@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Дорожная карта</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root{
+    --bg:#0f0f0f;
+    --panel:#181818;
+    --panel-2:#1d1d1f;
+    --border:#2a2a2c;
+    --text:#e0e0e0;
+    --text-dim:#888;
+    --accent:#d8b34a;
+  }
+
+  body{
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+  }
+
+  .page{ max-width:1800px; margin:0 auto; padding:36px 2.2rem 5rem; }
+
+  .main-tabs{ display:flex; gap:8px; margin-bottom:24px; border-bottom:1px solid var(--border); }
+  .main-tab-btn{
+    font-size:15px; font-weight:600; padding:11px 20px; background:transparent; border:none;
+    color:#777; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+    transition:color .15s, border-color .15s;
+  }
+  .main-tab-btn:hover{ color:#bbb; }
+  .main-tab-btn.active{ color:#fff; border-bottom-color:var(--accent); }
+  .main-tab-panel{ display:none; }
+  .main-tab-panel.active{ display:block; }
+
+  .topbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+  .topbar h1{ font-size:24px; font-weight:700; color:#fff; letter-spacing:.2px; }
+  .topbar .note{ font-size:12.5px; color:#5c5c5c; margin-top:4px; }
+  .controls{ display:flex; gap:9px; flex-wrap:wrap; }
+  .controls button{
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text);
+    padding:10px 18px; border-radius:9px; font-size:13.5px; cursor:pointer; font-weight:600;
+    transition:border-color .15s, background .15s;
+  }
+  .controls button:hover{ border-color:var(--accent); }
+  .controls button.danger{ color:#e2a89f; }
+
+  .grad-legend{ display:flex; gap:4px; align-items:center; margin:16px 0 18px; flex-wrap:wrap; }
+  .grad-swatch{
+    width:30px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; color:#fff5e6; flex-shrink:0;
+  }
+  .grad-legend.mini .grad-swatch{ width:22px; height:20px; font-size:9px; border-radius:5px; }
+  .grad-caption{ font-size:12px; color:#555; margin-left:8px; }
+
+  /* ===== ROADMAP TABLE ===== */
+  #rm-table-scroll{
+    overflow:auto; border:1px solid var(--border); border-radius:12px;
+    max-height:calc(100vh - 215px);
+  }
+  #grid{ border-collapse:separate; border-spacing:0; font-size:13px; width:100%; }
+  #grid th, #grid td{ padding:0; white-space:nowrap; }
+  #grid thead th{
+    position:sticky; top:0; background:var(--panel); z-index:3;
+    border-bottom:1px solid var(--border); padding:10px 8px; font-weight:700;
+    color:var(--text-dim); text-align:center; font-size:12.5px;
+  }
+  #grid thead th.now{ color:var(--accent); }
+  #grid thead th.corner{
+    position:sticky; left:0; top:0; z-index:5; background:var(--panel);
+    text-align:left; min-width:250px; color:var(--text); padding:10px 14px;
+  }
+  #grid thead th.nextstep-col{ background:#221c0c; color:var(--accent); min-width:220px; border-left:2px solid var(--accent); }
+  #grid tbody td.label{
+    position:sticky; left:0; z-index:2; background:var(--panel-2);
+    border-bottom:1px solid var(--border); border-right:1px solid var(--border);
+    color:var(--text); font-weight:500; min-width:250px;
+  }
+  #grid tr.dyn-row td{
+    position:static; background:#222224; color:var(--accent); font-weight:700;
+    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    font-size:12.5px; letter-spacing:.3px;
+  }
+  #grid tr.dyn-row td.label{ position:sticky; left:0; background:#222224; }
+
+  #grid td.cell{
+    border-bottom:1px solid var(--border); border-right:1px solid #1f1f21;
+    min-width:120px; text-align:center; cursor:pointer; transition:background .12s ease; position:relative;
+  }
+  #grid td.cell .num{
+    display:flex; align-items:center; justify-content:center; margin:0 auto;
+    border-radius:7px; border:1px dashed #3a3a3c; color:#555; font-weight:700;
+  }
+  #grid td.cell.has-num .num{ border:none; color:#fff5e6; }
+  #grid td.cell:hover .num{ filter:brightness(1.12); }
+  #grid td.cell.now-col{ background:rgba(216,179,74,.06); }
+  #grid td.gap-divider, #grid th.gap-divider{ border-left:2px solid #3a3a3c; }
+  #grid td.cell.has-comment::after{
+    content:''; position:absolute; top:5px; right:5px; width:6px; height:6px;
+    border-radius:50%; background:var(--accent);
+  }
+  #grid td.nextstep-cell{
+    text-align:left; padding:0 14px; font-size:12.5px; color:#e7d9b0; white-space:normal;
+    line-height:1.3; background:rgba(216,179,74,0.05); border-left:2px solid var(--accent);
+    min-width:220px;
+  }
+  #grid td.nextstep-cell.empty-step{ color:#555; font-style:italic; }
+
+  #rm-table-scroll.rm-fs-0 td.cell{ height:32px; }
+  #rm-table-scroll.rm-fs-0 td.cell .num{ width:28px; height:22px; font-size:11px; }
+  #rm-table-scroll.rm-fs-0 td.label{ padding:7px 14px; font-size:12.5px; }
+  #rm-table-scroll.rm-fs-0 tr.dyn-row td{ padding:7px 14px; }
+  #rm-table-scroll.rm-fs-0 td.nextstep-cell{ padding:6px 14px; }
+
+  #rm-table-scroll.rm-fs-1 td.cell{ height:40px; }
+  #rm-table-scroll.rm-fs-1 td.cell .num{ width:32px; height:26px; font-size:12.5px; }
+  #rm-table-scroll.rm-fs-1 td.label{ padding:9px 14px; font-size:13.5px; }
+  #rm-table-scroll.rm-fs-1 tr.dyn-row td{ padding:9px 14px; }
+  #rm-table-scroll.rm-fs-1 td.nextstep-cell{ padding:8px 14px; }
+
+  #rm-table-scroll.rm-fs-2 td.cell{ height:48px; }
+  #rm-table-scroll.rm-fs-2 td.cell .num{ width:36px; height:30px; font-size:13.5px; }
+  #rm-table-scroll.rm-fs-2 td.label{ padding:11px 14px; font-size:14px; }
+  #rm-table-scroll.rm-fs-2 tr.dyn-row td{ padding:11px 14px; }
+  #rm-table-scroll.rm-fs-2 td.nextstep-cell{ padding:10px 14px; }
+
+  #rm-table-scroll.rm-fs-3 td.cell{ height:58px; }
+  #rm-table-scroll.rm-fs-3 td.cell .num{ width:40px; height:34px; font-size:15px; }
+  #rm-table-scroll.rm-fs-3 td.label{ padding:14px 16px; font-size:15px; }
+  #rm-table-scroll.rm-fs-3 tr.dyn-row td{ padding:14px 16px; }
+  #rm-table-scroll.rm-fs-3 td.nextstep-cell{ padding:13px 16px; }
+
+  /* ===== DYNAMICS TAB ===== */
+  .columns{ display:grid; grid-template-columns:repeat(8, minmax(0,1fr)); gap:14px; margin-top:18px; }
+  .col{ display:flex; flex-direction:column; }
+  .col-header{
+    font-size:13px; font-weight:700; text-align:center; padding:14px 6px;
+    background:#1c1c1c; border-radius:10px; border:1px solid #2a2a2a;
+    color:#bbb; margin-bottom:12px; letter-spacing:.2px;
+  }
+  .col-items{ display:flex; flex-direction:column; gap:10px; }
+  .item{
+    font-size:13px; padding:16px 8px; border-radius:10px; text-align:center;
+    border:1px solid rgba(255,255,255,0.1); transition:transform .08s, filter .08s;
+    user-select:none; line-height:1.4; word-break:break-word; font-weight:500;
+    min-height:48px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .item:hover{ transform:scale(1.025); filter:brightness(1.1); }
+  .item.none{ background:transparent; color:#666; border:1px dashed #333; }
+  .item.none:hover{ color:#999; border-color:#555; }
+
+  /* ===== CHARTS TAB ===== */
+  .chart-card{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:14px;
+    padding:24px; margin-bottom:24px;
+  }
+  .chart-card h3{ font-size:15px; color:#fff; margin-bottom:16px; font-weight:600; }
+  .chart-empty{ font-size:13px; color:#555; padding:10px 0; }
+
+  /* ===== CELL POPOVER ===== */
+  .cell-popover{
+    position:fixed; z-index:300; background:#181818; border:1px solid #2e2e2e;
+    border-radius:14px; padding:14px; width:268px; box-shadow:0 24px 60px rgba(0,0,0,.8);
+    display:none;
+  }
+  .cell-popover.open{ display:block; }
+  .cp-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; gap:8px; }
+  .cp-head-text{ min-width:0; }
+  .cp-title{ font-size:11px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:.4px; }
+  .cp-name{ font-size:13.5px; color:#eee; font-weight:600; margin-top:2px; line-height:1.3; }
+  .cp-close{ background:none; border:none; color:#555; font-size:18px; cursor:pointer; line-height:1; flex-shrink:0; }
+  .cp-close:hover{ color:#aaa; }
+  .cp-numgrid{ display:grid; grid-template-columns:repeat(6,1fr); gap:5px; margin-bottom:10px; }
+  .cp-num{
+    padding:7px 0; border-radius:7px; border:1px solid #2e2e2e; background:#111;
+    color:#ccc; font-size:12px; font-weight:700; cursor:pointer; transition:border-color .12s;
+  }
+  .cp-num:hover{ border-color:#666; }
+  .cp-num.active{ border-color:var(--accent); background:#2a2410; color:#fff; }
+  .cp-note-toggle{
+    font-size:12px; color:#888; cursor:pointer; display:inline-flex; align-items:center;
+    gap:5px; user-select:none; margin-bottom:7px;
+  }
+  .cp-note-toggle:hover{ color:#bbb; }
+  .cp-note-area{ display:none; }
+  .cp-note-area.open{ display:block; }
+  .cp-note-area textarea{
+    width:100%; font-size:12.5px; padding:8px 9px; border:1px solid #2e2e2e; border-radius:8px;
+    background:#111; color:#e0e0e0; outline:none; resize:vertical; min-height:60px;
+    font-family:inherit;
+  }
+  .cp-note-area textarea:focus{ border-color:#555; }
+  .cp-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .cp-clear{ font-size:12px; color:#c0392b; background:none; border:none; cursor:pointer; padding:2px; }
+  .cp-clear:hover{ text-decoration:underline; }
+  .cp-saved{ font-size:11px; color:#5a8a64; opacity:0; transition:opacity .2s; }
+  .cp-saved.show{ opacity:1; }
+
+  /* ===== SHARED MODALS ===== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.80);
+    backdrop-filter:blur(5px); z-index:200; align-items:center; justify-content:center;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:#181818; border:1px solid #2e2e2e; border-radius:18px;
+    padding:1.9rem 1.8rem 1.6rem; width:420px; max-width:94vw;
+    box-shadow:0 28px 70px rgba(0,0,0,.85); animation:popIn .17s ease;
+  }
+  @keyframes popIn{ from{transform:scale(.92);opacity:0;} to{transform:scale(1);opacity:1;} }
+  .modal-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; }
+  .modal h2{ font-size:17px; font-weight:600; color:#fff; }
+  .modal-close{
+    background:none; border:none; color:#555; font-size:22px; cursor:pointer; line-height:1;
+    padding:0 4px; transition:color .12s;
+  }
+  .modal-close:hover{ color:#aaa; }
+  .modal-tabs{ display:flex; border:1px solid #2e2e2e; border-radius:10px; overflow:hidden; margin-bottom:1.2rem; }
+  .tab-btn{
+    flex:1; padding:9px; font-size:13px; font-weight:500; border:none; background:transparent;
+    color:#666; cursor:pointer; transition:background .12s, color .12s;
+  }
+  .tab-btn.active{ background:#252525; color:#e0e0e0; }
+  .tab-btn:first-child{ border-right:1px solid #2e2e2e; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+  .modal label{
+    display:block; font-size:11px; color:#666; margin-bottom:6px; margin-top:16px;
+    text-transform:uppercase; letter-spacing:.6px;
+  }
+  .modal label:first-of-type{ margin-top:0; }
+  .modal input, .modal select{
+    width:100%; font-size:14px; padding:10px 12px; border:1px solid #2e2e2e; border-radius:9px;
+    background:#111; color:#e0e0e0; outline:none; transition:border-color .15s;
+  }
+  .modal input:focus, .modal select:focus{ border-color:#555; }
+  .modal select option{ background:#1a1a1a; }
+  .modal-actions{ display:flex; gap:8px; margin-top:1.4rem; }
+  .btn-cancel{
+    flex:1; padding:11px; border-radius:9px; border:1px solid #2e2e2e; background:transparent;
+    color:#777; font-size:13.5px; cursor:pointer; transition:background .12s;
+  }
+  .btn-cancel:hover{ background:#222; }
+  .btn-confirm{
+    flex:2; padding:11px; border-radius:9px; border:none; background:#1e6e40;
+    color:#c8f5d8; font-size:13.5px; font-weight:600; cursor:pointer; transition:background .12s;
+  }
+  .btn-confirm:hover{ background:#278a52; }
+  .delete-col-select{
+    width:100%; font-size:14px; padding:10px 12px; border:1px solid #2e2e2e; border-radius:9px;
+    background:#111; color:#e0e0e0; outline:none; margin-bottom:12px;
+  }
+  .delete-col-select option{ background:#1a1a1a; }
+  .delete-list{ display:flex; flex-direction:column; gap:6px; max-height:320px; overflow-y:auto; padding-right:4px; }
+  .delete-list::-webkit-scrollbar{ width:4px; }
+  .delete-list::-webkit-scrollbar-track{ background:transparent; }
+  .delete-list::-webkit-scrollbar-thumb{ background:#333; border-radius:4px; }
+  .delete-row{
+    display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:9px;
+    border:1px solid #2a2a2a; background:#111;
+  }
+  .delete-row-dot{ width:10px; height:10px; border-radius:3px; flex-shrink:0; border:1px dashed #555; }
+  .delete-row-text{ flex:1; font-size:13px; color:#ccc; line-height:1.3; }
+  .delete-row-btn{
+    background:none; border:1px solid #3a1a1a; color:#c0392b; border-radius:6px;
+    padding:5px 11px; font-size:12px; cursor:pointer; flex-shrink:0; transition:background .12s;
+  }
+  .delete-row-btn:hover{ background:#2a1010; }
+  .empty-msg{ font-size:13px; color:#555; text-align:center; padding:20px 0; }
+
+  .size-btns{ display:flex; gap:8px; }
+  .size-btn{
+    flex:1; padding:11px 4px; border-radius:9px; border:1px solid #2e2e2e; background:#111;
+    color:#999; font-size:12.5px; font-weight:600; cursor:pointer; transition:border-color .12s, color .12s;
+  }
+  .size-btn.selected{ border-color:var(--accent); color:#fff; background:#221c0c; }
+
+  .year-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .year-chip{
+    padding:6px 11px; border-radius:7px; border:1px solid #2e2e2e; background:#111;
+    color:#666; font-size:12px; cursor:pointer; transition:border-color .12s, color .12s, background .12s;
+  }
+  .year-chip:hover{ border-color:#666; }
+  .year-chip.visible{ border-color:var(--accent); color:#fff; background:#221c0c; }
+  .year-chip.locked{ opacity:.55; cursor:default; }
+  .year-add-row{ display:flex; gap:8px; margin-bottom:4px; }
+  .year-add-row input{
+    flex:1; font-size:13px; padding:9px 11px; border:1px solid #2e2e2e; border-radius:8px;
+    background:#111; color:#e0e0e0; outline:none;
+  }
+  .year-add-row input:focus{ border-color:#555; }
+  .year-add-row button{
+    padding:9px 16px; border-radius:8px; border:1px solid #2e2e2e; background:#1e1e1e;
+    color:#ccc; font-size:12.5px; cursor:pointer; white-space:nowrap;
+  }
+  .year-add-row button:hover{ border-color:var(--accent); }
+
+  .reset-box{
+    background:#181818; border:1px solid #2e2e2e; border-radius:18px; padding:2rem;
+    width:360px; max-width:94vw; text-align:center; box-shadow:0 28px 70px rgba(0,0,0,.85);
+    animation:popIn .17s ease;
+  }
+  .reset-box h3{ font-size:17px; color:#fff; margin-bottom:10px; }
+  .reset-box p{ font-size:13px; color:#777; margin-bottom:1.5rem; line-height:1.5; }
+  .reset-box-actions{ display:flex; gap:10px; }
+  .reset-no{
+    flex:1; padding:11px; border-radius:9px; border:1px solid #2e2e2e; background:transparent;
+    color:#888; font-size:14px; cursor:pointer;
+  }
+  .reset-no:hover{ background:#222; }
+  .reset-yes{
+    flex:1; padding:11px; border-radius:9px; border:none; background:#7a2020;
+    color:#ffd0d0; font-size:14px; font-weight:600; cursor:pointer;
+  }
+  .reset-yes:hover{ background:#a02828; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="main-tabs">
+    <button class="main-tab-btn active" id="tabbtn-roadmap" onclick="switchMainTab('roadmap')">Дорожная карта</button>
+    <button class="main-tab-btn" id="tabbtn-dynamics" onclick="switchMainTab('dynamics')">Динамики</button>
+    <button class="main-tab-btn" id="tabbtn-charts" onclick="switchMainTab('charts')">Графики</button>
+  </div>
+
+  <!-- ============ ROADMAP ============ -->
+  <div class="main-tab-panel active" id="tab-roadmap">
+    <div class="topbar">
+      <div><h1>Дорожная карта</h1></div>
+      <div class="controls">
+        <button onclick="openManage()">+ Добавить / удалить пункт</button>
+        <button id="years-toggle-btn" onclick="toggleYearsExpanded()">+ Показать скрытые года</button>
+        <button onclick="openSettings()">⚙ Настройки</button>
+        <button class="danger" onclick="openReset()">↺ Сбросить всё</button>
+      </div>
+    </div>
+
+    <div class="grad-legend" id="rm-gradient-legend"></div>
+
+    <div id="rm-table-scroll" class="rm-fs-0">
+      <table id="grid"></table>
+    </div>
+  </div>
+
+  <!-- ============ DYNAMICS ============ -->
+  <div class="main-tab-panel" id="tab-dynamics">
+    <div class="topbar">
+      <div>
+        <h1>Динамики</h1>
+        <div class="note">Статистика по дорожной карте за текущий год · клик по пункту открывает редактор</div>
+      </div>
+      <div class="controls">
+        <button id="dyn-sort-btn" onclick="cycleDynSort()">Сортировка: по порядку</button>
+      </div>
+    </div>
+    <div class="grad-legend mini" id="dyn-gradient-legend"></div>
+    <div class="columns" id="board"></div>
+  </div>
+
+  <!-- ============ CHARTS ============ -->
+  <div class="main-tab-panel" id="tab-charts">
+    <div class="topbar"><div><h1>Графики</h1></div></div>
+
+    <div class="chart-card">
+      <h3>Средняя оценка по динамикам (текущий год)</h3>
+      <canvas id="chartDynamics" height="110"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Динамика среднего балла по годам</h3>
+      <canvas id="chartYears" height="110"></canvas>
+      <div class="chart-empty" id="chartYearsEmptyMsg" style="display:none;">Заполняйте оценки в дорожной карте для других лет — здесь появится график прогресса.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== Cell popover ===== -->
+<div class="cell-popover" id="cell-popover">
+  <div class="cp-head">
+    <div class="cp-head-text">
+      <div class="cp-title" id="cp-title"></div>
+      <div class="cp-name" id="cp-name"></div>
+    </div>
+    <button class="cp-close" onclick="closeCellPopover()">×</button>
+  </div>
+  <div class="cp-numgrid" id="cp-numgrid"></div>
+  <div class="cp-note-toggle" id="cp-note-toggle">+ Добавить заметку</div>
+  <div class="cp-note-area" id="cp-note-area">
+    <textarea id="cp-comment" placeholder="Что сделано, какой прогресс..."></textarea>
+  </div>
+  <div class="cp-actions">
+    <button class="cp-clear" onclick="cpClear()">Очистить</button>
+    <span class="cp-saved" id="cp-saved">Сохранено</span>
+  </div>
+</div>
+
+<!-- ===== Manage items modal ===== -->
+<div class="modal-overlay" id="manage-overlay" onclick="manageOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Пункты</h2>
+      <button class="modal-close" onclick="closeManage()">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="tab-btn active" id="manage-add-btn" onclick="manageSwitchTab('add')">Добавить</button>
+      <button class="tab-btn" id="manage-del-btn" onclick="manageSwitchTab('delete')">Удалить</button>
+    </div>
+
+    <div class="tab-panel active" id="manage-add">
+      <label>Название</label>
+      <input type="text" id="manage-text" placeholder="Введите текст..." />
+      <label>Динамика</label>
+      <select id="manage-col">
+        <option value="0">1 Динамика</option>
+        <option value="1">2 Динамика</option>
+        <option value="2">3 Динамика</option>
+        <option value="3">4 Динамика</option>
+        <option value="4">5 Динамика</option>
+        <option value="5">6 Динамика</option>
+        <option value="6">7 Динамика</option>
+        <option value="7">8 Динамика</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeManage()">Отмена</button>
+        <button class="btn-confirm" onclick="manageConfirmAdd()">Добавить</button>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="manage-delete">
+      <select class="delete-col-select" id="manage-del-col" onchange="manageRenderDeleteList()">
+        <option value="0">1 Динамика</option>
+        <option value="1">2 Динамика</option>
+        <option value="2">3 Динамика</option>
+        <option value="3">4 Динамика</option>
+        <option value="4">5 Динамика</option>
+        <option value="5">6 Динамика</option>
+        <option value="6">7 Динамика</option>
+        <option value="7">8 Динамика</option>
+      </select>
+      <div class="delete-list" id="manage-delete-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Settings modal ===== -->
+<div class="modal-overlay" id="settings-overlay" onclick="settingsOverlayClick(event)">
+  <div class="modal" style="width:400px;">
+    <div class="modal-header">
+      <h2>Настройки</h2>
+      <button class="modal-close" onclick="closeSettings()">×</button>
+    </div>
+
+    <label>Размер таблицы</label>
+    <div class="size-btns">
+      <button class="size-btn" id="size-0" onclick="pickSize(0)">Обычный</button>
+      <button class="size-btn" id="size-1" onclick="pickSize(1)">+1</button>
+      <button class="size-btn" id="size-2" onclick="pickSize(2)">+2</button>
+      <button class="size-btn" id="size-3" onclick="pickSize(3)">+3</button>
+    </div>
+
+    <label>Года в таблице</label>
+    <div class="year-chips" id="year-chips"></div>
+    <div class="year-add-row">
+      <input type="number" id="year-add-input" placeholder="напр. 2035" />
+      <button onclick="addYear()">+ Добавить год</button>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSettings()">Отмена</button>
+      <button class="btn-confirm" onclick="saveSettings()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Reset confirm ===== -->
+<div class="modal-overlay" id="reset-overlay">
+  <div class="reset-box">
+    <h3>Сброс дорожной карты</h3>
+    <p>Все оценки, заметки и шаги будут удалены, останутся только базовые значения текущего года. Это действие нельзя отменить.</p>
+    <div class="reset-box-actions">
+      <button class="reset-no" onclick="closeReset()">Отмена</button>
+      <button class="reset-yes" onclick="doReset()">Сбросить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   DATA MODEL
+========================================================= */
+const CURRENT_YEAR = 2026;
+const ITEMS_KEY = 'roadmap_items_v1';
+const CELLS_KEY = 'roadmap_cells_v1';
+const SETTINGS_KEY = 'roadmap_settings_v3';
+const YEARS_KEY = 'roadmap_years_v1';
+const NEXTSTEPS_KEY = 'roadmap_nextsteps_v1';
+const DYNSORT_KEY = 'roadmap_dynsort_v1';
+
+let YEARS = [2022,2023,2024,2025,2026,2027,2028,2029,2030,2040,2050,2060];
+let hiddenYears = [2027,2029,2030,2040,2050,2060];
+let yearsExpanded = false;
+
+const ROADMAP = [
+  {n:1, title:'1 ДИНАМИКА', items:[
+    {id:'d1-0',name:'Сон',base:'green'},{id:'d1-1',name:'Фигура',base:'green'},{id:'d1-2',name:'Отдых',base:'green'},
+    {id:'d1-3',name:'Гигиена',base:'green'},{id:'d1-4',name:'Внешний вид',base:'green'},{id:'d1-5',name:'Режим дня',base:'green'},
+    {id:'d1-6',name:'Питание',base:'green'},{id:'d1-7',name:'Эффективность',base:'green'},{id:'d1-8',name:'Здоровье',base:'yellow'},
+    {id:'d1-9',name:'Навыки',base:'yellow'},{id:'d1-10',name:'Техническое образование',base:'yellow'},
+    {id:'d1-11',name:'Функциональность тела',base:'yellow'},{id:'d1-12',name:'Общее образование',base:'yellow'},
+  ]},
+  {n:2, title:'2 ДИНАМИКА', items:[
+    {id:'d2-0',name:'Взаимоотношения с Сашей',base:'yellow'},{id:'d2-1',name:'Совместные увлечения',base:'yellow'},
+    {id:'d2-2',name:'Путешествия',base:'yellow'},{id:'d2-3',name:'Дети',base:'red'},{id:'d2-4',name:'Секс',base:'red'},
+  ]},
+  {n:3, title:'3 ДИНАМИКА', items:[
+    {id:'d3-0',name:'Инвестиционный фонд PFF',base:'yellow'},{id:'d3-1',name:'Управление другими фондами',base:'yellow'},
+    {id:'d3-2',name:'Климэйт',base:'red'},{id:'d3-3',name:'Благотворительный фонд',base:'red'},
+    {id:'d3-4',name:'Наставничество',base:'yellow'},{id:'d3-5',name:'Настольный теннис',base:'yellow'},
+    {id:'d3-6',name:'Семья',base:'yellow'},{id:'d3-7',name:'Бизнес',base:'red'},{id:'d3-8',name:'Франшиза',base:'red'},
+    {id:'d3-9',name:'PurrCat',base:'red'},{id:'d3-10',name:'Родительский дом',base:'red'},{id:'d3-11',name:'Снитч',base:'red'},
+    {id:'d3-12',name:'Саентология',base:'red'},{id:'d3-13',name:'Друзья',base:'red'},{id:'d3-14',name:'Шахматы',base:'yellow'},
+    {id:'d3-15',name:'Спортивный зал + MMA',base:'yellow'},
+  ]},
+  {n:4, title:'4 ДИНАМИКА', items:[
+    {id:'d4-0',name:'Алкогольная зависимость',base:'yellow'},{id:'d4-1',name:'Наркологическая зависимость',base:'yellow'},
+    {id:'d4-2',name:'Табачная зависимость',base:'yellow'},{id:'d4-3',name:'Брак, Разводы',base:'red'},
+    {id:'d4-4',name:'Война',base:'red'},{id:'d4-5',name:'Люди преклонного возраста',base:'red'},
+    {id:'d4-6',name:'Образование детей',base:'red'},
+  ]},
+  {n:5, title:'5 ДИНАМИКА', items:[
+    {id:'d5-0',name:'Котики',base:'green'},{id:'d5-1',name:'Деревья',base:'green'},
+    {id:'d5-2',name:'Животные',base:'green'},{id:'d5-3',name:'Птицы',base:'yellow'},
+  ]},
+  {n:6, title:'6 ДИНАМИКА', items:[
+    {id:'d6-0',name:'Капитал',base:'yellow'},{id:'d6-1',name:'Жильё',base:'green'},{id:'d6-2',name:'Мелкие объекты',base:'green'},
+    {id:'d6-3',name:'Чужое имущество',base:'yellow'},{id:'d6-4',name:'Чистота планеты',base:'yellow'},
+    {id:'d6-5',name:'Искусственный интеллект',base:'yellow'},{id:'d6-6',name:'Чистота воды',base:'red'},
+  ]},
+  {n:7, title:'7 ДИНАМИКА', items:[
+    {id:'d7-0',name:'Духовная свобода',base:'yellow'},{id:'d7-1',name:'Этика',base:'yellow'},
+    {id:'d7-2',name:'Личные необходимости',base:'yellow'},{id:'d7-3',name:'Положение на шкале тонов',base:'yellow'},
+    {id:'d7-4',name:'Контроль над телом',base:'yellow'},{id:'d7-5',name:'Драматизация',base:'yellow'},
+    {id:'d7-6',name:'Клонирование других Тетанов',base:'red'},
+  ]},
+  {n:8, title:'8 ДИНАМИКА', items:[
+    {id:'d8-0',name:'Концепт',base:'yellow'},{id:'d8-1',name:'Абсолют',base:'red'},
+  ]},
+];
+
+const BASE_NUM = { red:2, yellow:5, green:8 };
+
+let rmCells = {};
+let nextSteps = {};
+let sizeLevel = 0;
+let dynSortMode = 'default';
+let chartDynInstance = null, chartYearInstance = null;
+
+function valueColor(v){
+  if (v === null || v === undefined || v === '') return null;
+  const val = Math.max(0, Math.min(10, Number(v)));
+  const hue = (val / 10) * 120;
+  return 'hsl(' + Math.round(hue) + ', 62%, 40%)';
+}
+
+/* =========================================================
+   PERSISTENCE
+========================================================= */
+function loadItems(){
+  try{
+    const raw = localStorage.getItem(ITEMS_KEY);
+    if (raw){
+      const saved = JSON.parse(raw);
+      if (Array.isArray(saved) && saved.length){ ROADMAP.length = 0; saved.forEach(d => ROADMAP.push(d)); }
+    }
+  }catch(e){}
+}
+function saveItems(){ localStorage.setItem(ITEMS_KEY, JSON.stringify(ROADMAP)); }
+
+function defaultCells(){
+  const c = {};
+  ROADMAP.forEach(d => d.items.forEach(it => {
+    if (it.base) c[it.id + '_' + CURRENT_YEAR] = { n: BASE_NUM[it.base], comment:'' };
+  }));
+  return c;
+}
+function loadCells(){
+  try{ const raw = localStorage.getItem(CELLS_KEY); rmCells = raw ? JSON.parse(raw) : defaultCells(); }
+  catch(e){ rmCells = defaultCells(); }
+}
+function saveCells(){ localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells)); }
+
+function loadNextSteps(){
+  try{ const raw = localStorage.getItem(NEXTSTEPS_KEY); nextSteps = raw ? JSON.parse(raw) : {}; }
+  catch(e){ nextSteps = {}; }
+}
+function saveNextSteps(){ localStorage.setItem(NEXTSTEPS_KEY, JSON.stringify(nextSteps)); }
+
+function loadYears(){
+  try{
+    const raw = localStorage.getItem(YEARS_KEY);
+    if (raw){
+      const s = JSON.parse(raw);
+      if (s && Array.isArray(s.years) && s.years.length) YEARS = s.years;
+      if (s && Array.isArray(s.hidden)) hiddenYears = s.hidden;
+    }
+  }catch(e){}
+  if (!YEARS.includes(CURRENT_YEAR)) YEARS.push(CURRENT_YEAR);
+  YEARS.sort((a,b) => a - b);
+  hiddenYears = hiddenYears.filter(y => y !== CURRENT_YEAR);
+}
+function saveYears(){ localStorage.setItem(YEARS_KEY, JSON.stringify({ years: YEARS, hidden: hiddenYears })); }
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw){ const s = JSON.parse(raw); if (typeof s.sizeLevel === 'number') sizeLevel = s.sizeLevel; }
+  }catch(e){}
+  applySizeClass();
+}
+function saveSizeToStorage(){ localStorage.setItem(SETTINGS_KEY, JSON.stringify({ sizeLevel })); }
+function applySizeClass(){
+  const wrap = document.getElementById('rm-table-scroll');
+  wrap.classList.remove('rm-fs-0','rm-fs-1','rm-fs-2','rm-fs-3');
+  wrap.classList.add('rm-fs-' + sizeLevel);
+}
+
+function loadDynSort(){
+  try{ const v = localStorage.getItem(DYNSORT_KEY); if (v) dynSortMode = v; }catch(e){}
+  updateDynSortLabel();
+}
+function saveDynSort(){ localStorage.setItem(DYNSORT_KEY, dynSortMode); }
+
+/* =========================================================
+   MAIN TAB SWITCH
+========================================================= */
+function switchMainTab(tab){
+  document.getElementById('tab-roadmap').classList.toggle('active', tab === 'roadmap');
+  document.getElementById('tab-dynamics').classList.toggle('active', tab === 'dynamics');
+  document.getElementById('tab-charts').classList.toggle('active', tab === 'charts');
+  document.getElementById('tabbtn-roadmap').classList.toggle('active', tab === 'roadmap');
+  document.getElementById('tabbtn-dynamics').classList.toggle('active', tab === 'dynamics');
+  document.getElementById('tabbtn-charts').classList.toggle('active', tab === 'charts');
+  closeCellPopover();
+  if (tab === 'charts') buildCharts();
+}
+
+/* =========================================================
+   GRADIENT LEGEND
+========================================================= */
+function buildGradientLegend(containerId){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i <= 10; i++){
+    const sw = document.createElement('div');
+    sw.className = 'grad-swatch';
+    sw.style.background = valueColor(i);
+    sw.textContent = i;
+    el.appendChild(sw);
+  }
+  const none = document.createElement('div');
+  none.className = 'grad-swatch';
+  none.style.background = 'transparent';
+  none.style.border = '1px dashed #555';
+  none.style.color = '#666';
+  none.textContent = '–';
+  el.appendChild(none);
+  const cap = document.createElement('span');
+  cap.className = 'grad-caption';
+  cap.textContent = '0 → 10, без оценки';
+  el.appendChild(cap);
+}
+
+/* =========================================================
+   YEARS
+========================================================= */
+function visibleYearsList(){
+  const list = yearsExpanded ? YEARS.slice() : YEARS.filter(y => !hiddenYears.includes(y) || y === CURRENT_YEAR);
+  return list.sort((a,b) => a - b);
+}
+function toggleYearsExpanded(){
+  yearsExpanded = !yearsExpanded;
+  document.getElementById('years-toggle-btn').textContent = yearsExpanded ? '− Скрыть года' : '+ Показать скрытые года';
+  buildTable();
+}
+function toggleYearHidden(y){
+  if (y === CURRENT_YEAR) return;
+  const idx = hiddenYears.indexOf(y);
+  if (idx >= 0) hiddenYears.splice(idx, 1); else hiddenYears.push(y);
+  saveYears();
+  renderYearChips();
+  buildTable();
+}
+function addYear(){
+  const input = document.getElementById('year-add-input');
+  const v = parseInt(input.value, 10);
+  if (!v || v < 1900 || v > 9999 || YEARS.includes(v)) return;
+  YEARS.push(v);
+  YEARS.sort((a,b) => a - b);
+  saveYears();
+  input.value = '';
+  renderYearChips();
+  buildTable();
+}
+function renderYearChips(){
+  const wrap = document.getElementById('year-chips');
+  wrap.innerHTML = '';
+  YEARS.forEach(y => {
+    const chip = document.createElement('div');
+    const isHidden = hiddenYears.includes(y) && y !== CURRENT_YEAR;
+    chip.className = 'year-chip' + (isHidden ? '' : ' visible') + (y === CURRENT_YEAR ? ' locked' : '');
+    chip.textContent = y + (y === CURRENT_YEAR ? ' 🔒' : '');
+    if (y !== CURRENT_YEAR) chip.onclick = () => toggleYearHidden(y);
+    wrap.appendChild(chip);
+  });
+}
+
+/* =========================================================
+   ROADMAP TABLE
+========================================================= */
+function buildTable(){
+  const table = document.getElementById('grid');
+  table.innerHTML = '';
+  const yrs = visibleYearsList();
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.className = 'corner';
+  corner.textContent = 'Направление';
+  headRow.appendChild(corner);
+
+  yrs.forEach((y, idx) => {
+    const th = document.createElement('th');
+    th.textContent = y;
+    if (y === CURRENT_YEAR){ th.classList.add('now'); th.textContent = y + ' (сейчас)'; }
+    if (idx > 0 && yrs[idx-1] !== undefined && y - yrs[idx-1] > 1) th.classList.add('gap-divider');
+    headRow.appendChild(th);
+    if (y === CURRENT_YEAR){
+      const stepTh = document.createElement('th');
+      stepTh.className = 'nextstep-col';
+      stepTh.textContent = 'Что сделать дальше';
+      headRow.appendChild(stepTh);
+    }
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  ROADMAP.forEach(d => {
+    const dynRow = document.createElement('tr');
+    dynRow.className = 'dyn-row';
+    const dynLabel = document.createElement('td');
+    dynLabel.className = 'label';
+    dynLabel.textContent = d.title;
+    dynRow.appendChild(dynLabel);
+    const dynFiller = document.createElement('td');
+    dynFiller.colSpan = yrs.length + 1;
+    dynRow.appendChild(dynFiller);
+    tbody.appendChild(dynRow);
+
+    d.items.forEach(it => {
+      const tr = document.createElement('tr');
+      const labelTd = document.createElement('td');
+      labelTd.className = 'label';
+      labelTd.textContent = it.name;
+      tr.appendChild(labelTd);
+
+      yrs.forEach((y, idx) => {
+        const td = document.createElement('td');
+        td.className = 'cell';
+        if (y === CURRENT_YEAR) td.classList.add('now-col');
+        if (idx > 0 && yrs[idx-1] !== undefined && y - yrs[idx-1] > 1) td.classList.add('gap-divider');
+
+        const key = it.id + '_' + y;
+        const cd = rmCells[key];
+        const num = document.createElement('div');
+        num.className = 'num';
+
+        if (cd && cd.n !== null && cd.n !== undefined && cd.n !== ''){
+          td.classList.add('has-num');
+          num.style.background = valueColor(cd.n);
+          num.textContent = cd.n;
+        }
+        if (cd && cd.comment){ td.classList.add('has-comment'); td.title = cd.comment; }
+
+        td.appendChild(num);
+        td.addEventListener('click', (ev) => { ev.stopPropagation(); openCellPopover(td, key, d.title, it.name, y); });
+        tr.appendChild(td);
+
+        if (y === CURRENT_YEAR){
+          const stepTd = document.createElement('td');
+          stepTd.className = 'cell nextstep-cell';
+          const val = nextSteps[it.id] || '';
+          if (val){
+            stepTd.textContent = val.length > 50 ? val.slice(0,50) + '…' : val;
+            stepTd.title = val;
+          } else {
+            stepTd.textContent = '+ заметка';
+            stepTd.classList.add('empty-step');
+          }
+          stepTd.addEventListener('click', (ev) => { ev.stopPropagation(); openNextStepPopover(stepTd, it.id, it.name, d.title); });
+          tr.appendChild(stepTd);
+        }
+      });
+      tbody.appendChild(tr);
+    });
+  });
+
+  table.appendChild(tbody);
+}
+
+/* =========================================================
+   DYNAMICS VIEW
+========================================================= */
+function scoreFor(id){
+  const cd = rmCells[id + '_' + CURRENT_YEAR];
+  return (cd && cd.n !== null && cd.n !== undefined && cd.n !== '') ? Number(cd.n) : null;
+}
+
+function cycleDynSort(){
+  dynSortMode = dynSortMode === 'default' ? 'desc' : dynSortMode === 'desc' ? 'asc' : 'default';
+  saveDynSort();
+  updateDynSortLabel();
+  renderDynamicsView();
+}
+function updateDynSortLabel(){
+  const labels = { default:'Сортировка: по порядку', desc:'Сортировка: по убыванию ↓', asc:'Сортировка: по возрастанию ↑' };
+  const btn = document.getElementById('dyn-sort-btn');
+  if (btn) btn.textContent = labels[dynSortMode];
+}
+
+function renderDynamicsView(){
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  ROADMAP.forEach(d => {
+    const col = document.createElement('div');
+    col.className = 'col';
+    const header = document.createElement('div');
+    header.className = 'col-header';
+    header.textContent = d.title;
+    col.appendChild(header);
+
+    let list = d.items.slice();
+    if (dynSortMode !== 'default'){
+      list.sort((a, b) => {
+        const av = scoreFor(a.id), bv = scoreFor(b.id);
+        const aHas = av !== null, bHas = bv !== null;
+        if (aHas && bHas) return dynSortMode === 'desc' ? bv - av : av - bv;
+        if (aHas && !bHas) return -1;
+        if (!aHas && bHas) return 1;
+        return 0;
+      });
+    }
+
+    const items = document.createElement('div');
+    items.className = 'col-items';
+    list.forEach(it => {
+      const key = it.id + '_' + CURRENT_YEAR;
+      const cd = rmCells[key];
+      const el = document.createElement('div');
+      el.className = 'item';
+      const hasVal = cd && cd.n !== null && cd.n !== undefined && cd.n !== '';
+      if (hasVal){
+        const color = valueColor(cd.n);
+        el.style.background = color;
+        el.style.borderColor = color;
+        el.style.color = '#fff5e6';
+        el.textContent = it.name + ' · ' + cd.n;
+      } else {
+        el.classList.add('none');
+        el.textContent = it.name;
+      }
+      if (cd && cd.comment) el.title = cd.comment;
+      el.addEventListener('click', (ev) => { ev.stopPropagation(); openCellPopover(el, key, d.title, it.name, CURRENT_YEAR); });
+      items.appendChild(el);
+    });
+    col.appendChild(items);
+    board.appendChild(col);
+  });
+}
+
+function rerenderAll(){ buildTable(); renderDynamicsView(); }
+
+/* =========================================================
+   CELL POPOVER (score) / NEXT-STEP POPOVER (note only)
+========================================================= */
+let popoverMode = 'cell';
+let popoverKey = null;
+let popoverItemId = null;
+let commentTimer = null;
+
+function openCellPopover(anchorEl, key, dynTitle, itemName, year){
+  popoverMode = 'cell';
+  popoverKey = key;
+  popoverItemId = null;
+
+  document.getElementById('cp-title').textContent = dynTitle + ' · ' + year;
+  document.getElementById('cp-name').textContent = itemName;
+  document.getElementById('cp-numgrid').style.display = 'grid';
+  document.getElementById('cp-note-toggle').style.display = 'inline-flex';
+
+  const existing = rmCells[key] || {};
+  const curNum = (existing.n === undefined || existing.n === null || existing.n === '') ? null : existing.n;
+  buildNumGrid(curNum);
+
+  const noteArea = document.getElementById('cp-note-area');
+  const noteToggle = document.getElementById('cp-note-toggle');
+  document.getElementById('cp-comment').placeholder = 'Что сделано, какой прогресс...';
+  document.getElementById('cp-comment').value = existing.comment || '';
+  if (existing.comment){ noteArea.classList.add('open'); noteToggle.textContent = '📝 Заметка'; }
+  else { noteArea.classList.remove('open'); noteToggle.textContent = '+ Добавить заметку'; }
+
+  const pop = document.getElementById('cell-popover');
+  pop.classList.add('open');
+  positionPopover(anchorEl);
+}
+
+function openNextStepPopover(anchorEl, itemId, itemName, dynTitle){
+  popoverMode = 'nextstep';
+  popoverItemId = itemId;
+  popoverKey = null;
+
+  document.getElementById('cp-title').textContent = dynTitle + ' · следующий шаг';
+  document.getElementById('cp-name').textContent = itemName;
+  document.getElementById('cp-numgrid').style.display = 'none';
+  document.getElementById('cp-note-toggle').style.display = 'none';
+
+  const noteArea = document.getElementById('cp-note-area');
+  noteArea.classList.add('open');
+  document.getElementById('cp-comment').placeholder = 'Что нужно сделать, чтобы получить следующий балл...';
+  document.getElementById('cp-comment').value = nextSteps[itemId] || '';
+
+  const pop = document.getElementById('cell-popover');
+  pop.classList.add('open');
+  positionPopover(anchorEl);
+}
+
+function buildNumGrid(curNum){
+  const grid = document.getElementById('cp-numgrid');
+  grid.innerHTML = '';
+  for (let i = 0; i <= 10; i++){
+    const b = document.createElement('button');
+    b.className = 'cp-num' + (curNum === i ? ' active' : '');
+    b.textContent = i;
+    b.onclick = () => setPopoverNumber(i);
+    grid.appendChild(b);
+  }
+}
+
+function setPopoverNumber(i){
+  if (popoverMode !== 'cell' || !popoverKey) return;
+  const existing = rmCells[popoverKey] || { comment:'' };
+  existing.n = i;
+  rmCells[popoverKey] = existing;
+  saveCells();
+  buildNumGrid(i);
+  flashSaved();
+  rerenderAll();
+}
+
+function positionPopover(anchorEl){
+  const pop = document.getElementById('cell-popover');
+  const rect = anchorEl.getBoundingClientRect();
+  const popW = 268;
+  const popH = pop.offsetHeight || 230;
+  let top = rect.bottom + 8;
+  if (top + popH > window.innerHeight - 8){ top = rect.top - popH - 8; if (top < 8) top = 8; }
+  let left = rect.left;
+  if (left + popW > window.innerWidth - 8) left = window.innerWidth - popW - 8;
+  if (left < 8) left = 8;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+}
+
+function closeCellPopover(){
+  document.getElementById('cell-popover').classList.remove('open');
+  popoverKey = null;
+  popoverItemId = null;
+}
+
+document.getElementById('cp-note-toggle').addEventListener('click', () => {
+  document.getElementById('cp-note-area').classList.toggle('open');
+});
+
+document.getElementById('cp-comment').addEventListener('input', (e) => {
+  clearTimeout(commentTimer);
+  const val = e.target.value;
+  commentTimer = setTimeout(() => {
+    if (popoverMode === 'cell'){
+      if (!popoverKey) return;
+      const existing = rmCells[popoverKey] || { n:null };
+      existing.comment = val.trim();
+      rmCells[popoverKey] = existing;
+      saveCells();
+    } else if (popoverMode === 'nextstep'){
+      if (!popoverItemId) return;
+      nextSteps[popoverItemId] = val.trim();
+      saveNextSteps();
+    }
+    flashSaved();
+    rerenderAll();
+  }, 500);
+});
+
+function cpClear(){
+  if (popoverMode === 'cell'){
+    if (!popoverKey) return;
+    delete rmCells[popoverKey];
+    saveCells();
+  } else if (popoverMode === 'nextstep'){
+    if (!popoverItemId) return;
+    delete nextSteps[popoverItemId];
+    saveNextSteps();
+  }
+  closeCellPopover();
+  rerenderAll();
+}
+
+function flashSaved(){
+  const s = document.getElementById('cp-saved');
+  s.classList.add('show');
+  clearTimeout(s._t);
+  s._t = setTimeout(() => s.classList.remove('show'), 1200);
+}
+
+document.addEventListener('click', (e) => {
+  const pop = document.getElementById('cell-popover');
+  if (!pop.classList.contains('open')) return;
+  if (pop.contains(e.target)) return;
+  closeCellPopover();
+});
+window.addEventListener('resize', () => closeCellPopover());
+
+/* =========================================================
+   MANAGE ITEMS MODAL
+========================================================= */
+let manageTab = 'add';
+
+function openManage(){
+  manageSwitchTab('add');
+  document.getElementById('manage-text').value = '';
+  document.getElementById('manage-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('manage-text').focus(), 80);
+}
+function closeManage(){ document.getElementById('manage-overlay').classList.remove('open'); }
+function manageOverlayClick(e){ if (e.target === document.getElementById('manage-overlay')) closeManage(); }
+
+function manageSwitchTab(tab){
+  manageTab = tab;
+  document.getElementById('manage-add').classList.toggle('active', tab === 'add');
+  document.getElementById('manage-delete').classList.toggle('active', tab === 'delete');
+  document.getElementById('manage-add-btn').classList.toggle('active', tab === 'add');
+  document.getElementById('manage-del-btn').classList.toggle('active', tab === 'delete');
+  if (tab === 'delete') manageRenderDeleteList();
+}
+
+function manageRenderDeleteList(){
+  const ci = parseInt(document.getElementById('manage-del-col').value);
+  const list = document.getElementById('manage-delete-list');
+  list.innerHTML = '';
+  const items = ROADMAP[ci].items;
+  if (items.length === 0){ list.innerHTML = '<div class="empty-msg">Нет пунктов в этой динамике</div>'; return; }
+  items.forEach((it, ii) => {
+    const cd = rmCells[it.id + '_' + CURRENT_YEAR];
+    const hasVal = cd && cd.n !== null && cd.n !== undefined && cd.n !== '';
+    const dotColor = hasVal ? valueColor(cd.n) : 'transparent';
+    const row = document.createElement('div');
+    row.className = 'delete-row';
+    row.innerHTML =
+      '<div class="delete-row-dot" style="background:' + dotColor + '"></div>' +
+      '<div class="delete-row-text">' + it.name + '</div>' +
+      '<button class="delete-row-btn" onclick="manageDeleteItem(' + ci + ',' + ii + ')">удалить</button>';
+    list.appendChild(row);
+  });
+}
+
+function manageDeleteItem(ci, ii){
+  const it = ROADMAP[ci].items[ii];
+  Object.keys(rmCells).forEach(k => { if (k.indexOf(it.id + '_') === 0) delete rmCells[k]; });
+  delete nextSteps[it.id];
+  ROADMAP[ci].items.splice(ii, 1);
+  saveItems();
+  saveCells();
+  saveNextSteps();
+  rerenderAll();
+  manageRenderDeleteList();
+}
+
+function manageConfirmAdd(){
+  const text = document.getElementById('manage-text').value.trim();
+  if (!text){ document.getElementById('manage-text').focus(); return; }
+  const col = parseInt(document.getElementById('manage-col').value);
+  const newId = 'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  ROADMAP[col].items.push({ id:newId, name:text });
+  saveItems();
+  document.getElementById('manage-text').value = '';
+  closeManage();
+  rerenderAll();
+}
+
+/* =========================================================
+   SETTINGS MODAL
+========================================================= */
+let pendingSizeLevel = sizeLevel;
+function openSettings(){
+  pendingSizeLevel = sizeLevel;
+  highlightSize();
+  renderYearChips();
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settings-overlay').classList.remove('open'); }
+function settingsOverlayClick(e){ if (e.target === document.getElementById('settings-overlay')) closeSettings(); }
+function pickSize(lvl){ pendingSizeLevel = lvl; highlightSize(); }
+function highlightSize(){
+  [0,1,2,3].forEach(l => document.getElementById('size-' + l).classList.toggle('selected', l === pendingSizeLevel));
+}
+function saveSettings(){
+  sizeLevel = pendingSizeLevel;
+  applySizeClass();
+  saveSizeToStorage();
+  closeSettings();
+}
+
+/* =========================================================
+   RESET
+========================================================= */
+function openReset(){ document.getElementById('reset-overlay').classList.add('open'); }
+function closeReset(){ document.getElementById('reset-overlay').classList.remove('open'); }
+function doReset(){
+  rmCells = defaultCells();
+  nextSteps = {};
+  saveCells();
+  saveNextSteps();
+  closeReset();
+  rerenderAll();
+}
+
+/* =========================================================
+   CHARTS
+========================================================= */
+function buildCharts(){
+  if (typeof Chart === 'undefined') return;
+
+  const dynLabels = ROADMAP.map(d => d.title);
+  const dynAverages = ROADMAP.map(d => {
+    let sum = 0, count = 0;
+    d.items.forEach(it => { const v = scoreFor(it.id); if (v !== null){ sum += v; count++; } });
+    return count ? +(sum / count).toFixed(1) : null;
+  });
+  const dynColors = dynAverages.map(v => v === null ? '#333' : valueColor(v));
+
+  if (chartDynInstance) chartDynInstance.destroy();
+  chartDynInstance = new Chart(document.getElementById('chartDynamics'), {
+    type: 'bar',
+    data: { labels: dynLabels, datasets: [{ label:'Средняя оценка', data: dynAverages, backgroundColor: dynColors, borderRadius:6 }] },
+    options: {
+      scales: { y:{ min:0, max:10, ticks:{ color:'#888' }, grid:{ color:'#222' } }, x:{ ticks:{ color:'#888' }, grid:{ display:false } } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+
+  const yearAverages = YEARS.map(y => {
+    let sum = 0, count = 0;
+    ROADMAP.forEach(d => d.items.forEach(it => {
+      const cd = rmCells[it.id + '_' + y];
+      if (cd && cd.n !== null && cd.n !== undefined && cd.n !== ''){ sum += Number(cd.n); count++; }
+    }));
+    return count ? +(sum / count).toFixed(1) : null;
+  });
+
+  const hasMultiYearData = yearAverages.filter(v => v !== null).length > 1;
+  document.getElementById('chartYearsEmptyMsg').style.display = hasMultiYearData ? 'none' : 'block';
+
+  if (chartYearInstance) chartYearInstance.destroy();
+  chartYearInstance = new Chart(document.getElementById('chartYears'), {
+    type: 'line',
+    data: { labels: YEARS, datasets: [{
+      label:'Средний балл', data: yearAverages, borderColor:'#d8b34a',
+      backgroundColor:'rgba(216,179,74,0.15)', tension:0.3, spanGaps:true,
+      pointRadius:5, pointBackgroundColor:'#d8b34a'
+    }]},
+    options: {
+      scales: { y:{ min:0, max:10, ticks:{ color:'#888' }, grid:{ color:'#222' } }, x:{ ticks:{ color:'#888' }, grid:{ display:false } } },
+      plugins: { legend:{ display:false } }
+    }
+  });
+}
+
+/* =========================================================
+   KEYBOARD
+========================================================= */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ closeManage(); closeSettings(); closeReset(); closeCellPopover(); }
+});
+
+/* =========================================================
+   INIT
+========================================================= */
+loadItems();
+loadCells();
+loadNextSteps();
+loadYears();
+loadSettings();
+loadDynSort();
+buildGradientLegend('rm-gradient-legend');
+buildGradientLegend('dyn-gradient-legend');
+rerenderAll();
+</script>
+</body>
+</html>
+

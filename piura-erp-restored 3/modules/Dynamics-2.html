@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SYSTEM // WEEKLY SCORE</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #08080e;
+    --bg2:     #0d0d1a;
+    --bg3:     #131326;
+    --accent:  #00ff9d;
+    --purple:  #7b5ea7;
+    --red:     #ff4d6d;
+    --gold:    #ffd700;
+    --blue:    #00b4d8;
+    --text:    #e8e8f5;
+    --muted:   #555570;
+    --border:  #1c1c38;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,255,157,.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,255,157,.022) 1px,transparent 1px);
+    background-size:52px 52px;
+    pointer-events:none; z-index:0;
+  }
+  .app {
+    position:relative; z-index:1;
+    max-width:1400px;
+    margin:0 auto;
+    padding:32px 40px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+  }
+
+  /* HEADER */
+  .header { display:flex; justify-content:space-between; align-items:center; }
+  .logo {
+    font-family:'Unbounded',sans-serif;
+    font-weight:900; font-size:38px;
+    color:var(--accent);
+    text-shadow:0 0 40px rgba(0,255,157,.55);
+    letter-spacing:-1px;
+  }
+  .logo em { color:var(--muted); font-style:normal; }
+  .week-pick {
+    display:flex; align-items:center; gap:14px;
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:16px; padding:14px 24px;
+  }
+  .week-pick label { font-family:'Space Mono',monospace; font-size:14px; color:var(--muted); }
+  .week-pick input[type="date"] {
+    background:none; border:none;
+    color:var(--accent);
+    font-family:'Space Mono',monospace;
+    font-size:18px; outline:none; cursor:pointer;
+  }
+  .week-pick input[type="date"]::-webkit-calendar-picker-indicator {
+    filter:invert(1) sepia(1) saturate(5) hue-rotate(100deg);
+    transform:scale(1.4); cursor:pointer;
+  }
+
+  /* SCORE CARDS */
+  .scores {
+    display:grid;
+    grid-template-columns:1.5fr 1fr 1fr 1fr;
+    gap:16px;
+  }
+  .sc {
+    background:var(--bg2);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:24px 28px 20px;
+    position:relative; overflow:hidden;
+    transition:transform .2s;
+  }
+  .sc:hover { transform:translateY(-4px); }
+  .sc::after {
+    content:''; position:absolute;
+    bottom:0; left:0; right:0; height:3px;
+  }
+  .sc.main::after  { background:var(--accent); }
+  .sc.prev::after  { background:var(--purple); }
+  .sc.best::after  { background:var(--gold); }
+  .sc.avg::after   { background:var(--blue); }
+  .sc .lbl {
+    font-family:'Space Mono',monospace;
+    font-size:13px; color:var(--muted);
+    text-transform:uppercase; letter-spacing:1.2px;
+    margin-bottom:10px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .live { width:9px; height:9px; background:var(--accent); border-radius:50%; animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .sc .val { font-family:'Unbounded',sans-serif; font-weight:900; font-size:58px; line-height:1; }
+  .sc.main .val { color:var(--accent); text-shadow:0 0 25px rgba(0,255,157,.45); }
+  .sc.prev .val { color:var(--purple); }
+  .sc.best .val { color:var(--gold); }
+  .sc.avg  .val { color:var(--blue); }
+  .sc .sub { font-size:14px; color:var(--muted); margin-top:8px; }
+  .delta { position:absolute; top:20px; right:22px; font-family:'Space Mono',monospace; font-size:16px; font-weight:700; }
+  .delta.up { color:var(--accent); }
+  .delta.dn { color:var(--red); }
+
+  /* HISTORY */
+  .history-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+  .block-hd {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:16px 28px;
+    background:var(--bg3);
+    border-bottom:1px solid var(--border);
+  }
+  .block-hd-title { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+  .block-hd-count { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
+  .history-inner { display:grid; grid-template-columns:280px 1fr; }
+  .hist-chart { padding:20px 24px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
+  .hist-chart-lbl { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
+  .bars { display:flex; align-items:flex-end; gap:7px; height:90px; }
+  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .bar-rect {
+    width:100%;
+    background:linear-gradient(0deg,var(--purple),var(--accent));
+    border-radius:4px 4px 0 0;
+    opacity:.6; min-height:3px; cursor:pointer;
+    transition:opacity .2s;
+  }
+  .bar-rect:hover { opacity:1; }
+  .bar-rect.cur { opacity:1; box-shadow:0 0 12px rgba(0,255,157,.5); }
+  .bar-lbl { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); white-space:nowrap; }
+  .hist-list {
+    display:flex; align-items:center;
+    gap:10px; padding:20px 24px;
+    overflow-x:auto; flex-wrap:wrap;
+  }
+  .hist-list::-webkit-scrollbar { height:3px; }
+  .hist-list::-webkit-scrollbar-thumb { background:var(--border); }
+  .h-item {
+    display:flex; align-items:center; gap:12px;
+    padding:12px 18px;
+    background:var(--bg3);
+    border:1px solid transparent;
+    border-radius:12px; cursor:pointer;
+    transition:all .15s; white-space:nowrap;
+  }
+  .h-item:hover { border-color:var(--purple); }
+  .h-date { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
+  .h-score { font-family:'Unbounded',sans-serif; font-size:20px; font-weight:700; color:var(--accent); }
+  .h-del { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; transition:color .15s; padding:2px 4px; }
+  .h-del:hover { color:var(--red); }
+  .no-hist { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); padding:20px; }
+
+  /* PROGRESS */
+  .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:20px 28px; }
+  .prog-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .prog-lbl { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
+  .prog-pct { font-family:'Unbounded',sans-serif; font-size:22px; color:var(--accent); }
+  .track { height:12px; background:var(--bg); border-radius:6px; overflow:hidden; }
+  .fill {
+    height:100%;
+    background:linear-gradient(90deg,var(--purple),var(--accent));
+    border-radius:6px;
+    transition:width .7s cubic-bezier(.22,1,.36,1);
+    position:relative;
+  }
+  .fill::after {
+    content:''; position:absolute;
+    right:0; top:0; bottom:0; width:40px;
+    background:rgba(255,255,255,.2);
+    filter:blur(6px);
+  }
+
+  /* TASKS */
+  .tasks-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+  .tasks-head {
+    display:grid;
+    grid-template-columns:1fr 120px 140px 140px;
+    padding:16px 28px;
+    background:var(--bg3);
+    border-bottom:1px solid var(--border);
+    gap:10px;
+  }
+  .tasks-head span { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .tasks-head span:not(:first-child) { text-align:center; }
+  .task-row {
+    display:grid;
+    grid-template-columns:1fr 120px 140px 140px;
+    padding:13px 28px;
+    border-bottom:1px solid rgba(28,28,56,.7);
+    gap:10px; align-items:center;
+    transition:background .15s;
+  }
+  .task-row:last-child { border-bottom:none; }
+  .task-row:hover { background:rgba(255,255,255,.02); }
+  .t-name { font-size:18px; font-weight:500; color:var(--text); cursor:pointer; transition:color .15s; line-height:1.3; user-select:none; }
+  .t-name:hover { color:var(--accent); }
+  .t-weight { font-family:'Space Mono',monospace; font-size:17px; color:var(--muted); text-align:center; }
+  .counter { display:flex; align-items:center; justify-content:center; gap:8px; }
+  .cnt-btn {
+    width:34px; height:34px;
+    background:var(--bg3);
+    border:1px solid var(--border);
+    border-radius:8px; color:var(--muted); font-size:22px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .15s; line-height:1;
+    font-family:'Space Mono',monospace;
+  }
+  .cnt-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .cnt-val { font-family:'Space Mono',monospace; font-size:20px; color:var(--text); min-width:28px; text-align:center; }
+  .t-score { font-family:'Space Mono',monospace; font-size:20px; font-weight:700; text-align:center; transition:color .2s; }
+  .t-score.on  { color:var(--accent); }
+  .t-score.off { color:var(--border); }
+
+  /* BOTTOM */
+  .bottom { display:flex; gap:16px; }
+  .btn {
+    padding:18px 32px; border-radius:14px; border:1px solid;
+    font-family:'Space Mono',monospace; font-size:15px; font-weight:700;
+    cursor:pointer; transition:all .2s; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .btn-save { background:rgba(0,255,157,.1); border-color:var(--accent); color:var(--accent); flex:1; }
+  .btn-save:hover { background:rgba(0,255,157,.2); box-shadow:0 0 24px rgba(0,255,157,.25); }
+  .btn-add { background:var(--bg3); border-color:var(--border); color:var(--muted); flex:.4; }
+  .btn-add:hover { border-color:var(--purple); color:var(--purple); }
+
+  /* MODAL */
+  .overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.88);
+    backdrop-filter:blur(7px);
+    z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity .2s;
+  }
+  .overlay.open { opacity:1; pointer-events:all; }
+  .modal {
+    background:var(--bg2);
+    border:1px solid var(--purple);
+    border-radius:22px; padding:36px; width:520px;
+    box-shadow:0 0 70px rgba(123,94,167,.4);
+    transform:translateY(14px); transition:transform .25s;
+  }
+  .overlay.open .modal { transform:translateY(0); }
+  .modal h3 { font-family:'Unbounded',sans-serif; font-size:20px; color:var(--accent); margin-bottom:28px; }
+  .frow { display:flex; flex-direction:column; gap:7px; margin-bottom:18px; }
+  .frow label { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; }
+  .frow input {
+    background:var(--bg3); border:1px solid var(--border);
+    border-radius:12px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:17px;
+    padding:14px 16px; outline:none; transition:border-color .2s; width:100%;
+  }
+  .frow input:focus { border-color:var(--purple); }
+
+  /* hint inside modal when editing weight */
+  .weight-hint {
+    font-family:'Space Mono',monospace;
+    font-size:11px; color:var(--accent);
+    margin-top:6px;
+    display:none;
+  }
+  .weight-hint.show { display:block; }
+
+  .modal-btns { display:flex; gap:12px; margin-top:28px; }
+  .modal-btns .btn { flex:1; padding:16px; font-size:14px; }
+  .btn-del { background:rgba(255,77,109,.1); border-color:var(--red); color:var(--red); flex:.5 !important; }
+  .btn-del:hover { background:rgba(255,77,109,.2); }
+
+  /* TOAST */
+  .toast {
+    position:fixed; bottom:32px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--bg3); border:1px solid var(--accent); color:var(--accent);
+    font-family:'Space Mono',monospace; font-size:14px;
+    padding:14px 32px; border-radius:12px; z-index:200;
+    opacity:0; transition:all .3s; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo">SYSTEM <em>//</em> WEEKLY SCORE</div>
+    <div class="week-pick">
+      <label>НЕДЕЛЯ</label>
+      <input type="date" id="weekDate">
+    </div>
+  </div>
+
+  <div class="scores">
+    <div class="sc main">
+      <div class="lbl"><span class="live"></span>Текущая неделя</div>
+      <div class="val" id="curScore">0</div>
+      <div class="sub" id="curLabel">—</div>
+      <div class="delta" id="deltaBadge"></div>
+    </div>
+    <div class="sc prev">
+      <div class="lbl">Прошлая неделя</div>
+      <div class="val" id="prevScore">—</div>
+      <div class="sub" id="prevLabel">—</div>
+    </div>
+    <div class="sc best">
+      <div class="lbl">Рекорд</div>
+      <div class="val" id="bestScore">—</div>
+      <div class="sub" id="bestLabel">—</div>
+    </div>
+    <div class="sc avg">
+      <div class="lbl">Среднее</div>
+      <div class="val" id="avgScore">—</div>
+      <div class="sub">за все недели</div>
+    </div>
+  </div>
+
+  <div class="history-block">
+    <div class="block-hd">
+      <span class="block-hd-title">История недель</span>
+      <span class="block-hd-count" id="wkCount">0 нед.</span>
+    </div>
+    <div class="history-inner">
+      <div class="hist-chart">
+        <div class="hist-chart-lbl">Динамика</div>
+        <div class="bars" id="barChart"></div>
+      </div>
+      <div class="hist-list" id="histList"></div>
+    </div>
+  </div>
+
+  <div class="progress-block">
+    <div class="prog-top">
+      <span class="prog-lbl">ПРОГРЕСС К МАКСИМУМУ · <span id="maxVal">0</span> БАЛЛОВ</span>
+      <span class="prog-pct" id="pctVal">0%</span>
+    </div>
+    <div class="track"><div class="fill" id="fillBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="tasks-block">
+    <div class="tasks-head">
+      <span>Задача <span style="color:var(--border);font-size:11px">· нажми для редактирования</span></span>
+      <span>Вес</span>
+      <span>Количество</span>
+      <span>Баллы</span>
+    </div>
+    <div id="tasksList"></div>
+  </div>
+
+  <div class="bottom">
+    <button class="btn btn-save" onclick="saveWeek()">💾 Сохранить неделю</button>
+    <button class="btn btn-add" onclick="openAdd()">＋ Новая задача</button>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="mTitle">// ЗАДАЧА</h3>
+    <div class="frow">
+      <label>Название</label>
+      <input type="text" id="fName" placeholder="Название задачи...">
+    </div>
+    <div class="frow">
+      <label>Вес (баллы за 1 раз)</label>
+      <input type="number" id="fWeight" placeholder="100" min="1">
+      <div class="weight-hint" id="weightHint">
+        ↻ История пересчитается автоматически
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-save" onclick="saveModal()">Сохранить</button>
+      <button class="btn btn-add" onclick="closeModal()">Отмена</button>
+      <button class="btn btn-del" id="mDel" onclick="deleteTask()" style="display:none">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DEFAULTS ───
+const DEFAULTS = [
+  {id:1,  name:'Все встречи проведены с АРО',             w:1000},
+  {id:2,  name:'Неделя без расстройств',                   w:1000},
+  {id:3,  name:'Встречи в запланированном тайминге',       w:750},
+  {id:4,  name:'Премия по наставничеству от 1000$',        w:350},
+  {id:5,  name:'Уборка парка',                             w:250},
+  {id:6,  name:'Турнир по теннису или шахматам',           w:250},
+  {id:7,  name:'Выучил стих',                              w:200},
+  {id:8,  name:'Заработал 5.000$',                         w:175},
+  {id:9,  name:'Сделали более 5.000.000 в Klimate',        w:150},
+  {id:10, name:'PFF увеличился кратно 50.000$',            w:150},
+  {id:11, name:'Новый подписчик в фонде',                  w:100},
+  {id:12, name:'Прочитал 1 куж с текстовыделителями',     w:100},
+  {id:13, name:'Прочтено 50 стр. художественной лит-ры',  w:75},
+  {id:14, name:'Сходил в парк / ресторан / новое место',   w:50},
+  {id:15, name:'Сделан урок',                              w:25},
+  {id:16, name:'Стерилизовали котика',                     w:25},
+  {id:17, name:'Занятие с тренером по хобби',              w:25},
+  {id:18, name:'Присутствовал на спорте',                  w:25},
+  {id:19, name:'Рабочий день начался ровно в 8:00',        w:100},
+  {id:20, name:'Ходил в душ, чистил зубы каждый день',    w:25},
+  {id:21, name:'Засыпал до 11, вставал до 6',             w:25},
+  {id:22, name:'Интервальное голодание',                   w:25},
+  {id:23, name:'Пил витамины каждый день',                 w:25},
+  {id:24, name:'Гулял каждый день',                        w:25},
+  {id:25, name:'Обучался новому (1 час)',                  w:50},
+  {id:26, name:'Образовательное видео',                    w:10},
+  {id:27, name:'Занимался Админ. Школой (1 час)',          w:15},
+  {id:28, name:'Поддерживал здоровое питание',             w:25},
+];
+
+// ─── STATE ───
+// История хранит только scores (кол-во раз по id), НЕ total.
+// Total всегда пересчитывается динамически по текущим весам задач.
+let S = { tasks:[], counts:{}, history:[], nextId:300 };
+let editId = null;
+let origWeight = null; // для отслеживания изменения веса в модалке
+
+function loadS() {
+  try {
+    const r = localStorage.getItem('wt5');
+    if (r) {
+      S = JSON.parse(r);
+      // миграция со старого формата: если total жёстко записан, удаляем его
+      S.history.forEach(w => { delete w.total; });
+    } else {
+      S.tasks = JSON.parse(JSON.stringify(DEFAULTS));
+    }
+    if (!S.nextId) S.nextId = 300;
+  } catch(e) {
+    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{}, history:[], nextId:300 };
+  }
+}
+function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
+
+// ─── ВЫЧИСЛЕНИЯ ───
+// Считаем итог недели по текущим весам задач
+function calcTotal(scores) {
+  return S.tasks.reduce((sum, t) => sum + (scores[t.id] || 0) * t.w, 0);
+}
+function currentTotal() { return calcTotal(S.counts); }
+function maxPts() { return S.tasks.reduce((s,t) => s + t.w, 0); }
+
+// ─── RENDER ───
+function render() {
+  renderTasks();
+  renderScores();
+  renderHistory();
+  renderChart();
+  saveS();
+}
+
+function renderTasks() {
+  const el = document.getElementById('tasksList');
+  el.innerHTML = '';
+  S.tasks.forEach(t => {
+    const cnt = S.counts[t.id] || 0;
+    const pts = cnt * t.w;
+    const row = document.createElement('div');
+    row.className = 'task-row';
+    row.innerHTML =
+      `<div class="t-name" data-edit="${t.id}">${escHtml(t.name)}</div>` +
+      `<div class="t-weight">${t.w}</div>` +
+      `<div class="counter">` +
+        `<button class="cnt-btn" data-dec="${t.id}">−</button>` +
+        `<span class="cnt-val">${cnt}</span>` +
+        `<button class="cnt-btn" data-inc="${t.id}">+</button>` +
+      `</div>` +
+      `<div class="t-score ${pts>0?'on':'off'}">${pts>0?'+'+pts:'—'}</div>`;
+    el.appendChild(row);
+  });
+}
+
+// Единственный делегированный слушатель
+document.getElementById('tasksList').addEventListener('click', function(e) {
+  const inc  = e.target.dataset.inc;
+  const dec  = e.target.dataset.dec;
+  const edit = e.target.dataset.edit;
+  if (inc !== undefined) {
+    S.counts[+inc] = (S.counts[+inc] || 0) + 1;
+    render();
+  } else if (dec !== undefined) {
+    if ((S.counts[+dec] || 0) > 0) S.counts[+dec]--;
+    render();
+  } else if (edit !== undefined) {
+    openEdit(+edit);
+  }
+});
+
+function renderScores() {
+  const tot = currentTotal();
+  const mp  = maxPts();
+  document.getElementById('curScore').textContent = tot;
+  document.getElementById('maxVal').textContent   = mp;
+  const pct = mp ? Math.round(tot / mp * 100) : 0;
+  document.getElementById('pctVal').textContent   = pct + '%';
+  document.getElementById('fillBar').style.width  = pct + '%';
+  const d = document.getElementById('weekDate').value;
+  document.getElementById('curLabel').textContent = d ? fmt(d) : '—';
+  document.getElementById('wkCount').textContent  = S.history.length + ' нед.';
+
+  if (S.history.length) {
+    // Пересчитываем все исторические итоги на лету
+    const computed = S.history.map(w => ({ ...w, _total: calcTotal(w.scores) }));
+    const prev = computed[computed.length - 1];
+    document.getElementById('prevScore').textContent = prev._total;
+    document.getElementById('prevLabel').textContent = fmt(prev.date);
+
+    const best = [...computed].sort((a,b) => b._total - a._total)[0];
+    document.getElementById('bestScore').textContent = best._total;
+    document.getElementById('bestLabel').textContent = fmt(best.date);
+
+    const avg = Math.round(computed.reduce((s,w) => s + w._total, 0) / computed.length);
+    document.getElementById('avgScore').textContent = avg;
+
+    const delta = tot - prev._total;
+    const db = document.getElementById('deltaBadge');
+    if (delta !== 0) {
+      db.textContent = (delta > 0 ? '▲+' : '▼') + delta;
+      db.className   = 'delta ' + (delta > 0 ? 'up' : 'dn');
+    } else {
+      db.textContent = '';
+      db.className   = 'delta';
+    }
+  }
+}
+
+function renderHistory() {
+  const el = document.getElementById('histList');
+  if (!S.history.length) {
+    el.innerHTML = '<div class="no-hist">Нет сохранённых недель — нажми «Сохранить неделю»</div>';
+    return;
+  }
+  el.innerHTML = '';
+  [...S.history].reverse().forEach((w, ri) => {
+    const realIdx = S.history.length - 1 - ri;
+    const liveTotal = calcTotal(w.scores); // пересчёт на лету
+    const item = document.createElement('div');
+    item.className = 'h-item';
+    item.innerHTML =
+      `<div class="h-date">${fmt(w.date)}</div>` +
+      `<div class="h-score">${liveTotal}</div>` +
+      `<button class="h-del" data-delidx="${realIdx}" title="Удалить">✕</button>`;
+    item.addEventListener('click', e => {
+      if (e.target.dataset.delidx !== undefined) { delHist(+e.target.dataset.delidx); return; }
+      loadWeek(realIdx);
+    });
+    el.appendChild(item);
+  });
+}
+
+function renderChart() {
+  const el = document.getElementById('barChart');
+  el.innerHTML = '';
+  const recent = S.history.slice(-12);
+  if (!recent.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-family:Space Mono,monospace;font-size:11px;align-self:center">нет данных</div>';
+    return;
+  }
+  const totals = recent.map(w => calcTotal(w.scores));
+  const mx = Math.max(...totals, 1);
+  recent.forEach((w, i) => {
+    const h      = Math.round((totals[i] / mx) * 80);
+    const isCur  = i === recent.length - 1;
+    const ri     = S.history.indexOf(w);
+    const col    = document.createElement('div');
+    col.className = 'bar-col';
+    col.innerHTML =
+      `<div class="bar-rect ${isCur?'cur':''}" style="height:${h}px" title="${totals[i]}"></div>` +
+      `<div class="bar-lbl">${shortFmt(w.date)}</div>`;
+    col.querySelector('.bar-rect').addEventListener('click', () => loadWeek(ri));
+    el.appendChild(col);
+  });
+}
+
+// ─── ACTIONS ───
+function saveWeek() {
+  const date = document.getElementById('weekDate').value || today();
+  const idx  = S.history.findIndex(w => w.date === date);
+  // Сохраняем только scores (кол-во раз), без total
+  const entry = { date, scores: { ...S.counts } };
+  if (idx >= 0) S.history[idx] = entry; else S.history.push(entry);
+  S.history.sort((a,b) => a.date.localeCompare(b.date));
+  render();
+  toast('✓ Сохранено: ' + currentTotal() + ' баллов');
+}
+
+function loadWeek(idx) {
+  const w = S.history[idx]; if (!w) return;
+  S.counts = { ...w.scores };
+  document.getElementById('weekDate').value = w.date;
+  render();
+  toast('Загружена: ' + fmt(w.date));
+}
+
+function delHist(idx) {
+  if (!confirm('Удалить эту запись?')) return;
+  S.history.splice(idx, 1);
+  render();
+}
+
+// ─── MODAL ───
+function openAdd() {
+  editId = null; origWeight = null;
+  document.getElementById('mTitle').textContent     = '// НОВАЯ ЗАДАЧА';
+  document.getElementById('fName').value            = '';
+  document.getElementById('fWeight').value          = '';
+  document.getElementById('mDel').style.display     = 'none';
+  document.getElementById('weightHint').classList.remove('show');
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('fName').focus(), 60);
+}
+
+function openEdit(id) {
+  const t = S.tasks.find(x => x.id === id); if (!t) return;
+  editId = id; origWeight = t.w;
+  document.getElementById('mTitle').textContent    = '// РЕДАКТИРОВАТЬ ЗАДАЧУ';
+  document.getElementById('fName').value           = t.name;
+  document.getElementById('fWeight').value         = t.w;
+  document.getElementById('mDel').style.display    = '';
+  document.getElementById('weightHint').classList.remove('show');
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(() => document.getElementById('fName').focus(), 60);
+}
+
+// показываем подсказку если вес изменился
+document.getElementById('fWeight').addEventListener('input', function() {
+  if (editId === null || origWeight === null) return;
+  const hint = document.getElementById('weightHint');
+  const newW = parseInt(this.value);
+  if (newW && newW !== origWeight) hint.classList.add('show');
+  else hint.classList.remove('show');
+});
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('weightHint').classList.remove('show');
+}
+
+function saveModal() {
+  const name = document.getElementById('fName').value.trim();
+  const w    = parseInt(document.getElementById('fWeight').value);
+  if (!name || !w || w < 1) { toast('⚠ Заполните все поля'); return; }
+
+  if (editId !== null) {
+    const t = S.tasks.find(x => x.id === editId);
+    if (t) {
+      const weightChanged = t.w !== w;
+      t.name = name; t.w = w;
+      // История пересчитается автоматически при render(),
+      // т.к. calcTotal берёт актуальные веса из S.tasks
+      if (weightChanged) toast('✓ Обновлено — история пересчитана');
+      else toast('Задача обновлена');
+    }
+  } else {
+    S.tasks.push({ id: S.nextId++, name, w });
+    toast('Задача добавлена');
+  }
+  closeModal();
+  render();
+}
+
+function deleteTask() {
+  if (editId === null) return;
+  if (!confirm('Удалить эту задачу?')) return;
+  S.tasks = S.tasks.filter(t => t.id !== editId);
+  delete S.counts[editId];
+  S.history.forEach(w => { delete w.scores[editId]; });
+  closeModal();
+  render();
+  toast('Задача удалена');
+}
+
+// ─── UTILS ───
+function fmt(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}.${m}.${y}`;
+}
+function shortFmt(d) {
+  if (!d) return '';
+  const [,m,day] = d.split('-');
+  return `${day}.${m}`;
+}
+function today() { return new Date().toISOString().split('T')[0]; }
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ─── INIT ───
+document.getElementById('weekDate').value = today();
+document.getElementById('overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('overlay')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+loadS();
+render();
+</script>
+</body>
+</html>

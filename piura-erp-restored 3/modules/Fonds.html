@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIURA FOUNDATION</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080f;--bg2:#0d0f1a;--bg3:#13151f;--bg4:#1a1d2a;
+  --border:#252836;--text:#fff;--text2:#c8cad4;--text3:#6b7080;
+  --blue:#4f8ef7;--green:#1fd87a;--red:#f05252;--yellow:#f5b942;
+  --purple:#b06cf5;--cyan:#22d3ee;--orange:#fb923c
+}
+html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+
+/* HEADER */
+.header{background:rgba(10,11,18,.95);border-bottom:1px solid var(--border);padding:18px 48px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;backdrop-filter:blur(12px)}
+.logo-text{font-size:15px;font-weight:800;letter-spacing:.18em;color:var(--text3);text-transform:uppercase}
+.logo-text span{color:var(--blue)}
+.hright{display:flex;align-items:center;gap:10px}
+.rate-chip{font-size:13px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 14px;display:flex;align-items:center;gap:6px}
+.rate-chip b{color:var(--green);font-size:14px}
+.btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text2);cursor:pointer;padding:7px 16px;font-size:13px;font-weight:600;transition:.15s;font-family:inherit}
+.btn:hover{border-color:#4a5080;color:#fff;background:var(--bg4)}
+.btn.sm{padding:5px 12px;font-size:12px}
+.btn.primary{background:#1a2a5a;border-color:var(--blue);color:var(--blue)}
+.btn.primary:hover{background:#1f3270;color:#fff}
+
+/* WRAP */
+.wrap{padding:40px 56px;display:flex;flex-direction:column;gap:44px;max-width:1800px;margin:0 auto}
+
+/* ROOT FUND */
+.root-card{background:linear-gradient(145deg,#0d0f1a 0%,#0a0c18 100%);border:1px solid #1e2545;border-radius:28px;padding:44px 48px;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(79,142,247,.06)}
+.root-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#4f8ef7,#b06cf5,#22d3ee,#1fd87a)}
+.root-card::after{content:'PIURA';position:absolute;right:-20px;bottom:-40px;font-size:200px;font-weight:900;color:rgba(79,142,247,.025);letter-spacing:-8px;pointer-events:none;line-height:1}
+
+.root-name{font-size:112px;font-weight:900;letter-spacing:-4px;line-height:1;color:#fff;margin-bottom:8px}
+.root-sub{font-size:13px;font-weight:700;letter-spacing:.2em;color:var(--text3);text-transform:uppercase;margin-bottom:36px}
+
+.root-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px}
+.rm{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:24px 28px;backdrop-filter:blur(4px)}
+.rm:hover{background:rgba(255,255,255,.035);border-color:rgba(79,142,247,.2)}
+.rm-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:10px}
+.rm-val{font-size:56px;font-weight:900;letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.rm-sub{font-size:17px;color:var(--text3)}
+.rm-sub2{font-size:13px;color:var(--text3);margin-top:3px}
+
+.incl-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:22px}
+.incl-lbl{font-size:14px;color:var(--text3);margin-right:4px}
+.pill{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text3);cursor:pointer;padding:6px 16px;border-radius:20px;border:1px solid var(--border);transition:all .15s;user-select:none}
+.pill.on{background:#141f40;border-color:#3a4a7a;color:#7ca8f5}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:#2a3060;flex-shrink:0}
+.pill.on .dot{background:#7ca8f5}
+
+/* SECTION */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.15em;display:flex;align-items:center;gap:10px}
+.sec-lbl::after{content:'';width:60px;height:1px;background:var(--border)}
+
+/* TREE */
+.tree-wrap{width:100%;display:flex;flex-direction:column;gap:0}
+.fund-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;width:100%}
+.conn-row{position:relative;height:60px;pointer-events:none;width:100%}
+.conn-row svg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible}
+
+/* FUND CARD */
+.fc{background:var(--bg2);border:1px solid var(--border);border-radius:24px;padding:40px 42px;position:relative;transition:border-color .2s;overflow:hidden}
+.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent,#252836);border-radius:24px 24px 0 0}
+.fc:hover{border-color:#3a3f58}
+.fc.excl{opacity:.3}
+
+/* drag */
+.fc{cursor:grab}
+.fc.dragging{opacity:.5;cursor:grabbing}
+.fc.drag-over{border-color:var(--blue)!important;background:#0d1530!important}
+
+/* hover actions */
+.fc-hov{position:absolute;top:14px;right:14px;display:none;gap:5px;z-index:10}
+.fc:hover .fc-hov{display:flex}
+.hb{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.hb:hover{border-color:var(--blue);color:var(--blue);background:#0d1530}
+.hb.del:hover{border-color:var(--red);color:var(--red);background:#1a0808}
+
+.fc-name{font-size:26px;font-weight:800;color:#fff;padding-right:100px;margin-bottom:12px;letter-spacing:.02em;text-transform:uppercase}
+.fc-tag{font-size:13px;padding:4px 12px;border-radius:5px;font-weight:700;display:inline-block;margin-bottom:14px;letter-spacing:.05em;text-transform:uppercase}
+.fc-usd{font-size:56px;font-weight:900;letter-spacing:-2px;line-height:1;color:var(--green);margin-bottom:4px}
+.fc-rub{font-size:20px;color:var(--text3);margin-bottom:0}
+
+/* compact data */
+.fc-data{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border);padding-top:16px;margin-top:16px}
+.fdr{display:flex;justify-content:space-between;align-items:baseline}
+.fdr-l{font-size:15px;color:var(--text3)}
+.fdr-v{font-size:20px;font-weight:700}
+.fdr-v.g{color:var(--green)}.fdr-v.y{color:var(--yellow)}.fdr-v.p{color:var(--purple)}
+
+/* founders expand */
+.fc-founders{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:none}
+.fc.expanded .fc-founders{display:block}
+.fnd-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0}
+.fnd-name{font-size:15px;color:var(--text2)}
+.fnd-pct{font-size:15px;font-weight:700;color:var(--blue)}
+.fnd-amt{font-size:14px;color:var(--text3)}
+.expand-btn{width:100%;background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:10px 0 0;text-align:center;transition:color .15s;font-family:inherit}
+.expand-btn:hover{color:var(--text2)}
+
+.live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.mini-spin{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* CARD META ROW */
+.fc-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.meta-chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.04em;display:flex;align-items:center;gap:4px}
+.meta-chip.risk-1{background:rgba(31,216,122,.1);color:#1fd87a;border:1px solid rgba(31,216,122,.2)}
+.meta-chip.risk-2{background:rgba(130,210,120,.1);color:#7ecf6e;border:1px solid rgba(130,210,120,.2)}
+.meta-chip.risk-3{background:rgba(245,185,66,.1);color:#f5b942;border:1px solid rgba(245,185,66,.2)}
+.meta-chip.risk-4{background:rgba(251,146,60,.1);color:#fb923c;border:1px solid rgba(251,146,60,.2)}
+.meta-chip.risk-5{background:rgba(240,82,82,.1);color:#f05252;border:1px solid rgba(240,82,82,.2)}
+.meta-chip.risk-6{background:rgba(200,50,50,.12);color:#e03030;border:1px solid rgba(200,50,50,.2)}
+.meta-chip.risk-7{background:rgba(160,30,30,.15);color:#cc2020;border:1px solid rgba(160,30,30,.25)}
+.meta-chip.currency   {background:rgba(79,142,247,.1);color:#4f8ef7;border:1px solid rgba(79,142,247,.2)}
+.meta-chip.goal-ok    {background:rgba(31,216,122,.08);color:#1fd87a;border:1px solid rgba(31,216,122,.15)}
+.meta-chip.goal-warn  {background:rgba(245,185,66,.08);color:#f5b942;border:1px solid rgba(245,185,66,.15)}
+.meta-chip.goal-no    {background:rgba(79,142,247,.06);color:#6b7080;border:1px solid rgba(79,142,247,.1)}
+
+/* GOAL PROGRESS */
+.fc-goal{margin-top:10px;border-top:1px solid var(--border);padding-top:10px}
+.goal-bar-bg{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:6px}
+.goal-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.goal-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:3px}
+
+/* NEW CARD DESIGN */
+.fc{background:linear-gradient(160deg,#0d0f1a 0%,#0a0c16 100%);border:1px solid rgba(255,255,255,.07);border-radius:18px;padding:22px 24px;position:relative;transition:all .2s;overflow:hidden}
+.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,#252836);border-radius:18px 18px 0 0}
+.fc::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,var(--accent,transparent) 0%,transparent 70%);opacity:.08;pointer-events:none}
+.fc:hover{border-color:rgba(255,255,255,.14);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.fc.excl{opacity:.25}
+.fc-name{font-size:18px;font-weight:800;color:#fff;padding-right:85px;margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase;line-height:1.2}
+.fc-tag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;display:inline-block;margin-bottom:10px;letter-spacing:.06em;text-transform:uppercase}
+.fc-usd{font-size:38px;font-weight:900;letter-spacing:-1.5px;line-height:1;color:var(--green);margin-bottom:2px}
+.fc-rub{font-size:13px;color:var(--text3);margin-bottom:0}
+.fc-data{display:flex;flex-direction:column;gap:7px;border-top:1px solid var(--border);padding-top:12px;margin-top:12px}
+.fdr{display:flex;justify-content:space-between;align-items:baseline}
+.fdr-l{font-size:12px;color:var(--text3)}
+.fdr-v{font-size:14px;font-weight:700}
+.fdr-v.g{color:var(--green)}.fdr-v.y{color:var(--yellow)}.fdr-v.p{color:var(--purple)}
+.fc-founders{border-top:1px solid var(--border);margin-top:10px;padding-top:10px;display:none}
+.fc.expanded .fc-founders{display:block}
+.fnd-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+.fnd-name{font-size:12px;color:var(--text2)}
+.fnd-pct{font-size:12px;font-weight:700;color:var(--blue)}
+.fnd-amt{font-size:11px;color:var(--text3)}
+.expand-btn{width:100%;background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;padding:8px 0 0;text-align:center;transition:color .15s;font-family:inherit}
+.expand-btn:hover{color:var(--text2)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+.modal-bg.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid #2a3460;border-radius:16px;padding:28px;width:440px;max-width:94vw;transform:translateY(10px);transition:transform .18s;max-height:90vh;overflow-y:auto}
+.modal-bg.open .modal{transform:translateY(0)}
+.mtitle{font-size:17px;font-weight:800;margin-bottom:20px;letter-spacing:.02em}
+.fl{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;font-weight:600}
+.fi{width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:#fff;font-size:14px;margin-bottom:13px;outline:none;transition:border-color .15s;font-family:inherit}
+.fi:focus{border-color:var(--blue)}
+.fn{font-size:11px;color:var(--text3);margin-top:-9px;margin-bottom:13px}
+.mactions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.bok{background:var(--blue);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;padding:9px 20px;cursor:pointer;font-family:inherit;transition:background .15s}
+.bok:hover{background:#3a7ae8}
+.bcancel{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text3);font-size:13px;padding:9px 14px;cursor:pointer;font-family:inherit;transition:all .15s}
+.bcancel:hover{border-color:#5a6080;color:#fff}
+
+/* founder editor rows */
+.fnd-edit-row{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.fnd-edit-row input{flex:1}
+.fnd-edit-row input:last-of-type{max-width:70px}
+.fnd-rm{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text3);width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.fnd-rm:hover{border-color:var(--red);color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-text">PIURA <span>FOUNDATION</span></div>
+  <div class="hright">
+    <div class="rate-chip">$ → ₽ <b id="rateDisplay">...</b></div>
+    <button class="btn sm" onclick="openAdd(0)">+ Фонд</button>
+    <button class="btn sm" onclick="openSettings()">⚙</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="root-card">
+    <div class="root-name" id="rfName">PIURA FOUNDATION</div>
+    <div class="root-sub">ГОЛОВНОЙ ФОНД · ИЕРАРХИЯ</div>
+    <div class="root-metrics">
+      <div class="rm">
+        <div class="rm-lbl">Итого портфель</div>
+        <div class="rm-val" style="color:var(--green)" id="rfUsd">—</div>
+        <div class="rm-sub" id="rfRub">—</div>
+      </div>
+      <div class="rm">
+        <div class="rm-lbl">Доход / месяц</div>
+        <div class="rm-val" style="color:var(--green)" id="rfMonUsd">—</div>
+        <div class="rm-sub" id="rfMonRub" style="color:var(--purple)">—</div>
+      </div>
+      <div class="rm">
+        <div class="rm-lbl">Ср. доходность</div>
+        <div class="rm-val" style="color:var(--yellow)" id="rfYield">—</div>
+        <div class="rm-sub">% годовых</div>
+      </div>
+    </div>
+    <div style="margin-top:6px">
+      <button class="btn sm" onclick="toggleInclPanel()" id="inclToggleBtn" style="font-size:11px;color:var(--text3)">▸ Состав (учитывать)</button>
+      <div id="inclPanel" style="display:none;margin-top:10px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px">
+        <div class="incl-row" id="inclRow" style="border:none;padding:0;margin:0"><span class="incl-lbl">Учитывать:</span></div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn sm" onclick="toggleFilterPanel()" id="filterToggleBtn" style="font-size:11px;color:var(--text3)">▸ Фильтр по учредителю</button>
+      <div id="filterPanel" style="display:none;margin-top:10px;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em">Учредитель</span>
+          <button class="btn sm" id="clearFounderFilter" style="display:none;font-size:11px" onclick="clearFilter()">✕ сбросить</button>
+        </div>
+        <div id="founderFilterRow" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text3)">
+          Можно выбрать до 2 учредителей — покажется суммарная их доля
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-hdr">
+    <div class="sec-lbl">Структура управления</div>
+  </div>
+  <div class="tree-wrap" id="treeWrap"></div>
+</div>
+
+<!-- MODAL Edit -->
+<div class="modal-bg" id="mEdit">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle" id="mEditTitle">Редактировать фонд</div>
+    <label class="fl">Название</label>
+    <input class="fi" id="eName" type="text">
+    <label class="fl">Капитал, $ (вручную)</label>
+    <input class="fi" id="eUsd" type="number" placeholder="оставьте пустым — из Google Sheets">
+    <div class="fn">Если заполнено — заменяет живые данные</div>
+    <label class="fl">Доход / месяц, $ (вручную)</label>
+    <input class="fi" id="eMonthly" type="number" placeholder="оставьте пустым — из Google Sheets">
+    <label class="fl">Доходность, % годовых</label>
+    <input class="fi" id="eYield" type="number" step="0.1">
+    <label class="fl">Тег</label>
+    <input class="fi" id="eTag" type="text" placeholder="Акции, Облигации...">
+    <label class="fl">Цель, ₽ (целевой капитал)</label>
+    <input class="fi" id="eGoal" type="number" placeholder="например 1000000">
+    <label class="fl">Риск</label>
+    <select class="fi" id="eRisk">
+      <option value="">— не указан —</option>
+      <option value="Консервативный">Консервативный</option>
+      <option value="Умеренно-конс.">Умеренно-консервативный</option>
+      <option value="Умеренный">Умеренный</option>
+      <option value="Умеренно-агр.">Умеренно-агрессивный</option>
+      <option value="Агрессивный">Агрессивный</option>
+      <option value="Высокий">Высокий</option>
+      <option value="Спекулятивный">Спекулятивный</option>
+    </select>
+    <label class="fl">Валюта</label>
+    <select class="fi" id="eCurrency">
+      <option value="">— не указана —</option>
+      <option value="USD">USD — Доллар</option>
+      <option value="RUB">RUB — Рубль</option>
+      <option value="EUR">EUR — Евро</option>
+      <option value="Mixed">Mixed — Смешанная</option>
+    </select>
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:12px">
+      <div class="fl" style="margin-bottom:10px">Учредители / Партнёры</div>
+      <div id="foundersEdit"></div>
+      <button class="btn sm" onclick="addFounderRow()">+ Добавить учредителя</button>
+    </div>
+    <div class="mactions">
+      <button class="bcancel" id="bEditCancel">Отмена</button>
+      <button class="bok" id="bEditSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Add -->
+<div class="modal-bg" id="mAdd">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle" id="mAddTitle">Новый фонд</div>
+    <label class="fl">Название</label>
+    <input class="fi" id="aName" type="text">
+    <label class="fl">Капитал, $</label>
+    <input class="fi" id="aUsd" type="number" placeholder="0">
+    <div class="fn">₽ пересчитываются по курсу ЦБ автоматически</div>
+    <label class="fl">Доход / месяц, $</label>
+    <input class="fi" id="aMonthly" type="number" placeholder="0">
+    <label class="fl">Доходность, %</label>
+    <input class="fi" id="aYield" type="number" step="0.1">
+    <label class="fl">Тег</label>
+    <input class="fi" id="aTag" type="text" placeholder="Акции, Облигации...">
+    <label class="fl">Цель, ₽</label>
+    <input class="fi" id="aGoal" type="number" placeholder="например 1000000">
+    <label class="fl">Риск</label>
+    <select class="fi" id="aRisk">
+      <option value="">— не указан —</option>
+      <option value="Консервативный">Консервативный</option>
+      <option value="Умеренно-конс.">Умеренно-консервативный</option>
+      <option value="Умеренный">Умеренный</option>
+      <option value="Умеренно-агр.">Умеренно-агрессивный</option>
+      <option value="Агрессивный">Агрессивный</option>
+      <option value="Высокий">Высокий</option>
+      <option value="Спекулятивный">Спекулятивный</option>
+    </select>
+    <label class="fl">Валюта</label>
+    <select class="fi" id="aCurrency">
+      <option value="">— не указана —</option>
+      <option value="USD">USD — Доллар</option>
+      <option value="RUB">RUB — Рубль</option>
+      <option value="EUR">EUR — Евро</option>
+      <option value="Mixed">Mixed — Смешанная</option>
+    </select>
+    <div class="mactions">
+      <button class="bcancel" id="bAddCancel">Отмена</button>
+      <button class="bok" id="bAddSave">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL Settings -->
+<div class="modal-bg" id="mSettings">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="mtitle">Настройки</div>
+    <label class="fl">Название главного фонда</label>
+    <input class="fi" id="sName" type="text">
+    <div class="fn" id="rateNote">Курс ЦБ загружается автоматически</div>
+    <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;text-transform:uppercase;letter-spacing:.07em">Сброс данных</div>
+      <button class="btn sm" style="color:var(--red);border-color:rgba(240,82,82,.3)" onclick="resetAllData()">⚠ Сбросить localStorage и перезагрузить</button>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">Удалит все сохранённые данные. Структура фондов сбросится к дефолтной.</div>
+    </div>
+    <div class="mactions">
+      <button class="bcancel" id="bSettingsCancel">Отмена</button>
+      <button class="bok" id="bSettingsSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── STATE ── */
+const STORE_KEY = 'piura_funds_v4';
+let usdRub = 90;
+let nextId  = 20;
+let editingId = null, addingParentId = null;
+
+const API_PFF  = 'https://script.google.com/macros/s/AKfycbwn_984PnYQ2zSMAPlgVPT1xrXw4vXe91H0-_jgU7_9pLdNAwNjs78FMjPNAQeew1Zc/exec';
+const API_SAFE = 'https://script.google.com/macros/s/AKfycbx_n76kW9xt7MX7q48_AL3uzH1UaSwfbJqwebZaiGhyDFdLo3Ozj0zRdirgN6ifl3qj/exec';
+const API_MSK  = 'https://script.google.com/macros/s/AKfycbzj1IX4yWqV8LNMCVhfmJ5SVgGBzCyDemYoLDUpwJqNq3Ezkeu17NeGe-dPCuU0u0_b/exec';
+
+const FCOLORS = {1:'#4f8ef7',2:'#b06cf5',3:'#1fd87a',4:'#fb923c',5:'#22d3ee',6:'#f5b942'};
+const TCOLORS = {
+  'Акции':      {bg:'#0d1f33',c:'#5ab0f5'},
+  'Облигации':  {bg:'#0d2018',c:'#3dd68c'},
+  'Эндаумент':  {bg:'#1e1033',c:'#c084f5'},
+  'Резерв':     {bg:'#211508',c:'#fb923c'},
+  'Смешанный':  {bg:'#1a0f1f',c:'#e879f9'},
+  'Недвижимость':{bg:'#1a1008',c:'#fbbf24'},
+  'Крипто':     {bg:'#081a1a',c:'#22d3ee'},
+  'Золото':     {bg:'#1a1500',c:'#f5b942'},
+  '_':          {bg:'#141620',c:'#6b7080'},
+};
+
+let rootName = 'PIURA FOUNDATION';
+
+/* DEFAULT funds — can be overridden by localStorage */
+const DEFAULT_FUNDS = [
+  {id:1,name:'MOSCOW FUND',    usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:API_MSK, sheet:'2026 (НЕД)', cur:'rub',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:3,name:'SOLID FUND',     usdM:867800,yld:null, monthly:0,    tag:'Смешанный',     included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:4,name:'SAFE FUND',      usdM:null,  yld:null, monthly:null, tag:'Резерв',   included:true,children:[],api:API_SAFE,sheet:'2026 (SAFE)',cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:5,name:'PAFF FUND',      usdM:12032, yld:null, monthly:154,  tag:'Акции',  included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:6,name:'ENDOWMENT DRUG', usdM:null,  yld:null, monthly:null, tag:'Эндаумент', included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+];
+
+/* LOAD / SAVE */
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY)||'null');
+    if(!s) return JSON.parse(JSON.stringify(DEFAULT_FUNDS));
+    // merge live fields from defaults
+    function mergeLive(saved, def) {
+      saved.forEach(sf=>{
+        const df=def.find(d=>d.id===sf.id);
+        if(df){
+          sf.api=df.api;sf.sheet=df.sheet;sf.cur=df.cur;
+          sf.loading=false;sf.liveUsd=null;sf.liveMon=null;sf.liveYld=null;
+          // restore manual defaults if saved value is undefined
+          if(sf.usdM===undefined) sf.usdM=df.usdM;
+          if(sf.monthly===undefined) sf.monthly=df.monthly;
+
+        }
+        if(!sf.founders)sf.founders=[];
+        if(sf.children&&sf.children.length) mergeLive(sf.children,[]);
+      });
+      return saved;
+    }
+    nextId = s.reduce((m,f)=>Math.max(m,f.id+1),20);
+    return mergeLive(s, DEFAULT_FUNDS);
+  } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_FUNDS)); }
+}
+
+function saveState(list) {
+  function strip(funds){return funds.map(f=>({
+    id:f.id,name:f.name,usdM:f.usdM,yld:f.yld,monthly:f.monthly,tag:f.tag,
+    goal:f.goal,risk:f.risk,currency:f.currency,
+    included:f.included,founders:f.founders||[],
+    liveYld:f.liveYld,
+    children:strip(f.children||[])
+  }));}
+  localStorage.setItem(STORE_KEY, JSON.stringify(strip(list)));
+}
+
+let funds = loadState();
+
+/* UTILS */
+const fU = n=>{if(!n&&n!==0)return'—';n=Math.round(n);if(Math.abs(n)>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(Math.abs(n)>=1000)return'$'+n.toLocaleString('en');return'$'+n;};
+const fR = n=>{if(!n&&n!==0)return'—';n=Math.round(n);if(Math.abs(n)>=1e6)return'₽'+(n/1e6).toFixed(2)+'М';if(Math.abs(n)>=1000)return'₽'+n.toLocaleString('ru');return'₽'+n;};
+const pN = v=>{if(!v&&v!==0)return 0;const n=parseFloat(String(v).replace(/\s/g,''));return isNaN(n)?0:n;};
+const pP = v=>{const n=pN(v);return Math.abs(n)<2?n*100:n;};
+
+function findF(id,list){for(const f of list){if(f.id===id)return f;const r=findF(id,f.children||[]);if(r)return r;}return null;}
+function removeF(id,list){const i=list.findIndex(f=>f.id===id);if(i>=0){list.splice(i,1);return true;}for(const f of list)if(removeF(id,f.children||[]))return true;return false;}
+function allF(list,arr=[]){list.forEach(f=>{arr.push(f);allF(f.children||[],arr);});return arr;}
+
+/* CBR RATE */
+async function fetchRate(){
+  const t=new Date(),dd=String(t.getDate()).padStart(2,'0'),mm=String(t.getMonth()+1).padStart(2,'0'),yyyy=t.getFullYear();
+  const tryUrls=[
+    `https://www.cbr.ru/scripts/XML_daily.asp?date_req=${dd}/${mm}/${yyyy}`,
+    `https://corsproxy.io/?https://www.cbr.ru/scripts/XML_daily.asp?date_req=${dd}/${mm}/${yyyy}`,
+  ];
+  for(const url of tryUrls){
+    try{
+      const res=await fetch(url);if(!res.ok)continue;
+      const xml=new DOMParser().parseFromString(await res.text(),'text/xml');
+      for(const v of xml.querySelectorAll('Valute')){
+        if(v.querySelector('CharCode')?.textContent==='USD'){
+          const r=parseFloat(v.querySelector('Value')?.textContent.replace(',','.'));
+          if(!isNaN(r)&&r>0){usdRub=r;setRate(r,`CBR ${dd}.${mm}.${yyyy}`);return;}
+        }
+      }
+    }catch(e){}
+  }
+  try{
+    const d=await(await fetch('https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd/rub.json')).json();
+    if(d?.rub){usdRub=d.rub;setRate(d.rub,'market');}
+  }catch(e){document.getElementById('rateDisplay').textContent='—';}
+}
+function setRate(r,src){
+  document.getElementById('rateDisplay').textContent=r.toFixed(2)+' ₽';
+  document.getElementById('rateNote').textContent=`Rate (${src}): ${r.toFixed(2)} ₽/$`;
+  renderTree();recalcDisplay();
+}
+
+/* LIVE DATA */
+async function fetchFund(f){
+  if(!f.api)return;
+  f.loading=true;renderTree();
+  try{
+    const data=await(await fetch(f.api+'?t='+Date.now())).json();
+    const rows=data[f.sheet]||[];
+    const TYPES=new Set(['Счета, вклады и нал','Займы/бизнес','Золото','Фондовый рынок','Крипта/проекты','Инвест. недвижимость']);
+    const aF=f.sheet==='2026 (НЕД)'?'ФИО':'АКТИВ';
+    const mF=(f.sheet==='2026 (НЕД)'||f.sheet==='2026 (SAFE)')?'МЕС':'МЕСЯЦ';
+    let tS=0,tM=0,tP=0,found=false;
+    rows.forEach(row=>{
+      const a=String(row[aF]||'').trim(),tip=String(row['ТИП']||'').trim();
+      const s=pN(row['СУММА']),m=pN(row[mF]),p=pP(row['%']);
+      if(a.toUpperCase().startsWith('ИТОГО')||(!a&&s>0&&!found)){tS=s;tM=m;tP=p;found=true;return;}
+      if(!a||a===aF||!TYPES.has(tip))return;
+      if(!found){tS+=s;tM+=m;if(p>0)tP+=p;}
+    });
+    f.liveUsd=f.cur==='rub'?tS/usdRub:tS;
+    f.liveMon=f.cur==='rub'?tM/usdRub:tM;
+    if(tP===0&&tS>0&&tM>0)tP=tM*12/tS*100;
+    f.liveYld=tP;
+  }catch(e){console.warn(f.name,e);}
+  f.loading=false;renderTree();recalcDisplay();
+}
+
+/* COMPUTE */
+function getUsd(f){
+  // Собственный капитал: ручной > live > 0
+  const own = (f.usdM!=null&&f.usdM>=0) ? f.usdM : (f.liveUsd||0);
+  // Всегда прибавляем капитал подфондов
+  const childSum=(f.children||[]).filter(c=>c.included).reduce((s,c)=>s+getUsd(c),0);
+  return own + childSum;
+}
+function getMon(f){
+  // Собственный доход: ручной > live > 0
+  const own = (f.monthly!=null&&f.monthly>=0) ? f.monthly : (f.liveMon||0);
+  // Всегда прибавляем доход подфондов
+  const childSum=(f.children||[]).filter(c=>c.included).reduce((s,c)=>s+getMon(c),0);
+  return own + childSum;
+}
+function getYld(f){ return f.liveYld||f.yld||0; }
+
+function rootUsd(){ return funds.filter(f=>f.included).reduce((s,f)=>s+getUsd(f),0); }
+function rootMon(){ return funds.filter(f=>f.included).reduce((s,f)=>s+getMon(f),0); }
+function rootYld(){
+  // взвешенная по капиталу: сумма(usd*yld) / сумма(usd)
+  let wSum=0, uSum=0;
+  funds.filter(f=>f.included).forEach(f=>{
+    const u=getUsd(f), y=getYld(f);
+    if(u>0&&y>0){wSum+=u*y; uSum+=u;}
+  });
+  return uSum>0 ? wSum/uSum : 0;
+}
+
+/* ROOT UI */
+function updateRoot(){ recalcDisplay(); }
+
+/* CARD */
+function makeCard(f){
+  const col=FCOLORS[f.id]||'#4f8ef7';
+  const tc=TCOLORS[f.tag]||TCOLORS['_'];
+  const usd=getUsd(f),mon=getMon(f),yld=getYld(f);
+
+  const div=document.createElement('div');
+  div.className='fc'+(f.included?'':' excl');
+  div.setAttribute('data-fid',f.id);
+  div.style.setProperty('--accent',col);
+  div.setAttribute('draggable','true');
+
+  // drag events
+  div.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',String(f.id));div.classList.add('dragging');});
+  div.addEventListener('dragend',()=>div.classList.remove('dragging'));
+  div.addEventListener('dragover',e=>{e.preventDefault();div.classList.add('drag-over');});
+  div.addEventListener('dragleave',()=>div.classList.remove('drag-over'));
+  div.addEventListener('drop',e=>{
+    e.preventDefault();div.classList.remove('drag-over');
+    const fromId=parseInt(e.dataTransfer.getData('text/plain'));
+    if(fromId===f.id)return;
+    swapFunds(fromId,f.id);
+  });
+
+  // hover btns
+  const hov=document.createElement('div');hov.className='fc-hov';
+  const bE=document.createElement('button');bE.className='hb';bE.title='Edit';bE.textContent='✎';
+  bE.addEventListener('click',e=>{e.stopPropagation();openEdit(f.id);});
+  const bA=document.createElement('button');bA.className='hb';bA.title='Add sub-fund';bA.textContent='+';
+  bA.addEventListener('click',e=>{e.stopPropagation();openAdd(f.id);});
+  const bD=document.createElement('button');bD.className='hb del';bD.title='Delete';bD.textContent='✕';
+  bD.addEventListener('click',e=>{e.stopPropagation();deleteFund(f.id);});
+  hov.append(bE,bA,bD);div.appendChild(hov);
+
+  const nm=document.createElement('div');nm.className='fc-name';nm.textContent=f.name;div.appendChild(nm);
+  if(f.tag){const tg=document.createElement('div');tg.className='fc-tag';tg.style.background=tc.bg;tg.style.color=tc.c;tg.textContent=f.tag;div.appendChild(tg);}
+
+  // META CHIPS: risk + currency
+  const metaRow=document.createElement('div');metaRow.className='fc-meta';
+  if(f.risk){
+    const rc=document.createElement('span');
+    const riskMap={'Консервативный':['risk-1','↓'],'Умеренно-конс.':['risk-2','↘'],'Умеренный':['risk-3','→'],'Умеренно-агр.':['risk-4','↗'],'Агрессивный':['risk-5','↑'],'Высокий':['risk-6','⬆'],'Спекулятивный':['risk-7','🔥']};
+    const [rcls,rarr]=riskMap[f.risk]||['risk-3','→'];
+    rc.className=`meta-chip ${rcls}`;
+    rc.textContent=rarr+' '+f.risk;
+    metaRow.appendChild(rc);
+  }
+  if(f.currency){
+    const cc=document.createElement('span');cc.className='meta-chip currency';
+    cc.textContent='💱 '+f.currency;
+    metaRow.appendChild(cc);
+  }
+  if(metaRow.children.length)div.appendChild(metaRow);
+
+  const usdEl=document.createElement('div');usdEl.className='fc-usd';
+  usdEl.innerHTML=f.loading?'<span class="mini-spin"></span>':fU(usd);div.appendChild(usdEl);
+  const rubEl=document.createElement('div');rubEl.className='fc-rub';rubEl.textContent=fU(usd)==='—'?'':fR(usd*usdRub);div.appendChild(rubEl);
+
+  // compact data
+  const rows=[];
+  if(mon>0){rows.push(['Доход/мес',fU(mon),'g']);rows.push(['Доход/мес ₽',fR(mon*usdRub),'p']);}
+  if(yld>0)rows.push(['Доходность',yld.toFixed(1)+'%','y']);
+  if(f.liveUsd&&!f.loading)rows.push(['','<span class="live-dot"></span>актуально','g']);
+  if(rows.length){
+    const db=document.createElement('div');db.className='fc-data';
+    rows.forEach(([l,v,c])=>{
+      if(!l){const b=document.createElement('div');b.innerHTML=`<span style="font-size:11px;color:var(--green)">${v}</span>`;db.appendChild(b);return;}
+      const r=document.createElement('div');r.className='fdr';
+      r.innerHTML=`<span class="fdr-l">${l}</span><span class="fdr-v ${c}">${v}</span>`;db.appendChild(r);
+    });
+    div.appendChild(db);
+  }
+
+  // GOAL PROGRESS BAR
+  if(f.goal && f.goal > 0){
+    const rubVal = usd*usdRub;
+    const pct = Math.min(100, rubVal/f.goal*100);
+    const goalDiv = document.createElement('div');goalDiv.className='fc-goal';
+    const glbl = document.createElement('div');glbl.className='goal-lbl';
+    glbl.innerHTML=`<span>Цель: ${fR(f.goal)}</span><span style="font-weight:700;color:${pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--text3)'}">${pct.toFixed(0)}%</span>`;
+    const gBg=document.createElement('div');gBg.className='goal-bar-bg';
+    const gFill=document.createElement('div');gFill.className='goal-bar-fill';
+    gFill.style.width=pct+'%';
+    gFill.style.background=pct>=100?'var(--green)':pct>=50?'var(--yellow)':'var(--blue)';
+    gBg.appendChild(gFill);goalDiv.appendChild(glbl);goalDiv.appendChild(gBg);div.appendChild(goalDiv);
+  }
+
+  // founders
+  const fnds=f.founders||[];
+  if(fnds.length){
+    const fe=document.createElement('div');fe.className='fc-founders';
+    fnds.forEach(fn=>{
+      const share=usd*fn.pct/100;
+      const r=document.createElement('div');r.className='fnd-row';
+      r.innerHTML=`<span class="fnd-name">${fn.name}</span><span class="fnd-pct">${fn.pct}%</span><span class="fnd-amt">${fU(share)}</span>`;
+      fe.appendChild(r);
+    });
+    div.appendChild(fe);
+    const xb=document.createElement('button');xb.className='expand-btn';
+    xb.textContent='▾ учредители';
+    xb.addEventListener('click',()=>{div.classList.toggle('expanded');xb.textContent=div.classList.contains('expanded')?'▴ скрыть':'▾ учредители';});
+    div.appendChild(xb);
+  }
+
+  return div;
+}
+
+/* SWAP / DRAG */
+function swapFunds(idA,idB){
+  function findParent(id,list,parent){
+    for(let i=0;i<list.length;i++){
+      if(list[i].id===id)return{list,i,parent};
+      const r=findParent(id,list[i].children||[],list[i]);
+      if(r)return r;
+    }return null;
+  }
+  const a=findParent(idA,funds,null);
+  const b=findParent(idB,funds,null);
+  if(!a||!b||a.list!==b.list)return; // only swap within same level
+  const tmp=a.list[a.i];
+  a.list[a.i]=b.list[b.i];
+  b.list[b.i]=tmp;
+  saveState(funds);renderTree();updateRoot();
+}
+
+/* RENDER TREE — без подфондов вверху, с подфондами внизу */
+function renderTree(){
+  const wrap = document.getElementById('treeWrap');
+  wrap.innerHTML = '';
+  if(!funds.length){
+    wrap.innerHTML = '<div style="color:var(--text3);padding:40px;text-align:center">Нет фондов.</div>';
+    return;
+  }
+
+  // Рисует SVG-коннектор между родителем и детьми
+  function makeConnRow(parentEl, childEls, colorMap){
+    const row = document.createElement('div');
+    row.className = 'conn-row';
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    row.appendChild(svg);
+    wrap.appendChild(row);
+    requestAnimationFrame(()=>{
+      const sr = row.getBoundingClientRect();
+      if(!sr.width) return;
+      const pr = parentEl.getBoundingClientRect();
+      const px = pr.left + pr.width/2 - sr.left;
+      let p = '';
+      childEls.forEach((cel, i)=>{
+        if(!cel) return;
+        const cr = cel.getBoundingClientRect();
+        const cx = cr.left + cr.width/2 - sr.left;
+        const cc = colorMap[i] || '#4f8ef7';
+        p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
+        p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+      });
+      if(childEls.length) p += `<circle cx="${px}" cy="0" r="5" fill="#4f8ef7" opacity="0.9"/>`;
+      svg.setAttribute('width','100%');
+      svg.setAttribute('height','60');
+      svg.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+      svg.innerHTML = p;
+    });
+    return row;
+  }
+
+  // === РЯД 1: ВСЕ top-level фонды (в сетке 3 колонки, порядок сохраняется) ===
+  const connToMain = document.createElement('div');
+  connToMain.className = 'conn-row';
+  const svgMain = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  connToMain.appendChild(svgMain);
+  wrap.appendChild(connToMain);
+
+  const mainRow = document.createElement('div');
+  mainRow.className = 'fund-row';
+  funds.forEach(f => mainRow.appendChild(makeCard(f)));
+  wrap.appendChild(mainRow);
+
+  // коннектор root → все top-level
+  requestAnimationFrame(()=>{
+    const sr = connToMain.getBoundingClientRect();
+    if(!sr.width) return;
+    const rootEl = document.querySelector('.root-card');
+    if(!rootEl) return;
+    const rr = rootEl.getBoundingClientRect();
+    const px = rr.left + rr.width/2 - sr.left;
+    let p = `<circle cx="${px}" cy="0" r="6" fill="#4f8ef7" opacity="0.9"/>`;
+    funds.forEach(f=>{
+      const cel = mainRow.querySelector(`[data-fid="${f.id}"]`);
+      if(!cel) return;
+      const cr = cel.getBoundingClientRect();
+      const cx = cr.left + cr.width/2 - sr.left;
+      const cc = FCOLORS[f.id]||'#4f8ef7';
+      p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
+      p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+    });
+    svgMain.setAttribute('width','100%');
+    svgMain.setAttribute('height','60');
+    svgMain.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+    svgMain.innerHTML = p;
+  });
+
+  // === Подфонды: каждый родитель рисует своих детей прямо под основным рядом ===
+  // Группируем: если несколько родителей имеют детей — каждый показывает своих
+  const parents = funds.filter(f => f.children && f.children.length > 0);
+  parents.forEach(parent => {
+    // коннектор: от карточки родителя → дети
+    const connRow = document.createElement('div');
+    connRow.className = 'conn-row';
+    const svg2 = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    connRow.appendChild(svg2);
+    wrap.appendChild(connRow);
+
+    const subRow = document.createElement('div');
+    subRow.className = 'fund-row';
+    parent.children.forEach(c => subRow.appendChild(makeCard(c)));
+    wrap.appendChild(subRow);
+
+    requestAnimationFrame(()=>{
+      const sr = connRow.getBoundingClientRect();
+      if(!sr.width) return;
+      // найти карточку родителя в mainRow
+      const parEl = mainRow.querySelector(`[data-fid="${parent.id}"]`);
+      if(!parEl) return;
+      const pr = parEl.getBoundingClientRect();
+      const px = pr.left + pr.width/2 - sr.left;
+      const pcol = FCOLORS[parent.id]||'#4f8ef7';
+      let p = `<circle cx="${px}" cy="0" r="5" fill="${pcol}" opacity="0.9"/>`;
+      parent.children.forEach(child=>{
+        const cel = subRow.querySelector(`[data-fid="${child.id}"]`);
+        if(!cel) return;
+        const cr = cel.getBoundingClientRect();
+        const cx = cr.left + cr.width/2 - sr.left;
+        const cc = FCOLORS[child.id]||pcol;
+        p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
+        p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+      });
+      svg2.setAttribute('width','100%');
+      svg2.setAttribute('height','60');
+      svg2.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+      svg2.innerHTML = p;
+    });
+  });
+}
+
+/* MODALS */
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(el=>el.addEventListener('mousedown',e=>{if(e.target===el)closeM(el.id);}));
+document.getElementById('bEditCancel').addEventListener('click',()=>closeM('mEdit'));
+document.getElementById('bEditSave').addEventListener('click',saveEdit);
+document.getElementById('bAddCancel').addEventListener('click',()=>closeM('mAdd'));
+document.getElementById('bAddSave').addEventListener('click',saveAdd);
+document.getElementById('bSettingsCancel').addEventListener('click',()=>closeM('mSettings'));
+document.getElementById('bSettingsSave').addEventListener('click',saveSettings);
+
+function openSettings(){document.getElementById('sName').value=rootName;openM('mSettings');}
+function saveSettings(){
+  const n=document.getElementById('sName').value.trim();
+  if(n){rootName=n;document.getElementById('rfName').textContent=n;}
+  closeM('mSettings');
+}
+
+/* FOUNDER ROWS */
+function addFounderRow(name='',pct=''){
+  const row=document.createElement('div');row.className='fnd-edit-row';
+  row.innerHTML=`<input class="fi" placeholder="Имя учредителя" value="${name}" style="margin-bottom:0"><input class="fi" type="number" placeholder="%" value="${pct}" style="margin-bottom:0;max-width:70px"><button class="fnd-rm" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('foundersEdit').appendChild(row);
+}
+
+function openEdit(id){
+  const f=findF(id,funds);if(!f)return;
+  editingId=id;
+  document.getElementById('mEditTitle').textContent='Редактировать: '+f.name;
+  document.getElementById('eName').value=f.name;
+  document.getElementById('eUsd').value=f.usdM!=null?f.usdM:'';
+  document.getElementById('eMonthly').value=f.monthly!=null?f.monthly:'';
+  document.getElementById('eYield').value=f.yld!=null?f.yld:'';
+  document.getElementById('eTag').value=f.tag||'';
+  document.getElementById('eGoal').value=f.goal!=null?f.goal:'';
+  document.getElementById('eRisk').value=f.risk||'';
+  document.getElementById('eCurrency').value=f.currency||'';
+  const fe=document.getElementById('foundersEdit');fe.innerHTML='';
+  (f.founders||[]).forEach(fn=>addFounderRow(fn.name,fn.pct));
+  openM('mEdit');
+}
+function saveEdit(){
+  const f=findF(editingId,funds);if(!f)return;
+  const n=document.getElementById('eName').value.trim();if(n)f.name=n;
+  const u=document.getElementById('eUsd').value;f.usdM=u!==''?parseFloat(u):null;
+  const mon=document.getElementById('eMonthly').value;f.monthly=mon!==''?parseFloat(mon):null;
+  const y=document.getElementById('eYield').value;f.yld=y!==''?parseFloat(y):null;
+  f.tag=document.getElementById('eTag').value.trim();
+  const g=document.getElementById('eGoal').value;f.goal=g!==''?parseFloat(g):null;
+  f.risk=document.getElementById('eRisk').value||null;
+  f.currency=document.getElementById('eCurrency').value||null;
+  f.founders=[];
+  document.querySelectorAll('#foundersEdit .fnd-edit-row').forEach(row=>{
+    const ins=row.querySelectorAll('input');
+    const nm=ins[0].value.trim(),pc=parseFloat(ins[1].value)||0;
+    if(nm&&pc>0)f.founders.push({name:nm,pct:pc});
+  });
+  saveState(funds);closeM('mEdit');renderTree();recalcDisplay();
+}
+
+function openAdd(pid){
+  addingParentId=pid;
+  const p=pid===0?{name:rootName}:findF(pid,funds);
+  document.getElementById('mAddTitle').textContent='Новый фонд в: '+(p?p.name:'');
+  ['aName','aUsd','aMonthly','aYield','aTag'].forEach(id=>document.getElementById(id).value='');
+  openM('mAdd');
+}
+function saveAdd(){
+  const name=document.getElementById('aName').value.trim().toUpperCase();
+  if(!name){document.getElementById('aName').focus();return;}
+  const usdV=document.getElementById('aUsd').value;
+  const monV=document.getElementById('aMonthly').value;
+  const nf={
+    id:nextId++,name,tag:document.getElementById('aTag').value.trim(),
+    usdM:usdV!==''?parseFloat(usdV):null,
+    monthly:monV!==''?parseFloat(monV):null,
+    yld:document.getElementById('aYield').value!==''?parseFloat(document.getElementById('aYield').value):null,
+    goal:document.getElementById('aGoal').value!==''?parseFloat(document.getElementById('aGoal').value):null,
+    risk:document.getElementById('aRisk').value||null,
+    currency:document.getElementById('aCurrency').value||null,
+    included:true,children:[],api:null,sheet:null,cur:'usd',
+    liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]
+  };
+  if(addingParentId===0)funds.push(nf);
+  else{const p=findF(addingParentId,funds);if(p){p.children=p.children||[];p.children.push(nf);}}
+  saveState(funds);closeM('mAdd');renderTree();recalcDisplay();
+}
+function deleteFund(id){if(!confirm('Удалить фонд?'))return;removeF(id,funds);saveState(funds);renderTree();recalcDisplay();}
+
+/* ── FILTERS: "состав" (included) + "учредитель" работают вместе ── */
+let activeFounders = new Set(); // до 2 учредителей
+
+function allFundsFlat(){
+  const arr=[];
+  function walk(list){list.forEach(f=>{arr.push(f);walk(f.children||[]);});}
+  walk(funds);
+  return arr;
+}
+
+/* Единая функция пересчёта — применяет оба фильтра сразу */
+function recalcDisplay(){
+  const flat = allFundsFlat();
+  const hasFounderFilter = activeFounders.size > 0;
+
+  // Считаем долю учредителя для каждого фонда (1.0 если фильтр не активен)
+  flat.forEach(f=>{
+    if(!hasFounderFilter){ f._filterShare = 1; return; }
+    let share = 0;
+    (f.founders||[]).forEach(fn=>{ if(activeFounders.has(fn.name)) share += fn.pct; });
+    f._filterShare = share / 100;
+  });
+
+  // Учитываем только included фонды (фильтр "состав")
+  const activeFunds = flat.filter(f => f.included);
+
+  const u = activeFunds.reduce((s,f) => s + getUsd(f) * (f._filterShare ?? 1), 0);
+  const m = activeFunds.reduce((s,f) => s + getMon(f) * (f._filterShare ?? 1), 0);
+
+  // Доходность взвешенная
+  let wSum=0, uSum=0;
+  activeFunds.forEach(f=>{
+    const fu = getUsd(f) * (f._filterShare ?? 1);
+    const fy = getYld(f);
+    if(fu>0 && fy>0){ wSum+=fu*fy; uSum+=fu; }
+  });
+  const y = uSum>0 ? wSum/uSum : 0;
+
+  document.getElementById('rfUsd').textContent    = fU(u);
+  document.getElementById('rfRub').textContent    = fR(u*usdRub);
+  document.getElementById('rfMonUsd').textContent = fU(m);
+  document.getElementById('rfMonRub').textContent = fR(m*usdRub);
+  document.getElementById('rfYield').textContent  = y>0 ? y.toFixed(1)+'%' : '—';
+
+  // Пересчёт pills "Учитывать"
+  const inclRow = document.getElementById('inclRow');
+  if(inclRow){
+    inclRow.innerHTML = '<span class="incl-lbl">Учитывать:</span>';
+    funds.forEach(f=>{
+      const p = document.createElement('div');
+      p.className = 'pill'+(f.included?' on':'');
+      p.innerHTML = `<span class="dot"></span>${f.name}`;
+      p.addEventListener('click',()=>{
+        f.included = !f.included;
+        saveState(funds);
+        recalcDisplay();
+        renderFounderFilter();
+      });
+      inclRow.appendChild(p);
+    });
+  }
+
+  renderFounderFilter();
+}
+
+
+
+/* ── Панель "Состав" ── */
+function toggleInclPanel(){
+  const p=document.getElementById('inclPanel');
+  const b=document.getElementById('inclToggleBtn');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  b.textContent=(open?'▾':'▸')+' Состав (учитывать)';
+  if(open) recalcDisplay();
+}
+
+/* ── Панель "Учредитель" ── */
+function toggleFilterPanel(){
+  const p=document.getElementById('filterPanel');
+  const b=document.getElementById('filterToggleBtn');
+  const open=p.style.display==='none';
+  p.style.display=open?'block':'none';
+  b.textContent=(open?'▾':'▸')+' Фильтр по учредителю';
+  if(open) renderFounderFilter();
+}
+
+function renderFounderFilter(){
+  const row = document.getElementById('founderFilterRow');
+  if(!row) return;
+  const names = new Set();
+  allFundsFlat().forEach(f=>(f.founders||[]).forEach(fn=>names.add(fn.name)));
+  row.innerHTML = '';
+  const clearBtn = document.getElementById('clearFounderFilter');
+  if(clearBtn) clearBtn.style.display = activeFounders.size>0 ? 'inline-flex' : 'none';
+  if(!names.size){
+    row.innerHTML='<span style="font-size:12px;color:var(--text3)">Учредители не добавлены</span>';
+    return;
+  }
+  names.forEach(name=>{
+    const p = document.createElement('div');
+    p.className = 'pill'+(activeFounders.has(name)?' on':'');
+    p.innerHTML = `<span class="dot"></span>${name}`;
+    p.addEventListener('click',()=>{
+      if(activeFounders.has(name)) activeFounders.delete(name);
+      else if(activeFounders.size < 2) activeFounders.add(name);
+      recalcDisplay(); // оба фильтра одновременно
+    });
+    row.appendChild(p);
+  });
+}
+
+function clearFilter(){
+  activeFounders.clear();
+  allFundsFlat().forEach(f=>{ f._filterShare = 1; });
+  recalcDisplay();
+}
+
+function resetAllData(){
+  if(!confirm('Сбросить все данные? Фонды вернутся к дефолтным настройкам.')) return;
+  localStorage.removeItem('piura_funds_v4');
+  localStorage.removeItem('piura_funds_v4_incl');
+  location.reload();
+}
+
+/* INIT */
+fetchRate();
+renderTree();
+recalcDisplay();
+funds.forEach(f=>fetchFund(f));
+window.addEventListener('resize',()=>{renderTree();recalcDisplay();});
+</script>
+</body>
+</html>
