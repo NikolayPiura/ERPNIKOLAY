@@ -170,6 +170,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 const API='https://script.google.com/macros/s/AKfycbzj1IX4yWqV8LNMCVhfmJ5SVgGBzCyDemYoLDUpwJqNq3Ezkeu17NeGe-dPCuU0u0_b/exec';
 const SHEET='2026 (НЕД)';
 const CACHE_KEY='piura_cache_msk_v1';
+const BOOTSTRAP_DATA={[SHEET]:[{'ФИО':'Займы и бизнес','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Рубль','Ликвидность':'Низкая','СУММА':16583970,'%':.18,'МЕС':221495.42,'НЕД':51030.44},{'ФИО':'Счета и депозиты','ТИП':'Счета, вклады и нал','Риск':'Низкий','Валюта':'Рубль','Ликвидность':'Высокая','СУММА':4454854,'%':.077,'МЕС':28748.18,'НЕД':6615.56},{'ФИО':'Фондовый рынок','ТИП':'Фондовый рынок','Риск':'Низкий','Валюта':'Рубль','Ликвидность':'Высокая','СУММА':1501005,'%':0,'МЕС':0,'НЕД':0},{'ФИО':'Золото','ТИП':'Золото','Риск':'Низкий','Валюта':'Рубль','Ликвидность':'Высокая','СУММА':498995,'%':0,'МЕС':0,'НЕД':0},{'ФИО':'ИТОГО','СУММА':23538824,'%':.127573,'МЕС':250243.6,'НЕД':57646}]};
 
 const TYPES=[
   {id:'bank',   name:'Счета, вклады и нал', color:'#3b82f6', typ:'Счета, вклады и нал'},
@@ -215,7 +216,7 @@ function closeSov(e){if(e.target===document.getElementById('sov'))closeSP();}
 
 async function loadData(){
   let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(e){}
-  if(cached&&!_td){process(cached.data);document.getElementById('upd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');document.getElementById('ov').style.display='none';}
+  if(!_td){process(cached?cached.data:BOOTSTRAP_DATA);document.getElementById('upd').textContent=cached?'Сохранено: '+new Date(cached.at).toLocaleString('ru'):'Сохранённый снимок · обновляем в фоне';}
   document.getElementById('rbtn').classList.add('loading');
   document.getElementById('ov').style.display='none';
   document.getElementById('err').style.display='none';
@@ -227,7 +228,7 @@ async function loadData(){
     localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data}));
     document.getElementById('upd').textContent='Обновлено: '+new Date().toLocaleString('ru');
   }catch(e){
-    const eb=document.getElementById('err');eb.style.display='block';eb.textContent='Ошибка: '+e.message;
+    document.getElementById('upd').textContent='Показан сохранённый снимок · фоновое обновление недоступно';
   }finally{
     document.getElementById('ov').style.display='none';
     document.getElementById('rbtn').classList.remove('loading');
