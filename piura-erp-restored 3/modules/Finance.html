@@ -234,6 +234,30 @@ var CH={};
 var URL='https://script.google.com/macros/s/AKfycbxjg9I0W6r8slpuex8yvQIqO3BR9k9NS6h5grvqLVMN0Wjn7iT_1drEOXT2Sn93Y_x_/exec';
 var CACHE_KEY='piura_cache_finance_v1';
 var HAS_RENDERED=false;
+// Снимок из исходных таблиц на 28.07.2026. Он нужен только для первого
+// запуска на новом устройстве: свежие данные всё равно приходят в фоне.
+var BOOTSTRAP_DATA={
+  meta:{updated:'28.07.2026 · сохранённый снимок'},
+  summary:{
+    income:{'Янв':26715.9,'Фев':23117.75,'Мар':25308.84,'Апр':29255.19,'Май':17022.05,'Июн':31019.67,'Июл':37267.91,total:189707.31},
+    expenses:{'Янв':10045,'Фев':10125.75,'Мар':11824.4,'Апр':17254,'Май':58432,'Июн':56535,'Июл':15826,total:180042.15},
+    passive:{'Янв':12370,'Фев':12713,'Мар':9914,'Апр':9070,'Май':10451,'Июн':0,'Июл':10,total:54528},
+    apartment:{total:30692},life:{total:27058.15},education:{total:111935},travel:{total:7807},charity:{total:2550}
+  },
+  sources:{
+    sources:[
+      {name:'PFF · дивиденды',total:44953.49},{name:'PFF · управляющий',total:13812.59},
+      {name:'КЭ · зарплата',total:80473.39},{name:'КЭ · дивиденды',total:6608.6},
+      {name:'Наставник · абонементы',total:24550},{name:'Наставник · проекты',total:16088.4},
+      {name:'Москва · управляющий',total:6354.29},{name:'Solid · управляющий',total:3767},{name:'Снитч',total:691.82}
+    ],
+    categories:[
+      {name:'Климат',total:80473.39},{name:'Инвестиции',total:58766.08},{name:'Наставничество',total:40638.4},
+      {name:'Учредитель',total:6608.6},{name:'Управление деньгами',total:10121.29},{name:'Снитч',total:691.82}
+    ],
+    planYear:360000,fact_total:197299.59
+  }
+};
 
 function f(v){if(!v&&v!==0)return'—';return'$'+Math.round(v).toLocaleString('ru');}
 function fk(v){if(!v&&v!==0)return'—';return Math.abs(v)>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+Math.round(v);}
@@ -247,9 +271,14 @@ var AX={
 var DO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'};
 
 function go(){
+  if(!HAS_RENDERED){
+    render(BOOTSTRAP_DATA);
+    setSt('● СОХРАНЁННЫЙ СНИМОК','var(--b)');
+    document.getElementById('tupd').textContent='Обновляем в фоне';
+  }
   try{
     var cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
-    if(cached&&!HAS_RENDERED){
+    if(cached){
       render(cached.data);setSt('● СОХРАНЕНО','var(--b)');
       document.getElementById('tupd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');
     }
@@ -263,7 +292,7 @@ function go(){
       localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:d}));
       render(d);
     })
-    .catch(function(e){setSt('● ОШИБКА','var(--r)');});
+    .catch(function(e){setSt('● СНИМОК · ОБНОВЛЕНИЕ НЕДОСТУПНО','var(--r)');});
 }
 
 function render(data){
