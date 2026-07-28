@@ -103,7 +103,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .g-inp{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-weight:700;padding:8px 12px;width:130px;outline:none}
 .g-inp:focus{border-color:var(--blue)}
 .sp-hint{font-size:12px;color:var(--text3);margin-top:12px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
 .spin{width:44px;height:44px;border:3px solid #1a1a1a;border-top-color:var(--green);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .ltxt{font-size:15px;color:var(--text2)}
@@ -169,6 +169,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 <script>
 const API='https://script.google.com/macros/s/AKfycbx_n76kW9xt7MX7q48_AL3uzH1UaSwfbJqwebZaiGhyDFdLo3Ozj0zRdirgN6ifl3qj/exec';
 const SHEET='2026 (SAFE)';
+const CACHE_KEY='piura_cache_safe_v1';
 
 // Нужные нам колонки — всё остальное (даты выплат) игнорируем
 const KNOWN_COLS=['АКТИВ','СУММА','%','МЕС','НЕД','ВЫПЛАТА','ЗАКРЫТИЕ','ТИП','СТРАНА','РИСК','ВАЛЮТА','ЛИКВИДНОСТЬ'];
@@ -243,14 +244,17 @@ function closeSP(){document.getElementById('sov').classList.remove('open');if(_t
 function closeSov(e){if(e.target===document.getElementById('sov'))closeSP();}
 
 async function loadData(){
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(e){}
+  if(cached&&!_td){process(cached.data);document.getElementById('upd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');document.getElementById('ov').style.display='none';}
   document.getElementById('rbtn').classList.add('loading');
-  document.getElementById('ov').style.display='flex';
+  document.getElementById('ov').style.display='none';
   document.getElementById('err').style.display='none';
   try{
     const r=await fetch(API+'?t='+Date.now());
     if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();
     process(data);
+    localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data}));
     document.getElementById('upd').textContent='Обновлено: '+new Date().toLocaleString('ru');
   }catch(e){
     const eb=document.getElementById('err');eb.style.display='block';eb.textContent='Ошибка: '+e.message;
