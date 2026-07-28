@@ -177,6 +177,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
 .fnd-edit-row input:last-of-type{max-width:70px}
 .fnd-rm{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text3);width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
 .fnd-rm:hover{border-color:var(--red);color:var(--red)}
+.fund-tabs{display:flex;gap:8px;padding:18px 40px 0;max-width:1800px;margin:auto}.fund-tab{padding:11px 18px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--text3);font-weight:700;cursor:pointer}.fund-tab.on{color:#fff;border-color:rgba(79,142,247,.55);background:rgba(79,142,247,.12)}
+.tab-view{display:none}.tab-view.on{display:block}.portfolio-view{max-width:1800px;margin:auto;padding:40px}.portfolio-hero{border:1px solid var(--border2);border-radius:22px;padding:32px;background:linear-gradient(135deg,rgba(79,142,247,.09),transparent 55%),var(--bg2)}.portfolio-title{font-size:38px;font-weight:900}.portfolio-sub{margin-top:7px;color:var(--text3);text-transform:uppercase;letter-spacing:.12em;font-size:11px}.portfolio-metrics,.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}.theme-grid{grid-template-columns:repeat(5,1fr)}.portfolio-metric,.theme-card{border:1px solid var(--border);border-radius:15px;background:var(--bg2);padding:20px}.portfolio-metric label,.theme-card label{display:block;color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.11em}.portfolio-metric strong{display:block;margin-top:10px;font-size:32px;color:var(--green)}.theme-card strong{display:block;margin-top:14px;font-size:22px;color:var(--green)}.theme-card small{display:block;margin-top:7px;color:var(--text3)}.theme-card.active{border-top:3px solid var(--blue)}.data-status{margin-top:16px;color:var(--text3);font-size:11px}.data-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:7px}.source-note{margin-top:22px;padding:14px;border:1px dashed var(--border);border-radius:12px;color:var(--text3);font-size:12px}@media(max-width:1100px){.theme-grid{grid-template-columns:repeat(2,1fr)}.portfolio-metrics{grid-template-columns:1fr}}@media(max-width:650px){.portfolio-view{padding:22px}.fund-tabs{padding-inline:20px;overflow:auto}.theme-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -190,7 +192,9 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   </div>
 </div>
 
-<div class="wrap">
+<div class="fund-tabs"><button class="fund-tab on" data-tab="manage">Управление</button><button class="fund-tab" data-tab="endowment">Endowment</button><button class="fund-tab" data-tab="donations">Фонды</button></div>
+
+<div class="wrap tab-view on" id="view-manage">
   <div class="root-card">
     <div class="root-name" id="rfName">PIURA FOUNDATION</div>
     <div class="root-sub">ГОЛОВНОЙ ФОНД · ИЕРАРХИЯ</div>
@@ -237,6 +241,18 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   </div>
   <div class="tree-wrap" id="treeWrap"></div>
 </div>
+
+<section class="tab-view portfolio-view" id="view-endowment">
+  <div class="portfolio-hero"><div class="portfolio-title">ENDOWMENT</div><div class="portfolio-sub">инвестиционный капитал тематических фондов</div><div class="portfolio-metrics"><div class="portfolio-metric"><label>Капитал после исключений</label><strong id="endTotal">₽1 422 379</strong></div><div class="portfolio-metric"><label>Доход / месяц</label><strong id="endMonthly">₽24 112</strong></div><div class="portfolio-metric"><label>Доходность</label><strong>20.3%</strong></div></div><div class="data-status" id="endStatus"><i></i>Сохранённые данные показаны сразу · обновляем в фоне</div></div>
+  <div class="theme-grid"><div class="theme-card active"><label>Помощь бездомным котикам</label><strong id="endFriend">₽1 422 379</strong><small id="endFriendSub">Помощь бездомным котикам · ₽24 112/мес</small></div><div class="theme-card"><label>Направление</label><strong>₽0</strong><small>Борьба с наркотиками</small></div><div class="theme-card"><label>Направление</label><strong>₽0</strong><small>Продвижение саентологии</small></div><div class="theme-card"><label>Направление</label><strong>₽0</strong><small>Чистота планеты</small></div><div class="theme-card"><label>Растения</label><strong>₽0</strong><small>Растения · исключённые позиции не учитываются</small></div></div>
+  <div class="source-note">Не учитываются «Пюра Николай» и «Депозит ООО Климэйт». Новые направления начнут заполняться автоматически, когда соответствующие значения появятся в столбце «ФОНД».</div>
+</section>
+
+<section class="tab-view portfolio-view" id="view-donations">
+  <div class="portfolio-hero"><div class="portfolio-title">ФОНДЫ</div><div class="portfolio-sub">пожертвования людей · отдельно от инвестиционного капитала</div><div class="portfolio-metrics"><div class="portfolio-metric"><label>Пожертвования · июль</label><strong>₽174 941</strong></div><div class="portfolio-metric"><label>Предыдущий месяц</label><strong>₽89 207</strong></div><div class="portfolio-metric"><label>Изменение</label><strong>+96.1%</strong></div></div><div class="data-status" id="donStatus"><i></i>Сохранённые данные показаны сразу · обновляем в фоне</div></div>
+  <div class="theme-grid"><div class="theme-card active"><label>Помощь бездомным котикам</label><strong id="donFriend">₽174 941</strong><small>Помощь бездомным котикам · подписчики и донаты</small></div><div class="theme-card"><label>Фонд</label><strong>₽0</strong><small>Борьба с наркотиками</small></div><div class="theme-card"><label>Фонд</label><strong>₽0</strong><small>Продвижение саентологии</small></div><div class="theme-card"><label>Фонд</label><strong>₽0</strong><small>Чистота планеты</small></div><div class="theme-card"><label>Фонд</label><strong>₽0</strong><small>Растения</small></div></div>
+  <div class="source-note">В расчёте «Друг» объединены наличные платежи, разовые донаты, подписчики и ежемесячные пожертвования. Остальные фонды готовы к подключению следующих таблиц.</div>
+</section>
 
 <!-- MODAL Edit -->
 <div class="modal-bg" id="mEdit">
@@ -378,7 +394,7 @@ let rootName = 'PIURA FOUNDATION';
 const DEFAULT_FUNDS = [
   {id:1,name:'MOSCOW FUND',    usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:API_MSK, sheet:'2026 (НЕД)', cur:'rub',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
-  {id:3,name:'SOLID FUND',     usdM:867800,yld:null, monthly:0,    tag:'Смешанный',     included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:3,name:'SOLID FUND',     usdM:null,  yld:null, monthly:0,    tag:'Смешанный',     included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:4,name:'SAFE FUND',      usdM:null,  yld:null, monthly:null, tag:'Резерв',   included:true,children:[],api:API_SAFE,sheet:'2026 (SAFE)',cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:5,name:'PAFF FUND',      usdM:12032, yld:null, monthly:154,  tag:'Акции',  included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:6,name:'ENDOWMENT DRUG', usdM:null,  yld:null, monthly:null, tag:'Эндаумент', included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
@@ -398,6 +414,7 @@ function loadState() {
           sf.loading=false;sf.liveUsd=null;sf.liveMon=null;sf.liveYld=null;
           // restore manual defaults if saved value is undefined
           if(sf.usdM===undefined) sf.usdM=df.usdM;
+          if(sf.id===3&&sf.usdM===867800) sf.usdM=null;
           if(sf.monthly===undefined) sf.monthly=df.monthly;
 
         }
@@ -462,12 +479,45 @@ function setRate(r,src){
   document.getElementById('rateDisplay').textContent=r.toFixed(2)+' ₽';
   document.getElementById('rateNote').textContent=`Rate (${src}): ${r.toFixed(2)} ₽/$`;
   renderTree();recalcDisplay();
+  seedSolid();
+}
+
+function seedSolid(){
+  const f=findF(3,funds);if(!f)return;
+  // №1 АКТИВЫ ($63 562) + №2 АКТИВЫ (₽3 158 052), затем пересчёт по текущему курсу.
+  f.liveUsd=63562+(3158052/usdRub);f.liveMon=0;f.liveYld=0;
+  localStorage.setItem('piura_cache_solid_v1',JSON.stringify({at:Date.now(),usd:f.liveUsd}));
+  renderTree();recalcDisplay();
+}
+
+function csvRows(text){
+  const rows=[];let row=[],cell='',quoted=false;
+  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'&&quoted&&n==='"'){cell+='"';i++;continue}if(c==='"'){quoted=!quoted;continue}if(c===','&&!quoted){row.push(cell);cell='';continue}if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(v=>v!==''))rows.push(row);row=[];cell='';continue}cell+=c}row.push(cell);if(row.some(v=>v!==''))rows.push(row);return rows;
+}
+const sheetNumber=v=>{const s=String(v||'').replace(/[^0-9,.-]/g,'').replace(',','.');return parseFloat(s)||0};
+async function sheetCsv(id,sheet){const u=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return csvRows(await r.text())}
+function totalRowValue(rows){const row=rows.find(r=>r.some(v=>String(v).toUpperCase().includes('ИТОГО')));if(!row)return 0;for(const v of row){const n=sheetNumber(v);if(n>0)return n}return 0}
+async function refreshExternalFunds(){
+  try{
+    const rows=await sheetCsv('1Vp8wO6faecINu4BBhk0Y18i6nW3fY6BjXCrcVOy7Zuk','2026 (ЭНД)');let total=0,monthly=0;
+    rows.forEach(r=>{const name=String(r[0]||'').trim(),fund=String(r[1]||'').trim();if(!fund||name==='Пюра Николай'||name==='Депозит ООО Климэйт'||name.toUpperCase().includes('ИТОГО'))return;if(fund.toLowerCase()==='friend'){total+=sheetNumber(r[2]);monthly+=sheetNumber(r[4])}});
+    if(total){document.getElementById('endTotal').textContent=fR(total);document.getElementById('endMonthly').textContent=fR(monthly);document.getElementById('endFriend').textContent=fR(total);document.getElementById('endFriendSub').textContent=`Помощь бездомным котикам · ${fR(monthly)}/мес`;localStorage.setItem('piura_cache_endowment_v1',JSON.stringify({total,monthly,at:Date.now()}))}
+    document.getElementById('endStatus').innerHTML='<i></i>Обновлено из Google Sheets: '+new Date().toLocaleTimeString('ru');
+  }catch(e){document.getElementById('endStatus').innerHTML='<i></i>Показаны последние сохранённые данные · фоновое обновление недоступно'}
+  try{
+    const rows=await sheetCsv('167qHytXogtUN8iWVNhOc149oDR2k_0wqGjmbQOx_Db4','Подписчики '),row=rows.find(r=>String(r[1]||'').toUpperCase()==='ИТОГО');let latest=0;if(row)row.slice(2).forEach(v=>{const n=sheetNumber(v);if(n>0)latest=n});if(latest){document.getElementById('donFriend').textContent=fR(latest);localStorage.setItem('piura_cache_donations_v1',JSON.stringify({latest,at:Date.now()}))}document.getElementById('donStatus').innerHTML='<i></i>Обновлено из Google Sheets: '+new Date().toLocaleTimeString('ru');
+  }catch(e){document.getElementById('donStatus').innerHTML='<i></i>Показаны последние сохранённые данные · фоновое обновление недоступно'}
+  try{
+    const [one,two]=await Promise.all([sheetCsv('1ZrjETAPuytFmxlPtNShmYUMqMfDttltG51_MUrxN2dg','№1 АКТИВЫ'),sheetCsv('1ZrjETAPuytFmxlPtNShmYUMqMfDttltG51_MUrxN2dg','№2 АКТИВЫ')]);const usd=totalRowValue(one),rub=totalRowValue(two),f=findF(3,funds);if(f&&usd&&rub){f.liveUsd=usd+rub/usdRub;localStorage.setItem('piura_cache_solid_v1',JSON.stringify({at:Date.now(),usd:f.liveUsd}));renderTree();recalcDisplay()}
+  }catch(e){}
 }
 
 /* LIVE DATA */
 async function fetchFund(f){
   if(!f.api)return;
-  f.loading=true;renderTree();
+  const cacheKey='piura_cache_fonds_'+f.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(e){}
+  if(cached){f.liveUsd=cached.usd;f.liveMon=cached.mon;f.liveYld=cached.yld;renderTree();recalcDisplay();}
+  f.loading=!cached;renderTree();
   try{
     const data=await(await fetch(f.api+'?t='+Date.now())).json();
     const rows=data[f.sheet]||[];
@@ -486,6 +536,7 @@ async function fetchFund(f){
     f.liveMon=f.cur==='rub'?tM/usdRub:tM;
     if(tP===0&&tS>0&&tM>0)tP=tM*12/tS*100;
     f.liveYld=tP;
+    localStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),usd:f.liveUsd,mon:f.liveMon,yld:f.liveYld}));
   }catch(e){console.warn(f.name,e);}
   f.loading=false;renderTree();recalcDisplay();
 }
@@ -980,7 +1031,16 @@ function resetAllData(){
 }
 
 /* INIT */
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===btn));
+  document.querySelectorAll('.tab-view').forEach(x=>x.classList.toggle('on',x.id==='view-'+btn.dataset.tab));
+  localStorage.setItem('piura_funds_tab',btn.dataset.tab);
+}));
+const savedTab=localStorage.getItem('piura_funds_tab');if(savedTab)document.querySelector(`[data-tab="${savedTab}"]`)?.click();
 fetchRate();
+seedSolid();
+try{const e=JSON.parse(localStorage.getItem('piura_cache_endowment_v1')||'null'),d=JSON.parse(localStorage.getItem('piura_cache_donations_v1')||'null');if(e){document.getElementById('endTotal').textContent=fR(e.total);document.getElementById('endMonthly').textContent=fR(e.monthly);document.getElementById('endFriend').textContent=fR(e.total);document.getElementById('endFriendSub').textContent=`Помощь бездомным котикам · ${fR(e.monthly)}/мес`}if(d)document.getElementById('donFriend').textContent=fR(d.latest)}catch(e){}
+refreshExternalFunds();
 renderTree();
 recalcDisplay();
 funds.forEach(f=>fetchFund(f));
