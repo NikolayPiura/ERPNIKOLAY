@@ -226,6 +226,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbwn_984PnYQ2zSMAPlgVPT1xrXw4vXe91H0-_jgU7_9pLdNAwNjs78FMjPNAQeew1Zc/exec';
 const CACHE_KEY='piura_cache_pff_v1';
+const BOOTSTRAP_DATA={'2026 (PFF)':[{'АКТИВ':'Займ Лукьянов В','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Доллар','Ликвидность':'Низкая','СУММА':258164,'%':.12,'МЕСЯЦ':2581.64,'НЕДЕЛЯ':594.13},{'АКТИВ':'Фондовый рынок','ТИП':'Фондовый рынок','Риск':'Низкий','Валюта':'Доллар','Ликвидность':'Высокая','СУММА':127424.21,'%':.041042,'МЕСЯЦ':435.81,'НЕДЕЛЯ':101.35},{'АКТИВ':'Золото','ТИП':'Золото','Риск':'Низкий','Валюта':'Доллар','Ликвидность':'Высокая','СУММА':153609.4,'%':0,'МЕСЯЦ':0,'НЕДЕЛЯ':0},{'АКТИВ':'Займ Даламан А','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Рубль','Ликвидность':'Низкая','СУММА':65210.67,'%':.374539,'МЕСЯЦ':2035.33,'НЕДЕЛЯ':468.4},{'АКТИВ':'Криптовалюта','ТИП':'Крипта/проекты','Риск':'Высокий','Валюта':'Доллар','Ликвидность':'Высокая','СУММА':58344.32,'%':.015551,'МЕСЯЦ':75.61,'НЕДЕЛЯ':17.58},{'АКТИВ':'Займ Чеботок Г','ТИП':'Займы/бизнес','Риск':'Средний','Валюта':'Доллар','Ликвидность':'Низкая','СУММА':51148,'%':.2,'МЕСЯЦ':852.47,'НЕДЕЛЯ':196.18},{'АКТИВ':'Наличные и депозиты','ТИП':'Счета, вклады и нал','Риск':'Низкий','Валюта':'Доллар','Ликвидность':'Высокая','СУММА':98444.17,'%':.052,'МЕСЯЦ':242.1,'НЕДЕЛЯ':55.72},{'АКТИВ':'Компания Rate','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Доллар','Ликвидность':'Низкая','СУММА':15000,'%':.4,'МЕСЯЦ':650,'НЕДЕЛЯ':150},{'АКТИВ':'Займ Ганзюков А','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Доллар','Ликвидность':'Низкая','СУММА':10000,'%':.18,'МЕСЯЦ':150,'НЕДЕЛЯ':34.52},{'АКТИВ':'Займ Ольхов Д','ТИП':'Займы/бизнес','Риск':'Высокий','Валюта':'Доллар','Ликвидность':'Низкая','СУММА':5000,'%':.12,'МЕСЯЦ':50,'НЕДЕЛЯ':11.51},{'АКТИВ':'ИТОГО','СУММА':869340.78,'%':.097632,'МЕСЯЦ':7072.96,'НЕДЕЛЯ':1629.4}]};
 
 const TYPES = [
   {id:'bank',   name:'Счета, вклады и нал',  color:'#3b82f6', typ:'Счета, вклады и нал'},
@@ -314,7 +315,7 @@ function closeSov(e){if(e.target===document.getElementById('sov'))closeSP();}
 
 async function loadData(){
   let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(e){}
-  if(cached&&!_td){process(cached.data);document.getElementById('upd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');document.getElementById('ov').style.display='none';}
+  if(!_td){process(cached?cached.data:BOOTSTRAP_DATA);document.getElementById('upd').textContent=cached?'Сохранено: '+new Date(cached.at).toLocaleString('ru'):'Сохранённый снимок · обновляем в фоне';}
   document.getElementById('rbtn').classList.add('loading');
   document.getElementById('ov').style.display='none';
   document.getElementById('err').style.display='none';
@@ -326,7 +327,7 @@ async function loadData(){
     localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data}));
     document.getElementById('upd').textContent='Обновлено: '+new Date().toLocaleString('ru');
   }catch(e){
-    const eb=document.getElementById('err');eb.style.display='block';eb.textContent='Ошибка: '+e.message;
+    document.getElementById('upd').textContent='Показан сохранённый снимок · фоновое обновление недоступно';
   }finally{
     document.getElementById('ov').style.display='none';
     document.getElementById('rbtn').classList.remove('loading');
