@@ -125,7 +125,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 .g-inp:focus{border-color:var(--blue)}
 .sp-hint{font-size:12px;color:var(--text3);margin-top:12px}
 
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px}
 .spin{width:44px;height:44px;border:3px solid #1a1a1a;border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
 .ltxt{font-size:15px;color:var(--text2)}
@@ -225,6 +225,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbwn_984PnYQ2zSMAPlgVPT1xrXw4vXe91H0-_jgU7_9pLdNAwNjs78FMjPNAQeew1Zc/exec';
+const CACHE_KEY='piura_cache_pff_v1';
 
 const TYPES = [
   {id:'bank',   name:'Счета, вклады и нал',  color:'#3b82f6', typ:'Счета, вклады и нал'},
@@ -312,14 +313,17 @@ function closeSP(){document.getElementById('sov').classList.remove('open');if(_t
 function closeSov(e){if(e.target===document.getElementById('sov'))closeSP();}
 
 async function loadData(){
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null')}catch(e){}
+  if(cached&&!_td){process(cached.data);document.getElementById('upd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');document.getElementById('ov').style.display='none';}
   document.getElementById('rbtn').classList.add('loading');
-  document.getElementById('ov').style.display='flex';
+  document.getElementById('ov').style.display='none';
   document.getElementById('err').style.display='none';
   try{
     const r=await fetch(API+'?t='+Date.now());
     if(!r.ok)throw new Error('HTTP '+r.status);
     const data=await r.json();
     process(data);
+    localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data}));
     document.getElementById('upd').textContent='Обновлено: '+new Date().toLocaleString('ru');
   }catch(e){
     const eb=document.getElementById('err');eb.style.display='block';eb.textContent='Ошибка: '+e.message;
@@ -523,4 +527,3 @@ loadData();
 </script>
 </body>
 </html>
-
