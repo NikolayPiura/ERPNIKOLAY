@@ -123,24 +123,28 @@
     const ICONS={effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',finance:'<path d="M4 6h16v12H4zM4 10h16M8 15h3"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',pff:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/>',moscow:'<path d="M4 21h16M6 21V9l6-6 6 6v12M9 21v-6h6v6"/>',safe:'<path d="M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/>'};
     const DEFAULT_GROUPS=[
       {id:'eff',title:"Эффективность",accent:"#c8ff62",items:[
-        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html"],
-        ["morning","Утро","Чек-лист и настрой на день","piura-erp-restored%203/modules/Morning.html"],
-        ["time","Учёт времени","Часы, категории и история","piura-erp-restored%203/modules/Time-tracker.html"],
-        ["weekly","PS1","Баллы и динамика недели","piura-erp-restored%203/modules/Dynamics-2.html"],
-        ["dynamics","Динамическая","Цели, программы и планы","piura-erp-restored%203/modules/AdminScale.html"],
-        ["mydynamics","Мои динамики","My Dynamics 2","piura-erp-restored%203/modules/My-Dynamics.html"]]},
+        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260728b"],
+        ["morning","Утро","Чек-лист и настрой на день","piura-erp-restored%203/modules/Morning.html?v=20260728b"],
+        ["time","Учёт времени","Часы, категории и история","piura-erp-restored%203/modules/Time-tracker.html?v=20260728b"],
+        ["weekly","PS1","Баллы и динамика недели","piura-erp-restored%203/modules/Dynamics-2.html?v=20260728b"],
+        ["dynamics","Динамическая","Цели, программы и планы","piura-erp-restored%203/modules/AdminScale.html?v=20260728b"],
+        ["mydynamics","Мои динамики","My Dynamics 2","piura-erp-restored%203/modules/My-Dynamics.html?v=20260728b"]]},
       {id:'fin',title:"Финансы",accent:"#8fa8ff",items:[
-        ["finance","Доходы","Личный финансовый обзор","piura-erp-restored%203/modules/Finance.html"],
-        ["funds","Структура фондов","Иерархия и капитал","piura-erp-restored%203/modules/Fonds.html"],
-        ["pff","Фонд PFF","Piura Family Fund","piura-erp-restored%203/modules/PFF.html"],
-        ["moscow","Фонд Москва","Инвестиционный портфель","piura-erp-restored%203/modules/MSK.html"],
-        ["safe","SAFE","Резервный портфель","piura-erp-restored%203/modules/Safe.html"]]}
+        ["finance","Доходы","Личный финансовый обзор","piura-erp-restored%203/modules/Finance.html?v=20260728b"],
+        ["funds","Структура фондов","Иерархия и капитал","piura-erp-restored%203/modules/Fonds.html?v=20260728b"],
+        ["pff","Фонд PFF","Piura Family Fund","piura-erp-restored%203/modules/PFF.html?v=20260728b"],
+        ["moscow","Фонд Москва","Инвестиционный портфель","piura-erp-restored%203/modules/MSK.html?v=20260728b"],
+        ["safe","SAFE","Резервный портфель","piura-erp-restored%203/modules/Safe.html?v=20260728b"]]}
     ];
     const DEFAULTS={width:284,collapsedWidth:104,itemHeight:57,fontSize:12,gap:3,scale:1,radius:22,opacity:.97,blur:18,bg:'#0b1019',accent:'#c8ff62',text:'#f4f7fb',muted:'#8190a6',hoverExpand:true,tooltips:true,showSubtitles:true,showArrows:true,collapsed:false,hidden:[]};
     const KEY='piura_erp_shell_v5',ORDER='piura_erp_shell_order_v5',PROFILES='piura_erp_shell_profiles_v1';
     const clone=v=>JSON.parse(JSON.stringify(v));
     function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
     let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));let groups=read(ORDER,DEFAULT_GROUPS);if(!Array.isArray(groups)||!groups.length)groups=clone(DEFAULT_GROUPS);
+    // Сохраняем пользовательские порядок, названия и видимость, но всегда
+    // подставляем актуальный URL модуля, чтобы iframe не застревал на старом кэше.
+    const CANONICAL_PATHS=new Map(DEFAULT_GROUPS.flatMap(group=>group.items.map(item=>[item[0],item[3]])));
+    groups.forEach(group=>group.items.forEach(item=>{if(CANONICAL_PATHS.has(item[0]))item[3]=CANONICAL_PATHS.get(item[0])}));
     const shell=document.getElementById("shell");
     const frame=document.getElementById("moduleFrame");
     const menu=document.getElementById("menu");
