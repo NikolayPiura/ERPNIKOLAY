@@ -392,10 +392,10 @@ let rootName = 'PIURA FOUNDATION';
 
 /* DEFAULT funds — can be overridden by localStorage */
 const DEFAULT_FUNDS = [
-  {id:1,name:'MOSCOW FUND',    usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:API_MSK, sheet:'2026 (НЕД)', cur:'rub',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
-  {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:1,name:'MOSCOW FUND',    usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:API_MSK, sheet:'2026 (НЕД)', cur:'rub',snapshotUsd:261542,snapshotMon:2780,snapshotYld:12.76,liveUsd:261542,liveMon:2780,liveYld:12.76,loading:false,founders:[]},
+  {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',snapshotUsd:869341,snapshotMon:7073,snapshotYld:9.76,liveUsd:869341,liveMon:7073,liveYld:9.76,loading:false,founders:[]},
   {id:3,name:'SOLID FUND',     usdM:null,  yld:null, monthly:0,    tag:'Смешанный',     included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
-  {id:4,name:'SAFE FUND',      usdM:null,  yld:null, monthly:null, tag:'Резерв',   included:true,children:[],api:API_SAFE,sheet:'2026 (SAFE)',cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
+  {id:4,name:'SAFE FUND',      usdM:null,  yld:null, monthly:null, tag:'Резерв',   included:true,children:[],api:API_SAFE,sheet:'2026 (SAFE)',cur:'usd',snapshotUsd:61880,snapshotMon:475,snapshotYld:9.21,liveUsd:61880,liveMon:475,liveYld:9.21,loading:false,founders:[]},
   {id:5,name:'PAFF FUND',      usdM:12032, yld:null, monthly:154,  tag:'Акции',  included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:6,name:'ENDOWMENT DRUG', usdM:null,  yld:null, monthly:null, tag:'Эндаумент', included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
 ];
@@ -411,7 +411,8 @@ function loadState() {
         const df=def.find(d=>d.id===sf.id);
         if(df){
           sf.api=df.api;sf.sheet=df.sheet;sf.cur=df.cur;
-          sf.loading=false;sf.liveUsd=null;sf.liveMon=null;sf.liveYld=null;
+          sf.snapshotUsd=df.snapshotUsd;sf.snapshotMon=df.snapshotMon;sf.snapshotYld=df.snapshotYld;
+          sf.loading=false;sf.liveUsd=df.snapshotUsd||null;sf.liveMon=df.snapshotMon||null;sf.liveYld=df.snapshotYld||null;
           // restore manual defaults if saved value is undefined
           if(sf.usdM===undefined) sf.usdM=df.usdM;
           if(sf.id===3&&sf.usdM===867800) sf.usdM=null;
@@ -517,7 +518,8 @@ async function fetchFund(f){
   if(!f.api)return;
   const cacheKey='piura_cache_fonds_'+f.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(e){}
   if(cached){f.liveUsd=cached.usd;f.liveMon=cached.mon;f.liveYld=cached.yld;renderTree();recalcDisplay();}
-  f.loading=!cached;renderTree();
+  else if(f.snapshotUsd){f.liveUsd=f.snapshotUsd;f.liveMon=f.snapshotMon;f.liveYld=f.snapshotYld;}
+  f.loading=false;renderTree();recalcDisplay();
   try{
     const data=await(await fetch(f.api+'?t='+Date.now())).json();
     const rows=data[f.sheet]||[];
