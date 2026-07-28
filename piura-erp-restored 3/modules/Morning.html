@@ -255,7 +255,7 @@ body.editing .block-name:focus{box-shadow:0 0 0 2px var(--accent)}
 
 .block-items{display:flex;flex-direction:column;gap:0}
 .item{
-  display:grid;grid-template-columns:auto auto 1fr auto;
+  display:grid;grid-template-columns:auto auto 1fr auto auto;
   gap:calc(18px * var(--gap-scale));align-items:center;
   padding:calc(18px * var(--gap-scale)) 12px;
   border-radius:10px;cursor:pointer;transition:all .2s;
@@ -301,15 +301,19 @@ body.editing .item-text .word{cursor:pointer;padding:1px 4px;border-radius:4px;t
 body.editing .item-text .word:hover{background:var(--accent-soft)}
 body.editing .item-text .word.bold{background:var(--accent-soft)}
 
-.item-del{
+.item-del,.item-hide{
   width:calc(38px * var(--scale));height:calc(38px * var(--scale));
   border-radius:10px;border:1px solid var(--line-2);
   background:var(--paper);cursor:pointer;display:none;align-items:center;justify-content:center;
   color:var(--muted);transition:all .2s;flex-shrink:0;
 }
 .item-del:hover{border-color:var(--warn);color:var(--warn);background:rgba(239,68,68,.06)}
-.item-del svg{width:16px;height:16px}
-body.editing .item-del{display:flex}
+.item-hide:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.item-del svg,.item-hide svg{width:16px;height:16px}
+body.editing .item-del,body.editing .item-hide{display:flex}
+body.editing .item-text[contenteditable="true"]{outline:0;border:1px dashed var(--line-2);border-radius:8px;padding:5px 8px;cursor:text}
+.hidden-tray{display:none;margin-top:10px;padding:12px 14px;border:1px dashed var(--line-2);border-radius:10px;color:var(--muted);font-size:13px}
+body.editing .hidden-tray.has-items{display:block}.hidden-chip{margin:5px 5px 0 0;padding:7px 10px;border:1px solid var(--line-2);border-radius:8px;background:var(--paper);color:var(--ink-2);cursor:pointer}.hidden-chip:hover{border-color:var(--accent);color:var(--accent)}
 body.editing .item{cursor:default}
 body.editing .item .cbox{opacity:.4}
 
@@ -709,13 +713,11 @@ const DEFAULT_BLOCKS = [
     id: 'b1', name: 'СТАРТ ДНЯ',
     items: [
       { id:'b1i1', words:[{t:'Проснулся'},{t:'бодр,',b:true},{t:'не'},{t:'лежал'},{t:'в'},{t:'кровате'},{t:'больше',b:true},{t:'5',b:true},{t:'минут',b:true}] },
-      { id:'b1i2', words:[{t:'Сделал'},{t:'утреннюю'},{t:'гигиену'},{t:'хорошо,'},{t:'не',b:true},{t:'спешил',b:true}] },
-      { id:'b1i3', words:[{t:'Сделал'},{t:'утреннюю'},{t:'прогулку,',b:true},{t:'выпил'},{t:'стакан'},{t:'воды',b:true}] },
-      { id:'b1i4', words:[{t:'Сделал'},{t:'зарядку',b:true},{t:'для'},{t:'спины,'},{t:'растяжку,',b:true},{t:'и'},{t:'физические'},{t:'упражнения',b:true}] },
-      { id:'b1i5', words:[{t:'Навел'},{t:'порядок',b:true},{t:'на'},{t:'рабочем'},{t:'столе,'},{t:'приступил'},{t:'к'},{t:'старту',b:true},{t:'рабочего'},{t:'дня'}] },
-      { id:'b1i6', words:[{t:'Отметил'},{t:'выполнение',b:true},{t:'плана'},{t:'вчерашнего'},{t:'дня'}] },
-      { id:'b1i7', words:[{t:'Заполнил'},{t:'затраченное',b:true},{t:'время'},{t:'за'},{t:'вчерашний',b:true},{t:'день'}] },
-      { id:'b1i8', words:[{t:'Записал,'},{t:'где'},{t:'был'},{t:'эффективен,',b:true},{t:'а'},{t:'в'},{t:'чем'},{t:'нужно',b:true},{t:'улучшиться',b:true}] }
+      { id:'b1i2', words:[{t:'Сделал'},{t:'утреннюю',b:true},{t:'гигиену'},{t:'хорошо,'},{t:'не',b:true},{t:'спешил',b:true}] },
+      { id:'b1i3', words:[{t:'Сделал'},{t:'утреннюю',b:true},{t:'прогулку'}] },
+      { id:'b1i9', words:[{t:'Выпил'},{t:'стакан'},{t:'воды'},{t:'и'},{t:'витамины',b:true}] },
+      { id:'b1i4', words:[{t:'Сделал'},{t:'полностью'},{t:'программу'},{t:'для'},{t:'спины,',b:true},{t:'растяжку,',b:true},{t:'зарядку',b:true}] },
+      { id:'b1i7', words:[{t:'Заполнил'},{t:'затраченное',b:true},{t:'время'},{t:'за'},{t:'вчерашний',b:true},{t:'день',b:true}] }
     ]
   },
   {
@@ -725,19 +727,21 @@ const DEFAULT_BLOCKS = [
       { id:'b2i2', words:[{t:'Сверил',b:true},{t:'план'},{t:'до'},{t:'30'},{t:'лет,'},{t:'успевает',b:true},{t:'ли'},{t:'он'},{t:'за'},{t:'целями?'}] },
       { id:'b2i3', words:[{t:'Открыл'},{t:'план'},{t:'на'},{t:'пол'},{t:'года,'},{t:'выбрал'},{t:'задачу,'},{t:'которую'},{t:'точно'},{t:'сделаешь'},{t:'в'},{t:'ближ.'},{t:'2'},{t:'недели'}] },
       { id:'b2i4', words:[{t:'Выбрал',b:true},{t:'задачу'},{t:'из'},{t:'плана'},{t:'на'},{t:'пол',b:true},{t:'года,',b:true},{t:'которая'},{t:'будет'},{t:'сделана',b:true},{t:'в'},{t:'рамках'},{t:'2'},{t:'недель'}] },
-      { id:'b2i5', words:[{t:'Проверил'},{t:'актуальность',b:true},{t:'плана'},{t:'в'},{t:'работе'}] }
+      { id:'b2i5', words:[{t:'Проверил'},{t:'актуальность',b:true},{t:'плана'},{t:'в'},{t:'работе'}] },
+      { id:'b2i6', words:[{t:'Проверил'},{t:'календарь'},{t:'на',b:true},{t:'сегодня,',b:true},{t:'какие'},{t:'встречи'},{t:'запланированы?',b:true}] },
+      { id:'b2i7', words:[{t:'Написал'},{t:'план'},{t:'на',b:true},{t:'сегодня,',b:true},{t:'подготовил'},{t:'все',b:true},{t:'к'},{t:'началу'},{t:'рабочего'},{t:'дня'}] }
     ]
   },
   {
     id: 'b3', name: 'Вопросы эффективности',
     items: [
+      { id:'q7', words:[{t:'Какую'},{t:'самую',b:true},{t:'большую',b:true},{t:'ценность',b:true},{t:'я'},{t:'создам'},{t:'сегодня?'}] },
       { id:'q1', words:[{t:'Что'},{t:'мне'},{t:'нужно'},{t:'улучшить?',b:true}] },
       { id:'q2', words:[{t:'Что'},{t:'мне'},{t:'нужно'},{t:'нового',b:true},{t:'изучить?',b:true}] },
       { id:'q3', words:[{t:'Что'},{t:'мне'},{t:'нужно'},{t:'оптимизировать?',b:true}] },
       { id:'q4', words:[{t:'Как'},{t:'мне'},{t:'тратить',b:true},{t:'меньше',b:true},{t:'времени?',b:true}] },
       { id:'q5', words:[{t:'Что'},{t:'мне'},{t:'нужно'},{t:'делегировать?',b:true}] },
       { id:'q6', words:[{t:'Что'},{t:'мне'},{t:'нужно'},{t:'перестать',b:true},{t:'делать?',b:true}] },
-      { id:'q7', words:[{t:'Какую'},{t:'самую',b:true},{t:'большую',b:true},{t:'ценность',b:true},{t:'я'},{t:'создам'},{t:'сегодня?'}] },
       { id:'q8', words:[{t:'Как'},{t:'стать'},{t:'более',b:true},{t:'эффективнее',b:true},{t:'в'},{t:'Климате?'}] },
       { id:'q9', words:[{t:'Как'},{t:'стать'},{t:'более',b:true},{t:'эффективнее',b:true},{t:'в'},{t:'Наставничестве?'}] },
       { id:'q10', words:[{t:'Как'},{t:'стать'},{t:'более',b:true},{t:'эффективнее',b:true},{t:'в'},{t:'PFF?'}] },
@@ -747,12 +751,14 @@ const DEFAULT_BLOCKS = [
     ]
   },
   {
-    id: 'b4', name: 'План на день',
+    id: 'b4', name: 'Рудименты',
     items: [
-      { id:'b4i1', words:[{t:'Проверил'},{t:'актуальность',b:true},{t:'плана'},{t:'в'},{t:'работе'}] },
-      { id:'b4i2', words:[{t:'Проверил'},{t:'календарь'},{t:'на'},{t:'сегодня,',b:true},{t:'какие'},{t:'встречи'},{t:'запланированы?',b:true}] },
-      { id:'b4i3', words:[{t:'Написал'},{t:'план',b:true},{t:'на',b:true},{t:'день,',b:true},{t:'подготовил'},{t:'все',b:true},{t:'к'},{t:'старту',b:true},{t:'рабочего'},{t:'дня'}] },
-      { id:'b4i4', words:[{t:'Готов',b:true},{t:'начать'},{t:'день'}] }
+      { id:'b4r1', words:[{t:'С'},{t:'каким'},{t:'АРО'},{t:'я'},{t:'планирую'},{t:'провести'},{t:'этот'},{t:'день?'}] },
+      { id:'b4r2', words:[{t:'В'},{t:'чем'},{t:'заключается'},{t:'моя'},{t:'этика?'}] },
+      { id:'b4r3', words:[{t:'Что'},{t:'такое'},{t:'Тэта,'},{t:'какая'},{t:'у'},{t:'нее'},{t:'цель?'}] },
+      { id:'b4r4', words:[{t:'Чего'},{t:'я'},{t:'достигну'},{t:'в'},{t:'целом,'},{t:'и'},{t:'чего'},{t:'в'},{t:'рамках'},{t:'этой'},{t:'жизни?'}] },
+      { id:'b4r5', words:[{t:'Зачем'},{t:'я'},{t:'делаю'},{t:'Рудименты,'},{t:'и'},{t:'этот'},{t:'цикл'},{t:'в'},{t:'целом?'}] },
+      { id:'b4r6', words:[{t:'Готов'},{t:'начать'},{t:'день'}] }
     ]
   }
 ];
@@ -760,6 +766,41 @@ const DEFAULT_BLOCKS = [
 const BLOCKS_KEY = 'morn_v8_blocks';
 const STATE_KEY  = 'morn_v8_state';
 const PREFS_KEY  = 'morn_v8_prefs';
+const DATA_VERSION_KEY = 'morn_v8_data_version';
+const DATA_VERSION = 2;
+
+// Тексты из предыдущей версии нужны только для безопасной миграции: если
+// пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
+// ручные правки остаются отдельными пунктами и не теряются.
+const LEGACY_ITEM_TEXT = {
+  b1i1:'Проснулся бодр, не лежал в кровате больше 5 минут',
+  b1i2:'Сделал утреннюю гигиену хорошо, не спешил',
+  b1i3:'Сделал утреннюю прогулку, выпил стакан воды',
+  b1i4:'Сделал зарядку для спины, растяжку, и физические упражнения',
+  b1i5:'Навел порядок на рабочем столе, приступил к старту рабочего дня',
+  b1i6:'Отметил выполнение плана вчерашнего дня',
+  b1i7:'Заполнил затраченное время за вчерашний день',
+  b1i8:'Записал, где был эффективен, а в чем нужно улучшиться',
+  b2i1:'Сверил цели на жизнь, зачем я живу?',
+  b2i2:'Сверил план до 30 лет, успевает ли он за целями?',
+  b2i3:'Открыл план на пол года, выбрал задачу, которую точно сделаешь в ближ. 2 недели',
+  b2i4:'Выбрал задачу из плана на пол года, которая будет сделана в рамках 2 недель',
+  b2i5:'Проверил актуальность плана в работе',
+  q1:'Что мне нужно улучшить?', q2:'Что мне нужно нового изучить?',
+  q3:'Что мне нужно оптимизировать?', q4:'Как мне тратить меньше времени?',
+  q5:'Что мне нужно делегировать?', q6:'Что мне нужно перестать делать?',
+  q7:'Какую самую большую ценность я создам сегодня?',
+  q8:'Как стать более эффективнее в Климате?',
+  q9:'Как стать более эффективнее в Наставничестве?',
+  q10:'Как стать более эффективнее в PFF?',
+  q11:'Как стать более эффективнее в Управлении Деньгами?',
+  q12:'Как стать более эффективнее в Фонде "Друг"?',
+  q13:'Как стать более эффективнее во Второй Динамике?',
+  b4i1:'Проверил актуальность плана в работе',
+  b4i2:'Проверил календарь на сегодня, какие встречи запланированы?',
+  b4i3:'Написал план на день, подготовил все к старту рабочего дня',
+  b4i4:'Готов начать день'
+};
 
 const DEFAULT_PREFS = {
   theme:'light', accent:'cobalt', compact:1, scale:1, text:1, width:1640
@@ -777,10 +818,87 @@ function loadBlocks(){
     const raw = localStorage.getItem(BLOCKS_KEY);
     if(raw){
       const saved = JSON.parse(raw);
-      if(Array.isArray(saved) && saved.length>0) return saved;
+      if(Array.isArray(saved) && saved.length>0){
+        const version = Number(localStorage.getItem(DATA_VERSION_KEY) || 0);
+        if(version < DATA_VERSION){
+          const migrated = migrateBlocks(saved);
+          localStorage.setItem(BLOCKS_KEY, JSON.stringify(migrated));
+          localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
+          return migrated;
+        }
+        return saved;
+      }
     }
   }catch(e){}
+  localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
   return JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
+}
+
+function itemText(item){
+  return (item && Array.isArray(item.words) ? item.words.map(w=>w.t || '').join(' ') : '').trim();
+}
+
+function uniqueItemId(base, used){
+  let id = `${base}_screen_v${DATA_VERSION}`;
+  let suffix = 2;
+  while(used.has(id)) id = `${base}_screen_v${DATA_VERSION}_${suffix++}`;
+  return id;
+}
+
+function migrateBlocks(saved){
+  const result = JSON.parse(JSON.stringify(saved));
+  const legacyBlockNames = { b1:'СТАРТ ДНЯ', b2:'ЦЕЛИ', b3:'Вопросы эффективности', b4:'План на день' };
+
+  DEFAULT_BLOCKS.forEach(defaultBlock=>{
+    let block = result.find(b=>b.id===defaultBlock.id);
+    if(!block){
+      result.push(JSON.parse(JSON.stringify(defaultBlock)));
+      return;
+    }
+
+    if(!Array.isArray(block.items)) block.items = [];
+    if(block.name===legacyBlockNames[block.id]) block.name = defaultBlock.name;
+
+    const oldItems = block.items.slice();
+    const usedItems = new Set();
+    const usedIds = new Set(oldItems.map(item=>item.id));
+    const ordered = [];
+
+    defaultBlock.items.forEach(defaultItem=>{
+      const desiredText = itemText(defaultItem);
+      let existing = oldItems.find(item=>!usedItems.has(item) && itemText(item)===desiredText);
+
+      if(!existing){
+        const sameId = oldItems.find(item=>!usedItems.has(item) && item.id===defaultItem.id);
+        if(sameId && LEGACY_ITEM_TEXT[sameId.id]===itemText(sameId)){
+          existing = Object.assign({}, sameId, JSON.parse(JSON.stringify(defaultItem)));
+          usedItems.add(sameId);
+        }else if(sameId){
+          const copy = JSON.parse(JSON.stringify(defaultItem));
+          copy.id = uniqueItemId(defaultItem.id, usedIds);
+          usedIds.add(copy.id);
+          ordered.push(copy);
+          return;
+        }
+      }
+
+      if(existing){
+        usedItems.add(existing);
+        ordered.push(existing);
+      }else{
+        const copy = JSON.parse(JSON.stringify(defaultItem));
+        if(usedIds.has(copy.id)) copy.id = uniqueItemId(copy.id, usedIds);
+        usedIds.add(copy.id);
+        ordered.push(copy);
+      }
+    });
+
+    // Пользовательские и старые дополнительные пункты сохраняются после
+    // обязательных пунктов со скриншота — ничего введённого не удаляем.
+    block.items = ordered.concat(oldItems.filter(item=>!usedItems.has(item)));
+  });
+
+  return result;
 }
 function saveBlocks(){ localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocksData)); }
 
@@ -888,8 +1006,10 @@ function renderBlocks(){
   el.innerHTML = blocksData.map((b,i)=>{
     ensureStateFor(b.id);
     const s = state[b.id];
-    const checkedCount = Object.values(s.items).filter(v=>v).length;
-    const total = b.items.length;
+    const visibleItems = b.items.filter(it=>!it.hidden);
+    const hiddenItems = b.items.filter(it=>it.hidden);
+    const checkedCount = visibleItems.filter(it=>s.items[it.id]).length;
+    const total = visibleItems.length;
     const allChecked = total>0 && checkedCount === total;
     const unlocked = isBlockUnlocked(b.id);
     const active = isBlockActive(b.id);
@@ -898,12 +1018,15 @@ function renderBlocks(){
     else if(active) cls += ' active';
     if(!unlocked && !s.confirmed) cls += ' locked';
 
-    const itemsHTML = b.items.map(it=>{
+    const itemsHTML = visibleItems.map(it=>{
       const checked = s.items[it.id];
       return `<div class="item ${checked?'checked':''}" data-block="${b.id}" data-item="${it.id}">
         <button class="item-drag" title="Перетащить">${DRAG_SVG_ITEM}</button>
         <div class="cbox"></div>
-        <div class="item-text">${renderItemText(it)}</div>
+        <div class="item-text" ${editing?'contenteditable="true" spellcheck="false"':''}>${renderItemText(it)}</div>
+        <button class="item-hide" data-hide-block="${b.id}" data-hide-item="${it.id}" title="Скрыть пункт">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12s3-7 9-7 9 7 9 7-3 7-9 7-9-7-9-7Z"/><path d="m4 4 16 16"/></svg>
+        </button>
         <button class="item-del" data-del-block="${b.id}" data-del-item="${it.id}" title="Удалить">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -924,7 +1047,8 @@ function renderBlocks(){
         <div class="block-count">${checkedCount}<span class="sl">/</span><span class="tot">${total}</span></div>
       </div>
       <div class="block-items" data-block-items="${b.id}">${itemsHTML}</div>
-      <div class="edit-hint">Кликай по словам пункта — жирность. Клик по названию — редактирование. Тяни за <b>⋮⋮</b> — меняй порядок.</div>
+      <div class="hidden-tray ${hiddenItems.length?'has-items':''}"><b>Скрытые пункты:</b> ${hiddenItems.map(it=>`<button class="hidden-chip" data-show-block="${b.id}" data-show-item="${it.id}" title="Вернуть пункт">${escapeHtml(it.words.map(w=>w.t).join(' '))} · показать</button>`).join('')}</div>
+      <div class="edit-hint">Текст пункта теперь можно переписать полностью. Тяни за <b>⋮⋮</b> — меняй порядок; «глаз» временно скрывает пункт.</div>
       <div class="additem">
         <input class="additem-input" placeholder="новый пункт…" data-add-block="${b.id}" />
         <button class="additem-btn" data-add-btn="${b.id}">Добавить</button>
@@ -989,19 +1113,9 @@ function wireBlocks(el){
   el.querySelectorAll('.item').forEach(node=>{
     node.onclick = (e)=>{
       if(e.target.closest('.item-del')) return;
+      if(e.target.closest('.item-hide')) return;
       if(e.target.closest('.item-drag')) return;
       if(editing){
-        const word = e.target.closest('[data-word-idx]');
-        if(word){
-          const bid = node.dataset.block;
-          const iid = node.dataset.item;
-          const idx = parseInt(word.dataset.wordIdx);
-          const b = blocksData.find(x=>x.id===bid);
-          const item = b.items.find(x=>x.id===iid);
-          item.words[idx].b = !item.words[idx].b;
-          saveBlocks();
-          renderBlocks();
-        }
         return;
       }
       const bid = node.dataset.block;
@@ -1015,6 +1129,22 @@ function wireBlocks(el){
       }
       renderBlocks();
     };
+  });
+
+  el.querySelectorAll('.item-text[contenteditable="true"]').forEach(textEl=>{
+    textEl.onblur=()=>{
+      const node=textEl.closest('.item'),b=blocksData.find(x=>x.id===node.dataset.block),it=b.items.find(x=>x.id===node.dataset.item);
+      const value=textEl.textContent.replace(/\s+/g,' ').trim();
+      if(value){it.words=value.split(' ').map(t=>({t}));saveBlocks();renderBlocks();}
+    };
+    textEl.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();textEl.blur();}};
+  });
+
+  el.querySelectorAll('[data-hide-item]').forEach(btn=>{
+    btn.onclick=e=>{e.stopPropagation();const b=blocksData.find(x=>x.id===btn.dataset.hideBlock),it=b.items.find(x=>x.id===btn.dataset.hideItem);it.hidden=true;saveBlocks();renderBlocks();};
+  });
+  el.querySelectorAll('[data-show-item]').forEach(btn=>{
+    btn.onclick=e=>{e.stopPropagation();const b=blocksData.find(x=>x.id===btn.dataset.showBlock),it=b.items.find(x=>x.id===btn.dataset.showItem);it.hidden=false;saveBlocks();renderBlocks();};
   });
 
   el.querySelectorAll('[data-block-name]').forEach(node=>{
@@ -1306,6 +1436,7 @@ function resetAll(){
   closeModal('modalReset');
   localStorage.removeItem(STATE_KEY);
   localStorage.removeItem(BLOCKS_KEY);
+  localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
   blocksData = JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
   state = blankState();
   renderBlocks();
