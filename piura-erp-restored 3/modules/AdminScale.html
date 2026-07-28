@@ -104,6 +104,15 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 /* right controls */
 .topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.text-btn{
+  min-height:40px;padding:0 14px;border-radius:100px;border:1px solid var(--border2);
+  background:var(--surface);color:var(--text2);cursor:pointer;font-family:'Space Mono',monospace;
+  font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;transition:all .2s
+}
+.text-btn:hover{border-color:var(--border3);color:var(--text)}
+.sync-state{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--text3);white-space:nowrap}
+.sync-state.ok{color:var(--done-check)}
+.sync-state.busy{color:var(--accent)}
 .theme-pill{
   display:flex;border:1px solid var(--border2);
   border-radius:100px;overflow:hidden;cursor:pointer;
@@ -295,6 +304,23 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 }
 .del-btn:hover{border-color:var(--border2);color:var(--text)}
 .edit-mode .del-btn{display:flex}
+.hide-btn{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;border:1px solid transparent;
+  background:transparent;cursor:pointer;display:none;align-items:center;justify-content:center;
+  font-size:12px;color:var(--text3);transition:all .2s;margin-top:2px
+}
+.hide-btn:hover{border-color:var(--border2);color:var(--text)}
+.edit-mode .hide-btn{display:flex}
+.item-row.item-hidden{display:none}
+.edit-mode .item-row.item-hidden{display:flex;opacity:.38;border-style:dashed}
+.level-block:not(.block-expanded) .item-row.item-overflow{display:none}
+.edit-mode.level-block .item-row.item-overflow{display:flex}
+.block-more{
+  display:block;margin:0 2rem 1.15rem;padding:7px 14px;border-radius:100px;border:1px solid var(--border2);
+  background:transparent;color:var(--text2);cursor:pointer;font-family:'Space Mono',monospace;
+  font-size:.58rem;letter-spacing:.1em;text-transform:uppercase
+}
+.block-more:hover{border-color:var(--border3);color:var(--text)}
 
 .add-item-btn{
   display:none;
@@ -412,6 +438,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
         <button class="theme-opt active" data-t="light">○ свет</button>
         <button class="theme-opt" data-t="dark">◐ тень</button>
       </div>
+      <span class="sync-state" id="syncState">снимок сохранён</span>
+      <button class="text-btn" id="showAllToggle">Показать больше</button>
       <button class="icon-btn" id="editToggle">✎<span class="tip">Режим редактирования</span></button>
       <button class="icon-btn" id="settingsBtn">⚙<span class="tip">Настройки</span></button>
     </div>
@@ -593,6 +621,34 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     </div>
 
     <div class="modal-section">
+      <h3>Показывать и скрывать</h3>
+      <div class="color-row">
+        <label>Пунктов в свернутом блоке</label>
+        <select id="viewLimit">
+          <option value="3">3 пункта</option><option value="5">5 пунктов</option>
+          <option value="6" selected>6 пунктов</option><option value="8">8 пунктов</option>
+          <option value="12">12 пунктов</option><option value="9999">Показывать всё</option>
+        </select>
+      </div>
+      <div class="color-row"><label>Описание динамики</label><select id="viewHeroDef"><option value="1">Показывать</option><option value="0">Скрыть</option></select></div>
+      <div class="color-row"><label>Номер динамики</label><select id="viewHeroNum"><option value="1">Показывать</option><option value="0">Скрыть</option></select></div>
+      <p>Кнопка «Показать больше» раскрывает все длинные списки. В режиме ✎ у каждого пункта появляется кнопка скрытия; скрытый пункт не удаляется.</p>
+    </div>
+
+    <div class="modal-section">
+      <h3>Google Docs · двусторонняя синхронизация</h3>
+      <p>Цели, планы и программы сначала открываются из локального снимка, а затем незаметно обновляются из документов. Адрес моста хранится только в этом браузере.</p>
+      <div class="color-row"><label>Адрес Apps Script</label><input id="syncUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:62%;border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;padding:7px 8px;outline:none"></div>
+      <div class="color-row"><label>Ключ (необязательно)</label><input id="syncToken" type="password" placeholder="Хранится локально" style="width:62%;border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;padding:7px 8px;outline:none"></div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem">
+        <button class="text-btn" id="syncNow">↻ синхронизировать</button>
+        <a class="text-btn" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c/edit">Цели ↗</a>
+        <a class="text-btn" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/1J5wux0DZxyQkYwOKkUkBQjgAcPoMp4Fcyq1HC5wOUfM/edit">Планы ↗</a>
+        <a class="text-btn" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM/edit">Программы ↗</a>
+      </div>
+    </div>
+
+    <div class="modal-section">
       <h3>Блоки на каждой динамике</h3>
       <p>Перечень блоков, порядок и состав — одинаковы для всех динамик. В режиме редактирования (✎) тяните блоки за ≡ чтобы менять порядок, или удаляйте кнопкой ✕ в заголовке. Кнопка «+ добавить блок» появляется внизу страницы.</p>
       <div id="blockSettingsList" style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem"></div>
@@ -630,7 +686,7 @@ const DEFAULT_LEVELS=[
 const PRE={
   1:{
     цели:["Построить функциональное тело, способное выполнять задачи до 100 лет","Получить необходимое для целей образование, развить требуемые навыки"],
-    проги:["Достичь вот такой формы и держать ее","Сделать 3 круга силовых тренировок + МMA","Сделать быстрый анализ крови на витамины","Сделать Шляпу студента","Сделать FPRD","Сделать Метод 1","Сделать книгу \"Саентология 8-80\"","Сделать книгу \"Саентология 8-008\"","Сделать книгу \"Создание человеческих способностей\"","Сделать книгу \"Проблемы Работы\"","Нарисовать большую картину с тренером","Сдать на мотоправа в Тампе","Купить скутер 150сс","Прочесть Агата кристи \"Объявлено убийство\"","Прочесть Жюль верн \"Таинственный остров\"","Прочесть Грэм \"Разумный инвестор\"","Прочесть Фабер \"Распределение активов\"","Выучить стих У. Эрнест Хенли - Непокоренный","Закончить и напечатать книгу \"Деньги - 29\"","Сдать хороший экзамен по английскому языку и поставить цель","Делать кайдзен час в будние дни на протяжении полугода","Получить украинский загранпаспорт","Не мастурбировать пол года","Написать свой стих"],
+    проги:["Достичь вот такой формы и держать ее","Сделать 3 круга силовых тренировок + ММА","Сделать быстрый анализ крови на витамины","Сделать Шляпу студента","Сделать FPRD","Сделать Метод 1","Сделать книгу \"Саентология 8-80\"","Сделать книгу \"Саентология 8-008\"","Сделать книгу \"Создание человеческих способностей\"","Сделать книгу \"Проблемы Работы\"","Нарисовать большую картину с тренером","Сдать на мотоправа в Тампе","Купить скутер 150сс","Прочесть Агата кристи \"Объявлено убийство\"","Прочесть Жюль верн \"Таинственный остров\"","Прочесть Грэм \"Разумный инвестор\"","Прочесть Фабер \"Распределение активов\"","Выучить стих У. Эрнест Хенли - Непокоренный","Закончить и напечатать книгу \"Деньги - 29\"","Сдать хороший экзамен по английскому языку и поставить цель","Делать кайдзен час в будние дни на протяжении полугода","Получить украинский загранпаспорт","Не мастурбировать пол года","Написать свой стих"],
     планы:["Вернуть и поддерживать в течение года такую форму","Выучить английский до уверенного разговорного для встреч","Поднять уровень знаний по инвестициям, обдумать и возможно сдать CFA","Пройти ускоренный курс школьной программы, для общей эрудированности","Получить рейтинг 2000 в настольном теннисе (КМС)","Получить рейтинг 2000 блиц в шахматах"],
   },
   2:{
@@ -655,7 +711,7 @@ const PRE={
   },
   6:{
     цели:["Планета избавленная от излишнего мусора"],
-    проги:["Сходить на уборку пляжа","Сходить на уборку парка","Сделать уборку озера","Изучить солнечные батареи и чистую энергию","Убраться в поселке, привести его в порядок","Облагородить школу в Безымненом","Сделать уборку в НовиСаде","Купить все, что хочу для дома","Сделать небольшую оранжерею","Улучшить раздельный сбор мусора, разобраться","Облагородить сливной пруд в поселке"],
+    проги:["Сходить на уборку пляжа","Сходить на уборку парка","Сделать уборку озера","Изучить солнечные батареи и чистую энергию","Убраться в поселке, привести его в порядок","Облагородить школу в Безыменном","Сделать уборку в НовиСаде","Купить все, что хочу для дома","Сделать небольшую оранжерею","Улучшить раздельный сбор мусора, разобраться","Облагородить сливной пруд в поселке"],
     планы:["Сделать 50 акций по уборкам по миру","Довести до близкого к идеалу место жизни, окружающую среду, поселок, дом, авто"],
   },
   7:{
@@ -670,6 +726,18 @@ const PRE={
   },
 };
 
+const DONE_SEED=new Set([
+  'Получить украинский загранпаспорт',
+  'Съездить на чемпионат мира по футболу',
+  'Обустроить полностью Ланай',
+  'Начать готовить консультационный формат в КЭ'
+]);
+const DOCS={
+  цели:{id:'14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c',title:'Цели'},
+  планы:{id:'1J5wux0DZxyQkYwOKkUkBQjgAcPoMp4Fcyq1HC5wOUfM',title:'Планы'},
+  проги:{id:'1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',title:'Программы'}
+};
+
 /* ══ STORAGE ══ */
 const SK='adminv6';
 let db={};
@@ -677,13 +745,13 @@ function load(){try{const r=localStorage.getItem(SK);if(r)db=JSON.parse(r)}catch
 function persist(){try{localStorage.setItem(SK,JSON.stringify(db))}catch(e){}}
 
 function getLevels(){
-  return db.__levels||DEFAULT_LEVELS.map(l=>({...l}));
+  return (db.__levels||DEFAULT_LEVELS).map(l=>({...l,hidden:!!l.hidden}));
 }
 function saveLevels(arr){db.__levels=arr;persist();}
 
 function getItems(d,l){
   if(db[d]&&db[d][l]!=null)return db[d][l];
-  if(PRE[d]&&PRE[d][l])return PRE[d][l].map(t=>({t,done:false}));
+  if(PRE[d]&&PRE[d][l])return PRE[d][l].map(t=>({t,done:DONE_SEED.has(t),hidden:false}));
   return[];
 }
 function getFree(d,l){
@@ -696,7 +764,24 @@ function saveFree(d,l,h){if(!db[d])db[d]={};db[d][l+'_f']=h;persist();}
 function getDoneSettings(){return db.__doneSettings||{color:'#1a6b4a',bg:'#e8f5ef'};}
 function saveDoneSettings(s){db.__doneSettings=s;persist();}
 
+function getViewSettings(){return {...{limit:6,expandedAll:false,heroDef:true,heroNum:true},...(db.__view||{})};}
+function saveViewSettings(s){db.__view=s;persist();}
+function getSyncSettings(){return {...{url:'',token:'',lastSync:0},...(db.__sync||{})};}
+function saveSyncSettings(s){db.__sync=s;persist();}
+
+function migrateDocSnapshot(){
+  if(db.__docSeedV1)return;
+  Object.keys(db).filter(k=>/^\d+$/.test(k)).forEach(d=>{
+    ['цели','планы','проги'].forEach(l=>{
+      if(!Array.isArray(db[d][l]))return;
+      db[d][l]=db[d][l].map(item=>({...item,done:item.done||DONE_SEED.has(item.t),hidden:!!item.hidden}));
+    });
+  });
+  db.__docSeedV1=true;persist();
+}
+
 load();
+migrateDocSnapshot();
 
 /* ══ APPLY DONE COLORS ══ */
 function applyDoneColors(){
@@ -922,6 +1007,25 @@ document.getElementById('doneBgPicker').addEventListener('input',e=>{
   const s=getDoneSettings();s.bg=e.target.value;saveDoneSettings(s);applyDoneColors();
 });
 
+function syncViewControls(){
+  const s=getViewSettings();
+  document.getElementById('viewLimit').value=String(s.limit);
+  document.getElementById('viewHeroDef').value=s.heroDef?'1':'0';
+  document.getElementById('viewHeroNum').value=s.heroNum?'1':'0';
+  document.getElementById('showAllToggle').textContent=s.expandedAll?'Показать меньше':'Показать больше';
+}
+['viewLimit','viewHeroDef','viewHeroNum'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+  const s=getViewSettings();
+  s.limit=parseInt(document.getElementById('viewLimit').value,10);
+  s.heroDef=document.getElementById('viewHeroDef').value==='1';
+  s.heroNum=document.getElementById('viewHeroNum').value==='1';
+  saveViewSettings(s);syncViewControls();buildPanels();
+}));
+document.getElementById('showAllToggle').addEventListener('click',()=>{
+  const s=getViewSettings();s.expandedAll=!s.expandedAll;saveViewSettings(s);syncViewControls();buildPanels();
+});
+syncViewControls();
+
 const TAG_OPTIONS=[
   {val:'pt-цели',label:'Цели (золото)'},
   {val:'pt-ик',label:'ИК (зелёный)'},
@@ -947,6 +1051,7 @@ function renderBlockSettings(){
       <select data-i="${i}" class="lv-mode-sel" style="border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;padding:4px 6px;font-size:.8rem;outline:none">
         ${MODE_OPTIONS.map(o=>`<option value="${o.val}"${lv.mode===o.val?' selected':''}>${o.label}</option>`).join('')}
       </select>
+      <button data-i="${i}" class="lv-hide-btn text-btn" style="min-height:27px;padding:0 9px">${lv.hidden?'Показать':'Скрыть'}</button>
       <button data-i="${i}" class="lv-del-btn" style="width:26px;height:26px;border-radius:50%;border:1px solid transparent;background:transparent;cursor:pointer;color:var(--text3);font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.borderColor='#e04040';this.style.color='#e04040'" onmouseout="this.style.borderColor='transparent';this.style.color='var(--text3)'">✕</button>`;
     list.appendChild(row);
     row.querySelector('.lv-name-inp').addEventListener('input',e2=>{
@@ -957,6 +1062,9 @@ function renderBlockSettings(){
     });
     row.querySelector('.lv-mode-sel').addEventListener('change',e2=>{
       const lvs=getLevels();lvs[i].mode=e2.target.value;saveLevels(lvs);buildPanels();
+    });
+    row.querySelector('.lv-hide-btn').addEventListener('click',()=>{
+      const lvs=getLevels();lvs[i].hidden=!lvs[i].hidden;saveLevels(lvs);renderBlockSettings();buildPanels();
     });
     row.querySelector('.lv-del-btn').addEventListener('click',()=>{
       const lvs=getLevels();lvs.splice(i,1);saveLevels(lvs);renderBlockSettings();buildPanels();
@@ -982,6 +1090,75 @@ document.getElementById('addBlockSetting').addEventListener('click',()=>{
   saveLevels(lvs);renderBlockSettings();buildPanels();
 });
 
+/* ══ GOOGLE DOCS SYNC ══ */
+const syncState=document.getElementById('syncState');
+function setSyncState(text,kind=''){syncState.textContent=text;syncState.className='sync-state '+kind;}
+function syncSyncControls(){const s=getSyncSettings();document.getElementById('syncUrl').value=s.url||'';document.getElementById('syncToken').value=s.token||'';}
+['syncUrl','syncToken'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
+  const s=getSyncSettings();s.url=document.getElementById('syncUrl').value.trim();s.token=document.getElementById('syncToken').value;saveSyncSettings(s);refreshDocs();
+}));
+syncSyncControls();
+
+function normalizedText(value){return String(value||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ru');}
+function mergeDocSnapshot(items){
+  const grouped={};
+  (items||[]).forEach(item=>{
+    const dyn=Number(item.dyn),section=item.section;
+    if(!dyn||!['цели','планы','проги'].includes(section)||!String(item.text||'').trim())return;
+    (grouped[dyn+':'+section]||(grouped[dyn+':'+section]=[])).push(item);
+  });
+  let changed=false;
+  Object.entries(grouped).forEach(([key,records])=>{
+    const [dyn,section]=key.split(':');
+    const current=getItems(dyn,section),byText=new Map(current.map(item=>[normalizedText(item.t),item]));
+    const next=records.map(record=>{
+      const old=byText.get(normalizedText(record.text));
+      return {t:String(record.text).trim(),done:!!record.done,hidden:old?!!old.hidden:false};
+    });
+    saveItems(dyn,section,next);changed=true;
+  });
+  if(changed)buildPanels();
+}
+
+async function refreshDocs(){
+  const s=getSyncSettings();
+  if(!s.url){setSyncState('локальный снимок');return;}
+  setSyncState('обновляем Docs…','busy');
+  try{
+    await flushDocQueue();
+    const u=new URL(s.url);u.searchParams.set('action','snapshot');if(s.token)u.searchParams.set('token',s.token);
+    const response=await fetch(u.toString(),{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
+    const data=await response.json();if(!data.ok)throw new Error(data.error||'Ошибка синхронизации');
+    mergeDocSnapshot(data.items);s.lastSync=Date.now();saveSyncSettings(s);
+    setSyncState('Docs · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),'ok');
+  }catch(error){setSyncState('Docs недоступны · снимок сохранён');console.warn('Admin Scale sync:',error);}
+}
+
+async function postDocAction(action){
+  const s=getSyncSettings(),body=new URLSearchParams({...action,token:s.token||''});
+  const response=await fetch(s.url,{method:'POST',body});const data=await response.json();
+  if(!data.ok)throw new Error(data.error||'Ошибка записи');
+}
+let syncFlushing=false;
+async function flushDocQueue(){
+  const s=getSyncSettings();if(!s.url)return;
+  if(syncFlushing)return;
+  syncFlushing=true;
+  const queue=Array.isArray(db.__syncQueue)?db.__syncQueue:[];
+  try{while(queue.length){await postDocAction(queue[0]);queue.shift();db.__syncQueue=queue;persist();}}
+  finally{syncFlushing=false;}
+}
+async function queueDocAction(action){
+  if(!['цели','планы','проги'].includes(action.section))return;
+  const s=getSyncSettings();if(!s.url)return;
+  if(!Array.isArray(db.__syncQueue))db.__syncQueue=[];
+  db.__syncQueue.push({...action,queuedAt:Date.now()});persist();setSyncState('сохраняем в Docs…','busy');
+  try{await flushDocQueue();setSyncState('сохранено в Docs','ok');}
+  catch(error){setSyncState('локально · повторим автоматически');console.warn('Admin Scale write:',error);}
+}
+document.getElementById('syncNow').addEventListener('click',refreshDocs);
+setTimeout(refreshDocs,250);
+
 /* ══ ACTIVE TAB ══ */
 let activeTab=1;
 
@@ -1002,17 +1179,18 @@ function buildTabs(){
 /* ══ BUILD PANELS ══ */
 function buildPanels(){
   const wrap=document.getElementById('mainWrap');wrap.innerHTML='';
+  const view=getViewSettings();
   DYN.forEach(d=>{
     const panel=document.createElement('div');
     panel.className='panel'+(d.id===activeTab?' visible':'');
 
     panel.innerHTML=`
       <div class="panel-hero">
-        <div class="hero-num">${d.id}</div>
+        ${view.heroNum?`<div class="hero-num">${d.id}</div>`:''}
         <div class="hero-body">
           <p class="hero-label">Динамика ${d.id}</p>
           <h2 class="hero-name">${d.name}</h2>
-          <p class="hero-def">${d.def}</p>
+          ${view.heroDef?`<p class="hero-def">${d.def}</p>`:''}
         </div>
       </div>`;
 
@@ -1024,7 +1202,7 @@ function buildPanels(){
       grid.className='levels-grid';
       grid.id='lvgrid-'+d.id;
 
-      getLevels().forEach(lv=>grid.appendChild(makeBlock(d.id,lv)));
+      getLevels().filter(lv=>!lv.hidden).forEach(lv=>grid.appendChild(makeBlock(d.id,lv)));
 
       // add block btn
       const addBtn=document.createElement('button');
@@ -1065,9 +1243,12 @@ function buildPanels(){
   });
 }
 
+function isBlockExpanded(dynId,lvKey){return getViewSettings().expandedAll||!!((db.__expanded||{})[dynId+':'+lvKey]);}
+function setBlockExpanded(dynId,lvKey,value){if(!db.__expanded)db.__expanded={};db.__expanded[dynId+':'+lvKey]=value;persist();}
+
 function makeBlock(dynId, lv){
   const block=document.createElement('div');
-  block.className='level-block'+(editMode?' edit-mode':'');
+  block.className='level-block'+(editMode?' edit-mode':'')+(isBlockExpanded(dynId,lv.key)?' block-expanded':'');
   block.dataset.dyn=dynId;block.dataset.lv=lv.key;
 
   // heading
@@ -1158,7 +1339,16 @@ function makeBlock(dynId, lv){
     addBtn.addEventListener('click',()=>addItem(block,dynId,lv.key,list));
     block.appendChild(addBtn);
 
-    getItems(dynId,lv.key).forEach((item,i)=>renderItem(block,dynId,lv.key,list,item,i));
+    const items=getItems(dynId,lv.key),limit=getViewSettings().limit;
+    items.forEach((item,i)=>renderItem(block,dynId,lv.key,list,item,i,limit));
+    const visibleCount=items.filter(item=>!item.hidden).length;
+    if(visibleCount>limit){
+      const more=document.createElement('button');
+      more.className='block-more';
+      more.textContent=isBlockExpanded(dynId,lv.key)?'Показать меньше':`Показать ещё ${visibleCount-limit}`;
+      more.addEventListener('click',()=>{setBlockExpanded(dynId,lv.key,!block.classList.contains('block-expanded'));buildPanels();});
+      block.appendChild(more);
+    }
   } else {
     const fc=document.createElement('div');
     fc.className='free-content';
@@ -1181,31 +1371,41 @@ function makeBlock(dynId, lv){
   return block;
 }
 
-function renderItem(block,dynId,lvKey,list,item,idx){
+function renderItem(block,dynId,lvKey,list,item,idx,limit=getViewSettings().limit){
   const row=document.createElement('div');
-  row.className='item-row'+(item.done?' item-done':'');
+  const visibleIndex=getItems(dynId,lvKey).slice(0,idx+1).filter(x=>!x.hidden).length-1;
+  row.className='item-row'+(item.done?' item-done':'')+(item.hidden?' item-hidden':'')+(visibleIndex>=limit?' item-overflow':'');
+  row.dataset.index=idx;
   row.innerHTML=`
     <span class="item-num">${idx+1}.</span>
     <div class="item-text" contenteditable="${editMode?'true':'false'}" data-ph="Пункт ${idx+1}...">${item.t||''}</div>
     <button class="check-btn" title="Выполнено">✓</button>
+    <button class="hide-btn" title="${item.hidden?'Показать':'Скрыть'}">${item.hidden?'◉':'◌'}</button>
     <button class="del-btn" title="Удалить">✕</button>`;
   row.querySelector('.check-btn').addEventListener('click',()=>{
     item.done=!item.done;row.classList.toggle('item-done',item.done);
     autoSaveItems(block,dynId,lvKey);
+    queueDocAction({action:'setDone',section:lvKey,dyn:dynId,text:item.t,done:item.done});
+  });
+  row.querySelector('.hide-btn').addEventListener('click',()=>{
+    item.hidden=!item.hidden;const arr=collectItems(block);arr[idx].hidden=item.hidden;saveItems(dynId,lvKey,arr);buildPanels();
   });
   row.querySelector('.del-btn').addEventListener('click',()=>{
     const arr=collectItems(block);arr.splice(idx,1);
-    saveItems(dynId,lvKey,arr);rebuildList(block,dynId,lvKey,list);
+    saveItems(dynId,lvKey,arr);buildPanels();
+    queueDocAction({action:'deleteItem',section:lvKey,dyn:dynId,text:item.t});
   });
-  row.querySelector('.item-text').addEventListener('input',()=>autoSaveItems(block,dynId,lvKey));
+  const text=row.querySelector('.item-text');
+  text.addEventListener('focus',()=>{text.dataset.before=text.textContent.trim();});
+  text.addEventListener('input',()=>autoSaveItems(block,dynId,lvKey));
+  text.addEventListener('blur',()=>{const before=text.dataset.before||'';const after=text.textContent.trim();if(before!==after)queueDocAction({action:'renameItem',section:lvKey,dyn:dynId,text:before,newText:after});});
   list.appendChild(row);
 }
 
 function addItem(block,dynId,lvKey,list){
   const arr=collectItems(block);arr.push({t:'',done:false});
-  saveItems(dynId,lvKey,arr);rebuildList(block,dynId,lvKey,list);
-  const rows=list.querySelectorAll('.item-text');
-  if(rows.length)rows[rows.length-1].focus();
+  saveItems(dynId,lvKey,arr);setBlockExpanded(dynId,lvKey,true);buildPanels();
+  requestAnimationFrame(()=>{const rows=document.querySelectorAll(`.panel.visible .level-block[data-lv="${lvKey}"] .item-text`);if(rows.length)rows[rows.length-1].focus();});
 }
 
 function rebuildList(block,dynId,lvKey,list){
@@ -1216,7 +1416,8 @@ function rebuildList(block,dynId,lvKey,list){
 function collectItems(block){
   return Array.from(block.querySelectorAll('.item-row')).map(r=>({
     t:r.querySelector('.item-text').textContent.trim(),
-    done:r.classList.contains('item-done')
+    done:r.classList.contains('item-done'),
+    hidden:r.classList.contains('item-hidden')
   }));
 }
 
