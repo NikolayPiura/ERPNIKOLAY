@@ -24,7 +24,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 #rbtn{background:transparent;border:1px solid var(--brd2);border-radius:4px;color:var(--mu3);font-family:'JetBrains Mono',monospace;font-size:13px;padding:7px 17px;cursor:pointer;transition:all .15s;}
 #rbtn:hover{border-color:var(--g);color:var(--g);}
 
-#loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:20px;}
+#loader{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:20px;}
 .spin{width:52px;height:52px;border:2px solid var(--bg4);border-top:2px solid var(--g);border-radius:50%;animation:sp .7s linear infinite;}
 @keyframes sp{to{transform:rotate(360deg);}}
 .lt{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--g);letter-spacing:0.25em;animation:bl 1.5s ease infinite;}
@@ -132,7 +132,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   <button id="rbtn" onclick="go()">↻ Обновить</button>
 </div>
 
-<div class="pg" id="dash" style="display:none">
+<div class="pg" id="dash">
 
   <div class="hdr">
     <div class="hdr-name">ЛИЧНЫЙ ДОХОД 2026</div>
@@ -232,6 +232,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 var MO=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 var CH={};
 var URL='https://script.google.com/macros/s/AKfycbxjg9I0W6r8slpuex8yvQIqO3BR9k9NS6h5grvqLVMN0Wjn7iT_1drEOXT2Sn93Y_x_/exec';
+var CACHE_KEY='piura_cache_finance_v1';
+var HAS_RENDERED=false;
 
 function f(v){if(!v&&v!==0)return'—';return'$'+Math.round(v).toLocaleString('ru');}
 function fk(v){if(!v&&v!==0)return'—';return Math.abs(v)>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+Math.round(v);}
@@ -245,18 +247,27 @@ var AX={
 var DO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'};
 
 function go(){
+  try{
+    var cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(cached&&!HAS_RENDERED){
+      render(cached.data);setSt('● СОХРАНЕНО','var(--b)');
+      document.getElementById('tupd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');
+    }
+  }catch(e){}
   setSt('● СИНХРОНИЗАЦИЯ','var(--b)');
   fetch(URL)
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(d){
       setSt('● LIVE','var(--g)');
       document.getElementById('tupd').textContent='Обновлено: '+(d.meta&&d.meta.updated?d.meta.updated:new Date().toLocaleTimeString('ru'));
+      localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:d}));
       render(d);
     })
     .catch(function(e){setSt('● ОШИБКА','var(--r)');});
 }
 
 function render(data){
+  HAS_RENDERED=true;
   var s=data.summary||{};
   var sr=data.sources||{};
   var sources=sr.sources||[];
