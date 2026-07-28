@@ -9,22 +9,28 @@
     :root{
       --shell:#070a10;--surface:rgba(11,16,25,.97);--line:rgba(255,255,255,.09);
       --line-strong:rgba(255,255,255,.17);--text:#f4f7fb;--muted:#8190a6;
-      --faint:#4f5d71;--lime:#c8ff62;--blue:#8fa8ff
+      --faint:#4f5d71;--lime:#c8ff62;--blue:#8fa8ff;
+      --nav-width:284px;--nav-collapsed:104px;--item-height:57px;--item-gap:3px;
+      --nav-font:12px;--nav-radius:22px;--nav-scale:1;--nav-opacity:.97;--nav-blur:18px;
+      --nav-bg:#0b1019;--nav-accent:#c8ff62
     }
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--shell)}
     body{color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     button{font:inherit}
     .shell{
-      width:100vw;height:100vh;display:grid;grid-template-columns:284px minmax(0,1fr);
+      width:100vw;height:100vh;display:grid;grid-template-columns:var(--nav-width) minmax(0,1fr);
       overflow:hidden;background:var(--shell);transition:grid-template-columns .22s ease
     }
-    .shell.compact{grid-template-columns:86px minmax(0,1fr)}
+    .shell.compact{grid-template-columns:var(--nav-collapsed) minmax(0,1fr)}
+    .shell.compact.hover-open{grid-template-columns:var(--nav-width) minmax(0,1fr)}
     .nav-column{position:relative;z-index:2;min-width:0;height:100vh;background:var(--shell)}
     .sidebar{
       width:calc(100% - 20px);height:calc(100vh - 20px);margin:10px;
       display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line-strong);
-      border-radius:22px;background:linear-gradient(180deg,rgba(143,168,255,.07),transparent 22%),var(--surface);
+      border-radius:var(--nav-radius);background:linear-gradient(180deg,rgba(143,168,255,.07),transparent 22%),color-mix(in srgb,var(--nav-bg) calc(var(--nav-opacity)*100%),transparent);
+      backdrop-filter:blur(var(--nav-blur));transform:scale(var(--nav-scale));transform-origin:top left;
+      width:calc((100% - 20px)/var(--nav-scale));height:calc((100vh - 20px)/var(--nav-scale));
       box-shadow:0 24px 60px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04)
     }
     .stage{position:relative;z-index:1;min-width:0;width:100%;height:100vh;overflow:hidden;background:#080b11}
@@ -45,27 +51,32 @@
     .group-heading{height:28px;padding:0 10px;display:flex;align-items:center;gap:8px;color:var(--muted);font:680 9px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase}
     .group-heading i{width:6px;height:6px;flex:0 0 6px;border-radius:50%;background:var(--accent);box-shadow:0 0 13px var(--accent)}
     .group-heading span{flex:1}.group-heading b{color:var(--faint);font-weight:600}
-    .menu-items{display:flex;flex-direction:column;gap:3px}
-    .menu-item{position:relative;width:100%;min-height:57px;padding:8px 9px;display:flex;align-items:center;gap:11px;border:1px solid transparent;border-radius:13px;background:transparent;color:var(--muted);text-align:left;cursor:pointer;transition:.15s ease}
+    .menu-items{display:flex;flex-direction:column;gap:var(--item-gap);min-height:12px}
+    .menu-item{position:relative;width:100%;min-height:var(--item-height);padding:8px 9px;display:flex;align-items:center;gap:11px;border:1px solid transparent;border-radius:13px;background:transparent;color:var(--muted);text-align:left;cursor:pointer;transition:.15s ease}
     .menu-item:hover{border-color:var(--line);background:rgba(255,255,255,.025);color:var(--text)}
     .menu-item.active{border-color:color-mix(in srgb,var(--accent) 25%,transparent);background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 13%,transparent),transparent),rgba(255,255,255,.025);color:var(--text)}
     .menu-item.active:before{content:"";position:absolute;top:12px;bottom:12px;left:-1px;width:2px;border-radius:2px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-    .item-code{width:35px;height:35px;flex:0 0 35px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025);color:var(--faint);font:700 9px/1 ui-monospace,monospace}
-    .menu-item.active .item-code{border-color:color-mix(in srgb,var(--accent) 34%,transparent);color:var(--accent)}
+    .item-code{width:38px;height:38px;flex:0 0 38px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.025);color:var(--faint)}
+    .item-code svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.menu-item.active .item-code{border-color:color-mix(in srgb,var(--accent) 34%,transparent);color:var(--accent)}
     .item-copy{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
-    .item-copy strong{overflow:hidden;color:inherit;font-size:12px;line-height:1.1;text-overflow:ellipsis;white-space:nowrap}
+    .item-copy strong{overflow:hidden;color:inherit;font-size:var(--nav-font);line-height:1.1;text-overflow:ellipsis;white-space:nowrap}
     .item-copy small{overflow:hidden;color:var(--faint);font:500 8px/1 ui-monospace,monospace;text-overflow:ellipsis;white-space:nowrap}
     .item-arrow{color:var(--faint);font-size:12px}
     .sidebar-footer{min-height:62px;padding:0 17px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line)}
     .live{display:flex;align-items:center;gap:8px;color:var(--muted);font:600 9px/1 ui-monospace,monospace;white-space:nowrap}
     .live i{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px rgba(200,255,98,.72)}
     .version{color:var(--faint);font:600 8px/1 ui-monospace,monospace;white-space:nowrap}
-    .compact .brand-row{justify-content:center;padding-inline:9px;flex-wrap:wrap;align-content:center;gap:5px}
-    .compact .brand-copy,.compact .group-heading span,.compact .group-heading b,.compact .item-copy,.compact .item-arrow,.compact .live span,.compact .version{display:none}
-    .compact .brand-row{min-height:96px}.compact .collapse{width:46px;height:25px;flex-basis:46px}.compact .collapse span{display:inline-block;transform:rotate(180deg)}
-    .compact .group-heading{justify-content:center;padding:0}.compact .menu-item{justify-content:center;padding-inline:4px}.compact .sidebar-footer{justify-content:center;padding:0}
+    .compact:not(.hover-open) .brand-row{justify-content:center;padding-inline:9px;flex-wrap:wrap;align-content:center;gap:5px}
+    .compact:not(.hover-open) .brand-copy,.compact:not(.hover-open) .group-heading span,.compact:not(.hover-open) .group-heading b,.compact:not(.hover-open) .item-copy,.compact:not(.hover-open) .item-arrow,.compact:not(.hover-open) .live span,.compact:not(.hover-open) .version,.compact:not(.hover-open) .settings{display:none}
+    .compact:not(.hover-open) .brand-row{min-height:112px}.compact:not(.hover-open) .collapse{width:46px;height:25px;flex-basis:46px}.compact:not(.hover-open) .collapse span{display:inline-block;transform:rotate(180deg)}
+    .compact:not(.hover-open) .group-heading{justify-content:center;padding:0}.compact:not(.hover-open) .menu-item{justify-content:center;padding-inline:4px}.compact:not(.hover-open) .item-code{width:44px;height:44px;flex-basis:44px}.compact:not(.hover-open) .sidebar-footer{justify-content:center;padding:0}
+    .settings{width:31px;height:31px;flex:0 0 31px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.02);color:var(--muted);cursor:pointer}
+    .dragging{opacity:.35}.drop-zone{outline:1px dashed var(--accent)}
+    .tip{position:fixed;z-index:80;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#111824;color:#fff;font-size:11px;pointer-events:none;opacity:0;transition:.12s}.tip.show{opacity:1}
+    .modal-bg{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;padding:20px}.modal-bg.open{display:flex}.panel{width:min(760px,96vw);max-height:92vh;overflow:auto;border:1px solid rgba(255,255,255,.15);border-radius:20px;background:#0e1520;color:#eef3fa;box-shadow:0 40px 120px rgba(0,0,0,.6)}.panel-head{position:sticky;top:0;z-index:2;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.1);background:#0e1520}.panel-head h2{font-size:18px;margin:0}.panel-close{width:32px;height:32px;border:1px solid rgba(255,255,255,.13);border-radius:8px;background:transparent;color:#93a1b5;cursor:pointer}.panel-body{padding:18px 20px 24px}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px}.field{display:grid;gap:7px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.025)}.field label{font-size:11px;color:#93a1b5}.field output{color:#c8ff62;font:700 11px ui-monospace,monospace}.field input[type=range],.field input[type=color],.field select{width:100%}.field input[type=color]{height:34px;border:0;background:none}.check{display:flex;align-items:center;gap:9px;font-size:12px}.section-title{margin:20px 0 10px;font:700 10px ui-monospace,monospace;letter-spacing:.15em;text-transform:uppercase;color:#8fa8ff}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.action{padding:10px 13px;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:#121b29;color:#dfe7f2;cursor:pointer}.action.primary{border-color:rgba(200,255,98,.35);color:#dfff9f}.file-input{display:none}.hidden-item{display:none!important}
+    .menu-editor{display:grid;gap:7px}.edit-row{display:grid;grid-template-columns:24px 1fr auto;gap:9px;align-items:center;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.02)}.edit-row svg{width:17px;height:17px;fill:none;stroke:#8fa8ff;stroke-width:1.8}.edit-row input[type=text]{min-width:0;padding:8px 9px;border:1px solid rgba(255,255,255,.11);border-radius:7px;background:#111a27;color:#fff}.edit-row label{font-size:11px;color:#93a1b5;white-space:nowrap}
     @media(max-width:900px){
-      .shell{grid-template-columns:86px minmax(0,1fr)}
+      .shell{grid-template-columns:var(--nav-collapsed) minmax(0,1fr)}
       .brand-row{justify-content:center;padding-inline:9px;flex-wrap:wrap;align-content:center;gap:5px;min-height:96px}
       .brand-copy,.group-heading span,.group-heading b,.item-copy,.item-arrow,.live span,.version{display:none!important}
       .collapse{width:46px;height:25px;flex-basis:46px}.collapse span{display:inline-block;transform:rotate(180deg)}
@@ -82,52 +93,90 @@
         <div class="brand-row">
           <div class="brand-mark">P</div>
           <div class="brand-copy"><strong>PIURA</strong><span>ERP SYSTEM</span></div>
+          <button class="settings" id="settings" aria-label="Настройки меню" title="Настройки меню">⚙</button>
           <button class="collapse" id="collapse" aria-label="Изменить ширину меню" title="Компактное меню"><span>←</span></button>
         </div>
         <div class="menu-scroll" id="menu"></div>
         <div class="sidebar-footer"><div class="live"><i></i><span>Единая версия</span></div><span class="version">ORIGINAL · 02</span></div>
       </aside>
     </div>
-    <section class="stage"><iframe class="module-frame" id="moduleFrame" title="Обзор эффективности"></iframe></section>
+    <section class="stage"><iframe class="module-frame" id="moduleFrame" title="Эффективность"></iframe></section>
   </main>
+  <div class="tip" id="tip"></div>
+  <div class="modal-bg" id="settingsModal"><div class="panel">
+    <div class="panel-head"><h2>Настройки левого меню</h2><button class="panel-close" id="closeSettings">×</button></div>
+    <div class="panel-body">
+      <div class="settings-grid" id="settingsGrid"></div>
+      <div class="section-title">Поведение</div>
+      <div class="settings-grid">
+        <label class="field check"><input type="checkbox" data-setting="hoverExpand"> Раскрывать при наведении</label>
+        <label class="field check"><input type="checkbox" data-setting="tooltips"> Подсказки у значков</label>
+        <label class="field check"><input type="checkbox" data-setting="showSubtitles"> Подписи сервисов</label>
+        <label class="field check"><input type="checkbox" data-setting="showArrows"> Стрелки перехода</label>
+      </div>
+      <div class="section-title">Названия и видимость сервисов</div><div class="menu-editor" id="menuEditor"></div>
+      <div class="section-title">Профили и перенос настроек</div>
+      <div class="actions"><button class="action primary" id="saveProfile">Сохранить профиль</button><select class="action" id="profiles"></select><button class="action" id="loadProfile">Загрузить</button><button class="action" id="exportSettings">Экспорт</button><label class="action">Импорт<input class="file-input" type="file" id="importSettings" accept="application/json"></label><button class="action" id="resetSettings">Исходный вид</button></div>
+    </div>
+  </div></div>
   <script>
-    const groups=[
-      {title:"Эффективность",accent:"#c8ff62",items:[
-        ["effectiveness","01","Обзор эффективности","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html"],
-        ["morning","02","Утренний запуск","Чек-лист и настрой на день","piura-erp-restored%203/modules/Morning.html"],
-        ["time","03","Учёт времени","Часы, категории и история","piura-erp-restored%203/modules/Time-tracker.html"],
-        ["weekly","04","Недельный результат","Баллы и динамика недели","piura-erp-restored%203/modules/Dynamics-2.html"],
-        ["dynamics","05","8 динамик","Цели, программы и планы","piura-erp-restored%203/modules/AdminScale.html"],
-        ["mydynamics","06","Мои динамики","My Dynamics 2","piura-erp-restored%203/modules/My-Dynamics.html"]
-      ]},
-      {title:"Финансы",accent:"#8fa8ff",items:[
-        ["finance","07","Доходы и расходы","Личный финансовый обзор","piura-erp-restored%203/modules/Finance.html"],
-        ["funds","08","Структура фондов","Иерархия и капитал","piura-erp-restored%203/modules/Fonds.html"],
-        ["pff","09","Фонд PFF","Piura Family Fund","piura-erp-restored%203/modules/PFF.html"],
-        ["moscow","10","Фонд Москва","Инвестиционный портфель","piura-erp-restored%203/modules/MSK.html"],
-        ["safe","11","SAFE","Резервный портфель","piura-erp-restored%203/modules/Safe.html"]
-      ]}
+    const ICONS={effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',finance:'<path d="M4 6h16v12H4zM4 10h16M8 15h3"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',pff:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/>',moscow:'<path d="M4 21h16M6 21V9l6-6 6 6v12M9 21v-6h6v6"/>',safe:'<path d="M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/>'};
+    const DEFAULT_GROUPS=[
+      {id:'eff',title:"Эффективность",accent:"#c8ff62",items:[
+        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html"],
+        ["morning","Утро","Чек-лист и настрой на день","piura-erp-restored%203/modules/Morning.html"],
+        ["time","Учёт времени","Часы, категории и история","piura-erp-restored%203/modules/Time-tracker.html"],
+        ["weekly","PS1","Баллы и динамика недели","piura-erp-restored%203/modules/Dynamics-2.html"],
+        ["dynamics","Динамическая","Цели, программы и планы","piura-erp-restored%203/modules/AdminScale.html"],
+        ["mydynamics","Мои динамики","My Dynamics 2","piura-erp-restored%203/modules/My-Dynamics.html"]]},
+      {id:'fin',title:"Финансы",accent:"#8fa8ff",items:[
+        ["finance","Доходы","Личный финансовый обзор","piura-erp-restored%203/modules/Finance.html"],
+        ["funds","Структура фондов","Иерархия и капитал","piura-erp-restored%203/modules/Fonds.html"],
+        ["pff","Фонд PFF","Piura Family Fund","piura-erp-restored%203/modules/PFF.html"],
+        ["moscow","Фонд Москва","Инвестиционный портфель","piura-erp-restored%203/modules/MSK.html"],
+        ["safe","SAFE","Резервный портфель","piura-erp-restored%203/modules/Safe.html"]]}
     ];
-    const all=groups.flatMap(group=>group.items);
+    const DEFAULTS={width:284,collapsedWidth:104,itemHeight:57,fontSize:12,gap:3,scale:1,radius:22,opacity:.97,blur:18,bg:'#0b1019',accent:'#c8ff62',text:'#f4f7fb',muted:'#8190a6',hoverExpand:true,tooltips:true,showSubtitles:true,showArrows:true,collapsed:false,hidden:[]};
+    const KEY='piura_erp_shell_v5',ORDER='piura_erp_shell_order_v5',PROFILES='piura_erp_shell_profiles_v1';
+    const clone=v=>JSON.parse(JSON.stringify(v));
+    function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
+    let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));let groups=read(ORDER,DEFAULT_GROUPS);if(!Array.isArray(groups)||!groups.length)groups=clone(DEFAULT_GROUPS);
     const shell=document.getElementById("shell");
     const frame=document.getElementById("moduleFrame");
     const menu=document.getElementById("menu");
-    let current=all.find(item=>item[0]===localStorage.getItem("piura-erp-shell-module"))||all[0];
-    if(localStorage.getItem("piura-erp-shell-compact")==="1")shell.classList.add("compact");
+    const tip=document.getElementById('tip');let dragId=null;
+    const all=()=>groups.flatMap(group=>group.items);
+    let current=all().find(item=>item[0]===localStorage.getItem("piura-erp-shell-module"))||all()[0];
+    if(localStorage.getItem("piura-erp-shell-compact")==="1")prefs.collapsed=true;
+    function save(){localStorage.setItem(KEY,JSON.stringify(prefs));localStorage.setItem(ORDER,JSON.stringify(groups))}
+    function applyPrefs(){const r=document.documentElement.style;r.setProperty('--nav-width',prefs.width+'px');r.setProperty('--nav-collapsed',prefs.collapsedWidth+'px');r.setProperty('--item-height',prefs.itemHeight+'px');r.setProperty('--nav-font',prefs.fontSize+'px');r.setProperty('--item-gap',prefs.gap+'px');r.setProperty('--nav-scale',prefs.scale);r.setProperty('--nav-radius',prefs.radius+'px');r.setProperty('--nav-opacity',prefs.opacity);r.setProperty('--nav-blur',prefs.blur+'px');r.setProperty('--nav-bg',prefs.bg);r.setProperty('--nav-accent',prefs.accent);r.setProperty('--text',prefs.text);r.setProperty('--muted',prefs.muted);shell.classList.toggle('compact',prefs.collapsed);save();drawMenu()}
     function drawMenu(){
-      menu.innerHTML=groups.map(group=>`<section class="menu-group" style="--accent:${group.accent}"><div class="group-heading"><i></i><span>${group.title}</span><b>${String(group.items.length).padStart(2,"0")}</b></div><div class="menu-items">${group.items.map(item=>`<button class="menu-item ${item[0]===current[0]?"active":""}" data-id="${item[0]}" title="${item[2]}"><span class="item-code">${item[1]}</span><span class="item-copy"><strong>${item[2]}</strong><small>${item[3]}</small></span><span class="item-arrow">›</span></button>`).join("")}</div></section>`).join("");
-      menu.querySelectorAll("[data-id]").forEach(button=>button.addEventListener("click",()=>selectModule(button.dataset.id)));
+      menu.innerHTML=groups.map(group=>`<section class="menu-group" style="--accent:${group.accent}"><div class="group-heading"><i></i><span>${group.title}</span><b>${String(group.items.filter(i=>!prefs.hidden.includes(i[0])).length).padStart(2,"0")}</b></div><div class="menu-items" data-group="${group.id}">${group.items.map(item=>`<button draggable="true" class="menu-item ${item[0]===current[0]?"active":""} ${prefs.hidden.includes(item[0])?'hidden-item':''}" data-id="${item[0]}" title="${item[1]}"><span class="item-code"><svg viewBox="0 0 24 24">${ICONS[item[0]]}</svg></span><span class="item-copy"><strong>${item[1]}</strong>${prefs.showSubtitles?`<small>${item[2]}</small>`:''}</span>${prefs.showArrows?'<span class="item-arrow">›</span>':''}</button>`).join("")}</div></section>`).join("");
+      menu.querySelectorAll("[data-id]").forEach(button=>{button.onclick=()=>selectModule(button.dataset.id);button.ondragstart=()=>{dragId=button.dataset.id;button.classList.add('dragging')};button.ondragend=()=>button.classList.remove('dragging');button.onmouseenter=()=>showTip(button);button.onmouseleave=hideTip});
+      menu.querySelectorAll('[data-group]').forEach(zone=>{zone.ondragover=e=>{e.preventDefault();zone.classList.add('drop-zone')};zone.ondragleave=()=>zone.classList.remove('drop-zone');zone.ondrop=e=>{e.preventDefault();zone.classList.remove('drop-zone');moveItem(dragId,zone.dataset.group,e.target.closest('[data-id]')?.dataset.id)}})
     }
+    function moveItem(id,gid,before){let item;groups.forEach(g=>{const n=g.items.findIndex(i=>i[0]===id);if(n>=0)item=g.items.splice(n,1)[0]});const g=groups.find(x=>x.id===gid);if(!item||!g)return;const n=before?g.items.findIndex(i=>i[0]===before):-1;g.items.splice(n>=0?n:g.items.length,0,item);save();drawMenu()}
     function selectModule(id){
-      current=all.find(item=>item[0]===id)||all[0];
-      frame.src=current[4];frame.title=current[2];
+      current=all().find(item=>item[0]===id)||all()[0];
+      frame.src=current[3];frame.title=current[1];
       localStorage.setItem("piura-erp-shell-module",current[0]);drawMenu();
     }
     document.getElementById("collapse").addEventListener("click",()=>{
-      shell.classList.toggle("compact");
-      localStorage.setItem("piura-erp-shell-compact",shell.classList.contains("compact")?"1":"0");
+      prefs.collapsed=!prefs.collapsed;shell.classList.remove('hover-open');localStorage.setItem("piura-erp-shell-compact",prefs.collapsed?"1":"0");applyPrefs();
     });
-    drawMenu();selectModule(current[0]);
+    let hoverTimer;document.querySelector('.nav-column').onmouseenter=()=>{if(prefs.collapsed&&prefs.hoverExpand){clearTimeout(hoverTimer);shell.classList.add('hover-open')}};document.querySelector('.nav-column').onmouseleave=()=>{if(prefs.collapsed&&prefs.hoverExpand)hoverTimer=setTimeout(()=>shell.classList.remove('hover-open'),180)};
+    function showTip(b){if(!prefs.tooltips||!prefs.collapsed||shell.classList.contains('hover-open'))return;tip.textContent=b.title;const r=b.getBoundingClientRect();tip.style.left=(r.right+10)+'px';tip.style.top=(r.top+r.height/2-15)+'px';tip.classList.add('show')}function hideTip(){tip.classList.remove('show')}
+    const fields=[['width','Ширина раскрытого меню','range',240,480,2],['collapsedWidth','Ширина свёрнутого меню','range',86,160,2],['itemHeight','Высота пункта','range',44,86,1],['fontSize','Размер текста','range',10,17,.5],['gap','Расстояние между пунктами','range',0,14,1],['scale','Общий масштаб','range',.75,1.2,.01],['radius','Скругление','range',0,36,1],['opacity','Прозрачность','range',.65,1,.01],['blur','Размытие фона','range',0,36,1],['bg','Цвет панели','color'],['accent','Акцент','color'],['text','Основной текст','color'],['muted','Вторичный текст','color']];
+    document.getElementById('settingsGrid').innerHTML=fields.map(f=>`<div class="field"><label>${f[1]} <output data-out="${f[0]}"></output></label><input data-setting="${f[0]}" type="${f[2]}" ${f[2]==='range'?`min="${f[3]}" max="${f[4]}" step="${f[5]}"`:''}></div>`).join('');
+    function syncForm(){document.querySelectorAll('[data-setting]').forEach(el=>{const k=el.dataset.setting;el.type==='checkbox'?el.checked=!!prefs[k]:el.value=prefs[k];const o=document.querySelector(`[data-out="${k}"]`);if(o)o.textContent=prefs[k]})}
+    document.querySelectorAll('[data-setting]').forEach(el=>el.oninput=()=>{prefs[el.dataset.setting]=el.type==='checkbox'?el.checked:(el.type==='range'?Number(el.value):el.value);applyPrefs();syncForm()});
+    function buildMenuEditor(){const box=document.getElementById('menuEditor');box.innerHTML=groups.flatMap(g=>g.items.map(item=>`<div class="edit-row"><svg viewBox="0 0 24 24">${ICONS[item[0]]}</svg><input type="text" value="${item[1]}" data-rename="${item[0]}"><label><input type="checkbox" data-visible="${item[0]}" ${prefs.hidden.includes(item[0])?'':'checked'}> показывать</label></div>`)).join('');box.querySelectorAll('[data-rename]').forEach(inp=>inp.onchange=()=>{const item=all().find(i=>i[0]===inp.dataset.rename);if(item&&inp.value.trim()){item[1]=inp.value.trim();save();drawMenu()}});box.querySelectorAll('[data-visible]').forEach(inp=>inp.onchange=()=>{prefs.hidden=prefs.hidden.filter(id=>id!==inp.dataset.visible);if(!inp.checked)prefs.hidden.push(inp.dataset.visible);applyPrefs()})}
+    const modal=document.getElementById('settingsModal');document.getElementById('settings').onclick=()=>{syncForm();refreshProfiles();buildMenuEditor();modal.classList.add('open')};document.getElementById('closeSettings').onclick=()=>modal.classList.remove('open');modal.onclick=e=>{if(e.target===modal)modal.classList.remove('open')};
+    function getProfiles(){try{return JSON.parse(localStorage.getItem(PROFILES)||'{}')}catch(e){return{}}}function refreshProfiles(){const p=getProfiles(),s=document.getElementById('profiles');s.innerHTML=Object.keys(p).map(n=>`<option>${n}</option>`).join('')||'<option>Нет профилей</option>'}
+    document.getElementById('saveProfile').onclick=()=>{const n=prompt('Название профиля:','Мой профиль');if(!n)return;const p=getProfiles();p[n]={prefs,groups};localStorage.setItem(PROFILES,JSON.stringify(p));refreshProfiles()};document.getElementById('loadProfile').onclick=()=>{const p=getProfiles()[document.getElementById('profiles').value];if(p){prefs=Object.assign({},DEFAULTS,p.prefs);groups=p.groups;applyPrefs();syncForm()}};
+    document.getElementById('resetSettings').onclick=()=>{if(confirm('Вернуть исходные настройки и порядок?')){prefs=clone(DEFAULTS);groups=clone(DEFAULT_GROUPS);applyPrefs();syncForm()}};
+    document.getElementById('exportSettings').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({prefs,groups},null,2)],{type:'application/json'}));a.download='piura-erp-menu.json';a.click();URL.revokeObjectURL(a.href)};document.getElementById('importSettings').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);prefs=Object.assign({},DEFAULTS,d.prefs);groups=d.groups||clone(DEFAULT_GROUPS);applyPrefs();syncForm()}catch(x){alert('Некорректный файл')}};r.readAsText(f)};
+    applyPrefs();selectModule(current[0]);
   </script>
 </body>
 </html>
