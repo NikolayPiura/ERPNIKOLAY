@@ -154,6 +154,8 @@
     const clone=v=>JSON.parse(JSON.stringify(v));
     function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
     let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));let groups=read(ORDER,DEFAULT_GROUPS);if(!Array.isArray(groups)||!groups.length)groups=clone(DEFAULT_GROUPS);
+    // Миграция только старого стандартного имени; пользовательские названия не трогаем.
+    groups.flatMap(group=>group.items).forEach(item=>{if(item[0]==='weekly'&&item[1]==='PS1')item[1]='PS №1'});
     // Сохраняем пользовательские порядок, названия и видимость, но всегда
     // подставляем актуальный URL модуля, чтобы iframe не застревал на старом кэше.
     const CANONICAL_PATHS=new Map(DEFAULT_GROUPS.flatMap(group=>group.items.map(item=>[item[0],item[3]])));
