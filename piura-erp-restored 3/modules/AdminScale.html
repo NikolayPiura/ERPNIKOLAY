@@ -72,8 +72,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
 }
 .topbar-inner{
-  max-width:var(--layout-maxw);margin:0 auto;padding:0 var(--layout-pad);
-  display:flex;align-items:center;gap:2.5rem;height:var(--layout-topbar);
+  max-width:min(calc(var(--layout-maxw) + 260px),100%);margin:0 auto;padding:0 var(--layout-pad);
+  display:flex;align-items:center;gap:clamp(.7rem,1.15vw,1.3rem);height:var(--layout-topbar);
 }
 .logo{
   font-family:'Playfair Display',serif;
@@ -83,15 +83,16 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .logo em{font-style:italic;opacity:.4}
 
 /* tabs */
-.dyn-tabs{display:flex;gap:3px;flex:1;overflow-x:auto;scrollbar-width:none}
+.dyn-tabs{display:flex;gap:3px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;scroll-padding-inline:6px;overscroll-behavior-inline:contain}
 .dyn-tabs::-webkit-scrollbar{display:none}
 .dyn-tab{
   display:flex;flex-direction:column;align-items:center;
-  padding:6px 12px;border-radius:8px;
+  padding:6px 8px;border-radius:8px;
   border:1px solid transparent;cursor:pointer;
-  transition:all .18s;flex-shrink:0;background:transparent;
-  min-width:62px;gap:2px;
+  transition:all .18s;flex:1 1 52px;background:transparent;
+  min-width:48px;max-width:78px;gap:2px;
 }
+.dyn-tabs.section-tabs .dyn-tab{flex:1 1 112px;min-width:108px;max-width:148px}
 .dyn-tab:hover{background:var(--bg3);border-color:var(--border)}
 .dyn-tab.active{background:var(--bg3);border-color:var(--border2)}
 .tab-num{
@@ -101,9 +102,12 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .tab-name{font-size:.58rem;color:var(--text3);letter-spacing:.04em;text-align:center}
 .dyn-tab.active .tab-num{color:var(--accent)}
 .dyn-tab.active .tab-name{color:var(--text2)}
+.browse-mode{display:flex;border:1px solid var(--border2);border-radius:10px;padding:3px;gap:2px;background:var(--bg2);flex-shrink:0}
+.browse-mode button{border:0;background:transparent;color:var(--text3);border-radius:7px;padding:7px 10px;cursor:pointer;font:700 .56rem 'Space Mono',monospace;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.browse-mode button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
 /* right controls */
-.topbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-right{display:flex;align-items:center;gap:clamp(5px,.65vw,10px);flex-shrink:0}
 .text-btn{
   min-height:40px;padding:0 14px;border-radius:100px;border:1px solid var(--border2);
   background:var(--surface);color:var(--text2);cursor:pointer;font-family:'Space Mono',monospace;
@@ -148,6 +152,13 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 .panel{display:none;animation:fadeUp .3s ease}
 .panel.visible{display:block}
+.section-overview-head{padding:1rem 0 2.2rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.section-overview-head small{font:700 .62rem 'Space Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
+.section-overview-head h2{font:700 3rem 'Playfair Display',serif;margin-top:.45rem}
+.section-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.3rem}
+.section-dyn-card{border:1px solid var(--border);border-radius:var(--layout-block-radius);background:var(--surface);padding:1rem;box-shadow:var(--shadow)}
+.section-dyn-title{display:flex;align-items:baseline;gap:.7rem;padding:.35rem .55rem 1rem}.section-dyn-title b{font:700 1.4rem 'Space Mono',monospace;color:var(--accent)}.section-dyn-title span{font:700 1.25rem 'Playfair Display',serif}
+.section-dyn-card .level-block{margin:0;box-shadow:none}.section-dyn-card .level-heading{display:none}
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* hero */
@@ -424,6 +435,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   display:flex;align-items:center;justify-content:center;transition:all .2s;
 }
 .modal-close:hover{border-color:var(--border3);color:var(--text)}
+@media(max-width:1350px){.topbar-inner{gap:.65rem;padding-inline:1.4rem}.logo{font-size:min(var(--layout-logo),2.1rem)}.browse-mode button{padding:6px 8px}.topbar-right{gap:5px}.sync-state{display:none}.dyn-tab{min-width:46px;padding-inline:6px}}
+@media(max-width:1050px){.topbar-inner{height:auto;min-height:var(--layout-topbar);padding-block:8px;display:grid;grid-template-columns:auto auto 1fr;grid-template-areas:"logo mode controls" "tabs tabs tabs";column-gap:.7rem;row-gap:6px}.logo{grid-area:logo}.browse-mode{grid-area:mode}.dyn-tabs{grid-area:tabs;width:100%;max-width:none}.topbar-right{grid-area:controls;justify-self:end;background:var(--bg)}.section-overview-grid{grid-template-columns:1fr}.theme-pill{display:none}}
+@media(max-width:650px){.topbar-inner{padding:8px 1rem;grid-template-columns:1fr auto;grid-template-areas:"mode controls" "tabs tabs"}.logo{display:none}.main{padding:2rem 1rem 5rem}.section-overview-head h2{font-size:2.2rem}.section-dyn-card{padding:.55rem}.browse-mode{position:static;justify-self:start}.dyn-tabs{max-width:none;gap:2px}.dyn-tabs:not(.section-tabs) .dyn-tab,.dyn-tabs.section-tabs .dyn-tab{flex:1 1 0;min-width:0;max-width:none;padding-inline:4px}.dyn-tabs .tab-name{display:none}.text-btn{display:none}}
 </style>
 </head>
 <body data-theme="light">
@@ -432,6 +446,10 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 <div class="topbar">
   <div class="topbar-inner">
     <div class="logo">Админ<em>×</em>8</div>
+    <div class="browse-mode" aria-label="Вид админ-шкалы">
+      <button id="modeDynamics" class="active">По динамикам</button>
+      <button id="modeSections">По разделам</button>
+    </div>
     <div class="dyn-tabs" id="dynTabs"></div>
     <div class="topbar-right">
       <div class="theme-pill" id="themePill">
@@ -766,8 +784,8 @@ function saveDoneSettings(s){db.__doneSettings=s;persist();}
 
 function getViewSettings(){return {...{limit:6,expandedAll:false,heroDef:true,heroNum:true},...(db.__view||{})};}
 function saveViewSettings(s){db.__view=s;persist();}
-function getSyncSettings(){return {...{url:'',token:'',lastSync:0},...(db.__sync||{})};}
-function saveSyncSettings(s){db.__sync=s;persist();}
+function getSyncSettings(){let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}return {...{url:'',token:'',lastSync:0},...(db.__sync||{}),...(cloud.url?{url:cloud.url,token:cloud.token||''}:{})};}
+function saveSyncSettings(s){db.__sync=s;persist();let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}localStorage.setItem('piura_erp_cloud_v1',JSON.stringify({...cloud,url:s.url||'',token:s.token||''}));}
 
 function migrateDocSnapshot(){
   if(db.__docSeedV1)return;
@@ -1182,13 +1200,35 @@ async function queueDocAction(action){
 }
 document.getElementById('syncNow').addEventListener('click',refreshDocs);
 setTimeout(refreshDocs,250);
+setInterval(()=>{if(document.visibilityState==='visible')refreshDocs();},60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshDocs();});
 
 /* ══ ACTIVE TAB ══ */
 let activeTab=1;
+let browseMode=db.__browseMode==='sections'?'sections':'dynamics';
+let activeSection=['цели','проги','планы'].includes(db.__activeSection)?db.__activeSection:'цели';
+function setBrowseMode(mode){browseMode=mode;db.__browseMode=mode;persist();document.getElementById('modeDynamics').classList.toggle('active',mode==='dynamics');document.getElementById('modeSections').classList.toggle('active',mode==='sections');buildTabs();buildPanels();}
+document.getElementById('modeDynamics').addEventListener('click',()=>setBrowseMode('dynamics'));
+document.getElementById('modeSections').addEventListener('click',()=>setBrowseMode('sections'));
+document.getElementById('modeDynamics').classList.toggle('active',browseMode==='dynamics');
+document.getElementById('modeSections').classList.toggle('active',browseMode==='sections');
 
 /* ══ BUILD TABS ══ */
+function revealActiveTab(container,alignToStart=false){
+  requestAnimationFrame(()=>{
+    const active=container.querySelector('.dyn-tab.active');
+    if(!active)return;
+    if(alignToStart)container.scrollLeft=0;
+    active.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+  });
+}
 function buildTabs(){
-  const c=document.getElementById('dynTabs');c.innerHTML='';
+  const c=document.getElementById('dynTabs');c.innerHTML='';c.classList.toggle('section-tabs',browseMode==='sections');
+  if(browseMode==='sections'){
+    [{key:'цели',label:'Цели'},{key:'проги',label:'Программы'},{key:'планы',label:'Планы'}].forEach(section=>{
+      const b=document.createElement('button');b.className='dyn-tab'+(section.key===activeSection?' active':'');b.innerHTML=`<span class="tab-num">${section.label}</span><span class="tab-name">все 8 динамик</span>`;b.addEventListener('click',()=>{activeSection=section.key;db.__activeSection=activeSection;persist();buildTabs();buildPanels()});c.appendChild(b);
+    });revealActiveTab(c,true);return;
+  }
   const names=getDynNames();
   DYN.forEach((d,i)=>{
     const b=document.createElement('button');
@@ -1198,12 +1238,19 @@ function buildTabs(){
     b.addEventListener('click',()=>{activeTab=d.id;buildTabs();buildPanels();});
     c.appendChild(b);
   });
+  revealActiveTab(c,activeTab===1);
 }
 
 /* ══ BUILD PANELS ══ */
 function buildPanels(){
   const wrap=document.getElementById('mainWrap');wrap.innerHTML='';
   const view=getViewSettings();
+  if(browseMode==='sections'){
+    const lv=getLevels().find(level=>level.key===activeSection)||DEFAULT_LEVELS.find(level=>level.key===activeSection);
+    const names=getDynNames(),head=document.createElement('div');head.className='section-overview-head';head.innerHTML=`<small>Все восемь динамик</small><h2>${lv?.label||activeSection}</h2>`;wrap.appendChild(head);
+    const grid=document.createElement('div');grid.className='section-overview-grid';
+    DYN.forEach((d,index)=>{const card=document.createElement('section');card.className='section-dyn-card';card.innerHTML=`<div class="section-dyn-title"><b>${d.id}</b><span>${names[index]||d.name}</span></div>`;card.appendChild(makeBlock(d.id,lv));grid.appendChild(card)});wrap.appendChild(grid);return;
+  }
   DYN.forEach(d=>{
     const panel=document.createElement('div');
     panel.className='panel'+(d.id===activeTab?' visible':'');
@@ -1429,7 +1476,7 @@ function renderItem(block,dynId,lvKey,list,item,idx,limit=getViewSettings().limi
 function addItem(block,dynId,lvKey,list){
   const arr=collectItems(block);arr.push({t:'',done:false});
   saveItems(dynId,lvKey,arr);setBlockExpanded(dynId,lvKey,true);buildPanels();
-  requestAnimationFrame(()=>{const rows=document.querySelectorAll(`.panel.visible .level-block[data-lv="${lvKey}"] .item-text`);if(rows.length)rows[rows.length-1].focus();});
+  requestAnimationFrame(()=>{const rows=document.querySelectorAll(`.level-block[data-dyn="${dynId}"][data-lv="${lvKey}"] .item-text`);if(rows.length)rows[rows.length-1].focus();});
 }
 
 function rebuildList(block,dynId,lvKey,list){
