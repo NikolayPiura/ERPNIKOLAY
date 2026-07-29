@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PS1 // НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</title>
+<title>PS №1 // НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -18,8 +18,11 @@
     --text:    #e8e8f5;
     --muted:   #555570;
     --border:  #1c1c38;
+    --panel-radius:20px;
+    --task-density:13px;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden]{display:none!important}
   html, body { height:100%; }
   body {
     background: var(--bg);
@@ -48,27 +51,34 @@
   }
 
   /* HEADER */
-  .header { display:flex; justify-content:space-between; align-items:center; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; gap:22px; }
+  .header-copy{display:flex;flex-direction:column;gap:8px}
   .logo {
     font-family:'Unbounded',sans-serif;
-    font-weight:900; font-size:38px;
+    font-weight:900; font-size:clamp(28px,3vw,38px);
     color:var(--accent);
     text-shadow:0 0 40px rgba(0,255,157,.55);
     letter-spacing:-1px;
   }
   .logo em { color:var(--muted); font-style:normal; }
+  .header-sub{font:12px 'Space Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .header-tools{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px}
+  .tool-btn{min-height:48px;padding:0 16px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(145deg,rgba(123,94,167,.12),rgba(0,255,157,.04));color:var(--text);font:700 12px 'Space Mono',monospace;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:.18s}
+  .tool-btn:hover,.tool-btn.active{border-color:var(--accent);color:var(--accent);box-shadow:0 0 24px rgba(0,255,157,.13);transform:translateY(-2px)}
   .week-pick {
     display:flex; align-items:center; gap:14px;
     background:var(--bg3);
     border:1px solid var(--border);
-    border-radius:16px; padding:14px 24px;
+    border-radius:16px; padding:8px 10px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
   }
-  .week-pick label { font-family:'Space Mono',monospace; font-size:14px; color:var(--muted); }
+  .week-pick label { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);letter-spacing:.08em; }
+  .week-nav{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--accent);font-size:20px;cursor:pointer;transition:.15s}.week-nav:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,157,.15)}
   .week-pick input[type="date"] {
     background:none; border:none;
     color:var(--accent);
     font-family:'Space Mono',monospace;
-    font-size:18px; outline:none; cursor:pointer;
+    font-size:15px; outline:none; cursor:pointer;
   }
   .week-pick input[type="date"]::-webkit-calendar-picker-indicator {
     filter:invert(1) sepia(1) saturate(5) hue-rotate(100deg);
@@ -84,7 +94,7 @@
   .sc {
     background:var(--bg2);
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:var(--panel-radius);
     padding:24px 28px 20px;
     position:relative; overflow:hidden;
     transition:transform .2s;
@@ -107,7 +117,7 @@
   }
   .live { width:9px; height:9px; background:var(--accent); border-radius:50%; animation:blink 2s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .sc .val { font-family:'Unbounded',sans-serif; font-weight:900; font-size:58px; line-height:1; }
+  .sc .val { font-family:'Unbounded',sans-serif; font-weight:900; font-size:clamp(34px,3.6vw,58px); line-height:1; }
   .sc.main .val { color:var(--accent); text-shadow:0 0 25px rgba(0,255,157,.45); }
   .sc.prev .val { color:var(--purple); }
   .sc.best .val { color:var(--gold); }
@@ -118,7 +128,7 @@
   .delta.dn { color:var(--red); }
 
   /* HISTORY */
-  .history-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+  .history-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
   .block-hd {
     display:flex; justify-content:space-between; align-items:center;
     padding:16px 28px;
@@ -143,7 +153,7 @@
   .chart-note { color:var(--muted);font:11px 'Space Mono',monospace;margin-top:8px;display:flex;justify-content:space-between;gap:18px; }
 
   /* PROGRESS */
-  .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:20px 28px; }
+  .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); padding:20px 28px; }
   .prog-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
   .prog-lbl { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
   .prog-pct { font-family:'Unbounded',sans-serif; font-size:22px; color:var(--accent); }
@@ -163,7 +173,10 @@
   }
 
   /* TASKS */
-  .tasks-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; overflow:hidden; }
+  .tasks-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
+  .tasks-toolbar{padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(0,255,157,.05),transparent 50%)}
+  .tasks-toolbar-copy strong{display:block;font:700 13px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em}.tasks-toolbar-copy small{display:block;margin-top:5px;color:var(--muted);font:11px 'Space Mono',monospace}.tasks-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .mini-btn{padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--muted);font:700 11px 'Space Mono',monospace;text-transform:uppercase;cursor:pointer;transition:.15s}.mini-btn:hover,.mini-btn.active{border-color:var(--accent);color:var(--accent)}
   .tasks-head {
     display:grid;
     grid-template-columns:1fr 120px 140px 140px;
@@ -177,13 +190,18 @@
   .task-row {
     display:grid;
     grid-template-columns:1fr 120px 140px 140px;
-    padding:13px 28px;
+    padding:var(--task-density) 28px;
     border-bottom:1px solid rgba(28,28,56,.7);
     gap:10px; align-items:center;
     transition:background .15s;
   }
   .task-row:last-child { border-bottom:none; }
   .task-row:hover { background:rgba(255,255,255,.02); }
+  .task-row.hidden-task{opacity:.48;background:rgba(255,77,109,.025)}
+  .task-row.hidden-task .t-name{text-decoration:line-through;text-decoration-color:rgba(255,77,109,.5)}
+  .task-row.hidden-task .counter,.task-row.hidden-task .t-score{visibility:hidden}
+  .task-edit-actions{display:none;gap:7px;justify-content:center}.editing .task-edit-actions{display:flex}.editing .counter{display:none}
+  .vis-btn{min-width:74px;padding:8px 9px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--muted);font:700 10px 'Space Mono',monospace;cursor:pointer}.vis-btn:hover{border-color:var(--accent);color:var(--accent)}
   .t-name { font-size:18px; font-weight:500; color:var(--text); cursor:pointer; transition:color .15s; line-height:1.3; user-select:none; }
   .t-name:hover { color:var(--accent); }
   .t-weight { font-family:'Space Mono',monospace; font-size:17px; color:var(--muted); text-align:center; }
@@ -215,6 +233,7 @@
   .btn-save:hover { background:rgba(0,255,157,.2); box-shadow:0 0 24px rgba(0,255,157,.25); }
   .btn-add { background:var(--bg3); border-color:var(--border); color:var(--muted); flex:.4; }
   .btn-add:hover { border-color:var(--purple); color:var(--purple); }
+  .btn-rebalance{background:rgba(255,215,0,.07);border-color:rgba(255,215,0,.35);color:var(--gold)}
 
   /* MODAL */
   .overlay {
@@ -230,7 +249,7 @@
   .modal {
     background:var(--bg2);
     border:1px solid var(--purple);
-    border-radius:22px; padding:36px; width:520px;
+    border-radius:22px; padding:36px; width:min(620px,94vw);max-height:90vh;overflow:auto;
     box-shadow:0 0 70px rgba(123,94,167,.4);
     transform:translateY(14px); transition:transform .25s;
   }
@@ -259,6 +278,12 @@
   .modal-btns .btn { flex:1; padding:16px; font-size:14px; }
   .btn-del { background:rgba(255,77,109,.1); border-color:var(--red); color:var(--red); flex:.5 !important; }
   .btn-del:hover { background:rgba(255,77,109,.2); }
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);font:12px 'Space Mono',monospace;color:var(--muted)}.switch-row input{width:20px;height:20px;accent-color:var(--accent)}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings-card{padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--bg3)}.settings-card label{display:block;margin-bottom:9px;font:11px 'Space Mono',monospace;color:var(--muted);text-transform:uppercase}.settings-card input,.settings-card select{width:100%;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text)}
+  .rebalance-summary{margin-bottom:14px;padding:14px 16px;border:1px solid rgba(255,215,0,.25);border-radius:13px;background:rgba(255,215,0,.045);color:#d7d2a5;font:12px/1.6 'Space Mono',monospace}.rebalance-list{display:grid;gap:8px}.rebalance-row{display:grid;grid-template-columns:minmax(0,1fr) 78px 90px 92px;gap:9px;align-items:center;padding:11px;border:1px solid var(--border);border-radius:12px;background:var(--bg3)}.rebalance-name{font-size:13px;line-height:1.3}.rebalance-stat{color:var(--muted);font:10px 'Space Mono',monospace}.rebalance-weight{font:700 13px 'Space Mono',monospace;color:var(--gold);text-align:center}.apply-one{padding:8px;border:1px solid rgba(255,215,0,.3);border-radius:8px;background:rgba(255,215,0,.06);color:var(--gold);font:700 10px 'Space Mono',monospace;cursor:pointer}
+  body.compact-view{--task-density:8px}body.compact-view .sc{padding:18px 22px}body.compact-view .sc .val{font-size:48px}
+  @media(max-width:900px){.app{padding:22px 18px}.header{flex-direction:column}.header-tools{width:100%;justify-content:flex-start}.scores{grid-template-columns:1fr 1fr}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 70px 120px 90px;padding-inline:14px}.logo{font-size:27px}.settings-grid{grid-template-columns:1fr}}
+  @media(max-width:620px){.scores{grid-template-columns:1fr!important}.tasks-head span:nth-child(2),.t-weight{display:none}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 112px 72px}.tool-btn{font-size:10px;padding-inline:11px}.week-pick{width:100%;gap:5px}.week-pick label{display:none}.week-pick input[type="date"]{min-width:0;flex:1;font-size:13px}.rebalance-row{grid-template-columns:minmax(0,1fr) 64px 78px}.rebalance-row .rebalance-stat{display:none}}
 
   /* TOAST */
   .toast {
@@ -276,10 +301,20 @@
 <div class="app">
 
   <div class="header">
-    <div class="logo">PS1 <em>//</em> НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</div>
-    <div class="week-pick">
-      <label>НЕДЕЛЯ</label>
-      <input type="date" id="weekDate">
+    <div class="header-copy">
+      <div class="logo">PS №1 <em>//</em> НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</div>
+      <div class="header-sub">Личная система ценности действий · четверг к четвергу</div>
+    </div>
+    <div class="header-tools">
+      <button class="tool-btn" id="settingsBtn">⚙ Настройки</button>
+      <button class="tool-btn" id="editModeBtn">✎ Редактировать</button>
+      <button class="tool-btn" id="rebalanceBtn">⚖ Ребалансировка</button>
+      <div class="week-pick">
+        <button class="week-nav" id="prevWeek" aria-label="Предыдущая неделя">‹</button>
+        <label>ЧЕТВЕРГ</label>
+        <input type="date" id="weekDate">
+        <button class="week-nav" id="nextWeek" aria-label="Следующая неделя">›</button>
+      </div>
     </div>
   </div>
 
@@ -327,8 +362,12 @@
   </div>
 
   <div class="tasks-block">
+    <div class="tasks-toolbar">
+      <div class="tasks-toolbar-copy"><strong>Активные задачи</strong><small id="taskSummary">0 активных · максимум 0 баллов</small></div>
+      <div class="tasks-actions" id="editActions" hidden><button class="mini-btn" onclick="openAdd()">＋ Добавить задачу</button><button class="mini-btn" id="showHiddenBtn">Показать скрытые</button></div>
+    </div>
     <div class="tasks-head">
-      <span>Задача <span style="color:var(--border);font-size:11px">· нажми для редактирования</span></span>
+      <span>Задача</span>
       <span>Вес</span>
       <span>Количество</span>
       <span>Баллы</span>
@@ -338,7 +377,6 @@
 
   <div class="bottom">
     <button class="btn btn-save" onclick="saveWeek()">💾 Сохранить неделю</button>
-    <button class="btn btn-add" onclick="openAdd()">＋ Новая задача</button>
   </div>
 
 </div>
@@ -358,11 +396,38 @@
         ↻ История пересчитается автоматически
       </div>
     </div>
+    <label class="switch-row"><span>Показывать задачу в рабочем списке</span><input type="checkbox" id="fVisible" checked></label>
     <div class="modal-btns">
       <button class="btn btn-save" onclick="saveModal()">Сохранить</button>
       <button class="btn btn-add" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-del" id="mDel" onclick="deleteTask()" style="display:none">Удалить</button>
+      <button class="btn btn-del" id="mDel" onclick="deleteTask()" style="display:none">Скрыть</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal">
+    <h3>// НАСТРОЙКИ PS №1</h3>
+    <div class="settings-grid">
+      <div class="settings-card"><label>Недель на графике</label><select id="setChartWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>20</option></select></div>
+      <div class="settings-card"><label>Целевой максимум активных задач</label><input id="setTargetBudget" type="number" min="500" max="20000" step="25" value="5000"></div>
+      <div class="settings-card"><label>Период анализа для ребалансировки</label><select id="setAnalysisWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>24</option><option>52</option></select></div>
+      <div class="settings-card"><label>Акцент интерфейса</label><input id="setAccent" type="color" value="#00ff9d"></div>
+      <label class="switch-row"><span>Компактные строки задач</span><input type="checkbox" id="setCompact"></label>
+      <label class="switch-row"><span>Показывать значения на графике</span><input type="checkbox" id="setChartValues" checked></label>
+      <label class="switch-row"><span>Показывать прошлую неделю</span><input type="checkbox" id="setPrevCard" checked></label>
+      <label class="switch-row"><span>Показывать среднее</span><input type="checkbox" id="setAvgCard" checked></label>
+    </div>
+    <div class="modal-btns"><button class="btn btn-save" id="saveSettings">Сохранить настройки</button><button class="btn btn-add" onclick="closeSettings()">Отмена</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="rebalanceOverlay">
+  <div class="modal">
+    <h3>// РЕБАЛАНСИРОВКА ВЕСОВ</h3>
+    <div class="rebalance-summary" id="rebalanceSummary"></div>
+    <div class="rebalance-list" id="rebalanceList"></div>
+    <div class="modal-btns"><button class="btn btn-rebalance" id="applyAllWeights">Применить все рекомендации</button><button class="btn btn-add" onclick="closeRebalance()">Закрыть</button></div>
   </div>
 </div>
 
@@ -409,9 +474,11 @@ const HISTORY_SEED = [
 ].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
 HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
 const HISTORY_ANCHOR = '2026-05-14';
-let S = { tasks:[], counts:{}, history:[], nextId:300 };
+const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:12,accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true};
+let S = { tasks:[], counts:{}, history:[], nextId:300, settings:{...UI_DEFAULTS} };
 let editId = null;
 let origWeight = null; // для отслеживания изменения веса в модалке
+let editMode=false,showHidden=false,rebalanceRecommendations=[];
 
 function loadS() {
   try {
@@ -432,8 +499,11 @@ function loadS() {
       S.counts = {16:6};
     }
     if (!S.nextId) S.nextId = 300;
+    S.tasks=Array.isArray(S.tasks)?S.tasks:JSON.parse(JSON.stringify(DEFAULTS));
+    S.tasks.forEach(t=>{if(typeof t.active!=='boolean')t.active=true});
+    S.settings={...UI_DEFAULTS,...(S.settings||{})};
   } catch(e) {
-    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300 };
+    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300,settings:{...UI_DEFAULTS} };
   }
 }
 function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
@@ -441,14 +511,15 @@ function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
 // ─── ВЫЧИСЛЕНИЯ ───
 // Считаем итог недели по текущим весам задач
 function calcTotal(scores) {
-  return S.tasks.reduce((sum, t) => sum + (scores[t.id] || 0) * t.w, 0);
+  return S.tasks.filter(t=>t.active!==false).reduce((sum, t) => sum + (scores[t.id] || 0) * t.w, 0);
 }
 function historyTotal(week){return Number.isFinite(Number(week.snapshotTotal))?Number(week.snapshotTotal):calcTotal(week.scores||{});}
 function currentTotal() { return calcTotal(S.counts); }
-function maxPts() { return S.tasks.reduce((s,t) => s + t.w, 0); }
+function maxPts() { return S.tasks.filter(t=>t.active!==false).reduce((s,t) => s + t.w, 0); }
 
 // ─── RENDER ───
 function render() {
+  applyUiSettings();
   renderTasks();
   renderScores();
   renderChart();
@@ -458,11 +529,12 @@ function render() {
 function renderTasks() {
   const el = document.getElementById('tasksList');
   el.innerHTML = '';
-  S.tasks.forEach(t => {
+  const visibleTasks=S.tasks.filter(t=>t.active!==false||editMode&&showHidden);
+  visibleTasks.forEach(t => {
     const cnt = S.counts[t.id] || 0;
     const pts = cnt * t.w;
     const row = document.createElement('div');
-    row.className = 'task-row';
+    row.className = 'task-row'+(t.active===false?' hidden-task':'');
     row.innerHTML =
       `<div class="t-name" data-edit="${t.id}">${escHtml(t.name)}</div>` +
       `<div class="t-weight">${t.w}</div>` +
@@ -470,10 +542,16 @@ function renderTasks() {
         `<button class="cnt-btn" data-dec="${t.id}">−</button>` +
         `<span class="cnt-val">${cnt}</span>` +
         `<button class="cnt-btn" data-inc="${t.id}">+</button>` +
-      `</div>` +
+      `</div><div class="task-edit-actions"><button class="vis-btn" data-toggle="${t.id}">${t.active===false?'Вернуть':'Скрыть'}</button></div>` +
       `<div class="t-score ${pts>0?'on':'off'}">${pts>0?'+'+pts:'—'}</div>`;
     el.appendChild(row);
   });
+  document.querySelector('.tasks-block').classList.toggle('editing',editMode);
+  document.getElementById('editActions').hidden=!editMode;
+  document.getElementById('editModeBtn').classList.toggle('active',editMode);
+  document.getElementById('showHiddenBtn').classList.toggle('active',showHidden);
+  document.getElementById('showHiddenBtn').textContent=showHidden?'Спрятать скрытые':'Показать скрытые ('+S.tasks.filter(t=>t.active===false).length+')';
+  document.getElementById('taskSummary').textContent=S.tasks.filter(t=>t.active!==false).length+' активных · '+S.tasks.filter(t=>t.active===false).length+' скрытых · максимум '+maxPts()+' баллов';
 }
 
 // Единственный делегированный слушатель
@@ -481,13 +559,16 @@ document.getElementById('tasksList').addEventListener('click', function(e) {
   const inc  = e.target.dataset.inc;
   const dec  = e.target.dataset.dec;
   const edit = e.target.dataset.edit;
+  const toggle=e.target.dataset.toggle;
   if (inc !== undefined) {
     S.counts[+inc] = (S.counts[+inc] || 0) + 1;
     render();
   } else if (dec !== undefined) {
     if ((S.counts[+dec] || 0) > 0) S.counts[+dec]--;
     render();
-  } else if (edit !== undefined) {
+  } else if (toggle !== undefined) {
+    const task=S.tasks.find(t=>t.id===+toggle);if(task){task.active=task.active===false;render();toast(task.active?'Задача возвращена':'Задача скрыта — данные сохранены')}
+  } else if (edit !== undefined && editMode) {
     openEdit(+edit);
   }
 });
@@ -538,17 +619,17 @@ function renderChart() {
   const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
   const area=line+` L ${pts[pts.length-1][0]} ${H-B} L ${pts[0][0]} ${H-B} Z`;
   const grid=[0,.25,.5,.75,1].map(r=>{const gy=y(mx*r);return `<line class="chart-grid" x1="${L}" x2="${W-R}" y1="${gy}" y2="${gy}"/><text class="chart-axis" x="${L-10}" y="${gy+4}">${Math.round(mx*r)}</text>`}).join('');
-  const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов"><text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text><circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
-  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов PS1"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00ff9d" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
+  const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов">${S.settings.chartValues?`<text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text>`:''}<circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
+  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов PS №1"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${S.settings.accent}" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
   el.querySelectorAll('[data-date]').forEach(g=>{const open=()=>{const idx=S.history.findIndex(w=>w.date===g.dataset.date);if(idx>=0)loadWeek(idx)};g.addEventListener('click',open);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
 }
 
 function displayWindow(){
   if(!S.history.length)return[];
-  const last=S.history[S.history.length-1].date;let start=new Date(HISTORY_ANCHOR+'T12:00:00');const end=new Date(last+'T12:00:00');
-  while(end>new Date(start.getTime()+11*7*86400000))start=new Date(start.getTime()+4*7*86400000);
-  const max=new Date(start.getTime()+11*7*86400000);
-  return S.history.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=max}).slice(-12);
+  const limit=Math.max(4,Number(S.settings.chartWeeks)||12),last=S.history[S.history.length-1].date;let start=new Date(HISTORY_ANCHOR+'T12:00:00');const end=new Date(last+'T12:00:00');
+  while(end>new Date(start.getTime()+(limit-1)*7*86400000))start=new Date(start.getTime()+4*7*86400000);
+  const max=new Date(start.getTime()+(limit-1)*7*86400000);
+  return S.history.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=max}).slice(-limit);
 }
 
 // ─── ACTIONS ───
@@ -583,6 +664,7 @@ function openAdd() {
   document.getElementById('mTitle').textContent     = '// НОВАЯ ЗАДАЧА';
   document.getElementById('fName').value            = '';
   document.getElementById('fWeight').value          = '';
+  document.getElementById('fVisible').checked       = true;
   document.getElementById('mDel').style.display     = 'none';
   document.getElementById('weightHint').classList.remove('show');
   document.getElementById('overlay').classList.add('open');
@@ -595,6 +677,7 @@ function openEdit(id) {
   document.getElementById('mTitle').textContent    = '// РЕДАКТИРОВАТЬ ЗАДАЧУ';
   document.getElementById('fName').value           = t.name;
   document.getElementById('fWeight').value         = t.w;
+  document.getElementById('fVisible').checked      = t.active!==false;
   document.getElementById('mDel').style.display    = '';
   document.getElementById('weightHint').classList.remove('show');
   document.getElementById('overlay').classList.add('open');
@@ -624,14 +707,14 @@ function saveModal() {
     const t = S.tasks.find(x => x.id === editId);
     if (t) {
       const weightChanged = t.w !== w;
-      t.name = name; t.w = w;
+      t.name = name; t.w = w;t.active=document.getElementById('fVisible').checked;
       // История пересчитается автоматически при render(),
       // т.к. calcTotal берёт актуальные веса из S.tasks
       if (weightChanged) toast('✓ Обновлено — история пересчитана');
       else toast('Задача обновлена');
     }
   } else {
-    S.tasks.push({ id: S.nextId++, name, w });
+    S.tasks.push({ id: S.nextId++, name, w,active:document.getElementById('fVisible').checked });
     toast('Задача добавлена');
   }
   closeModal();
@@ -640,14 +723,68 @@ function saveModal() {
 
 function deleteTask() {
   if (editId === null) return;
-  if (!confirm('Удалить эту задачу?')) return;
-  S.tasks = S.tasks.filter(t => t.id !== editId);
-  delete S.counts[editId];
-  S.history.forEach(w => { delete w.scores[editId]; });
+  const task=S.tasks.find(t=>t.id===editId);if(!task)return;
+  task.active=false;
   closeModal();
   render();
-  toast('Задача удалена');
+  toast('Задача скрыта — вся история сохранена');
 }
+
+// ─── НАСТРОЙКИ И РЕЖИМ РЕДАКТИРОВАНИЯ ───
+function applyUiSettings(){
+  document.documentElement.style.setProperty('--accent',S.settings.accent||UI_DEFAULTS.accent);
+  document.body.classList.toggle('compact-view',!!S.settings.compact);
+  document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
+  document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
+  const shown=[...document.querySelectorAll('.scores .sc')].filter(x=>x.style.display!=='none').length;
+  document.querySelector('.scores').style.gridTemplateColumns=shown===4?'1.5fr 1fr 1fr 1fr':`repeat(${shown},minmax(0,1fr))`;
+  const note=document.querySelector('.chart-note span');if(note)note.textContent='Показывается окно до '+S.settings.chartWeeks+' четвергов';
+}
+function openSettings(){
+  document.getElementById('setChartWeeks').value=S.settings.chartWeeks;
+  document.getElementById('setTargetBudget').value=S.settings.targetBudget;
+  document.getElementById('setAnalysisWeeks').value=S.settings.analysisWeeks;
+  document.getElementById('setAccent').value=S.settings.accent;
+  document.getElementById('setCompact').checked=!!S.settings.compact;
+  document.getElementById('setChartValues').checked=S.settings.chartValues!==false;
+  document.getElementById('setPrevCard').checked=S.settings.prevCard!==false;
+  document.getElementById('setAvgCard').checked=S.settings.avgCard!==false;
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open')}
+function saveSettings(){
+  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:+document.getElementById('setAnalysisWeeks').value,accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
+  closeSettings();render();toast('Настройки PS №1 сохранены');
+}
+function toggleEditMode(){editMode=!editMode;if(!editMode)showHidden=false;render();toast(editMode?'Редактирование включено':'Рабочий режим включён')}
+
+// Байесовская оценка регулярности + нелинейная премия за редкость.
+// Рекомендации нормируются так, чтобы сумма активных весов держалась у заданного максимума.
+function calculateRebalance(){
+  const active=S.tasks.filter(t=>t.active!==false),weeks=[...S.history].sort((a,b)=>a.date.localeCompare(b.date)).slice(-(Number(S.settings.analysisWeeks)||12));
+  const n=Math.max(weeks.length,1),budget=Math.max(500,Number(S.settings.targetBudget)||5000),avgOld=active.reduce((s,t)=>s+t.w,0)/Math.max(active.length,1);
+  const stats=active.map(t=>{
+    const done=weeks.filter(w=>Number(w.scores?.[t.id]||0)>0).length,completions=weeks.reduce((s,w)=>s+Number(w.scores?.[t.id]||0),0);
+    const probability=(done+.5)/(n+1),rarity=Math.pow(1.08-probability,2.45)+.025,zeroBoost=done===0?1.28:1;
+    const strategic=.18*Math.sqrt(Math.max(t.w,10)/Math.max(avgOld,1));
+    return{task:t,done,completions,probability,raw:(.82*rarity+strategic)*zeroBoost};
+  });
+  const rawTotal=stats.reduce((s,x)=>s+x.raw,0)||1,step=5;
+  let recs=stats.map(x=>({...x,recommended:Math.max(10,Math.round((budget*x.raw/rawTotal)/step)*step)}));
+  let delta=budget-recs.reduce((s,x)=>s+x.recommended,0),guard=0;
+  while(Math.abs(delta)>=step&&guard++<500){const ordered=[...recs].sort((a,b)=>delta>0?b.raw-a.raw:a.raw-b.raw),target=ordered.find(x=>delta>0||x.recommended>10);if(!target)break;target.recommended+=delta>0?step:-step;delta+=delta>0?-step:step}
+  return recs;
+}
+function openRebalance(){
+  rebalanceRecommendations=calculateRebalance();
+  const total=rebalanceRecommendations.reduce((s,x)=>s+x.recommended,0),weeks=Math.min(S.history.length,Number(S.settings.analysisWeeks)||12);
+  document.getElementById('rebalanceSummary').innerHTML=`Анализ: последние <b>${weeks}</b> недель. Чем реже задача выполнялась, тем выше её цена; регулярные задачи дешевеют. Сумма рекомендаций: <b>${total}</b> из цели <b>${S.settings.targetBudget}</b>. Изменения применяются только кнопками ниже.`;
+  document.getElementById('rebalanceList').innerHTML=rebalanceRecommendations.map(x=>`<div class="rebalance-row"><div><div class="rebalance-name">${escHtml(x.task.name)}</div><div class="rebalance-stat">${x.done}/${weeks||1} нед. · ${Math.round(x.probability*100)}% · ${x.completions} раз</div></div><div class="rebalance-stat">${x.task.w} →</div><div class="rebalance-weight">${x.recommended}</div><button class="apply-one" data-apply-weight="${x.task.id}">Применить</button></div>`).join('');
+  document.getElementById('rebalanceOverlay').classList.add('open');
+}
+function closeRebalance(){document.getElementById('rebalanceOverlay').classList.remove('open')}
+function applyRecommendation(id){const rec=rebalanceRecommendations.find(x=>x.task.id===id);if(!rec)return;rec.task.w=rec.recommended;saveS();render();const button=document.querySelector(`[data-apply-weight="${id}"]`);if(button){button.textContent='Готово';button.disabled=true}toast('Вес задачи обновлён')}
+function applyAllRecommendations(){rebalanceRecommendations.forEach(x=>x.task.w=x.recommended);closeRebalance();render();toast('Все рекомендации применены · максимум '+maxPts())}
 
 // ─── UTILS ───
 function fmt(d) {
@@ -675,10 +812,21 @@ function toast(msg) {
 // ─── INIT ───
 document.getElementById('weekDate').value = thursdayFor(today());
 document.getElementById('weekDate').addEventListener('change',e=>{e.target.value=thursdayFor(e.target.value);const idx=S.history.findIndex(w=>w.date===e.target.value);if(idx>=0)S.counts={...(S.history[idx].scores||{})};else S.counts={};render();});
+function shiftWeek(days){const input=document.getElementById('weekDate'),d=new Date((input.value||today())+'T12:00:00');d.setDate(d.getDate()+days);input.value=thursdayFor(d.toISOString().slice(0,10));input.dispatchEvent(new Event('change'))}
+document.getElementById('prevWeek').onclick=()=>shiftWeek(-7);
+document.getElementById('nextWeek').onclick=()=>shiftWeek(7);
+document.getElementById('settingsBtn').onclick=openSettings;
+document.getElementById('editModeBtn').onclick=toggleEditMode;
+document.getElementById('rebalanceBtn').onclick=openRebalance;
+document.getElementById('showHiddenBtn').onclick=()=>{showHidden=!showHidden;render()};
+document.getElementById('saveSettings').onclick=saveSettings;
+document.getElementById('applyAllWeights').onclick=applyAllRecommendations;
+document.getElementById('rebalanceList').onclick=e=>{const id=e.target.dataset.applyWeight;if(id!==undefined)applyRecommendation(+id)};
 document.getElementById('overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('overlay')) closeModal();
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+['settingsOverlay','rebalanceOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)id==='settingsOverlay'?closeSettings():closeRebalance()}));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') {closeModal();closeSettings();closeRebalance()} });
 
 loadS();
 render();
