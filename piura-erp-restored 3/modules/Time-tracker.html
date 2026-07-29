@@ -259,8 +259,12 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink
 
 /* ══ HISTORY ══ */
 .hist-card { background: var(--white); border: 2px solid var(--bord); border-radius: var(--r); overflow: hidden; }
-.hist-top { padding: 1rem 1.5rem; border-bottom: 1.5px solid var(--bord); }
+.hist-top { padding: 1rem 1.5rem; border-bottom: 1.5px solid var(--bord); display:flex; align-items:center; justify-content:space-between; gap:1rem; }
 .hist-top h3 { font-size: 0.55rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.hist-toggle { border:1.5px solid var(--bord);background:var(--white);border-radius:9px;padding:.48rem .78rem;color:var(--muted);font:700 .58rem 'JetBrains Mono',monospace;cursor:pointer;transition:.15s; }
+.hist-toggle:hover { border-color:var(--blue);color:var(--blue); }
+.hist-card.collapsed .hist-scroll { display:none; }
+.hist-card.collapsed .hist-top { border-bottom:0; }
 .hist-scroll { overflow-x: auto; }
 
 table { width: 100%; border-collapse: collapse; }
@@ -301,6 +305,9 @@ tr:hover td { background: var(--bg); }
   display: flex; align-items: center; justify-content: center; transition: .12s;
 }
 .modal-close:hover { background: var(--bord); color: var(--ink); }
+.history-settings { display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 1rem;margin-bottom:1.2rem;border:1.5px solid var(--bord);border-radius:12px;background:var(--bg); }
+.history-settings label { font-size:.72rem;font-weight:700;color:var(--ink); }
+.history-settings select { border:1.5px solid var(--bord);border-radius:9px;background:var(--white);padding:.55rem .7rem;font:700 .68rem 'JetBrains Mono',monospace;color:var(--ink);cursor:pointer; }
 
 .manage-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.3rem; }
 .manage-row {
@@ -406,7 +413,7 @@ tr:hover td { background: var(--bg); }
       <button class="btn-today" onclick="goToday()">Сегодня</button>
     </div>
     <div class="hero-right">
-      <div class="sync-status" id="syncStatus">
+      <div class="sync-status" id="syncStatus" role="button" tabindex="0" title="Нажмите, чтобы обновить данные из Google Sheets">
         <div class="dot"></div>
         <span id="syncText">Google Sheets</span>
       </div>
@@ -449,8 +456,8 @@ tr:hover td { background: var(--bg); }
     <div class="chart-card"><h3>Последние 7 дней</h3><canvas id="cBar"></canvas></div>
   </div>
 
-  <div class="hist-card">
-    <div class="hist-top"><h3>История</h3></div>
+  <div class="hist-card" id="historyCard">
+    <div class="hist-top"><h3 id="historyTitle">История</h3><button class="hist-toggle" id="historyToggle" onclick="toggleHistory()">Скрыть</button></div>
     <div class="hist-scroll" id="histWrap"></div>
   </div>
 </div>
@@ -459,9 +466,18 @@ tr:hover td { background: var(--bg); }
 <div class="modal-overlay" id="manageOverlay" onclick="if(event.target===this) closeManageModal()">
   <div class="modal-box">
     <div class="modal-head">
-      <h2>Источники времени</h2>
+      <h2>Настройки времени</h2>
       <button class="modal-close" onclick="closeManageModal()">✕</button>
     </div>
+
+    <div class="history-settings">
+      <label for="historyLimit">Показывать в истории</label>
+      <select id="historyLimit" onchange="setHistoryLimit(this.value)">
+        <option value="15">15 дней</option><option value="20">20 дней</option><option value="30">30 дней</option>
+      </select>
+    </div>
+
+    <div class="field-label" style="margin-bottom:.65rem">Источники времени</div>
 
     <div class="manage-list" id="manageList"></div>
 
@@ -510,6 +526,8 @@ const DEFAULT_CATS = [
   {key:'nav',   label:'Наставник',           icon:'🧭', color:'#1A5CFF', work:true },
   {key:'eff',   label:'Эффективность',       icon:'⚡', color:'#8DC900', work:true },
   {key:'edu',   label:'Обучение',            icon:'📚', color:'#E0366A', work:false},
+  {key:'hobby', label:'Хобби',                icon:'🎯', color:'#A855F7', work:false},
+  {key:'friend',label:'Фонд Друг',            icon:'🐾', color:'#F59E0B', work:true },
 ];
 const EMOJI_CHOICES = ['🎨','🎮','🏋️','🎵','📷','✈️','🍳','🧘','🐶','🎬','📖','🛠️','🎯','🌱','💡','🧩','🚴','🏠','🛒','👨‍👩‍👧','🎸','🧗','🏃','☕'];
 const COLOR_CHOICES = ['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#F472B6','#0EA5E9','#A855F7','#F59E0B','#10B981','#EF4444'];
@@ -517,11 +535,13 @@ const COLOR_CHOICES = ['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366
 const PRESETS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
 const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ ключ, чтобы не терять историю
 const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
+const HISTORY_PREF_KEY = 'tt_history_pref_v1';
 
 let curDate = new Date(); curDate.setHours(0,0,0,0);
 let openKey = null, pH = 0, pM = 0;
 let chartPie = null, chartBar = null;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
+let historyPrefs = (()=>{try{return{limit:20,open:true,...JSON.parse(localStorage.getItem(HISTORY_PREF_KEY)||'{}')}}catch{return{limit:20,open:true}}})();
 const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
 /* ── CATEGORIES STORAGE ── */
@@ -531,7 +551,10 @@ function loadCats() {
     if (!raw) { saveCats(DEFAULT_CATS); return DEFAULT_CATS.slice(); }
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_CATS.slice();
-    return parsed;
+    const merged=parsed.slice();
+    DEFAULT_CATS.forEach(def=>{if(!merged.some(cat=>cat.key===def.key||cat.label===def.label))merged.push({...def});});
+    if(merged.length!==parsed.length)saveCats(merged);
+    return merged;
   } catch { return DEFAULT_CATS.slice(); }
 }
 function saveCats(cats) { localStorage.setItem(CATS_KEY, JSON.stringify(cats)); }
@@ -587,12 +610,40 @@ async function syncToSheets(dateKey) {
       headers: { 'Content-Type': 'application/json' },
       body: payload
     });
-    setSyncStatus('ok', '✓ Синхронизировано');
-    setTimeout(() => setSyncStatus('', 'Google Sheets'), 3000);
+    setSyncStatus('ok', '✓ Отправлено в Google Sheets');
+    setTimeout(()=>syncFromSheets(true),900);
   } catch (err) {
     setSyncStatus('error', '✗ Ошибка синхронизации');
     console.error('Sync error:', err);
     setTimeout(() => setSyncStatus('', 'Google Sheets'), 4000);
+  }
+}
+
+async function syncFromSheets(quiet=false) {
+  if(!quiet)setSyncStatus('syncing','Загружаем записи...');
+  try{
+    const response=await fetch(GAS_URL+'?t='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const payload=await response.json();
+    if(payload.status!=='ok'||!Array.isArray(payload.days))throw new Error('Некорректный ответ таблицы');
+    let cats=getCats();
+    const palette=['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#A855F7','#F59E0B','#10B981','#EF4444'];
+    (payload.categories||[]).forEach((label,index)=>{
+      if(!cats.some(cat=>cat.label===label))cats.push({key:slugify(label),label,icon:'◉',color:palette[index%palette.length],work:true});
+    });
+    saveCats(cats);
+    const byLabel=new Map(cats.map(cat=>[cat.label,cat.key])),all=load();
+    payload.days.forEach(serverDay=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(serverDay.date||''))return;
+      const next={...(all[serverDay.date]||{})};
+      (payload.categories||[]).forEach(label=>{const key=byLabel.get(label),mins=Number(serverDay[label])||0;if(!key)return;if(mins>0)next[key]=mins;else delete next[key];});
+      if(Object.keys(next).length)all[serverDay.date]=next;else delete all[serverDay.date];
+    });
+    save(all);renderAll();
+    setSyncStatus('ok','✓ Google Sheets · '+(payload.updated||'обновлено'));
+    return true;
+  }catch(error){
+    setSyncStatus('error','✗ Не удалось загрузить Google Sheets');console.error('Load sync error:',error);return false;
   }
 }
 
@@ -790,7 +841,10 @@ function renderBar() {
 function renderHistory() {
   const cats = getCats();
   const allData = load(), wrap = document.getElementById('histWrap');
-  const keys = Object.keys(allData).sort().reverse().slice(0, 30);
+  const allowed=[15,20,30],limit=allowed.includes(Number(historyPrefs.limit))?Number(historyPrefs.limit):20;
+  const keys = Object.keys(allData).sort().reverse().slice(0,limit);
+  const card=document.getElementById('historyCard'),toggle=document.getElementById('historyToggle'),title=document.getElementById('historyTitle');
+  card.classList.toggle('collapsed',historyPrefs.open===false);toggle.textContent=historyPrefs.open===false?'Показать':'Скрыть';title.textContent=`История · ${keys.length} дн.`;
   if (!keys.length) {
     wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>Записей пока нет. Заполни первый день!</p></div>`;
     return;
@@ -810,10 +864,15 @@ function renderHistory() {
   wrap.innerHTML = html;
 }
 
+function saveHistoryPrefs(){localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs));}
+function toggleHistory(){historyPrefs.open=historyPrefs.open===false;saveHistoryPrefs();renderHistory();}
+function setHistoryLimit(value){historyPrefs.limit=[15,20,30].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
+
 function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); renderHistory(); }
 
 /* ── MANAGE CATEGORIES MODAL ── */
 function openManageModal() {
+  document.getElementById('historyLimit').value=String(historyPrefs.limit||20);
   renderManageList();
   hideNewCatForm();
   document.getElementById('manageOverlay').classList.add('open');
@@ -950,6 +1009,9 @@ function doExport() {
 /* ── INIT ── */
 updateDateLabels();
 renderAll();
+document.getElementById('syncStatus').addEventListener('click',()=>syncFromSheets());
+document.getElementById('syncStatus').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();syncFromSheets();}});
+syncFromSheets();
 </script>
 </body>
 </html>

@@ -326,7 +326,6 @@
   <div class="main-tabs">
     <button class="main-tab-btn active" id="tabbtn-roadmap" onclick="switchMainTab('roadmap')">Дорожная карта</button>
     <button class="main-tab-btn" id="tabbtn-dynamics" onclick="switchMainTab('dynamics')">Динамики</button>
-    <button class="main-tab-btn" id="tabbtn-charts" onclick="switchMainTab('charts')">Графики</button>
   </div>
 
   <!-- ============ ROADMAP ============ -->
@@ -361,22 +360,6 @@
     </div>
     <div class="grad-legend mini" id="dyn-gradient-legend"></div>
     <div class="columns" id="board"></div>
-  </div>
-
-  <!-- ============ CHARTS ============ -->
-  <div class="main-tab-panel" id="tab-charts">
-    <div class="topbar"><div><h1>Графики</h1></div></div>
-
-    <div class="chart-card">
-      <h3>Средняя оценка по динамикам (текущий год)</h3>
-      <canvas id="chartDynamics" height="110"></canvas>
-    </div>
-
-    <div class="chart-card">
-      <h3>Динамика среднего балла по годам</h3>
-      <canvas id="chartYears" height="110"></canvas>
-      <div class="chart-empty" id="chartYearsEmptyMsg" style="display:none;">Заполняйте оценки в дорожной карте для других лет — здесь появится график прогресса.</div>
-    </div>
   </div>
 
 </div>
@@ -643,12 +626,9 @@ function saveDynSort(){ localStorage.setItem(DYNSORT_KEY, dynSortMode); }
 function switchMainTab(tab){
   document.getElementById('tab-roadmap').classList.toggle('active', tab === 'roadmap');
   document.getElementById('tab-dynamics').classList.toggle('active', tab === 'dynamics');
-  document.getElementById('tab-charts').classList.toggle('active', tab === 'charts');
   document.getElementById('tabbtn-roadmap').classList.toggle('active', tab === 'roadmap');
   document.getElementById('tabbtn-dynamics').classList.toggle('active', tab === 'dynamics');
-  document.getElementById('tabbtn-charts').classList.toggle('active', tab === 'charts');
   closeCellPopover();
-  if (tab === 'charts') buildCharts();
 }
 
 /* =========================================================
@@ -1216,4 +1196,3 @@ rerenderAll();
 </script>
 </body>
 </html>
-

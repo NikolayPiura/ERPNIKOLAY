@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SYSTEM // WEEKLY SCORE</title>
+<title>PS1 // НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -127,42 +127,20 @@
   }
   .block-hd-title { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
   .block-hd-count { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
-  .history-inner { display:grid; grid-template-columns:280px 1fr; }
-  .hist-chart { padding:20px 24px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:10px; }
-  .hist-chart-lbl { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); }
-  .bars { display:flex; align-items:flex-end; gap:7px; height:90px; }
-  .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
-  .bar-rect {
-    width:100%;
-    background:linear-gradient(0deg,var(--purple),var(--accent));
-    border-radius:4px 4px 0 0;
-    opacity:.6; min-height:3px; cursor:pointer;
-    transition:opacity .2s;
-  }
-  .bar-rect:hover { opacity:1; }
-  .bar-rect.cur { opacity:1; box-shadow:0 0 12px rgba(0,255,157,.5); }
-  .bar-lbl { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); white-space:nowrap; }
-  .hist-list {
-    display:flex; align-items:center;
-    gap:10px; padding:20px 24px;
-    overflow-x:auto; flex-wrap:wrap;
-  }
-  .hist-list::-webkit-scrollbar { height:3px; }
-  .hist-list::-webkit-scrollbar-thumb { background:var(--border); }
-  .h-item {
-    display:flex; align-items:center; gap:12px;
-    padding:12px 18px;
-    background:var(--bg3);
-    border:1px solid transparent;
-    border-radius:12px; cursor:pointer;
-    transition:all .15s; white-space:nowrap;
-  }
-  .h-item:hover { border-color:var(--purple); }
-  .h-date { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
-  .h-score { font-family:'Unbounded',sans-serif; font-size:20px; font-weight:700; color:var(--accent); }
-  .h-del { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; transition:color .15s; padding:2px 4px; }
-  .h-del:hover { color:var(--red); }
-  .no-hist { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); padding:20px; }
+  .history-inner { padding:24px 28px 18px; }
+  .chart-wrap { position:relative; min-height:250px; width:100%; }
+  .line-chart { display:block; width:100%; height:250px; overflow:visible; }
+  .chart-grid { stroke:rgba(123,94,167,.22); stroke-width:1; stroke-dasharray:4 7; }
+  .chart-area { fill:url(#scoreArea); }
+  .chart-line { fill:none; stroke:var(--accent); stroke-width:4; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 0 8px rgba(0,255,157,.45)); }
+  .chart-point { fill:var(--bg2); stroke:var(--accent); stroke-width:4; cursor:pointer; transition:r .15s,fill .15s; }
+  .chart-point:hover,.chart-point.current { r:7; fill:var(--accent); }
+  .chart-label,.chart-value { font-family:'Space Mono',monospace; text-anchor:middle; }
+  .chart-label { fill:var(--muted); font-size:11px; }
+  .chart-value { fill:var(--text); font-size:12px; font-weight:700; }
+  .chart-axis { font-family:'Space Mono',monospace; fill:var(--muted); font-size:10px; text-anchor:end; }
+  .chart-empty { min-height:210px;display:grid;place-items:center;color:var(--muted);font:13px 'Space Mono',monospace; }
+  .chart-note { color:var(--muted);font:11px 'Space Mono',monospace;margin-top:8px;display:flex;justify-content:space-between;gap:18px; }
 
   /* PROGRESS */
   .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:20px 28px; }
@@ -298,7 +276,7 @@
 <div class="app">
 
   <div class="header">
-    <div class="logo">SYSTEM <em>//</em> WEEKLY SCORE</div>
+    <div class="logo">PS1 <em>//</em> НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</div>
     <div class="week-pick">
       <label>НЕДЕЛЯ</label>
       <input type="date" id="weekDate">
@@ -331,15 +309,12 @@
 
   <div class="history-block">
     <div class="block-hd">
-      <span class="block-hd-title">История недель</span>
+      <span class="block-hd-title">Динамика по четвергам</span>
       <span class="block-hd-count" id="wkCount">0 нед.</span>
     </div>
     <div class="history-inner">
-      <div class="hist-chart">
-        <div class="hist-chart-lbl">Динамика</div>
-        <div class="bars" id="barChart"></div>
-      </div>
-      <div class="hist-list" id="histList"></div>
+      <div class="chart-wrap" id="scoreChart"></div>
+      <div class="chart-note"><span>Показывается окно до 12 четвергов</span><span>Нажмите точку, чтобы открыть неделю</span></div>
     </div>
   </div>
 
@@ -427,8 +402,13 @@ const DEFAULTS = [
 ];
 
 // ─── STATE ───
-// История хранит только scores (кол-во раз по id), НЕ total.
-// Total всегда пересчитывается динамически по текущим весам задач.
+const HISTORY_SEED = [
+  ['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],
+  ['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],
+  ['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]
+].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
+HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
+const HISTORY_ANCHOR = '2026-05-14';
 let S = { tasks:[], counts:{}, history:[], nextId:300 };
 let editId = null;
 let origWeight = null; // для отслеживания изменения веса в модалке
@@ -438,14 +418,22 @@ function loadS() {
     const r = localStorage.getItem('wt5');
     if (r) {
       S = JSON.parse(r);
-      // миграция со старого формата: если total жёстко записан, удаляем его
-      S.history.forEach(w => { delete w.total; });
+      S.history = Array.isArray(S.history) ? S.history : [];
+      // Старые жёстко записанные итоги сохраняем как исторический снимок.
+      S.history.forEach(w => { if(Number.isFinite(Number(w.total))&&!Number.isFinite(Number(w.snapshotTotal)))w.snapshotTotal=Number(w.total);delete w.total;w.date=thursdayFor(w.date); });
+      // Восстанавливаем известную детализацию контрольной недели, если в старом
+      // сохранении остался только итог 150, а сами шесть отметок потерялись.
+      const seedLast=HISTORY_SEED[HISTORY_SEED.length-1],savedLast=S.history.find(w=>w.date===seedLast.date);
+      if(savedLast&&Number(savedLast.snapshotTotal)===seedLast.snapshotTotal&&!Object.values(savedLast.scores||{}).some(Number))savedLast.scores={...seedLast.scores};
+      if(thursdayFor(today())===seedLast.date&&!Object.values(S.counts||{}).some(Number))S.counts={...seedLast.scores};
     } else {
       S.tasks = JSON.parse(JSON.stringify(DEFAULTS));
+      S.history = JSON.parse(JSON.stringify(HISTORY_SEED));
+      S.counts = {16:6};
     }
     if (!S.nextId) S.nextId = 300;
   } catch(e) {
-    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{}, history:[], nextId:300 };
+    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300 };
   }
 }
 function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
@@ -455,6 +443,7 @@ function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
 function calcTotal(scores) {
   return S.tasks.reduce((sum, t) => sum + (scores[t.id] || 0) * t.w, 0);
 }
+function historyTotal(week){return Number.isFinite(Number(week.snapshotTotal))?Number(week.snapshotTotal):calcTotal(week.scores||{});}
 function currentTotal() { return calcTotal(S.counts); }
 function maxPts() { return S.tasks.reduce((s,t) => s + t.w, 0); }
 
@@ -462,7 +451,6 @@ function maxPts() { return S.tasks.reduce((s,t) => s + t.w, 0); }
 function render() {
   renderTasks();
   renderScores();
-  renderHistory();
   renderChart();
   saveS();
 }
@@ -517,9 +505,9 @@ function renderScores() {
   document.getElementById('wkCount').textContent  = S.history.length + ' нед.';
 
   if (S.history.length) {
-    // Пересчитываем все исторические итоги на лету
-    const computed = S.history.map(w => ({ ...w, _total: calcTotal(w.scores) }));
-    const prev = computed[computed.length - 1];
+    const computed = S.history.map(w => ({ ...w, _total: historyTotal(w) }));
+    const before= computed.filter(w=>w.date!==thursdayFor(document.getElementById('weekDate').value));
+    const prev = before[before.length - 1] || computed[computed.length - 1];
     document.getElementById('prevScore').textContent = prev._total;
     document.getElementById('prevLabel').textContent = fmt(prev.date);
 
@@ -542,57 +530,30 @@ function renderScores() {
   }
 }
 
-function renderHistory() {
-  const el = document.getElementById('histList');
-  if (!S.history.length) {
-    el.innerHTML = '<div class="no-hist">Нет сохранённых недель — нажми «Сохранить неделю»</div>';
-    return;
-  }
-  el.innerHTML = '';
-  [...S.history].reverse().forEach((w, ri) => {
-    const realIdx = S.history.length - 1 - ri;
-    const liveTotal = calcTotal(w.scores); // пересчёт на лету
-    const item = document.createElement('div');
-    item.className = 'h-item';
-    item.innerHTML =
-      `<div class="h-date">${fmt(w.date)}</div>` +
-      `<div class="h-score">${liveTotal}</div>` +
-      `<button class="h-del" data-delidx="${realIdx}" title="Удалить">✕</button>`;
-    item.addEventListener('click', e => {
-      if (e.target.dataset.delidx !== undefined) { delHist(+e.target.dataset.delidx); return; }
-      loadWeek(realIdx);
-    });
-    el.appendChild(item);
-  });
+function renderChart() {
+  const el=document.getElementById('scoreChart'),recent=displayWindow();
+  if(!recent.length){el.innerHTML='<div class="chart-empty">Нет сохранённых четвергов</div>';return;}
+  const W=1180,H=250,L=62,R=22,T=28,B=46,totals=recent.map(historyTotal),mx=Math.max(...totals,1),step=(W-L-R)/Math.max(recent.length-1,1);
+  const x=i=>L+i*step,y=v=>T+(H-T-B)*(1-v/mx),pts=recent.map((w,i)=>[x(i),y(totals[i])]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=line+` L ${pts[pts.length-1][0]} ${H-B} L ${pts[0][0]} ${H-B} Z`;
+  const grid=[0,.25,.5,.75,1].map(r=>{const gy=y(mx*r);return `<line class="chart-grid" x1="${L}" x2="${W-R}" y1="${gy}" y2="${gy}"/><text class="chart-axis" x="${L-10}" y="${gy+4}">${Math.round(mx*r)}</text>`}).join('');
+  const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов"><text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text><circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
+  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов PS1"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#00ff9d" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
+  el.querySelectorAll('[data-date]').forEach(g=>{const open=()=>{const idx=S.history.findIndex(w=>w.date===g.dataset.date);if(idx>=0)loadWeek(idx)};g.addEventListener('click',open);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
 }
 
-function renderChart() {
-  const el = document.getElementById('barChart');
-  el.innerHTML = '';
-  const recent = S.history.slice(-12);
-  if (!recent.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-family:Space Mono,monospace;font-size:11px;align-self:center">нет данных</div>';
-    return;
-  }
-  const totals = recent.map(w => calcTotal(w.scores));
-  const mx = Math.max(...totals, 1);
-  recent.forEach((w, i) => {
-    const h      = Math.round((totals[i] / mx) * 80);
-    const isCur  = i === recent.length - 1;
-    const ri     = S.history.indexOf(w);
-    const col    = document.createElement('div');
-    col.className = 'bar-col';
-    col.innerHTML =
-      `<div class="bar-rect ${isCur?'cur':''}" style="height:${h}px" title="${totals[i]}"></div>` +
-      `<div class="bar-lbl">${shortFmt(w.date)}</div>`;
-    col.querySelector('.bar-rect').addEventListener('click', () => loadWeek(ri));
-    el.appendChild(col);
-  });
+function displayWindow(){
+  if(!S.history.length)return[];
+  const last=S.history[S.history.length-1].date;let start=new Date(HISTORY_ANCHOR+'T12:00:00');const end=new Date(last+'T12:00:00');
+  while(end>new Date(start.getTime()+11*7*86400000))start=new Date(start.getTime()+4*7*86400000);
+  const max=new Date(start.getTime()+11*7*86400000);
+  return S.history.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=max}).slice(-12);
 }
 
 // ─── ACTIONS ───
 function saveWeek() {
-  const date = document.getElementById('weekDate').value || today();
+  const date = thursdayFor(document.getElementById('weekDate').value || today());
   const idx  = S.history.findIndex(w => w.date === date);
   // Сохраняем только scores (кол-во раз), без total
   const entry = { date, scores: { ...S.counts } };
@@ -604,7 +565,7 @@ function saveWeek() {
 
 function loadWeek(idx) {
   const w = S.history[idx]; if (!w) return;
-  S.counts = { ...w.scores };
+  S.counts = { ...(w.scores||{}) };
   document.getElementById('weekDate').value = w.date;
   render();
   toast('Загружена: ' + fmt(w.date));
@@ -700,6 +661,7 @@ function shortFmt(d) {
   return `${day}.${m}`;
 }
 function today() { return new Date().toISOString().split('T')[0]; }
+function thursdayFor(value){const d=new Date((value||today())+'T12:00:00');if(Number.isNaN(d.getTime()))return value;const shift=4-(d.getDay()||7);d.setDate(d.getDate()+shift);return d.toISOString().slice(0,10);}
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -711,7 +673,8 @@ function toast(msg) {
 }
 
 // ─── INIT ───
-document.getElementById('weekDate').value = today();
+document.getElementById('weekDate').value = thursdayFor(today());
+document.getElementById('weekDate').addEventListener('change',e=>{e.target.value=thursdayFor(e.target.value);const idx=S.history.findIndex(w=>w.date===e.target.value);if(idx>=0)S.counts={...(S.history[idx].scores||{})};else S.counts={};render();});
 document.getElementById('overlay').addEventListener('click', e => {
   if (e.target === document.getElementById('overlay')) closeModal();
 });
