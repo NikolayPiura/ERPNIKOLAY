@@ -17,8 +17,8 @@
 html{font-size:28px;}
 body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(61,219,160,0.01) 1px,transparent 1px),linear-gradient(90deg,rgba(61,219,160,0.01) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
-#topbar{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,12,18,0.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd2);height:110px;display:flex;align-items:stretch;}
-.top-logo{font-family:'Orbitron',sans-serif;font-weight:700;font-size:2rem;letter-spacing:3px;padding:0 28px;display:flex;align-items:center;border-right:1px solid var(--brd2);white-space:nowrap;}
+#topbar{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,12,18,0.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd2);height:92px;display:flex;align-items:stretch;}
+.top-logo{display:none}
 .top-logo span{color:var(--accent);}
 .tabs{display:flex;flex:1;overflow:hidden;}
 .tab{flex:1;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:600;letter-spacing:0.3px;text-transform:uppercase;color:var(--mu2);cursor:pointer;border-right:1px solid var(--brd);border-bottom:4px solid transparent;transition:all .2s;text-align:center;padding:0 8px;white-space:nowrap;}
@@ -31,7 +31,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 #settbtn,#rbtn{background:transparent;border:1px solid var(--brd2);border-radius:8px;color:var(--mu3);font-family:'JetBrains Mono',monospace;font-size:1.1rem;padding:7px 14px;cursor:pointer;transition:all .2s;}
 #settbtn:hover{border-color:var(--y);color:var(--y);}
 #rbtn:hover{border-color:var(--accent);color:var(--accent);}
-.pg{padding:150px 4vw 80px;position:relative;z-index:1;width:100%;}
+.pg{padding:128px 4vw 80px;position:relative;z-index:1;width:100%;}
 .sec{margin-bottom:calc(72px * var(--spacing));}
 .sec:last-child{margin-bottom:0;}
 .sh{display:flex;align-items:center;gap:14px;margin-bottom:calc(28px * var(--spacing));cursor:pointer;user-select:none;}
@@ -270,7 +270,7 @@ const FORMULAS=[
 ];
 
 const requestedTab=new URLSearchParams(location.search).get('tab');
-let incomeData=null,timeData=null,timeDayCount=0,curTab=['overview',...ALL_TABS.map(tab=>tab.id)].includes(requestedTab)?requestedTab:'inv',mainChart=null,showManual={},openBlocks={},histChart=null;
+let incomeData=null,timeData=null,timeDayCount=0,curTab=['overview',...ALL_TABS.map(tab=>tab.id)].includes(requestedTab)?requestedTab:'overview',mainChart=null,showManual={},openBlocks={},histChart=null;
 let viewPeriod={};
 function getViewPeriod(tid){return viewPeriod[tid]||'week';}
 function setViewPeriod(tid,p){viewPeriod[tid]=p;renderPage();}
@@ -544,16 +544,16 @@ function getDphHistory(tab){
 // ── TABS ──
 function buildTabs(){
   const bar=document.getElementById('tabs-bar');bar.innerHTML='';
+  const ov=document.createElement('div');
+  ov.className='tab overview'+(curTab==='overview'?' act':'');
+  ov.style.setProperty('--tc','#f0c84e');ov.textContent='Обзор';
+  ov.onclick=()=>switchTab('overview');bar.appendChild(ov);
   TABS.forEach(t=>{
     const el=document.createElement('div');
     el.className='tab'+(t.id===curTab?' act':'');
     el.style.setProperty('--tc',t.color);el.textContent=t.name;
     el.onclick=()=>switchTab(t.id);bar.appendChild(el);
   });
-  const ov=document.createElement('div');
-  ov.className='tab overview'+(curTab==='overview'?' act':'');
-  ov.style.setProperty('--tc','#f0c84e');ov.textContent='Обзор';
-  ov.onclick=()=>switchTab('overview');bar.appendChild(ov);
 }
 function switchTab(id){curTab=id;buildTabs();renderPage();}
 function toggleBlock(key){

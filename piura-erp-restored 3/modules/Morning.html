@@ -803,12 +803,13 @@ const LEGACY_ITEM_TEXT = {
 };
 
 const DEFAULT_PREFS = {
-  theme:'light', accent:'cobalt', compact:1, scale:1, text:1, width:1640
+  theme:'dark', accent:'cobalt', compact:1, scale:1, text:1, width:1640
 };
 
 let blocksData = loadBlocks();
 let state = loadState();
 let prefs = loadPrefs();
+if(!localStorage.getItem('morn_unified_theme_v1')){prefs.theme='dark';localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));localStorage.setItem('morn_unified_theme_v1','1')}
 let editing = false;
 let sortableBlocks = null;
 let sortableItems = [];

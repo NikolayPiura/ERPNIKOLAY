@@ -155,7 +155,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .section-overview-head{padding:1rem 0 2.2rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
 .section-overview-head small{font:700 .62rem 'Space Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--text3)}
 .section-overview-head h2{font:700 3rem 'Playfair Display',serif;margin-top:.45rem}
-.section-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.3rem}
+.section-overview-grid{display:grid;grid-template-columns:1fr;gap:1.3rem;max-width:1100px;margin:0 auto}
 .section-dyn-card{border:1px solid var(--border);border-radius:var(--layout-block-radius);background:var(--surface);padding:1rem;box-shadow:var(--shadow)}
 .section-dyn-title{display:flex;align-items:baseline;gap:.7rem;padding:.35rem .55rem 1rem}.section-dyn-title b{font:700 1.4rem 'Space Mono',monospace;color:var(--accent)}.section-dyn-title span{font:700 1.25rem 'Playfair Display',serif}
 .section-dyn-card .level-block{margin:0;box-shadow:none}.section-dyn-card .level-heading{display:none}
@@ -1000,7 +1000,7 @@ function saveDynNames(a){db.__dynNames=a;persist();}
 const _origBuildTabs=buildTabs;
 
 /* ══ THEME ══ */
-let theme=localStorage.getItem('adm_theme')||'light';
+let theme=localStorage.getItem('adm_theme')||'dark';
 document.body.dataset.theme=theme;
 function syncTheme(){
   document.querySelectorAll('.theme-opt').forEach(b=>b.classList.toggle('active',b.dataset.t===theme));
@@ -1225,7 +1225,7 @@ function revealActiveTab(container,alignToStart=false){
 function buildTabs(){
   const c=document.getElementById('dynTabs');c.innerHTML='';c.classList.toggle('section-tabs',browseMode==='sections');
   if(browseMode==='sections'){
-    [{key:'цели',label:'Цели'},{key:'проги',label:'Программы'},{key:'планы',label:'Планы'}].forEach(section=>{
+    [{key:'цели',label:'Цели'},{key:'планы',label:'Планы'},{key:'проги',label:'Программы'}].forEach(section=>{
       const b=document.createElement('button');b.className='dyn-tab'+(section.key===activeSection?' active':'');b.innerHTML=`<span class="tab-num">${section.label}</span><span class="tab-name">все 8 динамик</span>`;b.addEventListener('click',()=>{activeSection=section.key;db.__activeSection=activeSection;persist();buildTabs();buildPanels()});c.appendChild(b);
     });revealActiveTab(c,true);return;
   }

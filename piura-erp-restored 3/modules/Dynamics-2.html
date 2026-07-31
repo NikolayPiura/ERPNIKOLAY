@@ -63,8 +63,9 @@
   .logo em { color:var(--muted); font-style:normal; }
   .header-sub{font:12px 'Space Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
   .header-tools{position:relative;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px}
-  .tool-btn{width:42px;height:42px;padding:0;display:grid;place-items:center;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,rgba(123,94,167,.12),rgba(0,255,157,.04));color:var(--muted);cursor:pointer;transition:.18s}
+  .tool-btn{width:42px;height:42px;padding:0;display:grid;place-items:center;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,rgba(123,94,167,.12),rgba(0,255,157,.04));color:var(--muted);cursor:pointer;transition:.18s}.tool-btn.settings-primary{width:50px;height:50px;color:var(--accent);border-color:rgba(0,255,157,.28)}
   .tool-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  #settingsBtn{width:50px;height:50px;color:var(--accent);border-color:rgba(0,255,157,.28)}
   .tool-btn:hover,.tool-btn.active{border-color:var(--accent);color:var(--accent);box-shadow:0 0 24px rgba(0,255,157,.13);transform:translateY(-2px)}
   .week-pick {
     display:flex; align-items:center; gap:14px;
@@ -279,6 +280,7 @@
   .switch-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);font:12px 'Space Mono',monospace;color:var(--muted)}.switch-row input{width:20px;height:20px;accent-color:var(--accent)}
   .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings-card{padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--bg3)}.settings-card label{display:block;margin-bottom:9px;font:11px 'Space Mono',monospace;color:var(--muted);text-transform:uppercase}.settings-card input,.settings-card select{width:100%;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text)}
   .rebalance-summary{margin-bottom:14px;padding:14px 16px;border:1px solid rgba(255,215,0,.25);border-radius:13px;background:rgba(255,215,0,.045);color:#d7d2a5;font:12px/1.6 'Space Mono',monospace}.rebalance-list{display:grid;gap:8px}.rebalance-row{display:grid;grid-template-columns:minmax(0,1fr) 115px 82px 92px;gap:9px;align-items:center;padding:11px;border:1px solid var(--border);border-radius:12px;background:var(--bg3)}.rebalance-name{font-size:13px;line-height:1.3}.rebalance-stat{color:var(--muted);font:10px/1.45 'Space Mono',monospace}.rebalance-weight{font:700 13px 'Space Mono',monospace;color:var(--gold);text-align:center}.apply-one{padding:8px;border:1px solid rgba(255,215,0,.3);border-radius:8px;background:rgba(255,215,0,.06);color:var(--gold);font:700 10px 'Space Mono',monospace;cursor:pointer}
+  #rebalanceOverlay .modal{width:min(570px,94vw);padding:25px;max-height:86vh}#rebalanceOverlay .modal h3{font-size:17px;margin-bottom:17px}#rebalanceOverlay .rebalance-list{max-height:56vh;overflow:auto;padding-right:4px}#rebalanceOverlay .rebalance-row{grid-template-columns:minmax(0,1fr) 92px 65px 75px;padding:8px;gap:7px}#rebalanceOverlay .rebalance-name{font-size:11px}#rebalanceOverlay .rebalance-stat{font-size:8px}#rebalanceOverlay .apply-one{font-size:8px;padding:7px 5px}#rebalanceOverlay .modal-btns{margin-top:14px}#rebalanceOverlay .modal-btns .btn{padding:12px;font-size:10px}
   body.compact-view{--task-density:8px}body.compact-view .sc{padding:18px 22px}body.compact-view .sc .val{font-size:48px}
   @media(max-width:900px){.app{padding:22px 18px}.header{flex-direction:column}.header-tools{width:100%;justify-content:flex-start}.scores{grid-template-columns:1fr 1fr}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 70px 120px 90px;padding-inline:14px}.logo{font-size:27px}.settings-grid{grid-template-columns:1fr}}
   @media(max-width:620px){.scores{grid-template-columns:1fr!important}.tasks-head span:nth-child(2),.t-weight{display:none}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 112px 72px}.week-pick{width:100%;gap:5px}.week-pick label{display:none}.date-open{flex:1;justify-content:center}.calendar-pop{left:0;right:auto;width:min(310px,calc(100vw - 36px))}.rebalance-row{grid-template-columns:minmax(0,1fr) 78px}.rebalance-row .rebalance-stat{display:none}}
@@ -300,8 +302,7 @@
 
   <div class="header">
     <div class="header-copy">
-      <div class="logo">PS НОМЕР ОДИН <em>//</em> НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</div>
-      <div class="header-sub">Личная система ценности действий · четверг к четвергу</div>
+      <div class="logo" id="serviceTitle">PS НОМЕР ОДИН</div>
     </div>
     <div class="header-tools">
       <button class="tool-btn" id="settingsBtn" title="Настройки" aria-label="Настройки"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-2v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.35 15a1.7 1.7 0 0 0-1.55-1.03H7.7v-2h.1a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.55V6.3h2v.09a1.7 1.7 0 0 0 1.1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.03H21v2h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
@@ -309,7 +310,6 @@
       <button class="tool-btn" id="rebalanceBtn" title="Ребалансировка" aria-label="Ребалансировка"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-4 7h8L7 7Zm10 0-4 7h8l-4-7Z"/></svg></button>
       <div class="week-pick">
         <button class="week-nav" id="prevWeek" aria-label="Предыдущая неделя">‹</button>
-        <label>ЧЕТВЕРГ</label>
         <button class="date-open" id="dateOpen" aria-haspopup="dialog" aria-expanded="false"><span id="dateLabel">—</span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></button>
         <input type="date" id="weekDate" tabindex="-1">
         <button class="week-nav" id="nextWeek" aria-label="Следующая неделя">›</button>
@@ -412,8 +412,9 @@
     <div class="settings-grid">
       <div class="settings-card"><label>Недель на графике</label><select id="setChartWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>20</option></select></div>
       <div class="settings-card"><label>Целевой максимум активных задач</label><input id="setTargetBudget" type="number" min="500" max="20000" step="25" value="5000"></div>
-      <div class="settings-card"><label>Период анализа для ребалансировки</label><select id="setAnalysisWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>24</option><option>52</option></select></div>
+      <div class="settings-card"><label>Период ребалансировки</label><select id="setAnalysisWeeks"><option value="all" selected>Вся история · свежие недели важнее</option></select></div>
       <div class="settings-card"><label>Акцент интерфейса</label><input id="setAccent" type="color" value="#00ff9d"></div>
+      <div class="settings-card"><label>Название сервиса</label><input id="setServiceTitle" type="text" maxlength="40" value="PS номер один"></div>
       <label class="switch-row"><span>Компактные строки задач</span><input type="checkbox" id="setCompact"></label>
       <label class="switch-row"><span>Показывать значения на графике</span><input type="checkbox" id="setChartValues" checked></label>
       <label class="switch-row"><span>Показывать прошлую неделю</span><input type="checkbox" id="setPrevCard" checked></label>
@@ -475,7 +476,7 @@ const HISTORY_SEED = [
 ].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
 HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
 const HISTORY_ANCHOR = '2026-05-14';
-const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:12,accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:2};
+const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:3,serviceTitle:'PS номер один'};
 let S = { tasks:[], counts:{}, history:[], nextId:300, settings:{...UI_DEFAULTS} };
 let editId = null;
 let origWeight = null; // для отслеживания изменения веса в модалке
@@ -503,7 +504,8 @@ function loadS() {
     S.tasks=Array.isArray(S.tasks)?S.tasks:JSON.parse(JSON.stringify(DEFAULTS));
     S.tasks.forEach(t=>{if(typeof t.active!=='boolean')t.active=true;if(!Number.isFinite(Number(t.targetPerWeek)))t.targetPerWeek=inferTarget(t.name)});
     const oldSettings=S.settings||{},oldBudget=Number(oldSettings.targetBudget);S.settings={...UI_DEFAULTS,...oldSettings};
-    if(Number(oldSettings.rebalanceVersion||0)<2){S.settings.targetBudget=S.tasks.filter(t=>t.active!==false).reduce((sum,t)=>sum+Number(t.w||0),0)||oldBudget||5000;S.settings.rebalanceVersion=2}
+    if(Number(oldSettings.rebalanceVersion||0)<2)S.settings.targetBudget=S.tasks.filter(t=>t.active!==false).reduce((sum,t)=>sum+Number(t.w||0),0)||oldBudget||5000;
+    if(Number(oldSettings.rebalanceVersion||0)<3){S.settings.analysisWeeks='all';S.settings.rebalanceVersion=3}
   } catch(e) {
     S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300,settings:{...UI_DEFAULTS} };
   }
@@ -731,6 +733,7 @@ function deleteTask() {
 // ─── НАСТРОЙКИ И РЕЖИМ РЕДАКТИРОВАНИЯ ───
 function applyUiSettings(){
   document.documentElement.style.setProperty('--accent',S.settings.accent||UI_DEFAULTS.accent);
+  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'PS номер один').toUpperCase();
   document.body.classList.toggle('compact-view',!!S.settings.compact);
   document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
   document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
@@ -743,6 +746,7 @@ function openSettings(){
   document.getElementById('setTargetBudget').value=S.settings.targetBudget;
   document.getElementById('setAnalysisWeeks').value=S.settings.analysisWeeks;
   document.getElementById('setAccent').value=S.settings.accent;
+  document.getElementById('setServiceTitle').value=S.settings.serviceTitle||'PS номер один';
   document.getElementById('setCompact').checked=!!S.settings.compact;
   document.getElementById('setChartValues').checked=S.settings.chartValues!==false;
   document.getElementById('setPrevCard').checked=S.settings.prevCard!==false;
@@ -751,7 +755,7 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open')}
 function saveSettings(){
-  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:+document.getElementById('setAnalysisWeeks').value,accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
+  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:'all',serviceTitle:document.getElementById('setServiceTitle').value.trim()||'PS номер один',accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
   closeSettings();render();toast('Настройки PS номер один сохранены');
 }
 function toggleEditMode(){editMode=!editMode;render();toast(editMode?'Редактирование включено':'Рабочий режим включён')}
@@ -759,10 +763,10 @@ function toggleEditMode(){editMode=!editMode;render();toast(editMode?'Редак
 // Учитываем фактические единицы, недельную норму и уже заработанные баллы.
 // Нулевое выполнение не обнуляет стратегическую цену задачи, а повышает её.
 function calculateRebalance(){
-  const active=S.tasks.filter(t=>t.active!==false),limit=Number(S.settings.analysisWeeks)||12,all=[...S.history].sort((a,b)=>a.date.localeCompare(b.date)),selected=thursdayFor(document.getElementById('weekDate').value),exists=all.some(w=>w.date===selected);
+  const active=S.tasks.filter(t=>t.active!==false),all=[...S.history].sort((a,b)=>a.date.localeCompare(b.date)),selected=thursdayFor(document.getElementById('weekDate').value),exists=all.some(w=>w.date===selected);
   if(!exists&&Object.values(S.counts||{}).some(Number))all.push({date:selected,scores:{...S.counts}});
-  const weeks=all.sort((a,b)=>a.date.localeCompare(b.date)).slice(-limit),n=Math.max(weeks.length,1),budget=Math.max(500,Number(S.settings.targetBudget)||maxPts());
-  const base=active.map(t=>{const target=Math.max(1,Number(t.targetPerWeek)||inferTarget(t.name)),units=weeks.reduce((s,w)=>s+Math.max(0,Number(w.scores?.[t.id]||0)),0),expected=n*target,rate=units/expected,earned=units*t.w;return{task:t,target,units,expected,rate,earned}}),totalEarned=base.reduce((s,x)=>s+x.earned,0)||1,totalExpectedValue=base.reduce((s,x)=>s+x.task.w*x.target,0)||1;
+  const weeks=all.sort((a,b)=>a.date.localeCompare(b.date)),n=Math.max(weeks.length,1),budget=Math.max(500,Number(S.settings.targetBudget)||maxPts()),weighted=weeks.map((week,index)=>({week,factor:Math.pow(.5,(weeks.length-1-index)/26)})),effectiveWeeks=weighted.reduce((s,x)=>s+x.factor,0)||1;
+  const base=active.map(t=>{const target=Math.max(1,Number(t.targetPerWeek)||inferTarget(t.name)),actualUnits=weeks.reduce((s,w)=>s+Math.max(0,Number(w.scores?.[t.id]||0)),0),units=weighted.reduce((s,x)=>s+Math.max(0,Number(x.week.scores?.[t.id]||0))*x.factor,0),expected=effectiveWeeks*target,rate=units/expected,earned=units*t.w;return{task:t,target,actualUnits,units,expected,rate,earned}}),totalEarned=base.reduce((s,x)=>s+x.earned,0)||1,totalExpectedValue=base.reduce((s,x)=>s+x.task.w*x.target,0)||1;
   const stats=base.map(x=>{const bounded=Math.min(1,x.rate),rarity=1+.55*Math.pow(1-bounded,1.7),expectedShare=x.task.w*x.target/totalExpectedValue,actualShare=x.earned/totalEarned,shareRatio=actualShare/Math.max(expectedShare,.0001),pointPressure=Math.max(.82,Math.min(1.16,1/Math.sqrt(Math.max(shareRatio,.35)))),raw=x.task.w*rarity*pointPressure;return{...x,raw}});
   const rawTotal=stats.reduce((s,x)=>s+x.raw,0)||1,step=5;
   let recs=stats.map(x=>({...x,recommended:Math.max(5,Math.round((budget*x.raw/rawTotal)/step)*step)}));
@@ -772,9 +776,9 @@ function calculateRebalance(){
 }
 function openRebalance(){
   rebalanceRecommendations=calculateRebalance();
-  const total=rebalanceRecommendations.reduce((s,x)=>s+x.recommended,0),weeks=Math.min(S.history.length,Number(S.settings.analysisWeeks)||12);
-  document.getElementById('rebalanceSummary').innerHTML=`Анализ: последние <b>${weeks}</b> недель. Формула сравнивает фактическое количество с личной целью задачи и учитывает уже заработанные ею баллы. Редкие задачи дорожают, регулярные — дешевеют. Общий максимум остаётся <b>${total}</b>. Это только рекомендации.`;
-  document.getElementById('rebalanceList').innerHTML=rebalanceRecommendations.map(x=>`<div class="rebalance-row"><div><div class="rebalance-name">${escHtml(x.task.name)}</div><div class="rebalance-stat">${x.units} из ${x.expected} выполнений · ${Math.round(x.rate*100)}% · ${x.earned} баллов<br>норма ${x.target} / неделю</div></div><div class="rebalance-stat">сейчас ${x.task.w}<br>→ рекомендация</div><div class="rebalance-weight">${x.recommended}</div><button class="apply-one" data-apply-weight="${x.task.id}">Применить</button></div>`).join('');
+  const total=rebalanceRecommendations.reduce((s,x)=>s+x.recommended,0),weeks=S.history.length;
+  document.getElementById('rebalanceSummary').innerHTML=`Анализируется <b>вся история: ${weeks} нед.</b> Свежие недели имеют больший вес, старые не удаляются. Текущий вес сохраняет вашу оценку важности, фактическая регулярность корректирует её. Общий максимум: <b>${total}</b>.`;
+  document.getElementById('rebalanceList').innerHTML=rebalanceRecommendations.map(x=>`<div class="rebalance-row"><div><div class="rebalance-name">${escHtml(x.task.name)}</div><div class="rebalance-stat">факт ${x.actualUnits} раз · взвешенная регулярность ${Math.round(x.rate*100)}%<br>норма ${x.target} / неделю</div></div><div class="rebalance-stat">сейчас ${x.task.w}<br>→ рекомендация</div><div class="rebalance-weight">${x.recommended}</div><button class="apply-one" data-apply-weight="${x.task.id}">Применить</button></div>`).join('');
   document.getElementById('rebalanceOverlay').classList.add('open');
 }
 function closeRebalance(){document.getElementById('rebalanceOverlay').classList.remove('open')}
