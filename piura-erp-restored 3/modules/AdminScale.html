@@ -435,12 +435,14 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
   display:flex;align-items:center;justify-content:center;transition:all .2s;
 }
 .modal-close:hover{border-color:var(--border3);color:var(--text)}
-@media(max-width:1350px){.topbar-inner{gap:.65rem;padding-inline:1.4rem}.logo{font-size:min(var(--layout-logo),2.1rem)}.browse-mode button{padding:6px 8px}.topbar-right{gap:5px}.sync-state{display:none}.dyn-tab{min-width:46px;padding-inline:6px}}
+/* Единая читаемая двухуровневая шапка ERP. */
+.topbar{background:rgba(9,11,15,.95)}.topbar-inner{height:auto;min-height:104px;padding-block:10px;display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"logo mode controls" "tabs tabs tabs";row-gap:9px}.logo{grid-area:logo}.browse-mode{grid-area:mode;justify-self:start}.dyn-tabs{grid-area:tabs;width:100%;padding-top:8px;border-top:1px solid var(--border)}.topbar-right{grid-area:controls;justify-self:end}.dyn-tab{max-width:none;min-height:42px}.tab-name{font-size:.62rem}.section-dyn-card,.level-block{box-shadow:none}.text-btn{width:40px;padding:0;border-radius:50%;font-size:1rem}.theme-pill{display:none}
+@media(max-width:1350px){.topbar-inner{gap:.65rem;padding-inline:1.4rem}.logo{font-size:min(var(--layout-logo),2.1rem)}.browse-mode button{padding:6px 8px}.topbar-right{gap:5px}.sync-state{display:none}.dyn-tab{min-width:64px;padding-inline:8px}}
 @media(max-width:1050px){.topbar-inner{height:auto;min-height:var(--layout-topbar);padding-block:8px;display:grid;grid-template-columns:auto auto 1fr;grid-template-areas:"logo mode controls" "tabs tabs tabs";column-gap:.7rem;row-gap:6px}.logo{grid-area:logo}.browse-mode{grid-area:mode}.dyn-tabs{grid-area:tabs;width:100%;max-width:none}.topbar-right{grid-area:controls;justify-self:end;background:var(--bg)}.section-overview-grid{grid-template-columns:1fr}.theme-pill{display:none}}
 @media(max-width:650px){.topbar-inner{padding:8px 1rem;grid-template-columns:1fr auto;grid-template-areas:"mode controls" "tabs tabs"}.logo{display:none}.main{padding:2rem 1rem 5rem}.section-overview-head h2{font-size:2.2rem}.section-dyn-card{padding:.55rem}.browse-mode{position:static;justify-self:start}.dyn-tabs{max-width:none;gap:2px}.dyn-tabs:not(.section-tabs) .dyn-tab,.dyn-tabs.section-tabs .dyn-tab{flex:1 1 0;min-width:0;max-width:none;padding-inline:4px}.dyn-tabs .tab-name{display:none}.text-btn{display:none}}
 </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -457,7 +459,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
         <button class="theme-opt" data-t="dark">◐ тень</button>
       </div>
       <span class="sync-state" id="syncState">снимок сохранён</span>
-      <button class="text-btn" id="showAllToggle">Показать больше</button>
+      <button class="text-btn" id="showAllToggle" title="Показать больше" aria-label="Показать больше">＋</button>
       <button class="icon-btn" id="editToggle">✎<span class="tip">Режим редактирования</span></button>
       <button class="icon-btn" id="settingsBtn">⚙<span class="tip">Настройки</span></button>
     </div>
@@ -837,7 +839,7 @@ function applyDoneColors(){
 
 /* ══ LAYOUT SETTINGS ══ */
 const LAYOUT_DEFAULTS={
-  maxw:'1400px',pad:'3rem',font:'18px',topbar:'88px',
+  maxw:'1400px',pad:'3rem',font:'16px',topbar:'88px',
   heroName:'4rem',heroNum:'7rem',blockGap:'1.8rem',
   blockPad:'1.3rem 2rem',radius:'18px',levelName:'1.55rem'
 };
@@ -1000,7 +1002,7 @@ function saveDynNames(a){db.__dynNames=a;persist();}
 const _origBuildTabs=buildTabs;
 
 /* ══ THEME ══ */
-let theme=localStorage.getItem('adm_theme')||'dark';
+let theme='dark';localStorage.setItem('adm_theme','dark');
 document.body.dataset.theme=theme;
 function syncTheme(){
   document.querySelectorAll('.theme-opt').forEach(b=>b.classList.toggle('active',b.dataset.t===theme));
@@ -1054,7 +1056,7 @@ function syncViewControls(){
   document.getElementById('viewLimit').value=String(s.limit);
   document.getElementById('viewHeroDef').value=s.heroDef?'1':'0';
   document.getElementById('viewHeroNum').value=s.heroNum?'1':'0';
-  document.getElementById('showAllToggle').textContent=s.expandedAll?'Показать меньше':'Показать больше';
+  const toggle=document.getElementById('showAllToggle'),label=s.expandedAll?'Показать меньше':'Показать больше';toggle.textContent=s.expandedAll?'−':'＋';toggle.title=label;toggle.setAttribute('aria-label',label);
 }
 ['viewLimit','viewHeroDef','viewHeroNum'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
   const s=getViewSettings();
@@ -1416,7 +1418,7 @@ function makeBlock(dynId, lv){
     if(visibleCount>limit){
       const more=document.createElement('button');
       more.className='block-more';
-      more.textContent=isBlockExpanded(dynId,lv.key)?'Показать меньше':`Показать ещё ${visibleCount-limit}`;
+      const expanded=isBlockExpanded(dynId,lv.key),moreLabel=expanded?'Показать меньше':`Показать ещё ${visibleCount-limit}`;more.textContent=expanded?'−':`＋ ${visibleCount-limit}`;more.title=moreLabel;more.setAttribute('aria-label',moreLabel);
       more.addEventListener('click',()=>{setBlockExpanded(dynId,lv.key,!block.classList.contains('block-expanded'));buildPanels();});
       block.appendChild(more);
     }

@@ -277,7 +277,7 @@ function setViewPeriod(tid,p){viewPeriod[tid]=p;renderPage();}
 
 // ── SETTINGS ──
 function defaultSettings(){
-  return{targetDph:500,logoText:'ПЮ',accent:'#3ddba0',fontSizeVal:50,compactVal:50,
+  return{targetDph:500,logoText:'ПЮ',accent:'#3ddba0',fontSizeVal:22,compactVal:50,
     fontFamily:'inter',tabOrder:ALL_TABS.map(t=>t.id),
     incomePreset:'12m',customStart:{month:0,year:2026},formula:'avg'};
 }
@@ -287,6 +287,10 @@ function loadSettings(){
 }
 function saveSettings(s){localStorage.setItem('pu_settings',JSON.stringify(s));}
 let SETTINGS=loadSettings();
+if(!localStorage.getItem('pu_font_default_v2')){
+  if(Number(SETTINGS.fontSizeVal)===50)SETTINGS.fontSizeVal=22;
+  localStorage.setItem('pu_font_default_v2','1');saveSettings(SETTINGS);
+}
 
 function sliderToFontPx(v){return 16+Math.round((v/100)*36);}
 function sliderToSpacing(v){return 0.5+((v/100)*1.3);}
@@ -791,7 +795,7 @@ async function loadAll(){
   await Promise.all([loadIncome(),loadTimeData()]);
   renderPage();
 }
-applySettings();buildTabs();
+applySettings();buildTabs();renderPage();
 try{const i=JSON.parse(localStorage.getItem(CACHE_KEY+'_income')||'null'),t=JSON.parse(localStorage.getItem(CACHE_KEY+'_time')||'null');if(i)incomeData=i.data;if(t){timeData=t.data;timeDayCount=t.days}if(i||t)renderPage()}catch(e){}
 loadAll();setInterval(loadAll,5*60*1000);
 </script>

@@ -21,7 +21,7 @@
   --green: #22C55E;
   --red:   #EF4444;
 }
-html { font-size: 20px; }
+html { font-size: 16px; }
 body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
 
 /* ══ HERO ══ */
@@ -399,8 +399,12 @@ tr:hover td { background: var(--bg); }
 }
 .btn-create:hover { filter: brightness(1.1); }
 :root{--bg:#0a0c12;--white:#11141c;--s2:#171b25;--blue:#5b9dff;--lime:#3ddba0;--ink:#d8dee8;--muted:#6b7990;--bord:rgba(255,255,255,.09);--green:#3ddba0;--red:#ff6b85;--r:16px}body{background-image:linear-gradient(rgba(61,219,160,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(61,219,160,.012) 1px,transparent 1px);background-size:60px 60px}.btn-today{color:#08110e}.modal-overlay{background:rgba(0,0,0,.82)!important;backdrop-filter:blur(8px)}
+.topbar{min-height:68px;padding:14px 3rem;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,12,18,.94);backdrop-filter:blur(18px)}
+.hero{padding:2.1rem 3rem 2rem;background:linear-gradient(130deg,rgba(91,157,255,.045),transparent 44%);border-bottom:1px solid rgba(255,255,255,.08)}.hero-big{font-size:4.4rem;color:#6ba3ff}.content{width:min(1500px,100%);margin:0 auto;padding:2rem 3rem 4rem}
+.entry-card,.chart-card,.hist-card{border-width:1px;background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(17,20,28,.96));box-shadow:none}.entry-card:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.18)}.card-head{padding:1.15rem 1.25rem}.card-cat-label{font-size:.64rem}.card-time{font-size:2rem}.card-icon{width:2.8rem;height:2.8rem}
+.chart-card{min-height:300px}.hist-top{background:rgba(255,255,255,.018)}.hist-toggle{border-width:1px}.btn-export,.btn-sync,.btn-today{border-radius:9px}
 @media(max-width:1100px){.entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content{padding-inline:2rem}}
-@media(max-width:700px){.entry-grid{grid-template-columns:1fr}.content{padding-inline:1rem}}
+@media(max-width:700px){.entry-grid,.charts-row{grid-template-columns:1fr}.content,.hero,.topbar{padding-inline:1rem}.hero-big{font-size:3.2rem}}
 </style>
 </head>
 <body>

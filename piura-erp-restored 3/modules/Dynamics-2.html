@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PS номер один // НЕДЕЛЬНЫЙ РЕЗУЛЬТАТ</title>
+<title>ПС номер один</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -302,7 +302,7 @@
 
   <div class="header">
     <div class="header-copy">
-      <div class="logo" id="serviceTitle">PS НОМЕР ОДИН</div>
+      <div class="logo" id="serviceTitle">ПС НОМЕР ОДИН</div>
     </div>
     <div class="header-tools">
       <button class="tool-btn" id="settingsBtn" title="Настройки" aria-label="Настройки"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-2v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.35 15a1.7 1.7 0 0 0-1.55-1.03H7.7v-2h.1a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.55V6.3h2v.09a1.7 1.7 0 0 0 1.1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.03H21v2h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
@@ -408,13 +408,13 @@
 
 <div class="overlay" id="settingsOverlay">
   <div class="modal">
-    <h3>// НАСТРОЙКИ PS НОМЕР ОДИН</h3>
+    <h3>// НАСТРОЙКИ ПС НОМЕР ОДИН</h3>
     <div class="settings-grid">
       <div class="settings-card"><label>Недель на графике</label><select id="setChartWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>20</option></select></div>
       <div class="settings-card"><label>Целевой максимум активных задач</label><input id="setTargetBudget" type="number" min="500" max="20000" step="25" value="5000"></div>
       <div class="settings-card"><label>Период ребалансировки</label><select id="setAnalysisWeeks"><option value="all" selected>Вся история · свежие недели важнее</option></select></div>
       <div class="settings-card"><label>Акцент интерфейса</label><input id="setAccent" type="color" value="#00ff9d"></div>
-      <div class="settings-card"><label>Название сервиса</label><input id="setServiceTitle" type="text" maxlength="40" value="PS номер один"></div>
+      <div class="settings-card"><label>Название сервиса</label><input id="setServiceTitle" type="text" maxlength="40" value="ПС номер один"></div>
       <label class="switch-row"><span>Компактные строки задач</span><input type="checkbox" id="setCompact"></label>
       <label class="switch-row"><span>Показывать значения на графике</span><input type="checkbox" id="setChartValues" checked></label>
       <label class="switch-row"><span>Показывать прошлую неделю</span><input type="checkbox" id="setPrevCard" checked></label>
@@ -476,7 +476,7 @@ const HISTORY_SEED = [
 ].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
 HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
 const HISTORY_ANCHOR = '2026-05-14';
-const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:3,serviceTitle:'PS номер один'};
+const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:4,serviceTitle:'ПС номер один'};
 let S = { tasks:[], counts:{}, history:[], nextId:300, settings:{...UI_DEFAULTS} };
 let editId = null;
 let origWeight = null; // для отслеживания изменения веса в модалке
@@ -506,6 +506,7 @@ function loadS() {
     const oldSettings=S.settings||{},oldBudget=Number(oldSettings.targetBudget);S.settings={...UI_DEFAULTS,...oldSettings};
     if(Number(oldSettings.rebalanceVersion||0)<2)S.settings.targetBudget=S.tasks.filter(t=>t.active!==false).reduce((sum,t)=>sum+Number(t.w||0),0)||oldBudget||5000;
     if(Number(oldSettings.rebalanceVersion||0)<3){S.settings.analysisWeeks='all';S.settings.rebalanceVersion=3}
+    if(Number(oldSettings.rebalanceVersion||0)<4){if(['PS1','PS №1','PS номер один','PS НОМЕР ОДИН'].includes(S.settings.serviceTitle))S.settings.serviceTitle='ПС номер один';S.settings.rebalanceVersion=4}
   } catch(e) {
     S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300,settings:{...UI_DEFAULTS} };
   }
@@ -619,7 +620,7 @@ function renderChart() {
   const area=line+` L ${pts[pts.length-1][0]} ${H-B} L ${pts[0][0]} ${H-B} Z`;
   const grid=[0,.25,.5,.75,1].map(r=>{const gy=y(mx*r);return `<line class="chart-grid" x1="${L}" x2="${W-R}" y1="${gy}" y2="${gy}"/><text class="chart-axis" x="${L-10}" y="${gy+4}">${Math.round(mx*r)}</text>`}).join('');
   const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов">${S.settings.chartValues?`<text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text>`:''}<circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
-  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов PS номер один"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${S.settings.accent}" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
+  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов ПС номер один"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${S.settings.accent}" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
   el.querySelectorAll('[data-date]').forEach(g=>{const open=()=>{const idx=S.history.findIndex(w=>w.date===g.dataset.date);if(idx>=0)loadWeek(idx)};g.addEventListener('click',open);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
 }
 
@@ -733,7 +734,7 @@ function deleteTask() {
 // ─── НАСТРОЙКИ И РЕЖИМ РЕДАКТИРОВАНИЯ ───
 function applyUiSettings(){
   document.documentElement.style.setProperty('--accent',S.settings.accent||UI_DEFAULTS.accent);
-  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'PS номер один').toUpperCase();
+  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'ПС номер один').toUpperCase();
   document.body.classList.toggle('compact-view',!!S.settings.compact);
   document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
   document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
@@ -746,7 +747,7 @@ function openSettings(){
   document.getElementById('setTargetBudget').value=S.settings.targetBudget;
   document.getElementById('setAnalysisWeeks').value=S.settings.analysisWeeks;
   document.getElementById('setAccent').value=S.settings.accent;
-  document.getElementById('setServiceTitle').value=S.settings.serviceTitle||'PS номер один';
+  document.getElementById('setServiceTitle').value=S.settings.serviceTitle||'ПС номер один';
   document.getElementById('setCompact').checked=!!S.settings.compact;
   document.getElementById('setChartValues').checked=S.settings.chartValues!==false;
   document.getElementById('setPrevCard').checked=S.settings.prevCard!==false;
@@ -755,8 +756,8 @@ function openSettings(){
 }
 function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open')}
 function saveSettings(){
-  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:'all',serviceTitle:document.getElementById('setServiceTitle').value.trim()||'PS номер один',accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
-  closeSettings();render();toast('Настройки PS номер один сохранены');
+  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:'all',serviceTitle:document.getElementById('setServiceTitle').value.trim()||'ПС номер один',accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
+  closeSettings();render();toast('Настройки ПС номер один сохранены');
 }
 function toggleEditMode(){editMode=!editMode;render();toast(editMode?'Редактирование включено':'Рабочий режим включён')}
 

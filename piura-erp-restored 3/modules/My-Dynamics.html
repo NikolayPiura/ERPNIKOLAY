@@ -318,6 +318,15 @@
     color:#ffd0d0; font-size:14px; font-weight:600; cursor:pointer;
   }
   .reset-yes:hover{ background:#a02828; }
+/* Визуальное объединение с «Эффективностью». Ключи данных не меняются. */
+:root{--bg:#07090e;--panel:#0d1019;--panel-2:#111620;--border:rgba(255,255,255,.085);--text:#dce4ef;--text-dim:#6b7990;--accent:#3ddba0}
+body{background-image:linear-gradient(rgba(61,219,160,.014) 1px,transparent 1px),linear-gradient(90deg,rgba(61,219,160,.014) 1px,transparent 1px);background-size:56px 56px;color:var(--text)}
+.page{max-width:1600px;padding:28px 32px 70px}.main-tabs{position:sticky;top:0;z-index:20;padding-top:10px;background:rgba(7,9,14,.95);backdrop-filter:blur(16px)}.main-tab-btn{font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;font-size:12px}.main-tab-btn.active{color:#fff;border-bottom-color:#3ddba0}
+.topbar{margin:20px 0}.topbar h1{font-size:30px;letter-spacing:-.03em}.topbar .note{color:#6b7990}.controls button{background:#111620;border-color:rgba(255,255,255,.09);border-radius:10px;color:#aeb9c8}.controls button:hover{border-color:#3ddba0;color:#fff}
+#rm-table-scroll{border-color:rgba(255,255,255,.09);border-radius:16px;background:#0d1019;box-shadow:0 22px 70px rgba(0,0,0,.18)}#grid thead th,#grid thead th.corner{background:#111620;color:#8593a7}#grid tbody td.label{background:#0f141d}#grid tr.dyn-row td,#grid tr.dyn-row td.label{background:linear-gradient(90deg,rgba(61,219,160,.11),#111620);color:#63e0b1}#grid td.cell{border-right-color:rgba(255,255,255,.045)}#grid td.nextstep-cell{background:rgba(61,219,160,.035);border-left-color:#3ddba0;color:#b8d8ca}
+.grad-swatch{border:1px solid rgba(255,255,255,.08)}.chart-card{background:#0d1019;border-color:rgba(255,255,255,.085);box-shadow:none}.col-header{background:#111620;border-color:rgba(255,255,255,.085)}.item{border-color:rgba(255,255,255,.08)}
+.modal{background:#0d1019;border-color:rgba(255,255,255,.11);border-radius:18px}.cell-popover{background:#111620;border-color:rgba(255,255,255,.11)}
+@media(max-width:850px){.page{padding:16px 14px 50px}.topbar h1{font-size:24px}.columns{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
