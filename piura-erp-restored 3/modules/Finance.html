@@ -127,6 +127,11 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .kc,.mc,.cb,.plan,.pm{border-color:rgba(255,255,255,.085);border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.022),#0d1019);box-shadow:none}.kc{padding:23px 25px}.kv{font-size:44px}.kl{font-size:11px}.kb{font-size:11px;border-radius:7px}.m12{gap:10px}.mc{padding:15px}.mname{font-size:12px}.minc{font-size:21px}.mexp{font-size:13px}.mpct{font-size:11px}.cb{padding:20px}.plan{padding:25px 28px}.plan-big{font-size:42px}.plan-pct{font-size:40px}.en{font-size:15px}.ea{font-size:14px}
 @media(max-width:1050px){.hdr-name{font-size:40px}.k3{grid-template-columns:1fr}.m12{grid-template-columns:repeat(3,1fr)}.flow,.exp-wrap,.src2{grid-template-columns:1fr}.pm4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.pg{padding:76px 16px 44px}.hdr{display:block}.hdr-r{text-align:left;margin-top:14px}.hdr-name{font-size:30px}.m12{grid-template-columns:repeat(2,1fr)}}
+  #flowSection{display:none!important}
+  :root{--bg:#090c12;--card:#11151e;--card2:#171c27;--line:rgba(255,255,255,.1);--text:#f4f7fb;--muted:#8190a6;--green:#42dda5;--blue:#5b9dff;--purple:#9a72ed;--yellow:#ffcc4a}
+  body{background:radial-gradient(circle at 18% 0,rgba(66,221,165,.05),transparent 32%),#090c12;color:var(--text)}
+  .pg{max-width:1720px;padding:42px 52px 96px}.hdr{min-height:112px;padding:26px 30px;border:1px solid var(--line);border-radius:22px;background:#11151e}.hdr-name{font-size:30px}.sec{margin-top:38px}.sh{margin-bottom:18px}.st{font-size:18px}.kc,.cb,.month{border-color:var(--line);background:#11151e;border-radius:18px}.kc{min-height:154px;padding:26px}.kv{font-size:36px}.exp-wrap,.src2{gap:20px}.exp-wrap>.cb,.src2>.cb{min-height:360px;padding:26px}.m12{gap:12px}.month{min-height:115px;padding:18px}
+  @media(max-width:1000px){.pg{padding:24px}.k3,.exp-wrap,.src2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -163,7 +168,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="m12" id="mg"></div>
   </div>
 
-  <div class="sec">
+  <div class="sec" id="flowSection">
     <div class="sh"><span class="sn">// 03</span><span class="st">ДИНАМИКА ПОТОКОВ</span><div class="sl"></div></div>
     <div class="flow">
       <div class="cb">

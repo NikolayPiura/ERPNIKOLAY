@@ -732,7 +732,7 @@ function renderOverview(){
     const data=getTabData(tab);
     totalDphSum+=data.dph;totalIncomeAll+=data.total;
     return{tab,data};
-  }).sort((a,b)=>b.data.avgMonthlyIncome-a.data.avgMonthlyIncome||b.data.total-a.data.total||b.data.dph-a.data.dph);
+  }).sort((a,b)=>b.data.dph-a.data.dph||b.data.avgMonthlyIncome-a.data.avgMonthlyIncome||b.data.total-a.data.total);
   const avgDph=Math.round(totalDphSum/ALL_TABS.length);
 
   const summary=document.createElement('div');summary.className='ov-summary';

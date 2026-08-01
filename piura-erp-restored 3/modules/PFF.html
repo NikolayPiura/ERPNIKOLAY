@@ -130,6 +130,11 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
 @keyframes sp{to{transform:rotate(360deg)}}
 .ltxt{font-size:15px;color:var(--text2)}
 .err-box{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:16px;color:var(--red);font-size:13px}
+  /* Unified ERP visual language: spacious, calm and readable. */
+  :root{--bg:#090c12;--bg2:#11151e;--bg3:#171c27;--border:rgba(255,255,255,.1);--text:#f4f7fb;--text2:#aab5c6;--text3:#718096;--green:#42dda5;--blue:#5b9dff;--purple:#9a72ed;--gold:#ffcc4a}
+  body{background:radial-gradient(circle at 18% 0,rgba(66,221,165,.055),transparent 32%),#090c12;color:var(--text)}
+  .wrap{max-width:1720px;padding:42px 52px 96px}.header{padding:26px 30px;border:1px solid var(--border);border-radius:22px;background:#11151e}.fund-name{font-size:34px}.metrics-4{gap:18px}.metric,.chart-card,.pie-card,.type-card{border-color:var(--border);background:#11151e;border-radius:18px}.metric{min-height:150px;padding:26px}.metric-val{font-size:32px}.charts-4{gap:18px}.chart-card,.pie-card{min-height:310px;padding:24px}.sec-title{margin:42px 0 18px;font-size:17px}.type-head{min-height:72px;padding:18px 22px;font-size:16px}.asset-row{min-height:62px;font-size:14px}
+  @media(max-width:1000px){.wrap{padding:24px}.charts-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -212,11 +217,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     <div class="types-list" id="tlist"></div>
   </div>
 
-  <!-- Ребалансировка -->
-  <div>
-    <div class="sec-title">Ребалансировка</div>
-    <div class="reb-list" id="rlist"></div>
-  </div>
+  <div class="reb-list" id="rlist" hidden></div>
 
   <div style="text-align:center;padding:12px 0;font-size:11px;color:var(--text3)">
     Piura Family Found · Данные из Google Sheets · Автообновление каждые 5 мин
