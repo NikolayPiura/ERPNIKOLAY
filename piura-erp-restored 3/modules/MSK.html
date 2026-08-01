@@ -125,7 +125,7 @@ html,body{background:var(--bg);color:var(--text);font-family:-apple-system,Blink
     <div class="sp-title">⚙️ Настройки <button class="sp-close" onclick="closeSP()">✕</button></div>
     <h3>🎯 Цели по типам (₽)</h3>
     <div id="gForm"></div>
-    <div class="sp-hint">Цели используются в блоке ребалансировки.</div>
+    <div class="sp-hint">Цели используются как ориентиры капитала для каждого класса активов.</div>
   </div>
 </div>
 
@@ -333,6 +333,9 @@ function renderTypes(td,total){
 function toggleType(id){document.getElementById('tc_'+id).classList.toggle('open');}
 
 function renderReb(td,total){
+  const list=document.getElementById('rlist');
+  if(list){list.hidden=true;list.replaceChildren();}
+  return;
   const goals=loadGoals();
   const gTot=TYPES.reduce((a,t)=>a+(parseFloat(goals[t.id])||0),0);
   document.getElementById('rlist').innerHTML=TYPES.map(t=>{
