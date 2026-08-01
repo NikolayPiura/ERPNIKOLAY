@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ПС номер один</title>
+<title>ПС №1</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -306,7 +306,7 @@
 
   <div class="header">
     <div class="header-copy">
-      <div class="logo" id="serviceTitle">ПС НОМЕР ОДИН</div>
+      <div class="logo" id="serviceTitle">ПС №1</div>
     </div>
     <div class="header-tools">
       <button class="tool-btn" id="settingsBtn" title="Настройки" aria-label="Настройки"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-2v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.35 15a1.7 1.7 0 0 0-1.55-1.03H7.7v-2h.1a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.55V6.3h2v.09a1.7 1.7 0 0 0 1.1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.03H21v2h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
@@ -480,7 +480,7 @@ const HISTORY_SEED = [
 ].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
 HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
 const HISTORY_ANCHOR = '2026-05-14';
-const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:4,serviceTitle:'ПС номер один'};
+const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:5,serviceTitle:'ПС №1'};
 let S = { tasks:[], counts:{}, history:[], nextId:300, settings:{...UI_DEFAULTS} };
 let editId = null;
 let origWeight = null; // для отслеживания изменения веса в модалке
@@ -510,7 +510,7 @@ function loadS() {
     const oldSettings=S.settings||{},oldBudget=Number(oldSettings.targetBudget);S.settings={...UI_DEFAULTS,...oldSettings};
     if(Number(oldSettings.rebalanceVersion||0)<2)S.settings.targetBudget=S.tasks.filter(t=>t.active!==false).reduce((sum,t)=>sum+Number(t.w||0),0)||oldBudget||5000;
     if(Number(oldSettings.rebalanceVersion||0)<3){S.settings.analysisWeeks='all';S.settings.rebalanceVersion=3}
-    if(Number(oldSettings.rebalanceVersion||0)<4){if(['PS1','PS №1','PS номер один','PS НОМЕР ОДИН'].includes(S.settings.serviceTitle))S.settings.serviceTitle='ПС номер один';S.settings.rebalanceVersion=4}
+    if(Number(oldSettings.rebalanceVersion||0)<5){if(['PS1','PS №1','PS номер один','PS НОМЕР ОДИН','ПС номер один'].includes(S.settings.serviceTitle))S.settings.serviceTitle='ПС №1';S.settings.rebalanceVersion=5}
   } catch(e) {
     S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300,settings:{...UI_DEFAULTS} };
   }
@@ -738,7 +738,7 @@ function deleteTask() {
 // ─── НАСТРОЙКИ И РЕЖИМ РЕДАКТИРОВАНИЯ ───
 function applyUiSettings(){
   document.documentElement.style.setProperty('--accent',S.settings.accent||UI_DEFAULTS.accent);
-  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'ПС номер один').toUpperCase();
+  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'ПС №1').toUpperCase();
   document.body.classList.toggle('compact-view',!!S.settings.compact);
   document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
   document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
