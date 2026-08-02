@@ -558,8 +558,9 @@ let chartDynInstance = null, chartYearInstance = null;
 function valueColor(v){
   if (v === null || v === undefined || v === '') return null;
   const val = Math.max(0, Math.min(10, Number(v)));
-  const hue = (val / 10) * 120;
-  return 'hsl(' + Math.round(hue) + ', 62%, 40%)';
+  if (val <= 3) return `color-mix(in srgb, var(--erp-primary, #4F8CFF) ${45 + val * 12}%, var(--erp-raised, #151D29))`;
+  if (val <= 7) return `color-mix(in srgb, var(--erp-secondary, #6D5DFB) ${48 + (val - 3) * 10}%, var(--erp-raised, #151D29))`;
+  return `color-mix(in srgb, var(--erp-info, #2AC4FF) ${62 + (val - 7) * 10}%, var(--erp-raised, #151D29))`;
 }
 
 /* =========================================================
@@ -583,9 +584,42 @@ function defaultCells(){
   }));
   return c;
 }
+/*
+ * Verified historical snapshot recovery (2022–2025).
+ * These values come from the user's complete roadmap screenshot. The migration
+ * is deliberately additive: a value already present in localStorage always wins.
+ */
+const HISTORICAL_CELLS_V1 = {
+  'd1-0':[5,5,6,7], 'd1-1':[6,6,3,8], 'd1-2':[2,3,4,5],
+  'd1-3':[5,5,5,6], 'd1-4':[2,3,5,6], 'd1-5':[3,3,4,6],
+  'd1-6':[3,4,5,7], 'd1-7':[1,1,4,5], 'd1-8':[4,4,5,5],
+  'd1-9':[4,4,4,4], 'd1-10':[4,4,5,5], 'd1-11':[6,5,4,4],
+  'd1-12':[4,4,4,4],
+  'd2-0':[4,4,6,6], 'd2-1':[4,4,4,5], 'd2-2':[5,6,6,6],
+  'd2-3':[0,0,0,0], 'd2-4':[3,3,2,2],
+  'd3-0':[0,1,3,6], 'd3-1':[0,0,3,5], 'd3-2':[5,1,3,8],
+  'd3-3':[0,0,0,6], 'd3-4':[0,2,4,5], 'd3-5':[1,2,4,7],
+  'd3-6':[3,3,3,4], 'd3-12':[0,3,2,2], 'd3-14':[2,1,1,6],
+  'd3-15':[1,1,2,4],
+  'd4-1':[0,0,1,0], 'd4-4':[0,0,0,0],
+  'd5-0':[0,1,3,7]
+};
+function historicalCells(){
+  const out = {};
+  Object.entries(HISTORICAL_CELLS_V1).forEach(([id, values]) => {
+    values.forEach((n, index) => { out[id + '_' + (2022 + index)] = { n, comment:'' }; });
+  });
+  return out;
+}
 function loadCells(){
-  try{ const raw = localStorage.getItem(CELLS_KEY); rmCells = raw ? JSON.parse(raw) : defaultCells(); }
-  catch(e){ rmCells = defaultCells(); }
+  try{
+    const raw = localStorage.getItem(CELLS_KEY);
+    const stored = raw ? JSON.parse(raw) : {};
+    rmCells = { ...defaultCells(), ...historicalCells(), ...stored };
+    /* Persist the merged snapshot so recovered history survives future builds. */
+    localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells));
+  }
+  catch(e){ rmCells = { ...defaultCells(), ...historicalCells() }; }
 }
 function saveCells(){ localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells)); }
 
@@ -1174,9 +1208,9 @@ function buildCharts(){
   chartYearInstance = new Chart(document.getElementById('chartYears'), {
     type: 'line',
     data: { labels: YEARS, datasets: [{
-      label:'Средний балл', data: yearAverages, borderColor:'#d8b34a',
-      backgroundColor:'rgba(216,179,74,0.15)', tension:0.3, spanGaps:true,
-      pointRadius:5, pointBackgroundColor:'#d8b34a'
+      label:'Средний балл', data: yearAverages, borderColor:'#4F8CFF',
+      backgroundColor:'rgba(79,140,255,0.15)', tension:0.3, spanGaps:true,
+      pointRadius:5, pointBackgroundColor:'#4F8CFF'
     }]},
     options: {
       scales: { y:{ min:0, max:10, ticks:{ color:'#888' }, grid:{ color:'#222' } }, x:{ ticks:{ color:'#888' }, grid:{ display:false } } },

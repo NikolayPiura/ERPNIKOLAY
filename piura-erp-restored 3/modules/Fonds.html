@@ -62,7 +62,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
 /* TREE */
 .tree-wrap{width:100%;display:flex;flex-direction:column;gap:0}
 .fund-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;width:100%}
-.conn-row{position:relative;height:60px;pointer-events:none;width:100%}
+.conn-row{display:none;position:relative;height:0;pointer-events:none;width:100%}
 .conn-row svg{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible}
 
 /* FUND CARD */
@@ -601,7 +601,7 @@ function renderDonations(data){
   currentDonationData=data;const latest=Number(data.latest)||0,previous=Number(data.previous)||0,change=previous?(latest-previous)/previous*100:0,people=data.people||[],active=people.filter(person=>person.latest>0),newPeople=active.filter(person=>person.previous===0),recurring=active.filter(person=>person.category==='subscriptions'||person.category==='monthly');document.getElementById('donCurrent').textContent=fPortfolioMoney(latest);document.getElementById('donPrevious').textContent=fPortfolioMoney(previous);document.getElementById('donFriend').textContent=fPortfolioMoney(latest);document.getElementById('donChange').textContent=(change>=0?'+':'')+change.toFixed(1)+'%';document.getElementById('donActive').textContent=active.length;document.getElementById('donCurrentLabel').textContent=data.latestLabel||'Текущий месяц';document.getElementById('donPreviousLabel').textContent=data.previousLabel||'Предыдущий месяц';document.getElementById('donFriendMeta').textContent=`${active.length} активных людей · ${fPortfolioMoney(latest)} за ${data.latestLabel}`;document.getElementById('donPeople').textContent=people.length;document.getElementById('donNew').textContent=newPeople.length;document.getElementById('donRecurring').textContent=recurring.length;document.getElementById('donPrevHead').textContent=data.previousLabel||'Предыдущий';document.getElementById('donLatestHead').textContent=data.latestLabel||'Текущий';
   const months=data.months||[],max=Math.max(...months.map(month=>month.amount),1);document.getElementById('donTrend').innerHTML=months.map(month=>`<div class="trend-col" title="${escapeHtml(month.label)}: ${fPortfolioMoney(month.amount)}"><div class="trend-value">${fPortfolioMoney(month.amount)}</div><div class="trend-bar" style="height:${Math.max(3,month.amount/max*155)}px"></div><div class="trend-label">${escapeHtml(month.label)}</div></div>`).join('');renderDonationFunds(latest);renderDonationPeople();
 }
-function renderDonationFunds(friendLive=0){document.querySelectorAll('[data-donation]').forEach(card=>{const key=card.dataset.donation,prefs=directionSetting(key),amount=key==='friend'?friendLive:Number(prefs.donations)||0,meta=card.querySelector('small');card.style.setProperty('--direction-color',ENDOWMENT_COLORS[key]);card.querySelector('strong').textContent=fPortfolioMoney(amount);meta.innerHTML=`<div class="direction-kpis"><div class="direction-kpi"><span>Поступило за месяц</span><b>${fPortfolioMoney(amount)}</b></div><div class="direction-kpi"><span>Продукт за месяц</span><b>${Number(prefs.productMonth)||0}</b></div><div class="direction-kpi"><span>Продукт всего</span><b>${Number(prefs.productTotal)||0}</b></div><div class="direction-kpi"><span>Источник</span><b>${key==='friend'?'Google Sheets':'Вручную'}</b></div></div>`})}
+function renderDonationFunds(friendLive=0){document.querySelectorAll('[data-donation]').forEach(card=>{const key=card.dataset.donation,prefs=directionSetting(key),amount=key==='friend'?friendLive:Number(prefs.donations)||0,meta=card.querySelector('small');card.style.setProperty('--direction-color',ENDOWMENT_COLORS[key]);card.querySelector('strong').textContent=fPortfolioMoney(amount);meta.innerHTML=`<div class="direction-kpis"><div class="direction-kpi"><span>Поступило за месяц</span><b>${fPortfolioMoney(amount)}</b></div><div class="direction-kpi"><span>Продукт за месяц</span><b>${Number(prefs.productMonth)||0}</b></div><div class="direction-kpi"><span>Продукт всего</span><b>${Number(prefs.productTotal)||0}</b></div></div>`})}
 function toggleDonationDetails(button){const view=document.getElementById('view-donations'),open=view.classList.toggle('details-open');button.textContent=open?'Скрыть подписчиков и поступления':'Открыть подписчиков и поступления'}
 async function loadEndowment(){
   const rows=await sheetCsv('1Vp8wO6faecINu4BBhk0Y18i6nW3fY6BjXCrcVOy7Zuk','2026 (ЭНД)'),groups={},positions=[];Object.keys(ENDOWMENT_NAMES).forEach(key=>groups[key]={total:0,monthly:0,rows:0,positions:[]});rows.forEach(row=>{const name=String(row[0]||'').trim(),fund=String(row[1]||'').trim(),key=endowmentKey(fund);if(!name||!key||name.toUpperCase().includes('ИТОГО'))return;const item={name,fund,key,total:sheetNumber(row[2]),rate:sheetNumber(row[3]),monthly:sheetNumber(row[4]),period:String(row[5]||'').trim(),date:String(row[6]||'').trim()};groups[key].total+=item.total;groups[key].monthly+=item.monthly;groups[key].rows++;groups[key].positions.push(item);positions.push(item)});const total=Object.values(groups).reduce((sum,group)=>sum+group.total,0),monthly=Object.values(groups).reduce((sum,group)=>sum+group.monthly,0),data={groups,positions,total,monthly,at:Date.now()};if(!total)throw new Error('В таблице нет сумм');localStorage.setItem('piura_cache_endowment_v2',JSON.stringify(data));renderEndowment(data);return data;
@@ -717,7 +717,7 @@ function makeCard(f){
   hov.append(bE,bA,bD);div.appendChild(hov);
 
   const nm=document.createElement('div');nm.className='fc-name';nm.textContent=f.name;div.appendChild(nm);
-  if(f.tag){const tg=document.createElement('div');tg.className='fc-tag';tg.style.background=tc.bg;tg.style.color=tc.c;tg.textContent=f.tag;div.appendChild(tg);}
+  /* Classification stays in the detailed portfolio, not in the overview card. */
 
   // META CHIPS: risk + currency
   const metaRow=document.createElement('div');metaRow.className='fc-meta';
@@ -738,13 +738,10 @@ function makeCard(f){
 
   const usdEl=document.createElement('div');usdEl.className='fc-usd';
   usdEl.innerHTML=f.loading?'<span class="mini-spin"></span>':fU(usd);div.appendChild(usdEl);
-  const rubEl=document.createElement('div');rubEl.className='fc-rub';rubEl.textContent=fU(usd)==='—'?'':fR(usd*usdRub);div.appendChild(rubEl);
-
-  // compact data
+  // Compact data: one currency and one value per meaning.
   const rows=[];
-  if(mon>0){rows.push(['Доход/мес',fU(mon),'g']);rows.push(['Доход/мес ₽',fR(mon*usdRub),'p']);}
+  if(mon>0)rows.push(['Доход / месяц',fU(mon),'g']);
   if(yld>0)rows.push(['Доходность',yld.toFixed(1)+'%','y']);
-  if(f.liveUsd&&!f.loading)rows.push(['','<span class="live-dot"></span>актуально','g']);
   if(rows.length){
     const db=document.createElement('div');db.className='fc-data';
     rows.forEach(([l,v,c])=>{

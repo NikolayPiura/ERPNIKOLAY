@@ -482,7 +482,7 @@ tr:hover td { background: var(--bg); }
     <div class="history-settings">
       <label for="historyLimit">Показывать в истории</label>
       <select id="historyLimit" onchange="setHistoryLimit(this.value)">
-        <option value="15">15 дней</option><option value="20">20 дней</option><option value="30">30 дней</option>
+        <option value="15">15 дней</option><option value="20">20 дней</option><option value="30">30 дней</option><option value="60">60 дней</option>
       </select>
     </div>
 
@@ -850,7 +850,7 @@ function renderBar() {
 function renderHistory() {
   const cats = getCats();
   const allData = load(), wrap = document.getElementById('histWrap');
-  const allowed=[15,20,30],limit=allowed.includes(Number(historyPrefs.limit))?Number(historyPrefs.limit):20;
+  const allowed=[15,20,30,60],limit=allowed.includes(Number(historyPrefs.limit))?Number(historyPrefs.limit):20;
   const keys = Object.keys(allData).sort().reverse().slice(0,limit);
   const card=document.getElementById('historyCard'),toggle=document.getElementById('historyToggle'),title=document.getElementById('historyTitle');
   card.classList.toggle('collapsed',historyPrefs.open===false);toggle.textContent=historyPrefs.open===false?'Показать':'Скрыть';title.textContent=`История · ${keys.length} дн.`;
@@ -875,7 +875,7 @@ function renderHistory() {
 
 function saveHistoryPrefs(){localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs));}
 function toggleHistory(){historyPrefs.open=historyPrefs.open===false;saveHistoryPrefs();renderHistory();}
-function setHistoryLimit(value){historyPrefs.limit=[15,20,30].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
+function setHistoryLimit(value){historyPrefs.limit=[15,20,30,60].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
 
 function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); renderHistory(); }
 
