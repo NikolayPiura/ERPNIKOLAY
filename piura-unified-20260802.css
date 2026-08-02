@@ -1,0 +1,385 @@
+/* PIURA ERP unified presentation layer — 2026-08-02 */
+:root {
+  --piura-font-scale: 1;
+  --piura-radius: 18px;
+  --piura-gap: 18px;
+}
+
+html.piura-light {
+  --piura-bg: #eef3f9;
+  --piura-panel: #ffffff;
+  --piura-panel-2: #f7f9fc;
+  --piura-text: #142033;
+  --piura-muted: #6f7f96;
+  --piura-line: #d9e1eb;
+  --piura-a1: #4f86ff;
+  --piura-a2: #695af7;
+  --piura-a3: #28b8ed;
+  --piura-shadow: 0 12px 34px rgba(31, 54, 88, .06);
+}
+
+html.piura-dark {
+  --piura-bg: #070c14;
+  --piura-panel: #0d1420;
+  --piura-panel-2: #111b29;
+  --piura-text: #eef4ff;
+  --piura-muted: #8695aa;
+  --piura-line: #223044;
+  --piura-a1: #68a1ff;
+  --piura-a2: #8173ff;
+  --piura-a3: #35c6ee;
+  --piura-shadow: 0 14px 38px rgba(0, 0, 0, .22);
+}
+
+html.piura-light,
+html.piura-dark,
+html.piura-light body,
+html.piura-dark body {
+  color: var(--piura-text) !important;
+  background-color: var(--piura-bg) !important;
+  font-size: calc(15px * var(--piura-font-scale)) !important;
+}
+
+html.piura-light body,
+html.piura-dark body,
+html.piura-light button,
+html.piura-dark button,
+html.piura-light input,
+html.piura-dark input,
+html.piura-light select,
+html.piura-dark select,
+html.piura-light textarea,
+html.piura-dark textarea {
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+html.piura-light *,
+html.piura-dark * {
+  box-sizing: border-box;
+}
+
+html.piura-light .piura-hidden,
+html.piura-dark .piura-hidden {
+  display: none !important;
+}
+
+html.piura-light .piura-sync-dot,
+html.piura-dark .piura-sync-dot {
+  display: inline-flex !important;
+  width: 9px !important;
+  height: 9px !important;
+  min-width: 9px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  color: transparent !important;
+  background: var(--piura-a1) !important;
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--piura-a1) 13%, transparent) !important;
+  animation: piuraPulse 2.2s ease-in-out infinite;
+  vertical-align: middle;
+}
+
+@keyframes piuraPulse {
+  0%, 100% { opacity: .58; transform: scale(.86); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* The light theme must never inherit dark islands from legacy modules. */
+html.piura-light body :is(header, main, section, article, aside, nav, div, form, table, thead, tbody, tfoot, tr, th, td, button, input, textarea, select) {
+  border-color: var(--piura-line);
+}
+
+html.piura-light body :is(.card, .panel, .widget, .section, .box, .tile, .modal, .dialog, [class*="card"], [class*="panel"], [class*="modal"], [class*="dialog"]) {
+  color: var(--piura-text) !important;
+}
+
+html.piura-light body :is(.card, .panel, .widget, .section, .box, .tile, [class*="card"], [class*="panel"]) {
+  background-color: var(--piura-panel) !important;
+  background-image: none !important;
+  box-shadow: var(--piura-shadow) !important;
+}
+
+html.piura-light body :is(button, [role="button"], input, textarea, select) {
+  color: var(--piura-text);
+  background-color: var(--piura-panel-2);
+  border-color: var(--piura-line);
+}
+
+html.piura-dark body :is(.card, .panel, .widget, .section, .box, .tile, [class*="card"], [class*="panel"]) {
+  background-image: none !important;
+  box-shadow: var(--piura-shadow) !important;
+}
+
+html.piura-light body :is(h1, h2, h3, h4, h5, h6, strong, b),
+html.piura-dark body :is(h1, h2, h3, h4, h5, h6, strong, b) {
+  color: var(--piura-text);
+}
+
+html.piura-light body :is(p, small, label, figcaption, [class*="muted"], [class*="subtitle"]),
+html.piura-dark body :is(p, small, label, figcaption, [class*="muted"], [class*="subtitle"]) {
+  color: var(--piura-muted);
+}
+
+html.piura-light a,
+html.piura-dark a {
+  color: var(--piura-a1);
+}
+
+html.piura-light :focus-visible,
+html.piura-dark :focus-visible {
+  outline: 2px solid var(--piura-a1) !important;
+  outline-offset: 2px;
+}
+
+html.piura-light button,
+html.piura-dark button,
+html.piura-light [role="button"],
+html.piura-dark [role="button"] {
+  min-height: 38px;
+  border-radius: 11px !important;
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease, opacity .16s ease !important;
+}
+
+html.piura-light button:hover,
+html.piura-dark button:hover,
+html.piura-light [role="button"]:hover,
+html.piura-dark [role="button"]:hover {
+  border-color: var(--piura-a1) !important;
+  transform: translateY(-1px);
+}
+
+/* Control Center */
+html.piura-light .piura-settings-shell,
+html.piura-dark .piura-settings-shell {
+  width: min(1760px, calc(100vw - 56px)) !important;
+  max-width: none !important;
+  height: min(900px, calc(100vh - 48px)) !important;
+  max-height: calc(100vh - 48px) !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+html.piura-light .piura-settings-shell :is(input[type="range"], select, input[type="text"], input[type="number"]),
+html.piura-dark .piura-settings-shell :is(input[type="range"], select, input[type="text"], input[type="number"]) {
+  min-height: 30px !important;
+}
+
+html.piura-light .piura-settings-shell :is(h1, h2),
+html.piura-dark .piura-settings-shell :is(h1, h2) {
+  letter-spacing: -.025em !important;
+}
+
+html.piura-light .piura-settings-shell :is(label, small, p, button, input, select),
+html.piura-dark .piura-settings-shell :is(label, small, p, button, input, select) {
+  font-size: .82rem !important;
+}
+
+html.piura-light .piura-settings-shell .piura-settings-content,
+html.piura-dark .piura-settings-shell .piura-settings-content {
+  padding: 22px 28px 40px !important;
+}
+
+html.piura-light .piura-settings-shell .piura-theme-card,
+html.piura-dark .piura-settings-shell .piura-theme-card {
+  min-height: 104px !important;
+  padding: 16px !important;
+}
+
+html.piura-light .piura-settings-shell .piura-service-visibility,
+html.piura-dark .piura-settings-shell .piura-service-visibility {
+  min-height: 48px !important;
+  padding: 10px 14px !important;
+  font-size: .94rem !important;
+}
+
+/* Sidebar */
+html.piura-light .piura-sidebar,
+html.piura-dark .piura-sidebar {
+  box-shadow: none !important;
+}
+
+html.piura-light .piura-sidebar-logo,
+html.piura-dark .piura-sidebar-logo {
+  width: 54px !important;
+  height: 54px !important;
+  font-size: 23px !important;
+}
+
+html.piura-light .piura-sidebar :is(a, button),
+html.piura-dark .piura-sidebar :is(a, button) {
+  min-height: 50px;
+}
+
+/* Module surfaces */
+html.piura-light [data-piura-surface],
+html.piura-dark [data-piura-surface] {
+  border: 1px solid var(--piura-line) !important;
+  border-radius: var(--piura-radius) !important;
+  background: var(--piura-panel) !important;
+  box-shadow: var(--piura-shadow) !important;
+}
+
+html.piura-light .piura-legacy-dark,
+html.piura-dark .piura-legacy-dark {
+  background-image: none !important;
+}
+
+html.piura-light .piura-legacy-dark {
+  color: var(--piura-text) !important;
+  background-color: var(--piura-panel) !important;
+  border-color: var(--piura-line) !important;
+}
+
+html.piura-light .piura-legacy-dark *,
+html.piura-dark .piura-legacy-dark * {
+  text-shadow: none !important;
+}
+
+html.piura-light .piura-legacy-dark :is(h1,h2,h3,h4,h5,h6,strong,b),
+html.piura-dark .piura-legacy-dark :is(h1,h2,h3,h4,h5,h6,strong,b) {
+  color: var(--piura-text) !important;
+}
+
+html.piura-light .piura-module-ps1 :is(.stat-card, [class*="stat"], [class*="metric"]),
+html.piura-dark .piura-module-ps1 :is(.stat-card, [class*="stat"], [class*="metric"]) {
+  min-width: 0 !important;
+}
+
+html.piura-light .piura-module-ps1 :is(.stat-card, [class*="stat-card"]),
+html.piura-dark .piura-module-ps1 :is(.stat-card, [class*="stat-card"]) {
+  min-height: 142px !important;
+}
+
+html.piura-light .piura-module-ps1 input[type="number"],
+html.piura-dark .piura-module-ps1 input[type="number"] {
+  appearance: textfield;
+  text-align: center;
+  min-height: 36px !important;
+}
+
+html.piura-light .piura-rebalance-modal,
+html.piura-dark .piura-rebalance-modal {
+  width: min(1040px, calc(100vw - 48px)) !important;
+  max-width: none !important;
+  font-size: .96rem !important;
+  line-height: 1.42 !important;
+}
+
+html.piura-light .piura-calendar,
+html.piura-dark .piura-calendar {
+  border: 1px solid var(--piura-line) !important;
+  border-radius: 18px !important;
+  background: var(--piura-panel) !important;
+  color: var(--piura-text) !important;
+  box-shadow: 0 24px 70px rgba(0,0,0,.22) !important;
+}
+
+html.piura-light .piura-calendar button,
+html.piura-dark .piura-calendar button {
+  min-height: 34px !important;
+  color: var(--piura-text) !important;
+  background: transparent !important;
+}
+
+html.piura-light .piura-calendar button[aria-selected="true"],
+html.piura-dark .piura-calendar button[aria-selected="true"] {
+  color: #fff !important;
+  background: var(--piura-a1) !important;
+}
+
+html.piura-light .piura-module-morning input:checked,
+html.piura-dark .piura-module-morning input:checked {
+  accent-color: var(--piura-a1) !important;
+}
+
+html.piura-light .piura-completion-overlay,
+html.piura-dark .piura-completion-overlay {
+  color: var(--piura-text) !important;
+  background: color-mix(in srgb, var(--piura-bg) 92%, transparent) !important;
+  backdrop-filter: blur(18px) !important;
+}
+
+html.piura-light .piura-module-time canvas,
+html.piura-dark .piura-module-time canvas,
+html.piura-light .piura-module-income canvas,
+html.piura-dark .piura-module-income canvas {
+  max-width: 100%;
+}
+
+html.piura-light .piura-module-dynamics table,
+html.piura-dark .piura-module-dynamics table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+
+html.piura-light .piura-module-dynamics :is(th,td),
+html.piura-dark .piura-module-dynamics :is(th,td) {
+  font-size: .82rem !important;
+}
+
+html.piura-light .piura-module-admin :is(header, nav, [class*="toolbar"]),
+html.piura-dark .piura-module-admin :is(header, nav, [class*="toolbar"]) {
+  background-image: none !important;
+}
+
+html.piura-light .piura-module-admin :is(header, nav, [class*="toolbar"]),
+html.piura-light .piura-module-dynamics :is(header, nav, [class*="toolbar"]) {
+  color: var(--piura-text) !important;
+  background-color: var(--piura-panel) !important;
+}
+
+html.piura-light :is(.piura-module-funds,.piura-module-portfolio,.piura-module-income) :is(.card,[class*="card"],section,article),
+html.piura-dark :is(.piura-module-funds,.piura-module-portfolio,.piura-module-income) :is(.card,[class*="card"],section,article) {
+  background-image: none !important;
+}
+
+html.piura-light :is(.piura-module-funds,.piura-module-portfolio,.piura-module-income) :is(.card,[class*="card"],section,article) {
+  color: var(--piura-text) !important;
+}
+
+html.piura-light .piura-module-portfolio [class*="accordion"],
+html.piura-dark .piura-module-portfolio [class*="accordion"] {
+  min-height: 64px !important;
+}
+
+html.piura-light .piura-module-portfolio [class*="accordion"] {
+  color: var(--piura-text) !important;
+  background: var(--piura-panel) !important;
+}
+
+html.piura-light .piura-module-funds .piura-fund-card,
+html.piura-dark .piura-module-funds .piura-fund-card {
+  min-height: 190px !important;
+  padding: 24px 28px !important;
+}
+
+html.piura-light .piura-module-funds .piura-kpi-grid,
+html.piura-dark .piura-module-funds .piura-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+html.piura-light .piura-module-income [class*="month"],
+html.piura-dark .piura-module-income [class*="month"] {
+  min-height: 86px !important;
+}
+
+html.piura-light .piura-module-income :is(svg, canvas),
+html.piura-dark .piura-module-income :is(svg, canvas) {
+  filter: saturate(.82);
+}
+
+@media (max-width: 980px) {
+  html.piura-light .piura-settings-shell,
+  html.piura-dark .piura-settings-shell {
+    width: calc(100vw - 20px) !important;
+    height: calc(100vh - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+  }
+  html.piura-light .piura-module-funds .piura-kpi-grid,
+  html.piura-dark .piura-module-funds .piura-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

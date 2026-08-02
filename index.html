@@ -126,6 +126,7 @@
     @media(max-width:760px){.panel{height:96vh;border-radius:20px}.panel-body{padding:18px}.settings-grid,.service-setting-grid{grid-template-columns:1fr}.service-launcher{grid-template-columns:repeat(2,minmax(0,1fr))}.service-select-row{grid-template-columns:1fr}.control-panel{width:98vw}.control-shell{display:block}.control-nav{padding:10px;display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}.control-nav-title{display:none}.control-nav-list{display:flex;gap:6px}.control-nav-btn{min-width:164px}.control-main{padding:22px 18px}.settings-home-grid,.theme-grid,.palette-grid{grid-template-columns:1fr}.control-hero h3{font-size:28px}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
   </style>
+  <link rel="stylesheet" href="piura-unified-20260802-v2.css?v=20260802b">
 </head>
 <body>
   <main class="shell" id="shell">
@@ -317,5 +318,6 @@ ${EMBED_HIDE[id]?EMBED_HIDE[id]+'{display:none!important}':''}`}
     async function initDataSafety(){syncCloudForm();takeLocalBackup();dataFingerprint=JSON.stringify(snapshotData());const c=readCloud();if(c.url&&c.auto!==false){setCloudStatus('Проверяем облачную копию…');try{await cloudLoad(false);await cloudPush()}catch(error){setCloudStatus('Локальное сохранение работает · облако пока недоступно','error')}}else setCloudStatus('Локальное сохранение включено · адрес облака пока не указан')}
     applyPrefs();selectModule(current[0]);initDataSafety();
   </script>
+  <script src="piura-unified-20260802-v2.js?v=20260802b" defer></script>
 </body>
 </html>
