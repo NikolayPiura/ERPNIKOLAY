@@ -475,50 +475,6 @@ function toggleType(id){document.getElementById('tc_'+id).classList.toggle('open
 function renderReb(td,total){
   const list=document.getElementById('rlist');
   if(list){list.hidden=true;list.replaceChildren();}
-  return;
-  const goals=loadGoals();
-  const gTot=TYPES.reduce((a,t)=>a+(parseFloat(goals[t.id])||0),0);
-  document.getElementById('rlist').innerHTML=TYPES.map(t=>{
-    const d=td[t.id];
-    const cp=total>0?(d.summa/total*100):0;
-    const gA=parseFloat(goals[t.id])||0;
-    const gP=gTot>0?(gA/gTot*100):0;
-    const dlt=gA>0?(d.summa-gA):0;
-    const dP=gA>0?((d.summa-gA)/gA*100):0;
-    const mx=Math.max(cp,gP,1);
-    let cls,txt;
-    if(!gA)            {cls='iok'; txt='Задай цель ⚙️';}
-    else if(dlt<-gA*.05){cls='ibuy';txt=`↑ Докупить ${fmt(Math.abs(dlt))}`;}
-    else if(dlt>gA*.05) {cls='isell';txt=`↓ Сократить ${fmt(dlt)}`;}
-    else               {cls='iok'; txt='✓ В норме';}
-    return `<div class="reb-row">
-      <div class="reb-head">
-        <div class="rdot" style="background:${t.color}"></div>
-        <div class="rname">${t.name}</div>
-        <div class="rind ${cls}">${txt}</div>
-      </div>
-      <div class="reb-stats">
-        <div>
-          <div class="rs-label">Текущее</div>
-          <div class="rs-val" style="color:${t.color}">${fmt(d.summa)}</div>
-          <div class="rs-sub">${fp(cp)} портфеля</div>
-          <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(100,cp/mx*100)}%;background:${t.color}"></div></div>
-        </div>
-        <div>
-          <div class="rs-label">Цель</div>
-          <div class="rs-val" style="color:var(--text2)">${gA?fmt(gA):'—'}</div>
-          <div class="rs-sub">${gP?fp(gP)+' от целей':''}</div>
-          <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(100,gP/mx*100)}%;background:#252530;border:1px solid ${t.color}44"></div></div>
-        </div>
-        <div>
-          <div class="rs-label">Дельта</div>
-          <div class="rs-val" style="color:${dlt<0?'var(--green)':dlt>0?'var(--red)':'var(--text2)'}">${gA?(dlt>0?'+':'')+fmt(dlt):'—'}</div>
-          <div class="rs-sub">${gA?(dP>0?'+':'')+dP.toFixed(1)+'% от цели':''}</div>
-          <div class="bar-bg"><div class="bar-fill" style="width:${gA?Math.min(100,Math.abs(dP)):0}%;background:${dlt<0?'var(--green)':'var(--red)'}"></div></div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
 }
 
 window.toggleType=toggleType;

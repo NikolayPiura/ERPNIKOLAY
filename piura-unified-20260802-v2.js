@@ -11,8 +11,7 @@
     'Пожертвования людей, подписки и донаты',
     'Статистика по дорожной карте за текущий год',
     '0 → 10, без оценки',
-    '0 → 10, без оценки.',
-    'Вернуть стандартный дизайн'
+    '0 → 10, без оценки.'
   ];
   const HIDE_CONTAINS = [
     'показывается окно до',
@@ -67,6 +66,7 @@
     if (/adminscale|админ/.test(path + title)) return 'admin';
     if (/fonds|foundation|структура фонд/.test(path + title)) return 'foundation';
     if (/pff|msk|safe/.test(path)) return 'portfolio';
+    if (/personal-finance|finance os/.test(path + title)) return 'financeos';
     if (/finance|доход/.test(path + title)) return 'income';
     if (/effectiv/.test(path + title)) return 'effectiveness';
     return 'generic';
@@ -79,7 +79,9 @@
     });
   }
   function markDarkIslands(doc) {
+    doc.querySelectorAll('.piura-legacy-dark').forEach(el => el.classList.remove('piura-legacy-dark'));
     if (!doc.body.classList.contains('piura-light')) return;
+    if (doc.body.classList.contains('erp-embedded') || doc.body.classList.contains('piura-root')) return;
     doc.querySelectorAll('div,section,article,header,footer,button').forEach(el => {
       const style = getComputedStyle(el);
       const rgb = (style.backgroundColor.match(/\d+/g) || []).slice(0,3).map(Number);
@@ -125,7 +127,7 @@
       q('[class*="rebalance"]').forEach(x => x.classList.add('piura-rebalance-modal'));
       classifyByText(doc, 'Закрыть', 'piura-rebalance-close-text');
     }
-    if (module === 'time' || module === 'income') q('line,[class*="grid"],.grid-line').forEach(x => x.classList.add('piura-chart-grid'));
+    if (module === 'time' || module === 'income') q('line,.grid-line,[class*="grid-line"]').forEach(x => x.classList.add('piura-chart-grid'));
     if (module === 'admin') {
       q('[class*="toolbar"]').forEach(x => x.classList.add('piura-edit-toolbar'));
       q('[class*="color"],.color-picker,.highlight-colors').forEach(x => x.classList.add('piura-edit-colors'));
@@ -172,6 +174,7 @@
     doc.body.classList.remove(theme === 'piura-light' ? 'piura-dark' : 'piura-light');
     if (isRoot) doc.body.classList.add('piura-root');
     const module = isRoot ? 'root' : detectModule(doc);
+    Array.from(doc.body.classList).filter(name => name.startsWith('piura-module-')).forEach(name => doc.body.classList.remove(name));
     doc.body.classList.add(`piura-module-${module}`);
     compactSync(doc);
     hideNoise(doc);
@@ -202,4 +205,3 @@
   new MutationObserver(queue).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class','data-theme','data-color-mode'] });
   setInterval(scanFrames, 2500);
 })();
-

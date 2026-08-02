@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Главная — PIURA ERP</title>
+  <style>
+    :root{
+      color-scheme:dark;--bg:#080b12;--surface:#111822;--raised:#151d29;--line:rgba(255,255,255,.09);
+      --text:#eef3fa;--muted:#8b99ad;--faint:#627086;--blue:#4f8cff;--purple:#6d5dfb;--cyan:#2ac4ff
+    }
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--erp-bg,var(--bg));color:var(--erp-text,var(--text));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{padding:clamp(24px,3vw,52px)}button{font:inherit}
+    .page{width:min(1640px,100%);margin:auto}.top{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;margin-bottom:28px}
+    .eyebrow{margin:0 0 9px;color:var(--erp-primary,var(--blue));font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+    h1{margin:0;font-size:clamp(34px,4vw,58px);line-height:.96;letter-spacing:-.055em}.top p{margin:10px 0 0;color:var(--erp-muted,var(--muted));font-size:13px}
+    .status{display:flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--erp-line,var(--line));border-radius:999px;background:var(--erp-surface,var(--surface));color:var(--erp-muted,var(--muted));font-size:11px;white-space:nowrap}.status i{width:7px;height:7px;border-radius:50%;background:var(--erp-primary,var(--blue))}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}.card,.panel{border:1px solid var(--erp-line,var(--line));background:var(--erp-surface,var(--surface));box-shadow:0 10px 34px rgba(0,0,0,.08)}
+    .card{min-height:156px;padding:22px;border-radius:19px;display:flex;flex-direction:column;justify-content:space-between}.card:nth-child(2){--tone:var(--erp-secondary,var(--purple))}.card:nth-child(3){--tone:var(--erp-info,var(--cyan))}.card:nth-child(4){--tone:var(--erp-primary,var(--blue))}
+    .label{color:var(--erp-muted,var(--muted));font-size:10px;font-weight:750;letter-spacing:.11em;text-transform:uppercase}.value{margin:14px 0 8px;color:var(--erp-text,var(--text));font-size:clamp(27px,2.55vw,43px);font-weight:800;letter-spacing:-.05em;white-space:nowrap}.hint{color:var(--erp-faint,var(--faint));font-size:11px}.line{height:3px;margin-top:17px;border-radius:3px;background:color-mix(in srgb,var(--tone,var(--erp-primary,var(--blue))) 18%,transparent);overflow:hidden}.line b{display:block;width:68%;height:100%;border-radius:inherit;background:var(--tone,var(--erp-primary,var(--blue)))}
+    .layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,.7fr);gap:16px}.panel{border-radius:21px;padding:24px;min-width:0}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}.panel h2{margin:0;font-size:20px;letter-spacing:-.025em}.panel-head p{margin:6px 0 0;color:var(--erp-muted,var(--muted));font-size:11px}.link{border:0;background:transparent;color:var(--erp-primary,var(--blue));font-size:11px;font-weight:750;cursor:pointer}.link:hover{text-decoration:underline}
+    .fund-list{display:grid;gap:9px}.fund{display:grid;grid-template-columns:44px minmax(130px,1fr) minmax(115px,.6fr) 98px;align-items:center;gap:13px;padding:13px 14px;border:1px solid var(--erp-line,var(--line));border-radius:14px;background:var(--erp-raised,var(--raised));cursor:pointer;text-align:left;color:inherit}.fund:hover{border-color:color-mix(in srgb,var(--erp-primary,var(--blue)) 48%,var(--erp-line,var(--line)));transform:translateY(-1px)}
+    .fund-code{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:color-mix(in srgb,var(--fund-tone,var(--erp-primary,var(--blue))) 11%,transparent);color:var(--fund-tone,var(--erp-primary,var(--blue)));font-weight:850;font-size:11px}.fund-name strong{display:block;font-size:13px}.fund-name small{display:block;margin-top:4px;color:var(--erp-muted,var(--muted));font-size:9px}.fund-amount{font-size:16px;font-weight:800;text-align:right}.fund-yield{text-align:right;color:var(--fund-tone,var(--erp-primary,var(--blue)));font-size:12px;font-weight:750}
+    .side{display:grid;gap:16px;align-content:start}.weather{position:relative;overflow:hidden}.weather:after{content:"";position:absolute;right:-54px;top:-68px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--erp-info,var(--cyan)) 18%,transparent),transparent 68%);pointer-events:none}.weather-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.weather-stat{padding:18px;border:1px solid var(--erp-line,var(--line));border-radius:15px;background:var(--erp-raised,var(--raised))}.weather-stat strong{display:block;font-size:31px;letter-spacing:-.05em}.weather-stat span{display:block;margin-top:7px;color:var(--erp-muted,var(--muted));font-size:10px}.weather-empty{padding:22px;border:1px dashed var(--erp-line,var(--line));border-radius:15px;color:var(--erp-muted,var(--muted));font-size:12px;line-height:1.55}.primary{margin-top:14px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--erp-primary,var(--blue)) 40%,transparent);border-radius:10px;background:color-mix(in srgb,var(--erp-primary,var(--blue)) 10%,transparent);color:var(--erp-primary,var(--blue));font-weight:750;cursor:pointer}
+    .quick{display:grid;grid-template-columns:1fr 1fr;gap:9px}.quick button{min-height:82px;padding:14px;border:1px solid var(--erp-line,var(--line));border-radius:14px;background:var(--erp-raised,var(--raised));color:var(--erp-text,var(--text));text-align:left;cursor:pointer}.quick button:hover{border-color:color-mix(in srgb,var(--erp-primary,var(--blue)) 45%,var(--erp-line,var(--line)))}.quick b{display:block;font-size:12px}.quick span{display:block;margin-top:7px;color:var(--erp-muted,var(--muted));font-size:9px;line-height:1.4}
+    .skeleton{color:transparent!important;border-radius:6px;background:linear-gradient(90deg,var(--erp-raised,var(--raised)),color-mix(in srgb,var(--erp-text,var(--text)) 8%,var(--erp-raised,var(--raised))),var(--erp-raised,var(--raised)));background-size:220% 100%;animation:shimmer 1.4s infinite}@keyframes shimmer{to{background-position:-220% 0}}
+    @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.layout{grid-template-columns:1fr}.side{grid-template-columns:1fr 1fr}}
+    @media(max-width:700px){body{padding:18px}.top{align-items:flex-start;flex-direction:column}.kpis,.side{grid-template-columns:1fr}.fund{grid-template-columns:40px 1fr auto}.fund-yield{display:none}.card{min-height:132px}.panel{padding:18px}.quick{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <div><div class="eyebrow">PIURA ERP · ОБЗОР</div><h1>Главная</h1><p id="today">Единая картина бизнеса, капитала и личной эффективности</p></div>
+    <div class="status"><i></i><span id="syncText">Загружаем актуальные данные</span></div>
+  </header>
+  <section class="kpis">
+    <article class="card"><div><div class="label">Доход за год</div><div class="value skeleton" id="income">$000,000</div><div class="hint">Финансовый план 2026</div></div><div class="line"><b id="incomeBar"></b></div></article>
+    <article class="card"><div><div class="label">Расходы за год</div><div class="value skeleton" id="expenses">$000,000</div><div class="hint">Все категории расходов</div></div><div class="line"><b id="expenseBar"></b></div></article>
+    <article class="card"><div><div class="label">Пассивный доход</div><div class="value skeleton" id="passive">$00,000</div><div class="hint">Накоплено за текущий год</div></div><div class="line"><b></b></div></article>
+    <article class="card"><div><div class="label">Капитал фондов</div><div class="value skeleton" id="capital">$0,000,000</div><div class="hint" id="capitalHint">5 основных фондов</div></div><div class="line"><b></b></div></article>
+  </section>
+  <section class="layout">
+    <article class="panel">
+      <div class="panel-head"><div><h2>Управление деньгами</h2><p>Последние сохранённые и доступные онлайн-значения</p></div><button class="link" data-go="funds">Открыть структуру</button></div>
+      <div class="fund-list" id="funds"></div>
+    </article>
+    <aside class="side">
+      <article class="panel weather">
+        <div class="panel-head"><div><h2>Govee Life</h2><p>Климат в помещении</p></div><button class="link" id="refreshClimate">Обновить</button></div>
+        <div id="climate"></div>
+      </article>
+      <article class="panel">
+        <div class="panel-head"><div><h2>Быстрый доступ</h2><p>Ключевые рабочие разделы</p></div></div>
+        <div class="quick">
+          <button data-go="effectiveness"><b>Эффективность</b><span>Доход, время и направления</span></button>
+          <button data-go="morning"><b>Утро</b><span>Чек-лист и настрой на день</span></button>
+          <button data-go="finance"><b>Доходы</b><span>План, факты и расходы</span></button>
+          <button data-go="financeos"><b>Finance OS</b><span>Операции и портфель</span></button>
+        </div>
+      </article>
+    </aside>
+  </section>
+</main>
+<script>
+const API={
+  income:'https://script.google.com/macros/s/AKfycbxjg9I0W6r8slpuex8yvQIqO3BR9k9NS6h5grvqLVMN0Wjn7iT_1drEOXT2Sn93Y_x_/exec',
+  pff:'https://script.google.com/macros/s/AKfycbwn_984PnYQ2zSMAPlgVPT1xrXw4vXe91H0-_jgU7_9pLdNAwNjs78FMjPNAQeew1Zc/exec',
+  moscow:'https://script.google.com/macros/s/AKfycbzj1IX4yWqV8LNMCVhfmJ5SVgGBzCyDemYoLDUpwJqNq3Ezkeu17NeGe-dPCuU0u0_b/exec',
+  safe:'https://script.google.com/macros/s/AKfycbx_n76kW9xt7MX7q48_AL3uzH1UaSwfbJqwebZaiGhyDFdLo3Ozj0zRdirgN6ifl3qj/exec'
+};
+const FALLBACK={fx:80,pff:{amount:869340.78,month:7072.96,yield:9.7632},moscow:{amount:23538824,month:250243.6,yield:12.7573},safe:{amount:61880.17,month:475.06,yield:9.2126},solid:{usd:63562,rub:3158052},endowment:{rub:1653218,month:24197,yield:17.56}};
+const money=(value,currency='USD')=>new Intl.NumberFormat('en-US',{style:'currency',currency,maximumFractionDigits:0}).format(Number(value)||0);
+const pct=value=>`${Number(value||0).toLocaleString('ru-RU',{maximumFractionDigits:1})}%`;
+const cache=key=>{try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}};
+function navigate(id){parent.postMessage({type:'piura:navigate',id},location.origin)}
+document.querySelectorAll('[data-go]').forEach(button=>button.addEventListener('click',()=>navigate(button.dataset.go)));
+document.getElementById('today').textContent=new Intl.DateTimeFormat('ru-RU',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
+
+function number(value){if(typeof value==='number')return value;return Number(String(value??'').replace(/[^0-9,.-]/g,'').replace(/\s/g,'').replace(',','.'))||0}
+function fundTotal(data,sheet,labelKey,monthKey){const rows=data?.[sheet]||[];const row=rows.find(item=>String(item?.[labelKey]||'').trim().toUpperCase().startsWith('ИТОГО'));if(!row)return null;let y=number(row['%']);if(y&&y<1)y*=100;return{amount:number(row['СУММА']),month:number(row[monthKey]??row.МЕС??row.МЕСЯЦ),yield:y}}
+async function getJson(url){const response=await fetch(url+(url.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);return response.json()}
+function cachedFund(key,sheet,label,month,fallback){const c=cache(key);return fundTotal(c?.data,sheet,label,month)||fallback}
+
+let state={fx:FALLBACK.fx,
+  pff:cachedFund('piura_cache_pff_v1','2026 (PFF)','АКТИВ','МЕСЯЦ',FALLBACK.pff),
+  moscow:cachedFund('piura_cache_msk_v1','2026 (НЕД)','ФИО','МЕС',FALLBACK.moscow),
+  safe:cachedFund('piura_cache_safe_v1','2026 (SAFE)','АКТИВ','МЕС',FALLBACK.safe),
+  solid:cache('piura_cache_solid_v1')||FALLBACK.solid,
+  endowment:cache('piura_cache_endowment_v2')||FALLBACK.endowment
+};
+function normalizeSolid(){return{amount:number(state.solid.usd||state.solid.rawUsd||FALLBACK.solid.usd)+number(state.solid.rub||state.solid.rawRub||FALLBACK.solid.rub)/state.fx,month:0,yield:0}}
+function normalizeEndowment(){return{amount:number(state.endowment.total||state.endowment.rub||FALLBACK.endowment.rub)/state.fx,month:number(state.endowment.monthly||state.endowment.month||FALLBACK.endowment.month)/state.fx,yield:number(state.endowment.yield||FALLBACK.endowment.yield)}}
+function renderFunds(){const rows=[
+  {id:'moscow',code:'MF',name:'Moscow Fund',sub:money(state.moscow.month,'RUB')+' / мес',amount:state.moscow.amount/state.fx,yield:state.moscow.yield,tone:'var(--erp-primary,var(--blue))'},
+  {id:'pff',code:'PFF',name:'Piura Family Fund',sub:money(state.pff.month)+' / мес',amount:state.pff.amount,yield:state.pff.yield,tone:'var(--erp-secondary,var(--purple))'},
+  {id:'funds',code:'SF',name:'Solid Fund',sub:'Недвижимость и резерв',...normalizeSolid(),tone:'var(--erp-info,var(--cyan))'},
+  {id:'safe',code:'SAFE',name:'Safe Fund',sub:money(state.safe.month)+' / мес',amount:state.safe.amount,yield:state.safe.yield,tone:'var(--erp-primary,var(--blue))'},
+  {id:'funds',code:'END',name:'Endowment',sub:money(normalizeEndowment().month)+' / мес',...normalizeEndowment(),tone:'var(--erp-secondary,var(--purple))'}
+  ];
+  document.getElementById('funds').innerHTML=rows.map(row=>`<button class="fund" data-fund-go="${row.id}" style="--fund-tone:${row.tone}"><span class="fund-code">${row.code}</span><span class="fund-name"><strong>${row.name}</strong><small>${row.sub}</small></span><span class="fund-amount">${money(row.amount)}</span><span class="fund-yield">${row.yield?pct(row.yield):'—'}</span></button>`).join('');
+  document.querySelectorAll('[data-fund-go]').forEach(button=>button.onclick=()=>navigate(button.dataset.fundGo));
+  const total=rows.reduce((sum,row)=>sum+number(row.amount),0);document.getElementById('capital').textContent=money(total);document.getElementById('capital').classList.remove('skeleton');document.getElementById('capitalHint').textContent='5 основных фондов · '+pct(rows.filter(row=>row.yield).reduce((sum,row)=>sum+row.yield,0)/rows.filter(row=>row.yield).length)+' средняя доходность';
+}
+renderFunds();
+
+async function loadFinance(){try{const data=await getJson(API.income),summary=data.summary||{};const income=number(summary.income?.total??summary.totalIncome),expenses=number(summary.expenses?.total??summary.totalExpenses),passive=number(summary.passive?.total??summary.totalPassive);[['income',income],['expenses',expenses],['passive',passive]].forEach(([id,value])=>{const el=document.getElementById(id);el.textContent=money(value);el.classList.remove('skeleton')});document.getElementById('incomeBar').style.width=Math.min(100,income/360000*100)+'%';document.getElementById('expenseBar').style.width=Math.min(100,expenses/Math.max(income,1)*100)+'%';return true}catch(error){[['income',208385],['expenses',185492],['passive',54528]].forEach(([id,value])=>{const el=document.getElementById(id);el.textContent=money(value);el.classList.remove('skeleton')});return false}}
+async function refreshFunds(){const jobs=[
+  getJson(API.pff).then(data=>state.pff=fundTotal(data,'2026 (PFF)','АКТИВ','МЕСЯЦ')||state.pff),
+  getJson(API.moscow).then(data=>state.moscow=fundTotal(data,'2026 (НЕД)','ФИО','МЕС')||state.moscow),
+  getJson(API.safe).then(data=>state.safe=fundTotal(data,'2026 (SAFE)','АКТИВ','МЕС')||state.safe),
+  fetch('https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd/rub.json').then(r=>r.json()).then(data=>state.fx=number(data.rub)||state.fx)
+];await Promise.allSettled(jobs);renderFunds()}
+
+function climatePrefs(){try{return JSON.parse(localStorage.getItem('piura_erp_service_settings_v1')||'{}').overview||{}}catch{return{}}}
+function climateValue(data,names){for(const name of names){if(Number.isFinite(Number(data?.[name])))return Number(data[name])}for(const value of Object.values(data||{})){if(value&&typeof value==='object'){const found=climateValue(value,names);if(found!=null)return found}}return null}
+async function loadClimate(){const box=document.getElementById('climate'),url=String(climatePrefs().goveeUrl||'').trim();if(!url){box.innerHTML='<div class="weather-empty">Подключите защищённый адрес Govee Life в настройках главного экрана. Секретный ключ не хранится в ERP.<br><button class="primary" id="setupClimate">Открыть настройки</button></div>';document.getElementById('setupClimate').onclick=()=>parent.postMessage({type:'piura:settings',page:'service:overview'},location.origin);return}box.innerHTML='<div class="weather-empty">Получаем показания Govee Life…</div>';try{const data=await getJson(url),temperature=climateValue(data,['temperature','temp','temperatureC','tempC']),humidity=climateValue(data,['humidity','humid','humidityPercent']);if(temperature==null&&humidity==null)throw new Error('Нет показаний');box.innerHTML=`<div class="weather-grid"><div class="weather-stat"><strong>${temperature==null?'—':temperature.toLocaleString('ru-RU',{maximumFractionDigits:1})+'°'}</strong><span>Температура</span></div><div class="weather-stat"><strong>${humidity==null?'—':humidity.toLocaleString('ru-RU',{maximumFractionDigits:0})+'%'}</strong><span>Влажность</span></div></div>`}catch(error){box.innerHTML='<div class="weather-empty">Govee Life временно недоступен. Проверьте адрес прокси в настройках.<br><button class="primary" id="setupClimate">Проверить настройки</button></div>';document.getElementById('setupClimate').onclick=()=>parent.postMessage({type:'piura:settings',page:'service:overview'},location.origin)}}
+document.getElementById('refreshClimate').onclick=loadClimate;
+loadFinance().then(financeOk=>{document.getElementById('syncText').textContent=financeOk?'Данные обновлены · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'Показан сохранённый снимок'});refreshFunds();loadClimate();
+</script>
+</body>
+</html>
