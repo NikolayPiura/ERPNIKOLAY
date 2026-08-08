@@ -21,11 +21,12 @@ const errors = [];
 if (indexes.length !== 1 || indexes[0] !== join(root, 'index.html')) errors.push(`Нужен один корневой index.html, найдено: ${indexes.length}`);
 for (const name of expected) if (!serviceViews.some(file => basename(file) === `${name}.html`)) errors.push(`Нет сервиса ${name}`);
 if (/Personal-Finance\.html|Finance OS|financeos|Финансовая картина фонда/i.test(source)) errors.push('Удалённый Personal Finance всё ещё упоминается');
-if (!source.includes('Тёмная · Premium') || !source.includes('Светлая · Лёгкая')) errors.push('Нет обеих монохромных тем');
-if (!source.includes("goveeControl") || !source.includes('lampBrightness') || !source.includes('lampPower')) errors.push('Нет управления лампой Govee');
+if (!source.includes('Тёмная · Premium') || !source.includes('Светлая · Air')) errors.push('Нет обеих премиальных тем');
+if (!source.includes("goveeControl") || !source.includes('lampBrightness') || !source.includes('lampPower') || !source.includes('lampColor')) errors.push('Нет полного управления лампой Govee');
+if (source.includes('body{filter:grayscale')) errors.push('Глобальный монохромный фильтр всё ещё включён');
 
 if (errors.length) {
   console.error(errors.map(error => `✗ ${error}`).join('\n'));
   process.exit(1);
 }
-console.log(`✓ Одна ERP: 1 index, ${expected.length} сервисов, Personal Finance удалён, темы и Govee подключены`);
+console.log(`✓ Одна ERP: 1 index, ${expected.length} сервисов, Personal Finance удалён, темы, цели и Govee подключены`);

@@ -18,18 +18,36 @@ test('Personal Finance удалён из файлов и навигации', ()
   assert.doesNotMatch(read('piura-erp-restored 3/modules/Overview.html'), /financeos|Finance OS|Personal-Finance/i);
 });
 
-test('premium/light темы остаются монохромными', () => {
+test('premium/light темы и сдержанные палитры доступны из полноэкранных настроек', () => {
   const shell = read('index.html');
   assert.match(shell, /Тёмная · Premium/);
-  assert.match(shell, /Светлая · Лёгкая/);
-  assert.match(shell, /grayscale\(1\) saturate\(0\)/);
+  assert.match(shell, /Светлая · Air/);
+  assert.match(shell, /class="modal-bg settings-page"/);
+  assert.match(shell, /data-palette="\$\{id\}"/);
+  assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
 test('обзор содержит климат и управление лампой', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /id="lampBrightness"/);
+  assert.match(overview, /id="lampColor"/);
   assert.match(overview, /goveeControl/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
+});
+
+test('главная объединяет эффективность, время и ПС №1', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  assert.match(overview, /id="overviewDph"/);
+  assert.match(overview, /id="overviewWeekHours"/);
+  assert.match(overview, /id="overviewPs"/);
+});
+
+test('фонды содержат прогресс целей продукта, фандрайзинга и аудитории', () => {
+  const funds = read('piura-erp-restored 3/modules/Fonds.html');
+  assert.match(funds, /Цель фандрайзинга/);
+  assert.match(funds, /Цель продукта/);
+  assert.match(funds, /Цель подписчиков/);
+  assert.match(funds, /До Нового года/);
 });

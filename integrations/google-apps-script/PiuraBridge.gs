@@ -104,6 +104,15 @@ function goveeControl_(parameter) {
   } else if (command === 'brightness') {
     instance = 'brightness';
     value = Math.max(1, Math.min(100, Number(parameter.value) || 1));
+  } else if (command === 'color') {
+    instance = 'colorRgb';
+    const hex = String(parameter.value || '').replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) throw new Error('Invalid colour value');
+    value = {
+      r: parseInt(hex.slice(0, 2), 16),
+      g: parseInt(hex.slice(2, 4), 16),
+      b: parseInt(hex.slice(4, 6), 16)
+    };
   } else {
     throw new Error('Unknown Govee command');
   }
