@@ -66,7 +66,6 @@
     if (/adminscale|админ/.test(path + title)) return 'admin';
     if (/fonds|foundation|структура фонд/.test(path + title)) return 'foundation';
     if (/pff|msk|safe/.test(path)) return 'portfolio';
-    if (/personal-finance|finance os/.test(path + title)) return 'financeos';
     if (/finance|доход/.test(path + title)) return 'income';
     if (/effectiv/.test(path + title)) return 'effectiveness';
     return 'generic';
