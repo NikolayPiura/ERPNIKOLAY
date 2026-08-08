@@ -1,0 +1,219 @@
+/* PIURA ERP — unified presentation layer, 2026-08-02.
+   This file intentionally changes presentation only. It never resets or rewrites user data. */
+
+:root {
+  --piura-accent: #4f86ff;
+  --piura-accent-2: #6857ee;
+  --piura-accent-3: #27b7e8;
+  --piura-positive: var(--piura-accent-3);
+  --piura-negative: var(--piura-accent-2);
+  --piura-warning: var(--piura-accent);
+  --piura-radius: 18px;
+  --piura-font-size: 15px;
+  --piura-gap: 16px;
+  --piura-panel-opacity: .98;
+  --piura-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html, body { font-family: var(--piura-font) !important; font-size: var(--piura-font-size) !important; }
+body { text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+
+body.piura-light,
+.piura-light {
+  color-scheme: light;
+  --piura-bg: #eef3f9;
+  --piura-surface: rgba(255,255,255,var(--piura-panel-opacity));
+  --piura-surface-2: #f5f8fc;
+  --piura-text: #132036;
+  --piura-muted: #667793;
+  --piura-border: #d8e0ea;
+  --piura-shadow: 0 10px 28px rgba(34, 58, 94, .055);
+  background: var(--piura-bg) !important;
+  color: var(--piura-text) !important;
+}
+
+body.piura-dark,
+.piura-dark {
+  color-scheme: dark;
+  --piura-bg: #080d15;
+  --piura-surface: rgba(16,23,35,var(--piura-panel-opacity));
+  --piura-surface-2: #121b29;
+  --piura-text: #f2f6fc;
+  --piura-muted: #8d9ab0;
+  --piura-border: #263246;
+  --piura-shadow: 0 12px 32px rgba(0, 0, 0, .22);
+  background: var(--piura-bg) !important;
+  color: var(--piura-text) !important;
+}
+
+body.piura-light main,
+body.piura-light section,
+body.piura-light article,
+body.piura-light header,
+body.piura-light footer { color: var(--piura-text); }
+
+/* Common enterprise surfaces */
+body.piura-unified :where(.card,.panel,.box,.widget,.section-card,.metric-card,.stat-card,.kpi-card,.summary-card,.fund-card,.task-card,.service-card,.settings-card) {
+  border-radius: var(--piura-radius) !important;
+  border-color: var(--piura-border) !important;
+  box-shadow: var(--piura-shadow) !important;
+}
+
+body.piura-light :where(.card,.panel,.box,.widget,.section-card,.metric-card,.stat-card,.kpi-card,.summary-card,.fund-card,.task-card,.service-card,.settings-card) {
+  background: var(--piura-surface) !important;
+  color: var(--piura-text) !important;
+}
+
+body.piura-dark :where(.card,.panel,.box,.widget,.section-card,.metric-card,.stat-card,.kpi-card,.summary-card,.fund-card,.task-card,.service-card,.settings-card) {
+  background: var(--piura-surface) !important;
+  color: var(--piura-text) !important;
+}
+
+body.piura-unified :where(button,.btn,[role="button"],input,select,textarea) {
+  border-radius: 12px !important;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease, opacity .16s ease;
+}
+body.piura-unified :where(button,.btn,[role="button"]):hover { transform: translateY(-1px); }
+body.piura-unified :where(button,.btn,[role="button"]):focus-visible,
+body.piura-unified :where(input,select,textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--piura-accent) 28%, transparent) !important;
+  outline-offset: 2px;
+}
+
+body.piura-light :where(button,.btn,[role="button"],input,select,textarea) {
+  background-color: var(--piura-surface) !important;
+  border-color: var(--piura-border) !important;
+  color: var(--piura-text) !important;
+}
+body.piura-dark :where(button,.btn,[role="button"],input,select,textarea) {
+  background-color: var(--piura-surface-2) !important;
+  border-color: var(--piura-border) !important;
+  color: var(--piura-text) !important;
+}
+
+body.piura-unified :where(.active,.selected,[aria-selected="true"],[aria-current="page"]) {
+  border-color: color-mix(in srgb, var(--piura-accent) 58%, var(--piura-border)) !important;
+}
+
+body.piura-unified :where(.muted,.subtitle,.caption,.meta,.hint,small) { color: var(--piura-muted) !important; }
+
+/* Tiny global sync indicator; the source name remains available as an accessible title. */
+.piura-sync-dot {
+  width: 8px !important;
+  height: 8px !important;
+  min-width: 8px !important;
+  min-height: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  display: inline-block !important;
+  background: var(--piura-accent) !important;
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--piura-accent) 45%, transparent);
+  animation: piuraPulse 2.2s infinite;
+  overflow: hidden !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+@keyframes piuraPulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb,var(--piura-accent) 0%,transparent); } 50% { box-shadow: 0 0 0 7px color-mix(in srgb,var(--piura-accent) 16%,transparent); } }
+
+/* Root navigation */
+body.piura-root .sidebar-logo,
+body.piura-root .brand-mark,
+body.piura-root .logo-mark { min-width: 54px !important; min-height: 54px !important; font-size: 24px !important; }
+body.piura-root .piura-nav-count { display: none !important; }
+body.piura-root .piura-nav-heading { letter-spacing: .12em !important; }
+
+/* Settings: wide horizontal control centre with one global system. */
+body.piura-root .piura-settings-modal,
+body.piura-root [data-piura-settings-modal="true"] {
+  width: min(94vw, 1780px) !important;
+  height: min(88vh, 1040px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+body.piura-root .piura-settings-modal :where(h1,h2) { font-size: 22px !important; line-height: 1.15 !important; }
+body.piura-root .piura-settings-modal :where(h3,h4,.section-title) { font-size: 14px !important; }
+body.piura-root .piura-settings-modal :where(label,.label,.setting-label,p,small) { font-size: 12px !important; line-height: 1.35 !important; }
+body.piura-root .piura-settings-modal :where(.theme-card,.palette-card,.setting-card,.control-card) { min-height: 70px !important; padding: 14px 16px !important; }
+body.piura-root .piura-settings-modal input[type="range"] { min-height: 20px !important; }
+body.piura-root .piura-settings-modal .piura-service-visibility { font-size: 15px !important; min-height: 48px !important; }
+body.piura-root .piura-settings-modal .piura-obsolete-setting { display: none !important; }
+
+/* In light mode, legacy dark islands are converted to the system surface. */
+body.piura-light .piura-legacy-dark,
+body.piura-light :where(.dark-card,.black-card,.dark-panel,.dark-section,.terminal-card) {
+  background: var(--piura-surface) !important;
+  color: var(--piura-text) !important;
+  border-color: var(--piura-border) !important;
+  box-shadow: var(--piura-shadow) !important;
+}
+body.piura-light .piura-legacy-dark * { color: inherit; }
+
+/* PS №1 */
+body.piura-module-ps .piura-redundant { display: none !important; }
+body.piura-module-ps .piura-metric-row { gap: var(--piura-gap) !important; }
+body.piura-module-ps .piura-metric-card { min-width: 0 !important; }
+body.piura-module-ps .piura-metric-card .piura-metric-value { font-variant-numeric: tabular-nums; line-height: .95 !important; }
+body.piura-module-ps .piura-metric-card .piura-delta { display: block !important; margin-top: 6px !important; font-size: 12px !important; }
+body.piura-module-ps .piura-editor-add { order: 999 !important; width: 100% !important; margin-top: 12px !important; }
+body.piura-module-ps .piura-rebalance-modal { width: min(820px, 92vw) !important; max-height: 88vh !important; font-size: 14px !important; }
+body.piura-module-ps .piura-rebalance-modal :where(.row,.item,.task) { min-height: 72px !important; padding: 12px 14px !important; }
+body.piura-module-ps .piura-rebalance-close-text { font-size: 0 !important; }
+body.piura-module-ps .piura-rebalance-close-text::after { content: "×"; font-size: 22px; }
+body.piura-module-ps .piura-calendar {
+  background: var(--piura-surface) !important;
+  color: var(--piura-text) !important;
+  border: 1px solid var(--piura-border) !important;
+  box-shadow: 0 18px 45px rgba(13,23,39,.18) !important;
+  border-radius: 16px !important;
+}
+
+/* Morning */
+body.piura-module-morning .piura-morning-year { font-size: .45em !important; opacity: .72; vertical-align: baseline; margin-left: 8px; }
+body.piura-module-morning input[type="checkbox"]:checked { accent-color: var(--piura-accent) !important; }
+body.piura-module-morning .piura-complete-overlay { background: var(--piura-surface) !important; color: var(--piura-text) !important; }
+
+/* Time tracker */
+body.piura-module-time .piura-redundant { display: none !important; }
+body.piura-module-time .piura-chart-grid { opacity: 0 !important; }
+
+/* My Dynamics */
+body.piura-module-dynamics .piura-redundant { display: none !important; }
+body.piura-module-dynamics table { width: 100% !important; table-layout: fixed !important; }
+body.piura-module-dynamics :where(th,td) { font-size: 12px !important; }
+body.piura-module-dynamics .piura-next-column { width: 28% !important; }
+
+/* Admin scale */
+body.piura-module-admin .piura-edit-toolbar { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.piura-module-admin .piura-edit-colors { display: none !important; }
+body.piura-module-admin :where(.admin-card,.section-card) { color: var(--piura-text) !important; }
+
+/* Foundation */
+body.piura-module-foundation .piura-redundant { display: none !important; }
+body.piura-module-foundation .piura-foundation-grid { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)) !important; gap: var(--piura-gap) !important; }
+body.piura-module-foundation .piura-foundation-grid > * { min-height: 260px !important; }
+body.piura-module-foundation .piura-four-kpis { display: grid !important; grid-template-columns: repeat(4,minmax(0,1fr)) !important; gap: 12px !important; }
+body.piura-module-foundation .piura-five-funds { display: grid !important; grid-template-columns: 1fr !important; gap: var(--piura-gap) !important; }
+body.piura-module-foundation .piura-five-funds > * { width: 100% !important; }
+
+/* Investment portfolios */
+body.piura-module-portfolio .piura-redundant { display: none !important; }
+body.piura-light.piura-module-portfolio .piura-asset-row { background: var(--piura-surface) !important; color: var(--piura-text) !important; }
+body.piura-module-portfolio .piura-asset-extra { display: none !important; }
+
+/* Income */
+body.piura-module-income .piura-redundant { display: none !important; }
+body.piura-module-income .piura-chart-grid { opacity: 0 !important; }
+body.piura-module-income .piura-month-secondary { display: none !important; }
+body.piura-light.piura-module-income .piura-legacy-dark { background: var(--piura-surface) !important; color: var(--piura-text) !important; }
+
+@media (max-width: 1000px) {
+  body.piura-root .piura-settings-modal { width: 96vw !important; height: 92vh !important; }
+  body.piura-module-foundation .piura-foundation-grid { grid-template-columns: 1fr !important; }
+  body.piura-module-foundation .piura-four-kpis { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+}
+

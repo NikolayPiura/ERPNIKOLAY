@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Личный доход 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#07090e;--bg2:#0d1019;--bg3:#131821;--bg4:#1b2030;
+  --brd:rgba(255,255,255,0.07);--brd2:rgba(255,255,255,0.14);
+  --g:#00e5a0;--b:#4a9eff;--r:#ff4466;--y:#f5c842;--p:#9b6dff;--c:#00d4ff;
+  --tx:#dde3ee;--mu:#3d4a5c;--mu2:#647890;--mu3:#8a9ab0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,0.013) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,0.013) 1px,transparent 1px);background-size:56px 56px;pointer-events:none;z-index:0;}
+
+/* TOPBAR */
+#top{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(7,9,14,0.97);backdrop-filter:blur(12px);border-bottom:1px solid var(--brd2);display:flex;align-items:center;justify-content:flex-end;padding:11px 28px;gap:16px;}
+#tst{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu2);}
+#tupd{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu);}
+#rbtn{background:transparent;border:1px solid var(--brd2);border-radius:4px;color:var(--mu3);font-family:'JetBrains Mono',monospace;font-size:13px;padding:7px 17px;cursor:pointer;transition:all .15s;}
+#rbtn:hover{border-color:var(--g);color:var(--g);}
+
+#loader{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:100;gap:20px;}
+.spin{width:52px;height:52px;border:2px solid var(--bg4);border-top:2px solid var(--g);border-radius:50%;animation:sp .7s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.lt{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--g);letter-spacing:0.25em;animation:bl 1.5s ease infinite;}
+@keyframes bl{0%,100%{opacity:.3;}50%{opacity:1;}}
+
+/* PAGE — padding увеличен +22% */
+.pg{width:100%;padding:68px 32px 52px;position:relative;z-index:1;}
+
+/* HEADER */
+.hdr{margin-bottom:34px;padding-bottom:18px;border-bottom:1px solid var(--brd2);position:relative;display:flex;justify-content:space-between;align-items:flex-end;}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;width:280px;height:1px;background:linear-gradient(90deg,var(--g),transparent);}
+/* Заголовок +22% от 72px = 88px */
+.hdr-name{font-family:'Orbitron',sans-serif;font-weight:900;font-size:88px;line-height:1;background:linear-gradient(120deg,var(--tx) 20%,var(--g) 55%,var(--c) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.03em;}
+.hdr-r{text-align:right;padding-bottom:8px;}
+.hdr-tag{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--g);background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);padding:6px 16px;border-radius:2px;letter-spacing:0.1em;display:inline-block;margin-bottom:6px;}
+.hdr-date{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--mu2);}
+
+/* SECTION — отступы +22% */
+.sec{margin-bottom:30px;}
+.sh{display:flex;align-items:center;gap:14px;margin-bottom:15px;}
+.sn{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--g);letter-spacing:0.18em;}
+.st{font-family:'Orbitron',sans-serif;font-size:17px;font-weight:600;color:var(--tx);letter-spacing:0.1em;}
+.sl{flex:1;height:1px;background:linear-gradient(90deg,var(--brd2),transparent);}
+
+/* KPI — было 52px, +22% = 63px */
+.k3{display:grid;grid-template-columns:repeat(3,1fr);gap:17px;}
+.kc{background:var(--bg2);border:1px solid var(--brd);border-radius:4px;padding:27px 30px;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kc.g::before{background:linear-gradient(90deg,var(--g),var(--c));}
+.kc.r::before{background:linear-gradient(90deg,var(--r),#ff8c65);}
+.kc.b::before{background:linear-gradient(90deg,var(--b),var(--p));}
+.kl{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu2);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:13px;}
+.kv{font-family:'Orbitron',sans-serif;font-size:63px;font-weight:700;line-height:1;margin-bottom:13px;}
+.kc.g .kv{color:var(--g);}.kc.r .kv{color:var(--r);}.kc.b .kv{color:var(--b);}
+.kb{font-family:'JetBrains Mono',monospace;font-size:14px;padding:5px 13px;border-radius:2px;border:1px solid;display:inline-block;}
+.kc.g .kb{background:rgba(0,229,160,0.08);color:var(--g);border-color:rgba(0,229,160,0.22);}
+.kc.r .kb{background:rgba(255,68,102,0.08);color:var(--r);border-color:rgba(255,68,102,0.22);}
+.kc.b .kb{background:rgba(74,158,255,0.08);color:var(--b);border-color:rgba(74,158,255,0.22);}
+
+/* МЕСЯЦЫ — было 22px, +22% = 27px */
+.m12{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.mc{background:var(--bg2);border:1px solid var(--brd);border-radius:4px;padding:17px 16px;position:relative;}
+.mc.act{border-color:rgba(0,229,160,0.28);background:var(--bg3);}
+.mc.act::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g),var(--c));}
+.mname{font-family:'Orbitron',sans-serif;font-size:17px;letter-spacing:0.08em;margin-bottom:10px;color:var(--mu2);}
+.mc.act .mname{color:var(--g);}
+.minc{font-family:'Orbitron',sans-serif;font-size:27px;font-weight:700;color:var(--g);line-height:1;}
+.mexp{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--r);margin-top:6px;}
+.mpct{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--mu2);margin-top:4px;}
+.mc.emp .minc{color:var(--mu);font-size:24px;}
+.mc.emp .mexp,.mc.emp .mpct{color:var(--mu);}
+
+/* CHART BOX */
+.cb{background:var(--bg2);border:1px solid var(--brd);border-radius:4px;padding:22px 24px;}
+.cb-ttl{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu2);text-transform:uppercase;letter-spacing:0.16em;margin-bottom:14px;}
+.cleg{display:flex;flex-wrap:wrap;gap:16px;margin-top:13px;}
+.cli{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu3);}
+.cld{width:11px;height:11px;border-radius:2px;flex-shrink:0;}
+
+/* ДИНАМИКА */
+.flow{display:grid;grid-template-columns:3fr 2fr;gap:17px;}
+
+/* РАСХОДЫ */
+.exp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:17px;}
+.ei{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--brd);}
+.ei:last-child{border-bottom:none;}
+.en{font-size:19px;color:var(--tx);width:140px;flex-shrink:0;font-weight:500;}
+.etr{flex:1;background:var(--bg4);border-radius:2px;height:8px;overflow:hidden;}
+.ef{height:100%;border-radius:2px;}
+.ea{font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--mu3);width:100px;text-align:right;flex-shrink:0;}
+.ep{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--mu);width:44px;text-align:right;flex-shrink:0;}
+
+/* ИСТОЧНИКИ */
+.src2{display:grid;grid-template-columns:1fr 1fr;gap:17px;}
+
+/* ПЛАН */
+.plan{background:var(--bg2);border:1px solid var(--brd);border-radius:4px;padding:29px 34px;}
+.plan-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+/* было 46px +22% = 56px */
+.plan-big{font-family:'Orbitron',sans-serif;font-size:56px;font-weight:700;line-height:1;}
+.plan-big span{color:var(--g);}
+.plan-sub{font-family:'JetBrains Mono',monospace;font-size:15px;color:var(--mu2);margin-top:9px;}
+/* было 44px +22% = 54px */
+.plan-pct{font-family:'Orbitron',sans-serif;font-size:54px;font-weight:900;color:var(--y);text-align:right;line-height:1;}
+.plan-plbl{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu);text-align:right;margin-top:5px;letter-spacing:0.14em;}
+.prog{background:var(--bg4);height:9px;overflow:hidden;margin-bottom:9px;}
+.progf{height:100%;background:linear-gradient(90deg,var(--b),var(--g),var(--c));transition:width 1.3s ease;}
+.plbl{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu);}
+.pm4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:17px 0;}
+.pm{background:var(--bg4);border:1px solid var(--brd);border-radius:3px;padding:15px 17px;}
+.pml{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:7px;}
+/* было 22px +22% = 27px */
+.pmv{font-family:'Orbitron',sans-serif;font-size:27px;font-weight:600;color:var(--tx);}
+
+.ftr{margin-top:28px;padding-top:16px;border-top:1px solid var(--brd);display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--mu);letter-spacing:0.08em;}
+
+/* Единый дизайн ERP: прежние данные и синхронизация остаются без изменений. */
+#top{min-height:62px;padding:10px 28px;background:rgba(7,9,14,.94);border-bottom-color:rgba(255,255,255,.08)}
+.pg{width:min(1540px,100%);margin:0 auto;padding:84px 34px 64px}.hdr{margin-bottom:28px;padding-bottom:20px}.hdr-name{font-size:52px;letter-spacing:-.035em}.hdr-tag{border-radius:8px}.sec{margin-bottom:28px}.sh{margin-bottom:14px}.st{font-size:14px}.sn{color:#3ddba0}
+.kc,.mc,.cb,.plan,.pm{border-color:rgba(255,255,255,.085);border-radius:14px;background:linear-gradient(145deg,rgba(255,255,255,.022),#0d1019);box-shadow:none}.kc{padding:23px 25px}.kv{font-size:44px}.kl{font-size:11px}.kb{font-size:11px;border-radius:7px}.m12{gap:10px}.mc{padding:15px}.mname{font-size:12px}.minc{font-size:21px}.mexp{font-size:13px}.mpct{font-size:11px}.cb{padding:20px}.plan{padding:25px 28px}.plan-big{font-size:42px}.plan-pct{font-size:40px}.en{font-size:15px}.ea{font-size:14px}
+@media(max-width:1050px){.hdr-name{font-size:40px}.k3{grid-template-columns:1fr}.m12{grid-template-columns:repeat(3,1fr)}.flow,.exp-wrap,.src2{grid-template-columns:1fr}.pm4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.pg{padding:76px 16px 44px}.hdr{display:block}.hdr-r{text-align:left;margin-top:14px}.hdr-name{font-size:30px}.m12{grid-template-columns:repeat(2,1fr)}}
+  #flowSection{display:none!important}
+  :root{--bg:#090c12;--card:#11151e;--card2:#171c27;--line:rgba(255,255,255,.1);--text:#f4f7fb;--muted:#8190a6;--green:#42dda5;--blue:#5b9dff;--purple:#9a72ed;--yellow:#ffcc4a}
+  body{background:radial-gradient(circle at 18% 0,rgba(66,221,165,.05),transparent 32%),#090c12;color:var(--text)}
+  .pg{max-width:1720px;padding:42px 52px 96px}.hdr{min-height:112px;padding:26px 30px;border:1px solid var(--line);border-radius:22px;background:#11151e}.hdr-name{font-size:30px}.sec{margin-top:38px}.sh{margin-bottom:18px}.st{font-size:18px}.kc,.cb,.month{border-color:var(--line);background:#11151e;border-radius:18px}.kc{min-height:154px;padding:26px}.kv{font-size:36px}.exp-wrap,.src2{gap:20px}.exp-wrap>.cb,.src2>.cb{min-height:360px;padding:26px}.m12{gap:12px}.month{min-height:115px;padding:18px}
+  @media(max-width:1000px){.pg{padding:24px}.k3,.exp-wrap,.src2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="spin"></div><div class="lt">ЗАГРУЗКА ДАННЫХ</div></div>
+
+<div id="top">
+  <span id="tst"></span>
+  <span id="tupd"></span>
+  <button id="rbtn" onclick="go()">↻ Обновить</button>
+</div>
+
+<div class="pg" id="dash">
+
+  <div class="hdr">
+    <div class="hdr-name">ЛИЧНЫЙ ДОХОД 2026</div>
+    <div class="hdr-r">
+      <div class="hdr-tag" id="hrange">—</div>
+      <div class="hdr-date" id="hdate"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh"><span class="sn">// 01</span><span class="st">ДОХОДЫ</span><div class="sl"></div></div>
+    <div class="k3">
+      <div class="kc g"><div class="kl">Доход итого</div><div class="kv" id="ki">—</div><div class="kb" id="kib">—</div></div>
+      <div class="kc r"><div class="kl">Расходы итого</div><div class="kv" id="ke">—</div><div class="kb" id="keb">—</div></div>
+      <div class="kc b"><div class="kl">Пассивный доход</div><div class="kv" id="kp">—</div><div class="kb" id="kpb">—</div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh"><span class="sn">// 02</span><span class="st">МЕСЯЧНАЯ РАЗБИВКА</span><div class="sl"></div></div>
+    <div class="m12" id="mg"></div>
+  </div>
+
+  <div class="sec" id="flowSection">
+    <div class="sh"><span class="sn">// 03</span><span class="st">ДИНАМИКА ПОТОКОВ</span><div class="sl"></div></div>
+    <div class="flow">
+      <div class="cb">
+        <!-- +22% от 240 = 293px -->
+        <div style="position:relative;height:293px"><canvas id="mc"></canvas></div>
+        <div class="cleg">
+          <div class="cli"><div class="cld" style="background:#00e5a0"></div>Доход</div>
+          <div class="cli"><div class="cld" style="background:#ff4466"></div>Расходы</div>
+          <div class="cli"><div class="cld" style="background:#4a9eff"></div>Пассивный</div>
+        </div>
+      </div>
+      <div class="cb">
+        <div class="cb-ttl">Структура расходов</div>
+        <!-- +22% от 200 = 244px -->
+        <div style="position:relative;height:244px"><canvas id="ed"></canvas></div>
+        <div class="cleg" id="eleg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh"><span class="sn">// 04</span><span class="st">РАСХОДЫ</span><div class="sl"></div></div>
+    <div class="exp-wrap">
+      <div class="cb" id="ebars"></div>
+      <div class="cb">
+        <div class="cb-ttl">Доля расходов</div>
+        <!-- +22% от 220 = 268px -->
+        <div style="position:relative;height:268px"><canvas id="ed2"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh"><span class="sn">// 05</span><span class="st">ИСТОЧНИКИ ДОХОДА</span><div class="sl"></div></div>
+    <div class="src2">
+      <div class="cb">
+        <div class="cb-ttl">Детальные источники</div>
+        <!-- +22% от 240 = 293px -->
+        <div style="position:relative;height:293px"><canvas id="sd1"></canvas></div>
+        <div class="cleg" id="sl1" style="margin-top:12px"></div>
+      </div>
+      <div class="cb">
+        <div class="cb-ttl">По категориям</div>
+        <div style="position:relative;height:293px"><canvas id="sd2"></canvas></div>
+        <div class="cleg" id="sl2" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sh"><span class="sn">// 06</span><span class="st">ВЫПОЛНЕНИЕ ГОДОВОГО ПЛАНА</span><div class="sl"></div></div>
+    <div class="plan">
+      <div class="plan-top">
+        <div><div class="plan-big" id="pn">—</div><div class="plan-sub" id="ps"></div></div>
+        <div><div class="plan-pct" id="pp">—%</div><div class="plan-plbl">ВЫПОЛНЕНО</div></div>
+      </div>
+      <div class="prog"><div class="progf" id="pf" style="width:0%"></div></div>
+      <div class="plbl"><span>$0</span><span id="pmid"></span><span id="pend"></span></div>
+      <div class="pm4" id="pmeta"></div>
+      <!-- +22% от 140 = 171px -->
+      <div style="position:relative;height:171px"><canvas id="pc"></canvas></div>
+    </div>
+  </div>
+
+  <div class="ftr">
+    <span>ЛИЧНЫЙ ДОХОД // 2026</span>
+    <span id="frange"></span>
+    <span>USD · AUTO-SYNC 5 МИН</span>
+  </div>
+</div>
+
+<script>
+var MO=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+var CH={};
+var URL='https://script.google.com/macros/s/AKfycbxjg9I0W6r8slpuex8yvQIqO3BR9k9NS6h5grvqLVMN0Wjn7iT_1drEOXT2Sn93Y_x_/exec';
+var CACHE_KEY='piura_cache_finance_v1';
+var HAS_RENDERED=false;
+// Снимок из исходных таблиц на 28.07.2026. Он нужен только для первого
+// запуска на новом устройстве: свежие данные всё равно приходят в фоне.
+var BOOTSTRAP_DATA={
+  meta:{updated:'28.07.2026 · сохранённый снимок'},
+  summary:{
+    income:{'Янв':26715.9,'Фев':23117.75,'Мар':25308.84,'Апр':29255.19,'Май':17022.05,'Июн':31019.67,'Июл':37267.91,total:189707.31},
+    expenses:{'Янв':10045,'Фев':10125.75,'Мар':11824.4,'Апр':17254,'Май':58432,'Июн':56535,'Июл':15826,total:180042.15},
+    passive:{'Янв':12370,'Фев':12713,'Мар':9914,'Апр':9070,'Май':10451,'Июн':0,'Июл':10,total:54528},
+    apartment:{total:30692},life:{total:27058.15},education:{total:111935},travel:{total:7807},charity:{total:2550}
+  },
+  sources:{
+    sources:[
+      {name:'PFF · дивиденды',total:44953.49},{name:'PFF · управляющий',total:13812.59},
+      {name:'КЭ · зарплата',total:80473.39},{name:'КЭ · дивиденды',total:6608.6},
+      {name:'Наставник · абонементы',total:24550},{name:'Наставник · проекты',total:16088.4},
+      {name:'Москва · управляющий',total:6354.29},{name:'Solid · управляющий',total:3767},{name:'Снитч',total:691.82}
+    ],
+    categories:[
+      {name:'Климат',total:80473.39},{name:'Инвестиции',total:58766.08},{name:'Наставничество',total:40638.4},
+      {name:'Учредитель',total:6608.6},{name:'Управление деньгами',total:10121.29},{name:'Снитч',total:691.82}
+    ],
+    planYear:360000,fact_total:197299.59
+  }
+};
+
+function f(v){if(!v&&v!==0)return'—';return'$'+Math.round(v).toLocaleString('ru');}
+function fk(v){if(!v&&v!==0)return'—';return Math.abs(v)>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+Math.round(v);}
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function setSt(m,c){var e=document.getElementById('tst');e.textContent=m;e.style.color=c||'var(--mu2)';}
+
+var AX={
+  x:{ticks:{color:'#647890',font:{family:'JetBrains Mono',size:13}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.08)'}},
+  y:{ticks:{color:'#647890',font:{family:'JetBrains Mono',size:12},callback:function(v){return'$'+(v/1000).toFixed(0)+'k';}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.08)'}}
+};
+var DO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'};
+
+function go(){
+  if(!HAS_RENDERED){
+    render(BOOTSTRAP_DATA);
+    setSt('● СОХРАНЁННЫЙ СНИМОК','var(--b)');
+    document.getElementById('tupd').textContent='Обновляем в фоне';
+  }
+  try{
+    var cached=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(cached){
+      render(cached.data);setSt('● СОХРАНЕНО','var(--b)');
+      document.getElementById('tupd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');
+    }
+  }catch(e){}
+  setSt('● СИНХРОНИЗАЦИЯ','var(--b)');
+  fetch(URL)
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(d){
+      setSt('● LIVE','var(--g)');
+      document.getElementById('tupd').textContent='Обновлено: '+(d.meta&&d.meta.updated?d.meta.updated:new Date().toLocaleTimeString('ru'));
+      localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data:d}));
+      render(d);
+    })
+    .catch(function(e){setSt('● СНИМОК · ОБНОВЛЕНИЕ НЕДОСТУПНО','var(--r)');});
+}
+
+function render(data){
+  HAS_RENDERED=true;
+  var s=data.summary||{};
+  var sr=data.sources||{};
+  var sources=sr.sources||[];
+  var cats=sr.categories||[];
+
+  var active=MO.filter(function(m){return((s.income||{})[m]||0)>0;});
+  if(!active.length)active=MO.slice(0,4);
+  var show=active.slice(0,4);
+
+  document.getElementById('hrange').textContent=active[0].toUpperCase()+'—'+active[active.length-1].toUpperCase()+' · '+active.length+' МЕС';
+  document.getElementById('hdate').textContent=data.meta&&data.meta.updated?'ОБНОВЛЕНО: '+data.meta.updated:'';
+  document.getElementById('frange').textContent=active[0]+'–'+active[active.length-1]+' 2026';
+
+  var iT=(s.income||{}).total||0,eT=(s.expenses||{}).total||0,pT=(s.passive||{}).total||0;
+  document.getElementById('ki').textContent=f(iT);
+  document.getElementById('ke').textContent=f(eT);
+  document.getElementById('kp').textContent=f(pT);
+  document.getElementById('kib').textContent=active.length+' МЕС ДАННЫХ';
+  document.getElementById('keb').textContent=(iT>0?(eT/iT*100).toFixed(1):0)+'% ОТ ДОХОДА';
+  document.getElementById('kpb').textContent=(eT>0?(pT/eT*100).toFixed(1):0)+'% ОТ РАСХОДОВ';
+
+  var mg=document.getElementById('mg');mg.innerHTML='';
+  MO.forEach(function(m){
+    var inc=(s.income||{})[m]||0,exp=(s.expenses||{})[m]||0,act=inc>0;
+    mg.innerHTML+='<div class="mc'+(act?' act':' emp')+'">'
+      +'<div class="mname">'+m.toUpperCase()+'</div>'
+      +(act
+        ?'<div class="minc">'+fk(inc)+'</div><div class="mexp">−'+fk(exp)+'</div><div class="mpct">'+(inc>0?(exp/inc*100).toFixed(0):0)+'% расх</div>'
+        :'<div class="minc">—</div><div class="mexp">—</div><div class="mpct">—</div>')
+      +'</div>';
+  });
+
+  dc('mc');
+  CH.mc=new Chart(document.getElementById('mc'),{type:'bar',
+    data:{labels:show,datasets:[
+      {data:show.map(function(m){return(s.income||{})[m]||0;}),backgroundColor:'rgba(0,229,160,0.82)',borderRadius:3,label:'Доход'},
+      {data:show.map(function(m){return(s.expenses||{})[m]||0;}),backgroundColor:'rgba(255,68,102,0.82)',borderRadius:3,label:'Расходы'},
+      {data:show.map(function(m){return(s.passive||{})[m]||0;}),backgroundColor:'rgba(74,158,255,0.82)',borderRadius:3,label:'Пассивный'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:AX}
+  });
+
+  var EC=[
+    {nm:'Квартира',key:'apartment',cl:'#4a9eff'},
+    {nm:'Жизнь',key:'life',cl:'#00e5a0'},
+    {nm:'Обучение',key:'education',cl:'#f5c842'},
+    {nm:'Путешествие',key:'travel',cl:'#ff4466'},
+    {nm:'Благотвор.',key:'charity',cl:'#9b6dff'}
+  ];
+  var maxE=Math.max.apply(null,EC.map(function(c){return(s[c.key]||{}).total||0;}));
+
+  dc('ed');
+  CH.ed=new Chart(document.getElementById('ed'),{type:'doughnut',
+    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return(s[c.key]||{}).total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
+    options:DO});
+  var el=document.getElementById('eleg');el.innerHTML='';
+  EC.forEach(function(c){
+    el.innerHTML+='<div class="cli"><div class="cld" style="background:'+c.cl+'"></div>'+c.nm+' '+f((s[c.key]||{}).total)+'</div>';
+  });
+
+  var bx=document.getElementById('ebars');
+  bx.innerHTML='<div class="cb-ttl">Расходы по категориям</div>';
+  EC.forEach(function(c){
+    var v=(s[c.key]||{}).total||0;
+    bx.innerHTML+='<div class="ei"><div class="en">'+c.nm+'</div>'
+      +'<div class="etr"><div class="ef" style="width:'+(maxE>0?(v/maxE*100).toFixed(0):0)+'%;background:'+c.cl+'"></div></div>'
+      +'<div class="ea">'+f(v)+'</div><div class="ep">'+(eT>0?(v/eT*100).toFixed(1):0)+'%</div></div>';
+  });
+
+  dc('ed2');
+  CH.ed2=new Chart(document.getElementById('ed2'),{type:'doughnut',
+    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return(s[c.key]||{}).total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
+    options:DO});
+
+  var SC1=['#00e5a0','#4a9eff','#f5c842','#ff4466','#9b6dff','#00d4ff','#ff8c00','#e040fb','#26c6da'];
+  var SC2=['#4a9eff','#00e5a0','#f5c842','#ff4466','#9b6dff','#00d4ff'];
+
+  dc('sd1');
+  CH.sd1=new Chart(document.getElementById('sd1'),{type:'doughnut',
+    data:{labels:sources.map(function(x){return x.name;}),datasets:[{data:sources.map(function(x){return x.total||0;}),backgroundColor:sources.map(function(_,i){return SC1[i%SC1.length];}),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+  var l1=document.getElementById('sl1');l1.innerHTML='';
+  sources.forEach(function(x,i){
+    l1.innerHTML+='<div class="cli"><div class="cld" style="background:'+SC1[i%SC1.length]+'"></div>'+x.name+' '+f(x.total)+'</div>';
+  });
+
+  dc('sd2');
+  CH.sd2=new Chart(document.getElementById('sd2'),{type:'doughnut',
+    data:{labels:cats.map(function(x){return x.name;}),datasets:[{data:cats.map(function(x){return x.total||0;}),backgroundColor:cats.map(function(_,i){return SC2[i%SC2.length];}),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
+  var l2=document.getElementById('sl2');l2.innerHTML='';
+  cats.forEach(function(x,i){
+    l2.innerHTML+='<div class="cli"><div class="cld" style="background:'+SC2[i%SC2.length]+'"></div>'+x.name+' '+f(x.total)+'</div>';
+  });
+
+  var planY=sr.planYear||0;
+  if(!planY||planY<50000||planY>500000)planY=360000;
+  var factT=sr.fact_total||0;
+  if(!factT)sources.forEach(function(x){factT+=x.total||0;});
+
+  var pct=planY>0?(factT/planY*100).toFixed(1):0;
+  var monthly=active.length>0?Math.round(factT/active.length):0;
+  var remain=planY-factT;
+  var mNeed=(12-active.length)>0?Math.round(remain/(12-active.length)):0;
+
+  document.getElementById('pn').innerHTML=f(factT)+' <span>/ '+f(planY)+'</span>';
+  document.getElementById('ps').textContent='фактически '+f(factT)+' из '+f(planY)+' · '+active.length+' из 12 месяцев';
+  document.getElementById('pp').textContent=pct+'%';
+  document.getElementById('pmid').textContent='ОЖИД. '+f(Math.round(planY/12*active.length))+' ('+Math.round(active.length/12*100)+'%)';
+  document.getElementById('pend').textContent=f(planY);
+  setTimeout(function(){document.getElementById('pf').style.width=Math.min(parseFloat(pct),100)+'%';},400);
+
+  document.getElementById('pmeta').innerHTML=[
+    ['Среднемес.',fk(monthly)],
+    ['Осталось',f(remain)],
+    ['Нужно/мес',fk(mNeed)],
+    ['Прогноз года',fk(monthly*12)]
+  ].map(function(x){return'<div class="pm"><div class="pml">'+x[0]+'</div><div class="pmv">'+x[1]+'</div></div>';}).join('');
+
+  var cumF=[],cumP=[],run=0;
+  MO.forEach(function(m,i){
+    run+=((s.income||{})[m]||0);
+    cumF.push(run>0?run:null);
+    cumP.push(Math.round(planY/12*(i+1)));
+  });
+  dc('pc');
+  CH.pc=new Chart(document.getElementById('pc'),{type:'line',
+    data:{labels:MO,datasets:[
+      {data:cumF,borderColor:'#00e5a0',backgroundColor:'rgba(0,229,160,0.07)',fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#00e5a0',borderWidth:2,spanGaps:false},
+      {data:cumP,borderColor:'#4a9eff',borderDash:[5,4],backgroundColor:'transparent',tension:0.1,pointRadius:0,borderWidth:1.5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{ticks:{color:'#647890',font:{family:'JetBrains Mono',size:12}},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.07)'}},
+      y:{ticks:{color:'#647890',font:{family:'JetBrains Mono',size:12},callback:function(v){return'$'+(v/1000).toFixed(0)+'k';}},grid:{color:'rgba(255,255,255,0.03)'},border:{color:'rgba(255,255,255,0.07)'}}
+    }}
+  });
+
+  document.getElementById('loader').style.display='none';
+  document.getElementById('dash').style.display='block';
+}
+
+window.onload=function(){go();setInterval(go,5*60*1000);};
+</script>
+</body>
+</html>

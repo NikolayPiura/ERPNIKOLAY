@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Трекер времени</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:    #F3F2ED;
+  --white: #FFFFFF;
+  --s2:    #ECEAE4;
+  --blue:  #1A5CFF;
+  --lime:  #C4FF3A;
+  --ink:   #0C0C0C;
+  --muted: #8A8880;
+  --bord:  #DDD9CF;
+  --r:     22px;
+  --green: #22C55E;
+  --red:   #EF4444;
+}
+html { font-size: 16px; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; }
+
+/* ══ HERO ══ */
+.hero {
+  background: var(--white);
+  border-bottom: 2px solid var(--bord);
+  padding: 2.2rem 3rem 2rem;
+  display: flex; flex-direction: column; gap: 1.2rem;
+}
+.hero-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.hero-date-group { display: flex; align-items: center; gap: 0.7rem; }
+.hero-weekday {
+  font-size: 0.75rem; font-weight: 900;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--blue);
+}
+.hero-fulldate {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem; color: var(--muted); font-weight: 500;
+}
+.nav-btn {
+  width: 2rem; height: 2rem;
+  border: 1.5px solid var(--bord); border-radius: 8px;
+  background: var(--bg); font-size: 1rem; cursor: pointer;
+  color: var(--muted); display: flex; align-items: center; justify-content: center; transition: .12s;
+}
+.nav-btn:hover { border-color: var(--blue); color: var(--blue); }
+.btn-today {
+  font-size: 0.6rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase;
+  padding: 0.35rem 0.75rem; background: var(--lime); border: none;
+  border-radius: 8px; font-family: 'Inter', sans-serif; cursor: pointer; transition: .12s;
+}
+.btn-today:hover { background: #aef020; }
+
+.hero-right { display: flex; align-items: center; gap: 0.6rem; }
+
+.sync-status {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.6rem; font-weight: 700;
+  letter-spacing: .05em; padding: 0.4rem 0.8rem;
+  border-radius: 8px; border: 1.5px solid var(--bord);
+  background: var(--bg); color: var(--muted);
+  transition: all .3s; white-space: nowrap;
+}
+.sync-status .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--muted); transition: background .3s;
+}
+.sync-status.syncing { border-color: var(--blue); color: var(--blue); }
+.sync-status.syncing .dot { background: var(--blue); animation: pulse 1s infinite; }
+.sync-status.ok { border-color: var(--green); color: var(--green); }
+.sync-status.ok .dot { background: var(--green); }
+.sync-status.error { border-color: var(--red); color: var(--red); }
+.sync-status.error .dot { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.btn-icon-sq {
+  width: 2.2rem; height: 2.2rem;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--muted); border: 1.5px solid var(--bord);
+  border-radius: 10px; cursor: pointer; transition: .14s; font-size: 1rem;
+}
+.btn-icon-sq:hover { border-color: var(--blue); color: var(--blue); }
+
+.btn-export {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--ink); color: #fff; border: none;
+  border-radius: 10px; padding: 0.55rem 1.1rem;
+  font-family: 'Inter', sans-serif; font-size: 0.65rem;
+  font-weight: 700; cursor: pointer; transition: .14s;
+  letter-spacing: .02em; white-space: nowrap;
+}
+.btn-export:hover { background: var(--blue); transform: translateY(-1px); }
+
+/* BIG TOTAL */
+.hero-total-row { display: flex; align-items: baseline; gap: 0.5rem; line-height: 1; }
+.hero-big {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 5.5rem; font-weight: 700;
+  letter-spacing: -.04em; color: var(--blue);
+}
+.hero-big-label {
+  font-size: 0.75rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .1em;
+  align-self: flex-end; padding-bottom: 0.9rem;
+}
+.hero-subs { display: flex; gap: 2.5rem; }
+.hero-sub-label {
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.2rem;
+}
+.hero-sub-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.4rem; font-weight: 600; letter-spacing: -.04em;
+}
+.hero-bar {
+  height: 8px; background: var(--s2);
+  border-radius: 4px; overflow: hidden; display: flex;
+}
+.hero-bar-seg { height: 100%; transition: width .4s ease; }
+
+/* ══ CONTENT ══ */
+.content { padding: 1.8rem 3rem 3rem; }
+
+/* ══ ENTRY CARDS ══ */
+.entry-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1rem; margin-bottom: 1rem;
+}
+.entry-card {
+  background: var(--white); border: 2px solid var(--bord);
+  border-radius: var(--r); overflow: hidden; cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  position: relative;
+}
+.entry-card:hover { border-color: var(--cc, var(--blue)); box-shadow: 0 4px 24px rgba(0,0,0,.06); }
+.entry-card.active { border-color: var(--cc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--cc) 15%, transparent); cursor: default; }
+.entry-card.has-value { border-color: var(--cc); }
+
+.card-head {
+  display: flex; align-items: center;
+  padding: 1.3rem 1.5rem; gap: 1rem; user-select: none;
+}
+.card-icon {
+  width: 3rem; height: 3rem; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; background: var(--s2); flex-shrink: 0; transition: background .2s;
+}
+.entry-card.has-value .card-icon,
+.entry-card.active .card-icon { background: color-mix(in srgb, var(--cc) 16%, white); }
+.card-meta { flex: 1; min-width: 0; }
+.card-cat-label {
+  font-size: 0.56rem; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.2rem; font-weight: 700; letter-spacing: -.06em;
+  color: var(--ink); transition: color .15s; line-height: 1;
+}
+.card-val.zero { color: #CCCAC0; }
+.entry-card.has-value .card-val { color: var(--cc); }
+.card-toggle {
+  width: 1.8rem; height: 1.8rem; border-radius: 8px;
+  border: 1.5px solid var(--bord); background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; color: var(--muted); flex-shrink: 0; transition: .15s;
+}
+.entry-card:hover .card-toggle { border-color: var(--cc); color: var(--cc); }
+.entry-card.active .card-toggle { background: var(--cc); border-color: var(--cc); color: #fff; transform: rotate(180deg); }
+
+/* add-category tile */
+.add-card {
+  background: var(--white); border: 2px dashed var(--bord);
+  border-radius: var(--r); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: .15s; min-height: 5.6rem; gap: 0.6rem;
+  color: var(--muted); font-weight: 700; font-size: 0.75rem;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.add-card:hover { border-color: var(--blue); color: var(--blue); background: #f7f9ff; }
+.add-card .plus { font-size: 1.4rem; font-weight: 400; line-height: 1; }
+
+/* ── INLINE PICKER ── */
+.card-picker {
+  display: none; padding: 0 1.5rem 1.5rem;
+  border-top: 1.5px solid var(--bord);
+  animation: pkIn .16s ease;
+}
+@keyframes pkIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.entry-card.active .card-picker { display: block; }
+
+.pk-presets {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem; padding-top: 1rem; margin-bottom: 1rem;
+}
+.pk-pre {
+  padding: 0.75rem 0; border: 1.5px solid var(--bord); border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; background: var(--bg); color: var(--ink); text-align: center; transition: .1s;
+}
+.pk-pre:hover { border-color: var(--cc); background: color-mix(in srgb, var(--cc) 8%, white); color: var(--cc); }
+.pk-pre.sel { border-color: var(--cc); background: var(--cc); color: #fff; }
+
+.pk-drums { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-bottom: 1rem; }
+.pk-drum { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+.pk-drum > label {
+  font-size: 0.5rem; font-weight: 800; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--muted);
+}
+.pk-dbtn {
+  width: 3.5rem; height: 1.8rem; border: none; background: var(--s2);
+  border-radius: 8px; font-size: 0.7rem; font-weight: 800;
+  cursor: pointer; color: var(--muted);
+  display: flex; align-items: center; justify-content: center; transition: .1s;
+}
+.pk-dbtn:hover { background: var(--bord); color: var(--ink); }
+.pk-dval {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.4rem; font-weight: 700; letter-spacing: -.06em;
+  width: 4rem; text-align: center;
+  border: 2px solid var(--bord); border-radius: 12px;
+  padding: 0.3rem 0; background: var(--white); color: var(--ink);
+  outline: none; cursor: text;
+}
+.pk-dval:focus { border-color: var(--cc); }
+.pk-sep { font-size: 2rem; font-weight: 800; color: var(--bord); margin-top: 1.8rem; }
+
+.pk-actions { display: flex; gap: 0.5rem; }
+.pk-clear {
+  flex: 1; padding: 0.7rem; border: 1.5px solid var(--bord); border-radius: 10px;
+  background: var(--bg); font-family: 'Inter', sans-serif;
+  font-size: 0.75rem; font-weight: 700; cursor: pointer; color: var(--muted); transition: .1s;
+}
+.pk-clear:hover { color: var(--ink); border-color: #aaa; }
+.pk-save {
+  flex: 2.5; padding: 0.7rem; border: none; border-radius: 10px;
+  background: var(--cc); font-family: 'Inter', sans-serif;
+  font-size: 0.75rem; font-weight: 800; cursor: pointer; color: #fff; transition: .14s;
+}
+.pk-save:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+/* ══ CHARTS ══ */
+.charts-row { display: grid; grid-template-columns: 1fr 1.8fr; gap: 1rem; margin-bottom: 1rem; }
+.chart-card {
+  background: var(--white); border: 2px solid var(--bord);
+  border-radius: var(--r); padding: 1.5rem 1.6rem;
+}
+.chart-card h3 {
+  font-size: 0.55rem; font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.1rem;
+}
+
+/* ══ HISTORY ══ */
+.hist-card { background: var(--white); border: 2px solid var(--bord); border-radius: var(--r); overflow: hidden; }
+.hist-top { padding: 1rem 1.5rem; border-bottom: 1.5px solid var(--bord); display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+.hist-top h3 { font-size: 0.55rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.hist-toggle { border:1.5px solid var(--bord);background:var(--white);border-radius:9px;padding:.48rem .78rem;color:var(--muted);font:700 .58rem 'JetBrains Mono',monospace;cursor:pointer;transition:.15s; }
+.hist-toggle:hover { border-color:var(--blue);color:var(--blue); }
+.hist-card.collapsed .hist-scroll { display:none; }
+.hist-card.collapsed .hist-top { border-bottom:0; }
+.hist-scroll { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; }
+th {
+  padding: 0.65rem 1rem; font-size: 0.5rem; font-weight: 800;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  text-align: left; background: var(--s2); border-bottom: 1.5px solid var(--bord);
+  white-space: nowrap;
+}
+td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--bord); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+.td-date { font-family: 'Inter', sans-serif; font-size: 0.7rem; font-weight: 600; }
+.td-total { font-weight: 700; color: var(--blue); }
+.td-zero { color: #CCC9BF; }
+
+.empty { padding: 3.5rem 1.5rem; text-align: center; }
+.empty .ei { font-size: 2.5rem; margin-bottom: 0.7rem; }
+.empty p { color: var(--muted); font-size: 0.75rem; }
+
+/* ══ MODAL ══ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(12,12,12,.45); z-index: 200;
+  align-items: center; justify-content: center; padding: 2rem;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--white); border-radius: 1.4rem;
+  width: 100%; max-width: 30rem; max-height: 85vh;
+  overflow-y: auto; padding: 1.8rem;
+}
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.3rem; }
+.modal-head h2 { font-size: 1.1rem; font-weight: 800; letter-spacing: -.02em; }
+.modal-close {
+  width: 2rem; height: 2rem; border: none; background: var(--s2);
+  border-radius: 8px; cursor: pointer; color: var(--muted); font-size: 1rem;
+  display: flex; align-items: center; justify-content: center; transition: .12s;
+}
+.modal-close:hover { background: var(--bord); color: var(--ink); }
+.history-settings { display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 1rem;margin-bottom:1.2rem;border:1.5px solid var(--bord);border-radius:12px;background:var(--bg); }
+.history-settings label { font-size:.72rem;font-weight:700;color:var(--ink); }
+.history-settings select { border:1.5px solid var(--bord);border-radius:9px;background:var(--white);padding:.55rem .7rem;font:700 .68rem 'JetBrains Mono',monospace;color:var(--ink);cursor:pointer; }
+
+.manage-list { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.3rem; }
+.manage-row {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.6rem 0.8rem; border: 1.5px solid var(--bord);
+  border-radius: 12px; background: var(--bg);
+}
+.manage-row .mr-icon {
+  width: 2.2rem; height: 2.2rem; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; background: var(--white); flex-shrink: 0;
+}
+.manage-row .mr-name { flex: 1; font-size: 0.78rem; font-weight: 600; }
+.manage-row .mr-tag {
+  font-size: 0.5rem; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+  background: var(--white); border: 1px solid var(--bord);
+  border-radius: 6px; padding: 0.2rem 0.4rem;
+}
+.manage-row .mr-del {
+  border: none; background: none; color: #CFCBC0; cursor: pointer;
+  font-size: 0.9rem; padding: 0.2rem; transition: .12s; flex-shrink: 0;
+}
+.manage-row .mr-del:hover { color: var(--red); }
+
+.btn-add-new {
+  width: 100%; padding: 0.75rem;
+  border: 1.5px dashed var(--bord); border-radius: 12px;
+  background: var(--bg); color: var(--muted);
+  font-family: 'Inter', sans-serif; font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: .12s; letter-spacing: .03em;
+}
+.btn-add-new:hover { border-color: var(--blue); color: var(--blue); background: #f7f9ff; }
+
+/* new-category form */
+.new-cat-form { display: none; flex-direction: column; gap: 0.9rem; margin-top: 1rem; padding-top: 1rem; border-top: 1.5px solid var(--bord); }
+.new-cat-form.open { display: flex; }
+.field-label {
+  font-size: 0.55rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem;
+}
+.field-input {
+  width: 100%; padding: 0.65rem 0.8rem; border: 1.5px solid var(--bord);
+  border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 0.85rem;
+  background: var(--white); color: var(--ink); outline: none; transition: .1s;
+}
+.field-input:focus { border-color: var(--blue); }
+
+.emoji-grid {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.35rem;
+  max-height: 9rem; overflow-y: auto; padding: 0.5rem;
+  background: var(--bg); border-radius: 10px;
+}
+.emoji-opt {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; padding: 0.4rem 0; border-radius: 8px;
+  cursor: pointer; transition: .1s; border: 1.5px solid transparent;
+}
+.emoji-opt:hover { background: var(--white); }
+.emoji-opt.sel { background: var(--white); border-color: var(--blue); }
+
+.color-grid { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.color-opt {
+  width: 2rem; height: 2rem; border-radius: 50%; cursor: pointer;
+  border: 2.5px solid transparent; transition: .12s;
+}
+.color-opt.sel { border-color: var(--ink); transform: scale(1.12); }
+
+.toggle-row { display: flex; gap: 0.5rem; }
+.toggle-opt {
+  flex: 1; padding: 0.6rem; text-align: center; border-radius: 10px;
+  border: 1.5px solid var(--bord); background: var(--bg);
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: .1s;
+  color: var(--muted);
+}
+.toggle-opt.sel { border-color: var(--blue); background: #eef2ff; color: var(--blue); }
+
+.form-actions { display: flex; gap: 0.5rem; margin-top: 0.3rem; }
+.btn-cancel-form {
+  flex: 1; padding: 0.7rem; border: 1.5px solid var(--bord); border-radius: 10px;
+  background: var(--white); font-size: 0.75rem; font-weight: 700;
+  color: var(--muted); cursor: pointer; transition: .1s;
+}
+.btn-cancel-form:hover { color: var(--ink); }
+.btn-create {
+  flex: 2; padding: 0.7rem; border: none; border-radius: 10px;
+  background: var(--blue); color: #fff; font-size: 0.75rem; font-weight: 800;
+  cursor: pointer; transition: .14s;
+}
+.btn-create:hover { filter: brightness(1.1); }
+:root{--bg:#0a0c12;--white:#11141c;--s2:#171b25;--blue:#5b9dff;--lime:#3ddba0;--ink:#d8dee8;--muted:#6b7990;--bord:rgba(255,255,255,.09);--green:#3ddba0;--red:#ff6b85;--r:16px}body{background-image:linear-gradient(rgba(61,219,160,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(61,219,160,.012) 1px,transparent 1px);background-size:60px 60px}.btn-today{color:#08110e}.modal-overlay{background:rgba(0,0,0,.82)!important;backdrop-filter:blur(8px)}
+.topbar{min-height:68px;padding:14px 3rem;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,12,18,.94);backdrop-filter:blur(18px)}
+.hero{padding:2.1rem 3rem 2rem;background:linear-gradient(130deg,rgba(91,157,255,.045),transparent 44%);border-bottom:1px solid rgba(255,255,255,.08)}.hero-big{font-size:4.4rem;color:#6ba3ff}.content{width:min(1500px,100%);margin:0 auto;padding:2rem 3rem 4rem}
+.entry-card,.chart-card,.hist-card{border-width:1px;background:linear-gradient(145deg,rgba(255,255,255,.025),rgba(17,20,28,.96));box-shadow:none}.entry-card:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,.18)}.card-head{padding:1.15rem 1.25rem}.card-cat-label{font-size:.64rem}.card-time{font-size:2rem}.card-icon{width:2.8rem;height:2.8rem}
+.chart-card{min-height:300px}.hist-top{background:rgba(255,255,255,.018)}.hist-toggle{border-width:1px}.btn-export,.btn-sync,.btn-today{border-radius:9px}
+/* Единая визуальная система «Эффективности». */
+.btn-export{display:none!important}.hero{padding:34px 46px 32px;gap:22px;background:radial-gradient(circle at 80% 18%,rgba(91,157,255,.09),transparent 32%),#10141d}.hero-topbar{align-items:flex-start}.hero-date-group{gap:12px;flex-wrap:wrap}.hero-weekday{font-size:13px;color:#42dda5}.hero-fulldate{font-size:17px;color:#f4f7fb}.nav-btn{width:38px;height:38px;background:#171c27}.btn-today{padding:10px 16px;background:#42dda5}.hero-big{font-size:clamp(72px,8vw,118px);color:#5b9dff}.hero-big-label{font-size:13px;padding-bottom:18px}.hero-sub-label{font-size:10px}.hero-sub-val{font-size:24px}.hero-bar{height:10px}.content{max-width:1560px;padding:32px 46px 70px}.entry-grid{gap:16px}.entry-card{min-height:126px;border-radius:17px}.card-head{padding:22px 24px}.card-icon{width:52px;height:52px;border-radius:14px}.card-cat-label{font-size:10px;color:#8190a6}.card-val{font-size:34px;color:#f4f7fb}.card-toggle{width:36px;height:36px}.chart-card,.hist-card{border-radius:17px;padding:24px}.chart-card h3,.hist-top h3{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#aab6c7}.hist-scroll{font-size:13px}
+@media(max-width:1100px){.entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content{padding-inline:2rem}}
+@media(max-width:700px){.entry-grid,.charts-row{grid-template-columns:1fr}.content,.hero,.topbar{padding-inline:1rem}.hero-big{font-size:3.2rem}}
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
+  <div class="hero-topbar">
+    <div class="hero-date-group">
+      <span class="hero-weekday" id="lblWD"></span>
+      <span class="hero-fulldate" id="lblDate"></span>
+      <button class="nav-btn" onclick="chDate(-1)">‹</button>
+      <button class="nav-btn" onclick="chDate(1)">›</button>
+      <button class="btn-today" onclick="goToday()">Сегодня</button>
+    </div>
+    <div class="hero-right">
+      <div class="sync-status" id="syncStatus" role="button" tabindex="0" title="Нажмите, чтобы обновить данные из Google Sheets">
+        <div class="dot"></div>
+        <span id="syncText">Google Sheets</span>
+      </div>
+      <button class="btn-icon-sq" onclick="openManageModal()" title="Категории">⚙</button>
+      <button class="btn-export" onclick="doExport()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1v9m0 0L5 7m3 3 3-3M2 12v1.5A1.5 1.5 0 003.5 15h9a1.5 1.5 0 001.5-1.5V12"
+            stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Скачать Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="hero-total-row">
+    <div class="hero-big" id="heroTotal">0:00</div>
+    <div class="hero-big-label">часов сегодня</div>
+  </div>
+
+  <div class="hero-subs">
+    <div>
+      <div class="hero-sub-label">Рабочее</div>
+      <div class="hero-sub-val" id="heroWork">0:00</div>
+    </div>
+    <div>
+      <div class="hero-sub-label">Личное</div>
+      <div class="hero-sub-val" id="heroPersonal">0:00</div>
+    </div>
+  </div>
+
+  <div class="hero-bar" id="heroBar"></div>
+</div>
+
+<!-- ═══ CONTENT ═══ -->
+<div class="content">
+  <div class="entry-grid" id="entryGrid"></div>
+
+  <div class="charts-row">
+    <div class="chart-card"><h3>Сегодня</h3><canvas id="cPie"></canvas></div>
+    <div class="chart-card"><h3>Последние 7 дней</h3><canvas id="cBar"></canvas></div>
+  </div>
+
+  <div class="hist-card" id="historyCard">
+    <div class="hist-top"><h3 id="historyTitle">История</h3><button class="hist-toggle" id="historyToggle" onclick="toggleHistory()">Скрыть</button></div>
+    <div class="hist-scroll" id="histWrap"></div>
+  </div>
+</div>
+
+<!-- ═══ MANAGE CATEGORIES MODAL ═══ -->
+<div class="modal-overlay" id="manageOverlay" onclick="if(event.target===this) closeManageModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Настройки времени</h2>
+      <button class="modal-close" onclick="closeManageModal()">✕</button>
+    </div>
+
+    <div class="history-settings">
+      <label for="historyLimit">Показывать в истории</label>
+      <select id="historyLimit" onchange="setHistoryLimit(this.value)">
+        <option value="15">15 дней</option><option value="20">20 дней</option><option value="30">30 дней</option><option value="60">60 дней</option>
+      </select>
+    </div>
+
+    <div class="field-label" style="margin-bottom:.65rem">Источники времени</div>
+
+    <div class="manage-list" id="manageList"></div>
+
+    <button class="btn-add-new" id="btnShowForm" onclick="showNewCatForm()">+ Добавить категорию</button>
+
+    <div class="new-cat-form" id="newCatForm">
+      <div>
+        <div class="field-label">Название</div>
+        <input type="text" class="field-input" id="newCatName" placeholder="Например, Хобби" maxlength="30">
+      </div>
+
+      <div>
+        <div class="field-label">Иконка</div>
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+
+      <div>
+        <div class="field-label">Цвет</div>
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+
+      <div>
+        <div class="field-label">Тип</div>
+        <div class="toggle-row">
+          <div class="toggle-opt sel" id="toggleWork" onclick="setNewCatWork(true)">Рабочее</div>
+          <div class="toggle-opt" id="togglePersonal" onclick="setNewCatWork(false)">Личное</div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-cancel-form" onclick="hideNewCatForm()">Отмена</button>
+        <button class="btn-create" onclick="createNewCategory()">Создать</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ── */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnd2ZyN7B6YzVvIH6wp8Uer5tNqG7OFV20Av7xmCqUrEHH3rREj6AfjDwRBsW_hahAPg/exec';
+
+const DEFAULT_CATS = [
+  {key:'klim',  label:'Климат',             icon:'🌍', color:'#00B4A0', work:false},
+  {key:'inv',   label:'Инвестиции',          icon:'📈', color:'#6C47FF', work:true },
+  {key:'money', label:'Управление деньгами', icon:'💰', color:'#FF8C00', work:true },
+  {key:'nav',   label:'Наставник',           icon:'🧭', color:'#1A5CFF', work:true },
+  {key:'eff',   label:'Эффективность',       icon:'⚡', color:'#8DC900', work:true },
+  {key:'edu',   label:'Обучение',            icon:'📚', color:'#E0366A', work:false},
+  {key:'hobby', label:'Хобби',                icon:'🎯', color:'#A855F7', work:false},
+  {key:'friend',label:'Фонд Друг',            icon:'🐾', color:'#F59E0B', work:true },
+];
+const EMOJI_CHOICES = ['🎨','🎮','🏋️','🎵','📷','✈️','🍳','🧘','🐶','🎬','📖','🛠️','🎯','🌱','💡','🧩','🚴','🏠','🛒','👨‍👩‍👧','🎸','🧗','🏃','☕'];
+const COLOR_CHOICES = ['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#F472B6','#0EA5E9','#A855F7','#F59E0B','#10B981','#EF4444'];
+
+const PRESETS = [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4];
+const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ ключ, чтобы не терять историю
+const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
+const HISTORY_PREF_KEY = 'tt_history_pref_v1';
+
+let curDate = new Date(); curDate.setHours(0,0,0,0);
+let openKey = null, pH = 0, pM = 0;
+let chartPie = null, chartBar = null;
+let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
+let historyPrefs = (()=>{try{return{limit:20,open:true,...JSON.parse(localStorage.getItem(HISTORY_PREF_KEY)||'{}')}}catch{return{limit:20,open:true}}})();
+const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+
+/* ── CATEGORIES STORAGE ── */
+function loadCats() {
+  try {
+    const raw = localStorage.getItem(CATS_KEY);
+    if (!raw) { saveCats(DEFAULT_CATS); return DEFAULT_CATS.slice(); }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_CATS.slice();
+    const merged=parsed.slice();
+    DEFAULT_CATS.forEach(def=>{if(!merged.some(cat=>cat.key===def.key||cat.label===def.label))merged.push({...def});});
+    if(merged.length!==parsed.length)saveCats(merged);
+    return merged;
+  } catch { return DEFAULT_CATS.slice(); }
+}
+function saveCats(cats) { localStorage.setItem(CATS_KEY, JSON.stringify(cats)); }
+function getCats() { return loadCats(); }
+
+function slugify(name) {
+  const translit = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'i',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+  let s = name.toLowerCase().split('').map(ch => translit[ch] !== undefined ? translit[ch] : ch).join('');
+  s = s.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (!s) s = 'cat';
+  const existing = getCats().map(c => c.key);
+  let finalKey = s, i = 2;
+  while (existing.includes(finalKey)) { finalKey = s + '_' + i; i++; }
+  return finalKey;
+}
+
+/* ── DATA STORAGE (по дням) ── */
+function load()  { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch { return {}; } }
+function save(d) { localStorage.setItem(SK, JSON.stringify(d)); }
+function dk(d)   { return d.toISOString().slice(0, 10); }
+function fmt(m)  { if (!m) return '0:00'; return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`; }
+function dayData() { return load()[dk(curDate)] || {}; }
+
+function setVal(key, mins) {
+  const d = load(), k = dk(curDate);
+  if (!d[k]) d[k] = {};
+  if (mins === 0) delete d[k][key]; else d[k][key] = mins;
+  if (!Object.keys(d[k]).length) delete d[k];
+  save(d);
+}
+
+/* ── GOOGLE SHEETS SYNC ── */
+function setSyncStatus(state, text) {
+  const el = document.getElementById('syncStatus');
+  const tx = document.getElementById('syncText');
+  el.className = 'sync-status ' + state;
+  tx.textContent = text;
+}
+
+async function syncToSheets(dateKey) {
+  const all = load();
+  const values = all[dateKey] || {};
+  const cats = getCats();
+  const catsMeta = cats.map(c => ({ key: c.key, label: c.label }));
+
+  setSyncStatus('syncing', 'Синхронизация...');
+
+  try {
+    const payload = JSON.stringify({ date: dateKey, values, cats: catsMeta });
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload
+    });
+    setSyncStatus('ok', '✓ Отправлено в Google Sheets');
+    setTimeout(()=>syncFromSheets(true),900);
+  } catch (err) {
+    setSyncStatus('error', '✗ Ошибка синхронизации');
+    console.error('Sync error:', err);
+    setTimeout(() => setSyncStatus('', 'Google Sheets'), 4000);
+  }
+}
+
+async function syncFromSheets(quiet=false) {
+  if(!quiet)setSyncStatus('syncing','Загружаем записи...');
+  try{
+    const response=await fetch(GAS_URL+'?t='+Date.now(),{cache:'no-store'});
+    if(!response.ok)throw new Error('HTTP '+response.status);
+    const payload=await response.json();
+    if(payload.status!=='ok'||!Array.isArray(payload.days))throw new Error('Некорректный ответ таблицы');
+    let cats=getCats();
+    const palette=['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#A855F7','#F59E0B','#10B981','#EF4444'];
+    (payload.categories||[]).forEach((label,index)=>{
+      if(!cats.some(cat=>cat.label===label))cats.push({key:slugify(label),label,icon:'◉',color:palette[index%palette.length],work:true});
+    });
+    saveCats(cats);
+    const byLabel=new Map(cats.map(cat=>[cat.label,cat.key])),all=load();
+    payload.days.forEach(serverDay=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(serverDay.date||''))return;
+      const next={...(all[serverDay.date]||{})};
+      (payload.categories||[]).forEach(label=>{const key=byLabel.get(label),mins=Number(serverDay[label])||0;if(!key)return;if(mins>0)next[key]=mins;else delete next[key];});
+      if(Object.keys(next).length)all[serverDay.date]=next;else delete all[serverDay.date];
+    });
+    save(all);renderAll();
+    setSyncStatus('ok','✓ Google Sheets · '+(payload.updated||'обновлено'));
+    return true;
+  }catch(error){
+    setSyncStatus('error','✗ Не удалось загрузить Google Sheets');console.error('Load sync error:',error);return false;
+  }
+}
+
+/* ── DATE ── */
+function updateDateLabels() {
+  document.getElementById('lblWD').textContent   = WD[curDate.getDay()];
+  document.getElementById('lblDate').textContent = curDate.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
+}
+function chDate(delta) { curDate = new Date(curDate); curDate.setDate(curDate.getDate() + delta); openKey = null; updateDateLabels(); renderAll(); }
+function goToday()     { curDate = new Date(); curDate.setHours(0,0,0,0); openKey = null; updateDateLabels(); renderAll(); }
+
+/* ── HERO ── */
+function renderHero() {
+  const cats = getCats();
+  const day = dayData(); let tot = 0, work = 0, personal = 0;
+  cats.forEach(c => { const v = day[c.key]||0; tot += v; if (c.work) work += v; else personal += v; });
+  document.getElementById('heroTotal').textContent    = fmt(tot);
+  document.getElementById('heroWork').textContent     = fmt(work);
+  document.getElementById('heroPersonal').textContent = fmt(personal);
+  const bar = document.getElementById('heroBar'); bar.innerHTML = '';
+  if (tot > 0) cats.forEach(c => {
+    const v = day[c.key]||0; if (!v) return;
+    const s = document.createElement('div'); s.className = 'hero-bar-seg';
+    s.style.width = ((v/tot)*100)+'%'; s.style.background = c.color;
+    bar.appendChild(s);
+  });
+}
+
+/* ── GRID ── */
+function renderGrid() {
+  const cats = getCats();
+  const grid = document.getElementById('entryGrid');
+  const day  = dayData();
+  grid.innerHTML = '';
+
+  cats.forEach(cat => {
+    const v      = day[cat.key] || 0;
+    const isOpen = openKey === cat.key;
+
+    const card = document.createElement('div');
+    card.className = 'entry-card' + (v ? ' has-value' : '') + (isOpen ? ' active' : '');
+    card.style.setProperty('--cc', cat.color);
+
+    const presHtml = PRESETS.map(h => {
+      const m   = h * 60;
+      const sel = isOpen && m === (pH*60 + pM);
+      return `<button class="pk-pre${sel?' sel':''}" onclick="presetPick(event,'${cat.key}',${m})">${fmt(m)}</button>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="card-head" onclick="toggleCard('${cat.key}',${v})">
+        <div class="card-icon">${cat.icon}</div>
+        <div class="card-meta">
+          <div class="card-cat-label">${cat.label}</div>
+          <div class="card-val${v?'':' zero'}">${fmt(v)}</div>
+        </div>
+        <div class="card-toggle">▾</div>
+      </div>
+      <div class="card-picker">
+        <div class="pk-presets">${presHtml}</div>
+        <div class="pk-drums">
+          <div class="pk-drum">
+            <label>Часы</label>
+            <button class="pk-dbtn" onclick="adj(event,'${cat.key}','h',1)">▲</button>
+            <div class="pk-dval" id="dh_${cat.key}" contenteditable="true"
+              oninput="drumIn(event,'${cat.key}','h',this)">${isOpen ? pH : Math.floor(v/60)}</div>
+            <button class="pk-dbtn" onclick="adj(event,'${cat.key}','h',-1)">▼</button>
+          </div>
+          <div class="pk-sep">:</div>
+          <div class="pk-drum">
+            <label>Минуты</label>
+            <button class="pk-dbtn" onclick="adj(event,'${cat.key}','m',15)">▲</button>
+            <div class="pk-dval" id="dm_${cat.key}" contenteditable="true"
+              oninput="drumIn(event,'${cat.key}','m',this)">${isOpen ? String(pM).padStart(2,'0') : String(v%60).padStart(2,'0')}</div>
+            <button class="pk-dbtn" onclick="adj(event,'${cat.key}','m',-15)">▼</button>
+          </div>
+        </div>
+        <div class="pk-actions">
+          <button class="pk-clear" onclick="clearCard(event,'${cat.key}')">Сбросить</button>
+          <button class="pk-save"  onclick="saveCard(event,'${cat.key}')">Сохранить</button>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  const addTile = document.createElement('div');
+  addTile.className = 'add-card';
+  addTile.onclick = openManageModal;
+  addTile.innerHTML = `<span class="plus">+</span><span>Добавить</span>`;
+  grid.appendChild(addTile);
+}
+
+function toggleCard(key, curVal) {
+  openKey = (openKey === key) ? null : key;
+  if (openKey) { const v = curVal||0; pH = Math.floor(v/60); pM = v%60; }
+  renderGrid();
+}
+
+function presetPick(e, key, mins) {
+  e.stopPropagation(); pH = Math.floor(mins/60); pM = mins%60;
+  updDrum(key); updPresets(key);
+}
+function adj(e, key, part, delta) {
+  e.stopPropagation();
+  if (part==='h') pH = Math.max(0, Math.min(23, pH+delta));
+  else            pM = ((pM+delta)+60)%60;
+  updDrum(key); updPresets(key);
+}
+function drumIn(e, key, part, el) {
+  e.stopPropagation();
+  const v = parseInt(el.textContent.replace(/\D/g,''))||0;
+  if (part==='h') pH = Math.max(0,Math.min(23,v));
+  else            pM = Math.max(0,Math.min(59,v));
+  updPresets(key);
+}
+function updDrum(key) {
+  const dh = document.getElementById('dh_'+key);
+  const dm = document.getElementById('dm_'+key);
+  if (dh) dh.textContent = pH;
+  if (dm) dm.textContent = String(pM).padStart(2,'0');
+}
+function updPresets(key) {
+  const grid = document.getElementById('entryGrid');
+  const card = [...grid.children].find(c => c.querySelector && c.querySelector('#dh_'+key));
+  if (!card) return;
+  card.querySelectorAll('.pk-pre').forEach((btn, i) => {
+    btn.classList.toggle('sel', PRESETS[i]*60 === (pH*60+pM));
+  });
+}
+function clearCard(e, key) { e.stopPropagation(); pH=0; pM=0; updDrum(key); updPresets(key); }
+
+function saveCard(e, key) {
+  e.stopPropagation();
+  setVal(key, pH*60+pM);
+  openKey = null;
+  renderAll();
+  syncToSheets(dk(curDate));
+}
+
+/* ── PIE ── */
+function renderPie() {
+  const cats = getCats();
+  const day = dayData(); const lb=[], dt=[], cl=[];
+  cats.forEach(c => { const v=day[c.key]||0; if(v){lb.push(c.label);dt.push(v);cl.push(c.color);} });
+  const ctx = document.getElementById('cPie').getContext('2d');
+  if (chartPie) chartPie.destroy();
+  if (!dt.length) {
+    ctx.clearRect(0,0,400,300);
+    ctx.fillStyle='#bbb'; ctx.font='14px Inter'; ctx.textAlign='center';
+    ctx.fillText('Нет данных', 200, 150); return;
+  }
+  chartPie = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels: lb, datasets: [{ data: dt, backgroundColor: cl, borderWidth: 0, hoverOffset: 10 }] },
+    options: { cutout:'66%', plugins: {
+      legend: { position:'bottom', labels: { font:{family:'Inter',size:13}, boxWidth:11, padding:12 } },
+      tooltip: { callbacks: { label: c => ` ${fmt(c.raw)}` } }
+    }}
+  });
+}
+
+/* ── BAR ── */
+function renderBar() {
+  const cats = getCats();
+  const days = [];
+  for (let i=6; i>=0; i--) { const d=new Date(curDate); d.setDate(d.getDate()-i); days.push(d); }
+  const labels  = days.map(d => d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}));
+  const allData = load();
+  const datasets = cats
+    .map(c => ({
+      label: c.label,
+      data:  days.map(d => (allData[dk(d)]?.[c.key]||0)/60),
+      backgroundColor: c.color+'CC', borderRadius:5, borderSkipped:false
+    }))
+    .filter(ds => ds.data.some(v=>v>0));
+  const ctx = document.getElementById('cBar').getContext('2d');
+  if (chartBar) chartBar.destroy();
+  chartBar = new Chart(ctx, {
+    type: 'bar', data: { labels, datasets },
+    options: {
+      responsive: true,
+      scales: {
+        x: { stacked:true, grid:{display:false}, ticks:{font:{family:'JetBrains Mono',size:12},color:'#aaa'} },
+        y: { stacked:true, grid:{color:'#f0efe9'}, ticks:{font:{family:'JetBrains Mono',size:12},color:'#aaa',callback:v=>v+'ч'} }
+      },
+      plugins: {
+        legend: { display:false },
+        tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt(Math.round(c.raw*60))}` } }
+      }
+    }
+  });
+}
+
+/* ── HISTORY ── */
+function renderHistory() {
+  const cats = getCats();
+  const allData = load(), wrap = document.getElementById('histWrap');
+  const allowed=[15,20,30,60],limit=allowed.includes(Number(historyPrefs.limit))?Number(historyPrefs.limit):20;
+  const keys = Object.keys(allData).sort().reverse().slice(0,limit);
+  const card=document.getElementById('historyCard'),toggle=document.getElementById('historyToggle'),title=document.getElementById('historyTitle');
+  card.classList.toggle('collapsed',historyPrefs.open===false);toggle.textContent=historyPrefs.open===false?'Показать':'Скрыть';title.textContent=`История · ${keys.length} дн.`;
+  if (!keys.length) {
+    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>Записей пока нет. Заполни первый день!</p></div>`;
+    return;
+  }
+  let html = `<table><thead><tr><th>Дата</th>`;
+  cats.forEach(c => html += `<th>${c.label}</th>`);
+  html += `<th>Итого</th></tr></thead><tbody>`;
+  keys.forEach(k => {
+    const d = allData[k]||{}; let tot = 0;
+    cats.forEach(c => tot += d[c.key]||0);
+    const date = new Date(k+'T00:00:00');
+    html += `<tr><td class="td-date">${date.toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'short'})}</td>`;
+    cats.forEach(c => { const v=d[c.key]||0; html+=`<td class="${v?'':'td-zero'}">${fmt(v)}</td>`; });
+    html += `<td class="td-total">${fmt(tot)}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+}
+
+function saveHistoryPrefs(){localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs));}
+function toggleHistory(){historyPrefs.open=historyPrefs.open===false;saveHistoryPrefs();renderHistory();}
+function setHistoryLimit(value){historyPrefs.limit=[15,20,30,60].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
+
+function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); renderHistory(); }
+
+/* ── MANAGE CATEGORIES MODAL ── */
+function openManageModal() {
+  document.getElementById('historyLimit').value=String(historyPrefs.limit||20);
+  renderManageList();
+  hideNewCatForm();
+  document.getElementById('manageOverlay').classList.add('open');
+}
+function closeManageModal() {
+  document.getElementById('manageOverlay').classList.remove('open');
+}
+
+function renderManageList() {
+  const cats = getCats();
+  const list = document.getElementById('manageList');
+  list.innerHTML = '';
+  cats.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'manage-row';
+    row.innerHTML = `
+      <div class="mr-icon" style="background:color-mix(in srgb, ${c.color} 16%, white)">${c.icon}</div>
+      <div class="mr-name">${c.label}</div>
+      <div class="mr-tag">${c.work ? 'Рабочее' : 'Личное'}</div>
+      <button class="mr-del" onclick="deleteCategory('${c.key}')" title="Удалить">✕</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function deleteCategory(key) {
+  const cats = getCats();
+  if (cats.length <= 1) { alert('Должна остаться хотя бы одна категория.'); return; }
+  const cat = cats.find(c => c.key === key);
+  if (!confirm(`Удалить категорию «${cat ? cat.label : key}»? История по ней останется в данных, но карточка пропадёт из дашборда.`)) return;
+  const updated = cats.filter(c => c.key !== key);
+  saveCats(updated);
+  if (openKey === key) openKey = null;
+  renderManageList();
+  renderAll();
+}
+
+function showNewCatForm() {
+  document.getElementById('newCatForm').classList.add('open');
+  document.getElementById('btnShowForm').style.display = 'none';
+  document.getElementById('newCatName').value = '';
+  newCatIcon = EMOJI_CHOICES[0];
+  newCatColor = COLOR_CHOICES[0];
+  newCatWork = true;
+  buildEmojiGrid();
+  buildColorGrid();
+  updateWorkToggleUI();
+  setTimeout(() => document.getElementById('newCatName').focus(), 50);
+}
+function hideNewCatForm() {
+  document.getElementById('newCatForm').classList.remove('open');
+  document.getElementById('btnShowForm').style.display = 'block';
+}
+
+function buildEmojiGrid() {
+  const grid = document.getElementById('emojiGrid');
+  grid.innerHTML = '';
+  EMOJI_CHOICES.forEach(em => {
+    const el = document.createElement('div');
+    el.className = 'emoji-opt' + (em === newCatIcon ? ' sel' : '');
+    el.textContent = em;
+    el.onclick = () => { newCatIcon = em; buildEmojiGrid(); };
+    grid.appendChild(el);
+  });
+}
+function buildColorGrid() {
+  const grid = document.getElementById('colorGrid');
+  grid.innerHTML = '';
+  COLOR_CHOICES.forEach(col => {
+    const el = document.createElement('div');
+    el.className = 'color-opt' + (col === newCatColor ? ' sel' : '');
+    el.style.background = col;
+    el.onclick = () => { newCatColor = col; buildColorGrid(); };
+    grid.appendChild(el);
+  });
+}
+function setNewCatWork(isWork) { newCatWork = isWork; updateWorkToggleUI(); }
+function updateWorkToggleUI() {
+  document.getElementById('toggleWork').classList.toggle('sel', newCatWork);
+  document.getElementById('togglePersonal').classList.toggle('sel', !newCatWork);
+}
+
+function createNewCategory() {
+  const nameInput = document.getElementById('newCatName');
+  const name = nameInput.value.trim();
+  if (!name) { nameInput.focus(); return; }
+
+  const cats = getCats();
+  const key = slugify(name);
+  const newCat = { key, label: name, icon: newCatIcon, color: newCatColor, work: newCatWork };
+  cats.push(newCat);
+  saveCats(cats);
+
+  hideNewCatForm();
+  renderManageList();
+  renderAll();
+}
+
+/* ── EXCEL ── */
+function doExport() {
+  const cats = getCats();
+  const wb = XLSX.utils.book_new(), all = load();
+  const keys = Object.keys(all).sort();
+
+  const daily = [['Дата', ...cats.map(c=>c.label), 'Итого (мин)', 'Итого']];
+  keys.forEach(k => {
+    const d=all[k]||{}; let tot=0;
+    const row=[k]; cats.forEach(c=>{const v=d[c.key]||0;row.push(v);tot+=v;});
+    row.push(tot); row.push(fmt(tot)); daily.push(row);
+  });
+  const ws1 = XLSX.utils.aoa_to_sheet(daily);
+  ws1['!cols'] = [{wch:14}, ...cats.map(()=>({wch:16})), {wch:14}, {wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'По дням');
+
+  function wStart(s) { const d=new Date(s+'T00:00:00'),day=d.getDay()||7; d.setDate(d.getDate()-day+1); return dk(d); }
+  const wmap = {};
+  keys.forEach(k => {
+    const ws = wStart(k); if (!wmap[ws]) wmap[ws]={};
+    cats.forEach(c => { wmap[ws][c.key]=(wmap[ws][c.key]||0)+(all[k]?.[c.key]||0); });
+  });
+  const weekly = [['Неделя (Пн)', ...cats.map(c=>c.label), 'Итого']];
+  Object.keys(wmap).sort().forEach(w => {
+    let tot=0; const row=[w];
+    cats.forEach(c=>{const v=wmap[w][c.key]||0;row.push(fmt(v));tot+=v;});
+    row.push(fmt(tot)); weekly.push(row);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(weekly);
+  ws2['!cols'] = [{wch:14}, ...cats.map(()=>({wch:18})), {wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'По неделям');
+
+  XLSX.writeFile(wb, `Трекер_${dk(new Date())}.xlsx`);
+}
+
+/* ── INIT ── */
+updateDateLabels();
+renderAll();
+document.getElementById('syncStatus').addEventListener('click',()=>syncFromSheets());
+document.getElementById('syncStatus').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();syncFromSheets();}});
+syncFromSheets();
+</script>
+</body>
+</html>
