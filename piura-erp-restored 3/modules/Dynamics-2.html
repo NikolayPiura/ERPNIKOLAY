@@ -125,7 +125,7 @@
   .delta.dn { color:var(--red); }
 
   /* HISTORY */
-  .history-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
+  .history-block { display:block!important;min-height:440px;background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
   .block-hd {
     display:flex; justify-content:space-between; align-items:center;
     padding:16px 28px;
@@ -134,9 +134,9 @@
   }
   .block-hd-title { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
   .block-hd-count { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
-  .history-inner { padding:24px 28px 18px; }
-  .chart-wrap { position:relative; min-height:250px; width:100%; }
-  .line-chart { display:block; width:100%; height:250px; overflow:visible; }
+  .history-inner { padding:30px 32px 26px;overflow-x:auto; }
+  .chart-wrap { position:relative; min-height:300px; min-width:900px;width:100%; }
+  .line-chart { display:block; width:100%; height:300px; overflow:visible; }
   .chart-grid { stroke:rgba(123,94,167,.22); stroke-width:1; stroke-dasharray:4 7; }
   .chart-area { fill:url(#scoreArea); }
   .chart-line { fill:none; stroke:var(--accent); stroke-width:4; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 0 8px rgba(0,255,157,.45)); }
@@ -148,7 +148,7 @@
   .chart-axis { font-family:'Space Mono',monospace; fill:var(--muted); font-size:10px; text-anchor:end; }
   .chart-empty { min-height:210px;display:grid;place-items:center;color:var(--muted);font:13px 'Space Mono',monospace; }
   .chart-note { color:var(--muted);font:11px 'Space Mono',monospace;margin-top:8px;display:flex;justify-content:space-between;gap:18px; }
-  .weeks-archive{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-top:18px}.week-archive-btn{min-height:68px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text);text-align:left;cursor:pointer}.week-archive-btn:hover,.week-archive-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg3))}.week-archive-btn strong{display:block;font:700 16px 'Space Mono',monospace}.week-archive-btn small{display:block;margin-top:5px;color:var(--muted);font:10px 'Space Mono',monospace}.weeks-empty{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font:11px 'Space Mono',monospace}
+  .weeks-archive{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-top:22px;min-width:900px}.week-archive-btn{min-height:76px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--bg3);color:var(--text);text-align:left;cursor:pointer}.week-archive-btn:hover,.week-archive-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg3))}.week-archive-btn strong{display:block;font:700 18px 'Space Mono',monospace}.week-archive-btn small{display:block;margin-top:6px;color:var(--muted);font:11px 'Space Mono',monospace}.weeks-empty{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font:11px 'Space Mono',monospace}
 
   /* PROGRESS */
   .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); padding:20px 28px; }
@@ -354,7 +354,7 @@
     </div>
     <div class="history-inner">
       <div class="chart-wrap" id="scoreChart"></div>
-      <div class="chart-note"><span>Показывается окно до 12 четвергов</span><span>Нажмите точку, чтобы открыть неделю</span></div>
+      <div class="chart-note"><span>Показаны все сохранённые недели</span><span>Нажмите точку или карточку, чтобы открыть неделю</span></div>
       <div class="weeks-archive" id="weeksArchive" aria-label="Сохранённые недели"></div>
     </div>
   </div>
@@ -634,11 +634,7 @@ function renderChart() {
 function renderWeeksArchive(){const box=document.getElementById('weeksArchive');if(!box)return;const selected=document.getElementById('weekDate').value,weeks=[...S.history].sort((a,b)=>b.date.localeCompare(a.date));box.innerHTML=weeks.length?weeks.map(week=>`<button class="week-archive-btn ${week.date===selected?'active':''}" data-week-date="${week.date}"><strong>${historyTotal(week).toLocaleString('ru-RU')}</strong><small>${fmt(week.date)}</small></button>`).join(''):'<div class="weeks-empty">Сохранённые недели появятся здесь после первого сохранения.</div>';box.querySelectorAll('[data-week-date]').forEach(button=>button.onclick=()=>{const idx=S.history.findIndex(week=>week.date===button.dataset.weekDate);if(idx>=0)loadWeek(idx)})}
 
 function displayWindow(){
-  if(!S.history.length)return[];
-  const limit=Math.max(4,Number(S.settings.chartWeeks)||12),last=S.history[S.history.length-1].date;let start=new Date(HISTORY_ANCHOR+'T12:00:00');const end=new Date(last+'T12:00:00');
-  while(end>new Date(start.getTime()+(limit-1)*7*86400000))start=new Date(start.getTime()+4*7*86400000);
-  const max=new Date(start.getTime()+(limit-1)*7*86400000);
-  return S.history.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=max}).slice(-limit);
+  return [...S.history].sort((a,b)=>a.date.localeCompare(b.date));
 }
 
 // ─── ACTIONS ───
@@ -748,8 +744,8 @@ function applyUiSettings(){
   document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
   document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
   const shown=[...document.querySelectorAll('.scores .sc')].filter(x=>x.style.display!=='none').length;
-  document.querySelector('.scores').style.gridTemplateColumns=shown===4?'1.5fr 1fr 1fr 1fr':`repeat(${shown},minmax(0,1fr))`;
-  const note=document.querySelector('.chart-note span');if(note)note.textContent='Показывается окно до '+S.settings.chartWeeks+' четвергов';
+  document.querySelector('.scores').style.gridTemplateColumns=`repeat(${shown},minmax(0,1fr))`;
+  const note=document.querySelector('.chart-note span');if(note)note.textContent='Показаны все сохранённые недели';
 }
 function openSettings(){
   document.getElementById('setChartWeeks').value=S.settings.chartWeeks;

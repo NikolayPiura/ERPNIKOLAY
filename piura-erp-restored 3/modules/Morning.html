@@ -1424,6 +1424,12 @@ function finishCycle(){
   const overlay = document.getElementById('finishOverlay');
   const n = new Date();
   const pad=v=>String(v).padStart(2,'0');
+  const completion={
+    date:`${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`,
+    time:`${pad(n.getHours())}:${pad(n.getMinutes())}`,
+    completedAt:n.toISOString()
+  };
+  localStorage.setItem('morn_v8_last_completion',JSON.stringify(completion));
   const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
   document.getElementById('finishStamp').textContent =
     `${n.getDate()} ${months[n.getMonth()]} · ${pad(n.getHours())}:${pad(n.getMinutes())}`;
