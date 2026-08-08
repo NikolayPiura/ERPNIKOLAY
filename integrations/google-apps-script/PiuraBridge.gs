@@ -78,13 +78,18 @@ function goveeOverview_() {
     const state = goveeState_(sensor);
     climate.temperature = goveeStateValue_(state, ['sensorTemperature', 'temperature']);
     climate.humidity = goveeStateValue_(state, ['sensorHumidity', 'humidity']);
+    climate.co2 = goveeStateValue_(state, ['carbonDioxideConcentration', 'co2']);
+    climate.airQuality = goveeStateValue_(state, ['airQuality', 'pm25', 'pm2_5']);
     climate.online = goveeStateValue_(state, ['online']);
     climate.deviceName = sensor.deviceName || 'Govee Life';
   }
   if (light) {
     const state = sensor && light.device === sensor.device && light.sku === sensor.sku ? goveeState_(sensor) : goveeState_(light);
-    lamp.power = Boolean(goveeStateValue_(state, ['powerSwitch', 'onOff']));
+    const powerValue = goveeStateValue_(state, ['powerSwitch', 'onOff']);
+    lamp.power = powerValue === 1 || powerValue === true || /^(on|1|true)$/i.test(String(powerValue));
     lamp.brightness = goveeStateValue_(state, ['brightness']);
+    lamp.colorRgb = goveeStateValue_(state, ['colorRgb']);
+    lamp.colorTemperature = goveeStateValue_(state, ['colorTemperatureK']);
     lamp.lightName = light.deviceName || 'Govee Light';
     if (climate.online == null) climate.online = goveeStateValue_(state, ['online']);
   }
@@ -108,11 +113,10 @@ function goveeControl_(parameter) {
     instance = 'colorRgb';
     const hex = String(parameter.value || '').replace('#', '');
     if (!/^[0-9a-f]{6}$/i.test(hex)) throw new Error('Invalid colour value');
-    value = {
-      r: parseInt(hex.slice(0, 2), 16),
-      g: parseInt(hex.slice(2, 4), 16),
-      b: parseInt(hex.slice(4, 6), 16)
-    };
+    value = parseInt(hex, 16);
+  } else if (command === 'kelvin') {
+    instance = 'colorTemperatureK';
+    value = Math.max(2000, Math.min(9000, Number(parameter.value) || 4000));
   } else {
     throw new Error('Unknown Govee command');
   }

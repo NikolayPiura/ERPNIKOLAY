@@ -148,6 +148,7 @@
   .chart-axis { font-family:'Space Mono',monospace; fill:var(--muted); font-size:10px; text-anchor:end; }
   .chart-empty { min-height:210px;display:grid;place-items:center;color:var(--muted);font:13px 'Space Mono',monospace; }
   .chart-note { color:var(--muted);font:11px 'Space Mono',monospace;margin-top:8px;display:flex;justify-content:space-between;gap:18px; }
+  .weeks-archive{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px;margin-top:18px}.week-archive-btn{min-height:68px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);color:var(--text);text-align:left;cursor:pointer}.week-archive-btn:hover,.week-archive-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg3))}.week-archive-btn strong{display:block;font:700 16px 'Space Mono',monospace}.week-archive-btn small{display:block;margin-top:5px;color:var(--muted);font:10px 'Space Mono',monospace}.weeks-empty{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font:11px 'Space Mono',monospace}
 
   /* PROGRESS */
   .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); padding:20px 28px; }
@@ -286,7 +287,7 @@
   body::before{background-image:linear-gradient(rgba(91,157,255,.014) 1px,transparent 1px),linear-gradient(90deg,rgba(91,157,255,.014) 1px,transparent 1px);background-size:60px 60px}
   .app{max-width:1500px;padding:38px 48px 70px;gap:24px}.logo{color:#f4f7fb;text-shadow:none;font-size:clamp(30px,3vw,42px)}.tool-btn,#settingsBtn{background:var(--bg3);border-color:var(--border);color:#9aa8ba}.tool-btn:hover,.tool-btn.active,#settingsBtn:hover{border-color:#5b9dff;color:#5b9dff;box-shadow:none}.week-pick{background:var(--bg2)}.week-nav,.date-open{color:#5b9dff}.sc{box-shadow:none}.sc.main .val{color:#42dda5;text-shadow:none}.chart-line{stroke:#42dda5;filter:none}.chart-grid{stroke:rgba(91,157,255,.15)}.tasks-toolbar{background:linear-gradient(90deg,rgba(91,157,255,.07),transparent 55%)}
   body.compact-view{--task-density:8px}body.compact-view .sc{padding:18px 22px}body.compact-view .sc .val{font-size:48px}
-  @media(max-width:900px){.app{padding:22px 18px}.header{flex-direction:column}.header-tools{width:100%;justify-content:flex-start}.scores{grid-template-columns:1fr 1fr}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 70px 120px 90px;padding-inline:14px}.logo{font-size:27px}.settings-grid{grid-template-columns:1fr}}
+  @media(max-width:900px){.app{padding:22px 18px}.header{flex-direction:column}.header-tools{width:100%;justify-content:flex-start}.scores{grid-template-columns:1fr 1fr}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 70px 120px 90px;padding-inline:14px}.logo{font-size:27px}.settings-grid{grid-template-columns:1fr}.weeks-archive{grid-template-columns:repeat(3,minmax(0,1fr))}}
   @media(max-width:620px){.scores{grid-template-columns:1fr!important}.tasks-head span:nth-child(2),.t-weight{display:none}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 112px 72px}.week-pick{width:100%;gap:5px}.week-pick label{display:none}.date-open{flex:1;justify-content:center}.calendar-pop{left:0;right:auto;width:min(310px,calc(100vw - 36px))}.rebalance-row{grid-template-columns:minmax(0,1fr) 78px}.rebalance-row .rebalance-stat{display:none}}
 
   /* TOAST */
@@ -354,6 +355,7 @@
     <div class="history-inner">
       <div class="chart-wrap" id="scoreChart"></div>
       <div class="chart-note"><span>Показывается окно до 12 четвергов</span><span>Нажмите точку, чтобы открыть неделю</span></div>
+      <div class="weeks-archive" id="weeksArchive" aria-label="Сохранённые недели"></div>
     </div>
   </div>
 
@@ -617,7 +619,7 @@ function renderScores() {
 
 function renderChart() {
   const el=document.getElementById('scoreChart'),recent=displayWindow();
-  if(!recent.length){el.innerHTML='<div class="chart-empty">Нет сохранённых четвергов</div>';return;}
+  if(!recent.length){el.innerHTML='<div class="chart-empty">Нет сохранённых четвергов</div>';renderWeeksArchive();return;}
   const W=1180,H=250,L=62,R=22,T=28,B=46,totals=recent.map(historyTotal),mx=Math.max(...totals,1),step=(W-L-R)/Math.max(recent.length-1,1);
   const x=i=>L+i*step,y=v=>T+(H-T-B)*(1-v/mx),pts=recent.map((w,i)=>[x(i),y(totals[i])]);
   const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
@@ -626,7 +628,10 @@ function renderChart() {
   const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов">${S.settings.chartValues?`<text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text>`:''}<circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
   el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов ПС номер один"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${S.settings.accent}" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
   el.querySelectorAll('[data-date]').forEach(g=>{const open=()=>{const idx=S.history.findIndex(w=>w.date===g.dataset.date);if(idx>=0)loadWeek(idx)};g.addEventListener('click',open);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
+  renderWeeksArchive();
 }
+
+function renderWeeksArchive(){const box=document.getElementById('weeksArchive');if(!box)return;const selected=document.getElementById('weekDate').value,weeks=[...S.history].sort((a,b)=>b.date.localeCompare(a.date));box.innerHTML=weeks.length?weeks.map(week=>`<button class="week-archive-btn ${week.date===selected?'active':''}" data-week-date="${week.date}"><strong>${historyTotal(week).toLocaleString('ru-RU')}</strong><small>${fmt(week.date)}</small></button>`).join(''):'<div class="weeks-empty">Сохранённые недели появятся здесь после первого сохранения.</div>';box.querySelectorAll('[data-week-date]').forEach(button=>button.onclick=()=>{const idx=S.history.findIndex(week=>week.date===button.dataset.weekDate);if(idx>=0)loadWeek(idx)})}
 
 function displayWindow(){
   if(!S.history.length)return[];

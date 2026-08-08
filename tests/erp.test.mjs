@@ -32,9 +32,34 @@ test('обзор содержит климат и управление ламп�
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /id="lampBrightness"/);
   assert.match(overview, /id="lampColor"/);
+  assert.match(overview, /id="lampWheel"/);
+  assert.match(overview, /id="lampKelvin"/);
+  assert.match(overview, /colorTemperatureK/);
+  assert.match(overview, /data-lamp-color/);
   assert.match(overview, /goveeControl/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
+});
+
+test('учёт времени позволяет выбрать дату и удалить категорию', () => {
+  const time = read('piura-erp-restored 3/modules/Time-tracker.html');
+  assert.match(time, /id="dateJump" type="date"/);
+  assert.match(time, /deleteCategory\('\$\{cat\.key\}'\)/);
+  assert.match(time, /function deleteCategory\(key\)/);
+});
+
+test('ПС №1 показывает полный архив сохранённых недель', () => {
+  const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
+  assert.match(weekly, /id="weeksArchive"/);
+  assert.match(weekly, /function renderWeeksArchive\(\)/);
+  assert.match(weekly, /\[\.\.\.S\.history\]/);
+});
+
+test('глобальные размеры применяются и к центру настроек', () => {
+  const shell = read('index.html');
+  assert.match(shell, /--settings-scale/);
+  assert.match(shell, /control\.style\.zoom/);
+  assert.match(shell, /class="choice-btn/);
 });
 
 test('главная объединяет эффективность, время и ПС №1', () => {
