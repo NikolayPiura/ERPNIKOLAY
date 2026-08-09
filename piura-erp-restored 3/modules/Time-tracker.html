@@ -410,7 +410,7 @@ tr:hover td { background: var(--bg); }
 /* 2026-08 premium pass: date controls stay usable during sync; charts use a calm shared palette. */
 .hero-topbar{align-items:flex-start}.hero-date-group{position:relative;z-index:4}.hero-right{position:relative;z-index:1}.hero-weekday{color:#6ea8fe}.btn-today{background:#6ea8fe;color:#07101d}.hero-subs{display:none}.hero-bar{height:8px;background:rgba(255,255,255,.055)}.content{max-width:1660px}.charts-row{grid-template-columns:.8fr 1.2fr}.sync-status{max-width:210px;overflow:hidden}.sync-status span{overflow:hidden;text-overflow:ellipsis}.date-jump{height:38px;padding:0 10px;border:1px solid var(--bord);border-radius:9px;background:var(--s2);color:var(--ink);font:700 11px 'JetBrains Mono',monospace;color-scheme:dark}.entry-card{position:relative}.card-delete{position:absolute;right:10px;top:10px;z-index:3;width:28px;height:28px;border:1px solid var(--bord);border-radius:8px;background:var(--s2);color:var(--muted);opacity:.32;cursor:pointer}.entry-card:hover .card-delete,.card-delete:focus-visible{opacity:1}.card-delete:hover{border-color:var(--red);color:var(--red)}.manage-row .mr-tag{display:none}.new-cat-form>div:has(#toggleWork){display:none}
 /* Навигация дня — отдельный заметный рабочий блок, не перекрываемый синхронизацией. */
-.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:20px!important;min-height:62px!important;position:relative!important;z-index:10!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;min-height:54px!important;width:max-content!important;max-width:100%!important;padding:8px 10px!important;border:1px solid var(--bord)!important;border-radius:15px!important;background:var(--s2)!important;box-shadow:0 10px 30px rgba(0,0,0,.16)!important}.hero-weekday{min-width:84px!important;font-size:12px!important}.hero-fulldate{min-width:160px!important}.nav-btn{flex:0 0 38px!important}.hero-right{align-self:center}.chart-card{overflow:hidden}.chart-card canvas{min-height:320px!important}.charts-row{gap:18px}.chart-card h3{margin-bottom:18px}.hist-scroll table{line-height:1.35}
+  .hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:20px!important;min-height:62px!important;position:sticky!important;top:12px!important;z-index:30!important;padding:12px!important;border:1px solid var(--bord)!important;border-radius:20px!important;background:color-mix(in srgb,var(--bg2) 92%,transparent)!important;backdrop-filter:blur(18px)!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;min-height:54px!important;width:max-content!important;max-width:100%!important;padding:8px 10px!important;border:1px solid var(--bord)!important;border-radius:15px!important;background:var(--s2)!important;box-shadow:0 10px 30px rgba(0,0,0,.16)!important}.hero-weekday{min-width:84px!important;font-size:12px!important}.hero-fulldate{min-width:160px!important}.nav-btn{flex:0 0 38px!important}.hero-right{align-self:center}.chart-card{overflow:hidden;background:radial-gradient(circle at 90% 0,rgba(110,168,254,.1),transparent 38%),var(--bg2)!important}.chart-card canvas{min-height:320px!important}.charts-row{gap:18px}.chart-card h3{margin-bottom:18px}.hist-scroll table{line-height:1.35}
 @media(max-width:850px){.hero-topbar{grid-template-columns:1fr!important}.hero-date-group{width:100%!important}.hero-right{justify-content:flex-end}.hero-fulldate{min-width:120px!important}}
 </style>
 </head>
@@ -803,7 +803,7 @@ function saveCard(e, key) {
 function renderPie() {
   const cats = getCats();
   const day = dayData(); const lb=[], dt=[], cl=[];
-  const tones=['#6ea8fe','#43d3c1','#8fa8ff','#9aa6b8'];
+  const tones=['#68a7ff','#42d3ad','#9a8cff','#d8ad62'];
   cats.forEach((c,index) => { const v=day[c.key]||0; if(v){lb.push(c.label);dt.push(v);cl.push(tones[index%tones.length]);} });
   const ctx = document.getElementById('cPie').getContext('2d');
   if (chartPie) chartPie.destroy();
@@ -829,7 +829,7 @@ function renderBar() {
   for (let i=6; i>=0; i--) { const d=new Date(curDate); d.setDate(d.getDate()-i); days.push(d); }
   const labels  = days.map(d => d.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}));
   const allData = load();
-  const tones=['#6ea8fe','#43d3c1','#8fa8ff','#9aa6b8'];
+  const tones=['#68a7ff','#42d3ad','#9a8cff','#d8ad62'];
   const datasets = cats
     .map((c,index) => ({
       label: c.label,

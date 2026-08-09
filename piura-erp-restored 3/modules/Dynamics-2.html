@@ -86,7 +86,7 @@
   /* SCORE CARDS */
   .scores {
     display:grid;
-    grid-template-columns:1.5fr 1fr 1fr 1fr;
+    grid-template-columns:repeat(4,minmax(0,1fr));
     gap:16px;
   }
   .sc {
@@ -95,9 +95,14 @@
     border-radius:var(--panel-radius);
     padding:24px 28px 20px;
     position:relative; overflow:hidden;
-    transition:transform .2s;
+    min-height:168px;
+    transition:transform .34s cubic-bezier(.2,.9,.25,1),box-shadow .34s,border-color .28s;
   }
-  .sc:hover { transform:translateY(-4px); }
+  .sc:hover { transform:translateY(-8px) scale(1.025); border-color:rgba(110,168,254,.72); box-shadow:0 24px 54px rgba(0,0,0,.28),0 0 28px rgba(110,168,254,.14); }
+  .sc.score-pop{animation:score-pop .56s cubic-bezier(.2,1.25,.25,1)}
+  .task-row.task-pop{animation:task-pop .56s cubic-bezier(.2,1.25,.25,1)}
+  @keyframes score-pop{45%{transform:translateY(-9px) scale(1.04);filter:brightness(1.15)}100%{transform:none;filter:none}}
+  @keyframes task-pop{45%{transform:translateX(8px) scale(1.01);border-color:var(--accent)}100%{transform:none}}
   .sc::after {
     content:''; position:absolute;
     bottom:0; left:0; right:0; height:3px;
@@ -548,6 +553,7 @@ function renderTasks() {
     const pts = cnt * t.w;
     const row = document.createElement('div');
     row.className = 'task-row'+(t.active===false?' hidden-task':'');
+    row.dataset.taskId=t.id;
     row.innerHTML = editMode ?
       `<input class="edit-input" data-name-input="${t.id}" value="${escHtml(t.name)}" aria-label="Название задачи"><input class="edit-input edit-number" data-weight-input="${t.id}" type="number" min="1" value="${t.w}" aria-label="Вес"><input class="edit-input edit-number" data-target-input="${t.id}" type="number" min="1" max="100" value="${t.targetPerWeek||1}" title="Сколько раз планируется выполнить за неделю" aria-label="Цель в неделю"><div class="task-edit-actions"><button class="vis-btn" data-toggle="${t.id}" title="Скрыть задачу" aria-label="Скрыть задачу"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="m4 4 16 16"/></svg></button></div>` :
       `<div class="t-name">${escHtml(t.name)}</div><div class="t-weight">${t.w}</div><div class="counter"><button class="cnt-btn" data-dec="${t.id}">−</button><span class="cnt-val">${cnt}</span><button class="cnt-btn" data-inc="${t.id}">+</button></div><div class="t-score ${pts>0?'on':'off'}">${pts>0?'+'+pts:'—'}</div>`;
@@ -569,13 +575,19 @@ document.getElementById('tasksList').addEventListener('click', function(e) {
   if (inc !== undefined) {
     S.counts[+inc] = (S.counts[+inc] || 0) + 1;
     render();
+    requestAnimationFrame(()=>pulsePoints(inc));
   } else if (dec !== undefined) {
     if ((S.counts[+dec] || 0) > 0) S.counts[+dec]--;
     render();
+    requestAnimationFrame(()=>pulsePoints(dec));
   } else if (toggle !== undefined) {
     const task=S.tasks.find(t=>t.id===+toggle);if(task){task.active=task.active===false;render();toast(task.active?'Задача возвращена':'Задача скрыта — данные сохранены')}
   }
 });
+function pulsePoints(id){
+  document.querySelectorAll('.sc').forEach(card=>{card.classList.remove('score-pop');void card.offsetWidth;card.classList.add('score-pop')});
+  const row=document.querySelector(`[data-task-id="${id}"]`);if(row){row.classList.remove('task-pop');void row.offsetWidth;row.classList.add('task-pop')}
+}
 document.getElementById('tasksList').addEventListener('change',e=>{const name=e.target.dataset.nameInput,weight=e.target.dataset.weightInput,target=e.target.dataset.targetInput,id=+(name??weight??target);if(!id)return;const task=S.tasks.find(t=>t.id===id);if(!task)return;if(name!==undefined&&e.target.value.trim())task.name=e.target.value.trim();if(weight!==undefined)task.w=Math.max(1,Number(e.target.value)||task.w);if(target!==undefined)task.targetPerWeek=Math.max(1,Math.min(100,Number(e.target.value)||1));render();toast('Изменение сохранено')});
 document.getElementById('hiddenChips').addEventListener('click',e=>{const id=e.target.closest('[data-restore]')?.dataset.restore;if(id===undefined)return;const task=S.tasks.find(t=>t.id===+id);if(task){task.active=true;render();toast('Задача возвращена')}});
 function addInlineTask(){const task={id:S.nextId++,name:'Новая задача',w:25,targetPerWeek:1,active:true};S.tasks.push(task);render();setTimeout(()=>{const input=document.querySelector(`[data-name-input="${task.id}"]`);input?.focus();input?.select()},0)}

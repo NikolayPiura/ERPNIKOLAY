@@ -558,8 +558,9 @@ let chartDynInstance = null, chartYearInstance = null;
 function valueColor(v){
   if (v === null || v === undefined || v === '') return null;
   const val = Math.max(0, Math.min(10, Number(v)));
-  if (val <= 3) return `color-mix(in srgb, var(--erp-primary, #4F8CFF) ${26 + val * 9}%, var(--erp-raised, #151D29))`;
-  return `color-mix(in srgb, var(--erp-success, #43D39E) ${28 + (val - 3) * 7}%, var(--erp-raised, #151D29))`;
+  /* Calm two-tone roadmap: blue tracks the path, green marks real momentum. */
+  if (val < 4) return `color-mix(in srgb, var(--erp-primary, #4F8CFF) ${30 + val * 8}%, var(--erp-raised, #151D29))`;
+  return `color-mix(in srgb, var(--erp-success, #43D39E) ${30 + (val - 4) * 8}%, var(--erp-raised, #151D29))`;
 }
 
 /* =========================================================
