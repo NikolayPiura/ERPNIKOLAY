@@ -72,15 +72,16 @@ test('главная объединяет эффективность, время
   assert.match(overview, /function loadHourlyIncome/);
   assert.match(overview, /function overallHourlyIncome/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('</section>'));
-  const order=['admin-progress','tile morning','fund-goals','tile income','tile capital','tile lamp'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','tile morning','fund-goals','tile lamp','tile air','tile income','tile capital'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
+  for (const id of ['psBar','incomeBar','dphBar','capitalBar','pffBar','endowmentBar','subscribersBar']) assert.match(overview,new RegExp(`id="${id}"`));
 });
 
 test('фонды содержат точные цели продукта, фандрайзинга, Endowment и дохода', () => {
   const funds = read('piura-erp-restored 3/modules/Fonds.html');
   assert.match(funds, /Планета без бездомных домашних животных/);
   assert.match(funds, /goalProgress\('Доход',''/);
-  assert.match(funds, /goalProgress\('Итого',''/);
+  assert.doesNotMatch(funds, /goalProgress\('Итого',''/);
   assert.match(funds, /product:'Книги'/);
   assert.match(funds, /fundraising:2250,endowment:50000,income:250,product:1000,total:2500/);
 });
@@ -116,7 +117,7 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /sku:'H5140'/);
   assert.match(overview, /device:'29:9C:DC:B4:D9:F2:F5:00'/);
   assert.match(overview, /discoveredGoveeKey/);
-  assert.match(overview, /\.lamp\{grid-column:span 8\}/);
+  assert.match(overview, /\.lamp\{grid-column:span 5/);
 });
 
 test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {
@@ -126,7 +127,9 @@ test('утро и учёт времени сохраняются без отде
   assert.match(morning, /if\(completed\)state\[bid\]\.confirmed=true/);
   assert.doesNotMatch(time, /<button class="pk-(?:save|clear)"/);
   assert.match(time, /function commitPicker/);
-  assert.match(time, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(time, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(time, /SELECTED_DATE_KEY = 'tt_selected_date_v1'/);
+  assert.match(time, /function persistSelectedDate\(\)/);
   assert.match(time, /limit:20,open:false/);
   assert.match(time, /DIRTY_KEY/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);

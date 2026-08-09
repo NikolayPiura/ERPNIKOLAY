@@ -786,6 +786,7 @@ const STATE_KEY  = 'morn_v8_state';
 const PREFS_KEY  = 'morn_v8_prefs';
 const DATA_VERSION_KEY = 'morn_v8_data_version';
 const DATA_VERSION = 2;
+const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v1';
 
 // Тексты из предыдущей версии нужны только для безопасной миграции: если
 // пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
@@ -824,7 +825,7 @@ const DEFAULT_PREFS = {
   theme:'dark', accent:'cobalt', compact:1, scale:1, text:1, width:1640
 };
 
-let blocksData = loadBlocks();
+let blocksData = restoreHiddenItems(loadBlocks());
 let state = loadState();
 let prefs = loadPrefs();
 if(!localStorage.getItem('morn_unified_theme_v1')){prefs.theme='dark';localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));localStorage.setItem('morn_unified_theme_v1','1')}
@@ -851,6 +852,18 @@ function loadBlocks(){
   }catch(e){}
   localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
   return JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
+}
+
+function restoreHiddenItems(blocks){
+  if(localStorage.getItem(HIDDEN_RESTORE_KEY)) return blocks;
+  const hasSavedBlocks=Boolean(localStorage.getItem(BLOCKS_KEY));
+  const alreadyConfigured=blocks.some(block=>(block.items||[]).some(item=>item.hidden===true));
+  if(!hasSavedBlocks || alreadyConfigured){localStorage.setItem(HIDDEN_RESTORE_KEY,'1');return blocks}
+  const visibleIds=new Set(['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']);
+  blocks.forEach(block=>(block.items||[]).forEach(item=>{item.hidden=!visibleIds.has(item.id)}));
+  localStorage.setItem(BLOCKS_KEY,JSON.stringify(blocks));
+  localStorage.setItem(HIDDEN_RESTORE_KEY,'1');
+  return blocks;
 }
 
 function itemText(item){
