@@ -398,8 +398,8 @@ tr:hover td { background: var(--bg); }
 /* Навигация дня — отдельный заметный рабочий блок, не перекрываемый синхронизацией. */
   .hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:20px!important;min-height:62px!important;position:sticky!important;top:12px!important;z-index:30!important;padding:12px!important;border:1px solid var(--bord)!important;border-radius:20px!important;background:color-mix(in srgb,var(--bg2) 92%,transparent)!important;backdrop-filter:blur(18px)!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;min-height:54px!important;width:max-content!important;max-width:100%!important;padding:8px 10px!important;border:1px solid var(--bord)!important;border-radius:15px!important;background:var(--s2)!important;box-shadow:0 10px 30px rgba(0,0,0,.16)!important;pointer-events:auto!important}.hero-date-group>*{position:relative;z-index:2;pointer-events:auto!important}.hero-weekday{min-width:84px!important;font-size:12px!important}.hero-fulldate{min-width:160px!important}.nav-btn{flex:0 0 42px!important;cursor:pointer!important;touch-action:manipulation}.hero-right{align-self:center}.content{display:grid;gap:24px}.entry-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--bord);border-radius:24px;background:color-mix(in srgb,var(--bg2) 82%,transparent)}.entry-card{min-height:148px!important;border-radius:18px!important;background:var(--bg2)!important}.card-picker{border-top:1px solid var(--bord);padding:18px 22px 22px}.pk-presets{grid-template-columns:repeat(5,minmax(0,1fr))}.pk-actions{display:none!important}.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:24px!important}.chart-card{min-height:390px;overflow:hidden;background:radial-gradient(circle at 90% 0,rgba(110,168,254,.1),transparent 38%),var(--bg2)!important}.chart-card canvas{min-height:320px!important}.chart-card h3{margin-bottom:18px}.hist-card{padding:0!important;border:0!important;background:transparent!important}.hist-top{padding:0 4px 14px;border:0}.hist-scroll{overflow:visible}.history-days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.history-day{min-height:142px;padding:22px;border:1px solid var(--bord);border-radius:18px;background:var(--bg2);display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start}.history-date{font-size:15px;font-weight:850;color:var(--ink)}.history-total{font-size:30px;font-weight:850;color:var(--blue);letter-spacing:-.04em}.history-tags{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:7px}.history-tag{padding:7px 9px;border:1px solid var(--bord);border-radius:9px;background:var(--s2);color:var(--muted);font:700 10px 'JetBrains Mono',monospace}.history-tag b{color:var(--ink)}
 @media(max-width:850px){.hero-topbar{grid-template-columns:1fr!important}.hero-date-group{width:100%!important;overflow:auto}.hero-right{justify-content:flex-end}.hero-fulldate{min-width:120px!important}.entry-grid,.charts-row,.history-days{grid-template-columns:1fr}}
-/* Компактный рабочий экран: день, все категории и аналитика помещаются без двухэтажной ленты. */
-.hero{padding:16px 28px 18px!important}.hero-topbar{position:relative!important;top:auto!important;min-height:48px!important;padding:7px!important;border-radius:15px!important}.hero-date-group{min-height:42px!important;padding:4px 7px!important;border:0!important;background:transparent!important;box-shadow:none!important}.hero-weekday{min-width:68px!important}.hero-fulldate{min-width:142px!important;font-size:14px!important}.nav-btn{flex-basis:34px!important;width:34px!important;height:34px!important}.btn-today,.date-jump{height:34px!important}.hero-total-row{margin-top:8px!important}.hero-big{font-size:clamp(48px,5.8vw,76px)!important}.hero-big-label{padding-bottom:8px!important}.hero-bar{margin-top:8px!important;height:6px!important}.content{max-width:1780px!important;padding:16px 28px 36px!important;gap:14px!important}.entry-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;margin:0!important;padding:8px!important;border-radius:17px!important}.entry-card{min-height:76px!important;border-radius:12px!important}.card-head{min-height:74px!important;padding:10px 12px!important;gap:9px!important}.card-icon{width:34px!important;height:34px!important;border-radius:10px!important}.card-val{font-size:23px!important}.card-cat-label{font-size:8px!important;margin-bottom:4px!important}.card-toggle{width:28px!important;height:28px!important}.card-delete{width:22px!important;height:22px!important;right:5px!important;top:5px!important}.card-picker{padding:10px 12px 12px!important}.pk-presets{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:5px!important;padding-top:8px!important;margin-bottom:8px!important}.pk-pre{padding:7px 0!important}.charts-row{grid-template-columns:.78fr 1.22fr!important;gap:10px!important;margin:0!important}.chart-card{min-height:210px!important;height:210px!important;padding:14px 16px!important;border-radius:13px!important}.chart-card canvas{min-height:0!important;max-height:164px!important}.chart-card h3{margin-bottom:8px!important;font-size:10px!important}.hist-card{margin-top:0!important}.hist-top{min-height:42px!important;padding:8px 10px!important;border:1px solid var(--bord)!important;border-radius:12px!important;background:var(--bg2)!important}.hist-top h3{font-size:10px!important}.hist-toggle{padding:6px 10px!important}.hist-card:not(.collapsed) .hist-scroll{max-height:330px!important;overflow:auto!important;margin-top:8px!important}.history-days{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.history-day{min-height:98px!important;padding:13px!important;border-radius:12px!important;gap:8px!important}.history-date{font-size:12px!important}.history-total{font-size:22px!important}.history-tag{padding:4px 6px!important;font-size:8px!important}
+/* Просторный рабочий экран: карточки легко читаются, а история остаётся закрытой. */
+.hero{padding:22px 32px 24px!important;background:radial-gradient(circle at 14% 15%,color-mix(in srgb,var(--blue) 12%,transparent),transparent 34%),radial-gradient(circle at 88% 82%,color-mix(in srgb,var(--lime) 8%,transparent),transparent 38%),var(--bg2)!important}.hero-topbar{position:relative!important;top:auto!important;min-height:56px!important;padding:9px!important;border-radius:17px!important}.hero-date-group{min-height:46px!important;padding:5px 8px!important;border:0!important;background:transparent!important;box-shadow:none!important}.hero-weekday{min-width:78px!important}.hero-fulldate{min-width:154px!important;font-size:15px!important}.nav-btn{flex-basis:38px!important;width:38px!important;height:38px!important}.btn-today,.date-jump{height:38px!important}.hero-total-row{margin-top:12px!important}.hero-big{font-size:clamp(58px,6.2vw,88px)!important}.hero-big-label{padding-bottom:10px!important}.hero-bar{margin-top:11px!important;height:8px!important}.content{width:100%!important;max-width:none!important;padding:22px 32px 48px!important;gap:18px!important}.entry-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;margin:0!important;padding:13px!important;border-radius:22px!important;background:linear-gradient(145deg,color-mix(in srgb,var(--blue) 5%,var(--bg2)),color-mix(in srgb,var(--lime) 3%,var(--bg2)))!important}.entry-card{min-height:104px!important;border-left:4px solid var(--cc)!important;border-radius:16px!important;background:radial-gradient(circle at 0 50%,color-mix(in srgb,var(--cc) 12%,transparent),transparent 48%),var(--bg2)!important}.entry-card:hover{transform:translateY(-3px)!important;border-color:color-mix(in srgb,var(--cc) 55%,var(--bord))!important}.card-head{min-height:102px!important;padding:16px 18px!important;gap:13px!important}.card-icon{width:44px!important;height:44px!important;border-radius:13px!important}.card-val{font-size:30px!important}.card-cat-label{font-size:9px!important;margin-bottom:6px!important}.card-toggle{width:32px!important;height:32px!important}.card-picker{padding:14px 18px 18px!important}.pk-presets{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:7px!important;padding-top:10px!important;margin-bottom:10px!important}.pk-pre{padding:9px 0!important}.charts-row{grid-template-columns:.72fr 1.28fr!important;gap:14px!important;margin:0!important}.chart-card{min-height:280px!important;height:280px!important;padding:19px 21px!important;border-radius:17px!important}.chart-card canvas{min-height:0!important;max-height:222px!important}.chart-card h3{margin-bottom:12px!important;font-size:11px!important}.hist-card{margin-top:0!important}.hist-top{min-height:48px!important;padding:10px 13px!important;border:1px solid var(--bord)!important;border-radius:14px!important;background:var(--bg2)!important}.hist-top h3{font-size:11px!important}.hist-toggle{padding:7px 11px!important}.hist-card:not(.collapsed) .hist-scroll{max-height:360px!important;overflow:auto!important;margin-top:10px!important}.history-days{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}.history-day{min-height:110px!important;padding:16px!important;border-radius:14px!important;gap:10px!important}.history-date{font-size:13px!important}.history-total{font-size:24px!important}.history-tag{padding:5px 7px!important;font-size:9px!important}
 @media(max-width:1280px){.entry-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}.history-days{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:850px){.hero{padding-inline:14px!important}.content{padding-inline:14px!important}.entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.charts-row,.history-days{grid-template-columns:1fr!important}.chart-card{height:auto!important;min-height:240px!important}}
 </style>
@@ -541,13 +541,15 @@ const PRESETS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10];
 const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ ключ, чтобы не терять историю
 const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
 const HISTORY_PREF_KEY = 'tt_history_pref_v1';
+const DIRTY_KEY = 'tt_local_dirty_v1';
+const OPEN_KEY = 'tt_open_picker_v1';
 
 let curDate = new Date(); curDate.setHours(0,0,0,0);
-let openKey = null, pH = 0, pM = 0;
+let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
 let chartPie = null, chartBar = null;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
 let historyPrefs = (()=>{try{return{limit:20,open:false,...JSON.parse(localStorage.getItem(HISTORY_PREF_KEY)||'{}')}}catch{return{limit:20,open:false}}})();
-if(!localStorage.getItem('tt_compact_history_v1')){historyPrefs.open=false;localStorage.setItem('tt_compact_history_v1','1');localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs))}
+if(!localStorage.getItem('tt_history_default_v2')){historyPrefs.open=false;localStorage.setItem('tt_history_default_v2','1');localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs))}
 const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
 /* ── CATEGORIES STORAGE ── */
@@ -583,6 +585,9 @@ function save(d) { localStorage.setItem(SK, JSON.stringify(d)); }
 function dk(d)   { const value=new Date(d);return [value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-'); }
 function fmt(m)  { if (!m) return '0:00'; return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`; }
 function dayData() { return load()[dk(curDate)] || {}; }
+function dirtyDays(){try{return JSON.parse(localStorage.getItem(DIRTY_KEY)||'{}')}catch{return{}}}
+function markDirty(dateKey){const dirty=dirtyDays(),now=Date.now();Object.keys(dirty).forEach(key=>{if(now-Number(dirty[key]||0)>120000)delete dirty[key]});dirty[dateKey]=now;localStorage.setItem(DIRTY_KEY,JSON.stringify(dirty));}
+function isDirty(dateKey){return Date.now()-Number(dirtyDays()[dateKey]||0)<120000}
 
 function setVal(key, mins) {
   const d = load(), k = dk(curDate);
@@ -590,6 +595,7 @@ function setVal(key, mins) {
   if (mins === 0) delete d[k][key]; else d[k][key] = mins;
   if (!Object.keys(d[k]).length) delete d[k];
   save(d);
+  markDirty(k);
 }
 
 /* ── GOOGLE SHEETS SYNC ── */
@@ -617,7 +623,7 @@ async function syncToSheets(dateKey) {
       body: payload
     });
     setSyncStatus('ok', '✓ Отправлено в Google Sheets');
-    setTimeout(()=>syncFromSheets(true),900);
+    setTimeout(()=>setSyncStatus('', 'Google Sheets'),4000);
   } catch (err) {
     setSyncStatus('error', '✗ Ошибка синхронизации');
     console.error('Sync error:', err);
@@ -641,6 +647,7 @@ async function syncFromSheets(quiet=false) {
     const byLabel=new Map(cats.map(cat=>[cat.label,cat.key])),all=load();
     payload.days.forEach(serverDay=>{
       if(!/^\d{4}-\d{2}-\d{2}$/.test(serverDay.date||''))return;
+      if(isDirty(serverDay.date))return;
       const next={...(all[serverDay.date]||{})};
       (payload.categories||[]).forEach(label=>{const key=byLabel.get(label),mins=Number(serverDay[label])||0;if(!key)return;if(mins>0)next[key]=mins;else delete next[key];});
       if(Object.keys(next).length)all[serverDay.date]=next;else delete all[serverDay.date];
@@ -658,8 +665,8 @@ function updateDateLabels() {
   document.getElementById('lblWD').textContent   = WD[curDate.getDay()];
   document.getElementById('lblDate').textContent = curDate.toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'});
 }
-function chDate(delta) { curDate = new Date(curDate); curDate.setDate(curDate.getDate() + delta); openKey = null; updateDateLabels(); const picker=document.getElementById('dateJump');if(picker)picker.value=dk(curDate);renderAll(); }
-function goToday()     { curDate = new Date(); curDate.setHours(0,0,0,0); openKey = null; updateDateLabels(); const picker=document.getElementById('dateJump');if(picker)picker.value=dk(curDate);renderAll(); }
+function chDate(delta) { curDate = new Date(curDate); curDate.setDate(curDate.getDate() + delta); openKey = null; sessionStorage.removeItem(OPEN_KEY); updateDateLabels(); const picker=document.getElementById('dateJump');if(picker)picker.value=dk(curDate);renderAll(); }
+function goToday()     { curDate = new Date(); curDate.setHours(0,0,0,0); openKey = null; sessionStorage.removeItem(OPEN_KEY); updateDateLabels(); const picker=document.getElementById('dateJump');if(picker)picker.value=dk(curDate);renderAll(); }
 
 /* ── HERO ── */
 function renderHero() {
@@ -700,7 +707,6 @@ function renderGrid() {
     }).join('');
 
     card.innerHTML = `
-      <button class="card-delete" onclick="event.stopPropagation();deleteCategory('${cat.key}')" title="Удалить категорию">✕</button>
       <div class="card-head" onclick="toggleCard('${cat.key}',${v})">
         <div class="card-icon">${cat.icon}</div>
         <div class="card-meta">
@@ -741,13 +747,14 @@ function renderGrid() {
 
 function toggleCard(key, curVal) {
   openKey = (openKey === key) ? null : key;
+  if(openKey)sessionStorage.setItem(OPEN_KEY,openKey);else sessionStorage.removeItem(OPEN_KEY);
   if (openKey) { const v = curVal||0; pH = Math.floor(v/60); pM = v%60; }
   renderGrid();
 }
 
 function presetPick(e, key, mins) {
   e.stopPropagation(); pH = Math.floor(mins/60); pM = mins%60;
-  setVal(key,mins);openKey=null;renderAll();queueSheetSync();
+  setVal(key,mins);openKey=key;sessionStorage.setItem(OPEN_KEY,key);renderAll();queueSheetSync();
 }
 function adj(e, key, part, delta) {
   e.stopPropagation();
@@ -854,6 +861,7 @@ function renderHistory() {
 function saveHistoryPrefs(){localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs));}
 function toggleHistory(){historyPrefs.open=historyPrefs.open===false;saveHistoryPrefs();renderHistory();}
 function setHistoryLimit(value){historyPrefs.limit=[15,20,30,60].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
+function setHistoryOpen(value){historyPrefs.open=Boolean(value);saveHistoryPrefs();renderHistory();}
 
 function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); renderHistory(); }
 
@@ -995,10 +1003,11 @@ function doExport() {
 /* ── INIT ── */
 updateDateLabels();
 document.getElementById('dateJump').value=dk(curDate);
-document.getElementById('dateJump').addEventListener('change',event=>{if(!event.target.value)return;curDate=new Date(event.target.value+'T00:00:00');openKey=null;updateDateLabels();renderAll()});
+document.getElementById('dateJump').addEventListener('change',event=>{if(!event.target.value)return;curDate=new Date(event.target.value+'T00:00:00');openKey=null;sessionStorage.removeItem(OPEN_KEY);updateDateLabels();renderAll()});
 document.getElementById('prevDay').addEventListener('click',event=>{event.preventDefault();chDate(-1)});
 document.getElementById('nextDay').addEventListener('click',event=>{event.preventDefault();chDate(1)});
 document.getElementById('todayDay').addEventListener('click',event=>{event.preventDefault();goToday()});
+if(openKey){const initial=dayData()[openKey]||0;pH=Math.floor(initial/60);pM=initial%60}
 renderAll();
 document.getElementById('syncStatus').addEventListener('click',()=>syncFromSheets());
 document.getElementById('syncStatus').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();syncFromSheets();}});

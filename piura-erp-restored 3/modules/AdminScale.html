@@ -769,11 +769,13 @@ let db={};
 function load(){try{const r=localStorage.getItem(SK);if(r)db=JSON.parse(r)}catch(e){}}
 function programSummary(){
   let total=0,done=0;
-  DYN.forEach(({id})=>{
+  const dynamics=DYN.map(({id,name})=>{
     const items=Array.isArray(db[id]?.['проги'])?db[id]['проги']:(PRE[id]?.['проги']||[]).map(t=>({t,done:DONE_SEED.has(t),hidden:false}));
-    items.filter(item=>!item.hidden).forEach(item=>{total++;if(item.done)done++});
+    const visible=items.filter(item=>!item.hidden),dynamicDone=visible.filter(item=>item.done).length;
+    total+=visible.length;done+=dynamicDone;
+    return{id,name,done:dynamicDone,total:visible.length};
   });
-  return{done,total,updatedAt:Date.now()};
+  return{done,total,dynamics,updatedAt:Date.now()};
 }
 function persist(){try{localStorage.setItem(SK,JSON.stringify(db));localStorage.setItem('admin_program_summary_v1',JSON.stringify(programSummary()))}catch(e){}}
 
@@ -836,9 +838,18 @@ function migrateDocSnapshotV2(){
   db.__docSeedV2=true;persist();
 }
 
+function migrateCompactDefault(){
+  if(db.__compactDefaultV2)return;
+  db.__view={...(db.__view||{}),limit:4,expandedAll:false};
+  db.__expanded={};
+  db.__compactDefaultV2=true;
+  persist();
+}
+
 load();
 migrateDocSnapshot();
 migrateDocSnapshotV2();
+migrateCompactDefault();
 
 /* ══ APPLY DONE COLORS ══ */
 function applyDoneColors(){
