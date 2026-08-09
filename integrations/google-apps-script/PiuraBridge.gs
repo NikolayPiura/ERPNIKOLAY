@@ -72,29 +72,40 @@ function goveeOverview_() {
   const props = PropertiesService.getScriptProperties();
   const sensor = goveeSelectDevice_(devices, 'sensor', props);
   const light = goveeSelectDevice_(devices, 'light', props);
-  let climate = {}, lamp = {};
+  let climate = {}, lamp = {}, sensorError = null, lightError = null;
 
   if (sensor) {
-    const state = goveeState_(sensor);
-    climate.temperature = goveeStateValue_(state, ['sensorTemperature', 'temperature']);
-    climate.humidity = goveeStateValue_(state, ['sensorHumidity', 'humidity']);
-    climate.co2 = goveeStateValue_(state, ['carbonDioxideConcentration', 'co2']);
-    climate.airQuality = goveeStateValue_(state, ['airQuality', 'pm25', 'pm2_5']);
-    climate.online = goveeStateValue_(state, ['online']);
-    climate.deviceName = sensor.deviceName || 'Govee Life';
+    try {
+      const state = goveeState_(sensor);
+      climate.temperature = goveeStateValue_(state, ['sensorTemperature', 'temperature']);
+      climate.humidity = goveeStateValue_(state, ['sensorHumidity', 'humidity']);
+      climate.co2 = goveeStateValue_(state, ['carbonDioxideConcentration', 'co2']);
+      climate.airQuality = goveeStateValue_(state, ['airQuality', 'pm25', 'pm2_5']);
+      climate.online = goveeStateValue_(state, ['online']);
+      climate.deviceName = sensor.deviceName || 'Govee Life';
+    } catch (error) {
+      sensorError = error;
+    }
   }
   if (light) {
-    const state = sensor && light.device === sensor.device && light.sku === sensor.sku ? goveeState_(sensor) : goveeState_(light);
-    const powerValue = goveeStateValue_(state, ['powerSwitch', 'onOff']);
-    lamp.power = powerValue === 1 || powerValue === true || /^(on|1|true)$/i.test(String(powerValue));
-    lamp.brightness = goveeStateValue_(state, ['brightness']);
-    lamp.colorRgb = goveeStateValue_(state, ['colorRgb']);
-    lamp.colorTemperature = goveeStateValue_(state, ['colorTemperatureK']);
-    lamp.lightName = light.deviceName || 'Govee Light';
-    if (climate.online == null) climate.online = goveeStateValue_(state, ['online']);
+    try {
+      const state = sensor && light.device === sensor.device && light.sku === sensor.sku && !sensorError ? goveeState_(sensor) : goveeState_(light);
+      const powerValue = goveeStateValue_(state, ['powerSwitch', 'onOff']);
+      lamp.power = powerValue === 1 || powerValue === true || /^(on|1|true)$/i.test(String(powerValue));
+      lamp.brightness = goveeStateValue_(state, ['brightness']);
+      lamp.colorRgb = goveeStateValue_(state, ['colorRgb']);
+      lamp.colorTemperature = goveeStateValue_(state, ['colorTemperatureK']);
+      lamp.lightName = light.deviceName || 'Govee Light';
+      lamp.lightAvailable = true;
+      if (climate.online == null) climate.online = goveeStateValue_(state, ['online']);
+    } catch (error) {
+      lightError = error;
+      lamp.lightAvailable = false;
+    }
   }
   if (!sensor && !light) throw new Error('No compatible Govee devices were found');
-  return Object.assign({ok: true, updatedAt: new Date().toISOString()}, climate, lamp);
+  if (sensorError && lightError) throw sensorError;
+  return Object.assign({ok: true, sensorAvailable: Boolean(sensor) && !sensorError, updatedAt: new Date().toISOString()}, climate, lamp);
 }
 
 function goveeControl_(parameter) {

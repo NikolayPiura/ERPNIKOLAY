@@ -136,6 +136,10 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /function climateNumber\(raw\)/);
   assert.match(overview, /raw==null\|\|raw===''/);
   assert.doesNotMatch(overview, /Number\.isFinite\(Number\(data\?\.\[name\]\)\)/);
+  assert.match(overview, /Promise\.allSettled\(\[directState\(sensor\)/);
+  assert.match(overview, /CLIMATE_SNAPSHOT_KEY='overview_govee_climate_v1'/);
+  assert.doesNotMatch(overview, /temperature==null&&humidity==null\)throw/);
+  assert.match(overview, /renderClimate\(readings\);renderLamp\(data\)/);
   assert.match(read('piura-erp-restored 3/modules/EFFECTIVNESS.html'), /source:'effectiveness'/);
   assert.doesNotMatch(overview, /localStorage\.setItem\(EFFECTIVENESS_SUMMARY_KEY/);
   const shell = read('index.html');
