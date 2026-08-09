@@ -1,0 +1,218 @@
+/* PIURA LIFE OS — isolated competition concept. This file is loaded only by contest-preview. */
+
+:root[data-piura-contest]{
+  --contest-blue:#78a9ff;
+  --contest-green:#50dfb0;
+  --contest-violet:#aa91ff;
+  --contest-gold:#f2c86f;
+  --contest-red:#ff7a86;
+  --contest-bg:#07090d;
+  --contest-surface:#111319;
+  --contest-raised:#171a21;
+  --contest-line:rgba(255,255,255,.105);
+  --contest-text:#f8f9fc;
+  --contest-muted:#929aaa;
+  --contest-faint:#616a7b;
+}
+
+/* Shell */
+:root[data-piura-contest="shell"]{
+  --shell:var(--contest-bg)!important;
+  --surface:var(--contest-surface)!important;
+  --line:var(--contest-line)!important;
+  --line-strong:rgba(255,255,255,.17)!important;
+  --text:var(--contest-text)!important;
+  --muted:var(--contest-muted)!important;
+  --faint:var(--contest-faint)!important;
+  --nav-width:268px!important;
+  --nav-collapsed:90px!important;
+  --item-height:52px!important;
+  --item-gap:2px!important;
+  --nav-font:12px!important;
+  --nav-radius:0!important;
+  --nav-bg:#0b0d12!important;
+  --nav-accent:var(--contest-blue)!important;
+}
+:root[data-piura-contest="shell"] body{
+  background:
+    radial-gradient(circle at 82% -10%,rgba(120,169,255,.09),transparent 28%),
+    radial-gradient(circle at 8% 94%,rgba(80,223,176,.045),transparent 23%),
+    var(--contest-bg)!important;
+}
+:root[data-piura-contest="shell"] .shell{grid-template-columns:268px minmax(0,1fr)!important;background:transparent!important}
+:root[data-piura-contest="shell"] .shell.compact{grid-template-columns:90px minmax(0,1fr)!important}
+:root[data-piura-contest="shell"] .nav-column{background:rgba(8,10,14,.88)!important;border-right:1px solid rgba(255,255,255,.08)!important}
+:root[data-piura-contest="shell"] .sidebar{
+  width:100%!important;height:100vh!important;margin:0!important;border:0!important;border-radius:0!important;
+  background:linear-gradient(180deg,rgba(120,169,255,.055),transparent 18%),rgba(8,10,14,.94)!important;
+  box-shadow:18px 0 70px rgba(0,0,0,.22)!important;backdrop-filter:blur(26px)!important;transform:none!important
+}
+:root[data-piura-contest="shell"] .brand-row{min-height:104px!important;padding:22px 20px!important;border-bottom-color:rgba(255,255,255,.07)!important}
+:root[data-piura-contest="shell"] .brand-mark{
+  width:50px!important;height:50px!important;flex-basis:50px!important;border:1px solid rgba(255,255,255,.16)!important;
+  border-radius:17px!important;background:linear-gradient(145deg,rgba(120,169,255,.18),rgba(255,255,255,.025))!important;
+  color:#fff!important;font-family:Inter,-apple-system,sans-serif!important;font-size:20px!important;box-shadow:0 18px 46px rgba(0,0,0,.28)!important
+}
+:root[data-piura-contest="shell"] .brand-copy strong{font-size:17px!important;letter-spacing:.16em!important}
+:root[data-piura-contest="shell"] .brand-copy span{font-family:Inter,-apple-system,sans-serif!important;font-size:8px!important;letter-spacing:.18em!important;color:#747d8e!important}
+:root[data-piura-contest="shell"] .brand-copy span{font-size:0!important}
+:root[data-piura-contest="shell"] .brand-copy span:after{content:"LIFE OPERATING SYSTEM";font-size:8px}
+:root[data-piura-contest="shell"] .collapse{border-color:rgba(255,255,255,.1)!important;background:rgba(255,255,255,.025)!important;color:#8992a2!important;box-shadow:none!important}
+:root[data-piura-contest="shell"] .menu-scroll{padding:10px 12px 18px!important}
+:root[data-piura-contest="shell"] .menu-group{padding-top:12px!important}
+:root[data-piura-contest="shell"] .group-heading{height:30px!important;padding:0 10px!important;font-family:Inter,-apple-system,sans-serif!important;font-size:9px!important;letter-spacing:.16em!important;color:#7a8291!important}
+:root[data-piura-contest="shell"] .group-heading i{width:5px!important;height:5px!important;flex-basis:5px!important;box-shadow:none!important}
+:root[data-piura-contest="shell"] .group-heading b{font-size:8px!important}
+:root[data-piura-contest="shell"] .menu-item{
+  min-height:52px!important;padding:7px 9px!important;border:0!important;border-radius:13px!important;background:transparent!important;color:#8992a2!important
+}
+:root[data-piura-contest="shell"] .menu-item:hover{background:rgba(255,255,255,.035)!important;color:#e7e9ee!important;transform:translateX(2px)}
+:root[data-piura-contest="shell"] .menu-item.active{background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 14%,transparent),rgba(255,255,255,.025))!important;color:#fff!important}
+:root[data-piura-contest="shell"] .menu-item.active:before{top:9px!important;bottom:9px!important;left:-12px!important;width:3px!important;box-shadow:0 0 20px color-mix(in srgb,var(--accent) 45%,transparent)!important}
+:root[data-piura-contest="shell"] .item-code{width:34px!important;height:34px!important;flex-basis:34px!important;border:0!important;border-radius:11px!important;background:rgba(255,255,255,.035)!important;color:#707989!important}
+:root[data-piura-contest="shell"] .menu-item.active .item-code{background:color-mix(in srgb,var(--accent) 12%,rgba(255,255,255,.03))!important;color:var(--accent)!important}
+:root[data-piura-contest="shell"] .item-copy{gap:4px!important}
+:root[data-piura-contest="shell"] .item-copy strong{font-size:12px!important;font-weight:680!important;letter-spacing:-.01em!important}
+:root[data-piura-contest="shell"] .item-copy small{font-family:Inter,-apple-system,sans-serif!important;font-size:8px!important;color:#606979!important}
+:root[data-piura-contest="shell"] .sidebar-footer{min-height:50px!important;padding:8px 18px!important;background:rgba(255,255,255,.012)!important}
+:root[data-piura-contest="shell"] .settings-hub-btn{height:56px!important;border:0!important;border-radius:14px!important;background:rgba(255,255,255,.03)!important;color:#9ba4b4!important;box-shadow:none!important}
+:root[data-piura-contest="shell"] .settings-hub-btn b{width:38px!important;height:38px!important;border-radius:11px!important;background:rgba(120,169,255,.09)!important;font-size:20px!important}
+:root[data-piura-contest="shell"] .settings-hub-btn:hover,:root[data-piura-contest="shell"] .settings-hub-btn.active{background:rgba(120,169,255,.105)!important;color:#fff!important}
+:root[data-piura-contest="shell"] .stage{height:100vh!important;display:grid!important;grid-template-rows:48px minmax(0,1fr)!important;background:transparent!important}
+:root[data-piura-contest="shell"] .module-frame{height:100%!important;min-height:0!important;background:transparent!important}
+.contest-command-bar{position:relative;z-index:3;min-width:0;padding:0 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(8,10,14,.75);backdrop-filter:blur(18px);color:#9099a9}
+.contest-command-brand,.contest-command-context{display:flex;align-items:center;gap:11px;min-width:0}.contest-command-brand i{width:7px;height:7px;border-radius:50%;background:var(--contest-green);box-shadow:0 0 16px rgba(80,223,176,.6)}.contest-command-brand strong{color:#f4f6fa;font-size:10px;letter-spacing:.15em}.contest-command-brand span,.contest-command-context{font-size:8px;font-weight:700;letter-spacing:.14em}.contest-command-brand span{color:#5e6777}.contest-command-context span{max-width:280px;overflow:hidden;color:#c7cdd7;text-overflow:ellipsis;white-space:nowrap}.contest-command-context b{padding:5px 8px;border:1px solid rgba(80,223,176,.18);border-radius:99px;color:var(--contest-green);font-size:7px}.contest-command-context time{color:#626c7c}
+
+/* Global module system */
+:root[data-piura-contest="module"] body{
+  --erp-bg:var(--contest-bg)!important;--erp-surface:var(--contest-surface)!important;--erp-raised:var(--contest-raised)!important;
+  --erp-line:var(--contest-line)!important;--erp-text:var(--contest-text)!important;--erp-muted:var(--contest-muted)!important;
+  background:
+    radial-gradient(circle at 88% 2%,rgba(120,169,255,.075),transparent 26%),
+    radial-gradient(circle at 12% 96%,rgba(80,223,176,.035),transparent 24%),
+    var(--contest-bg)!important;color:var(--contest-text)!important;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important
+}
+:root[data-piura-contest="module"] body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;background:linear-gradient(rgba(255,255,255,.012) 1px,transparent 1px);background-size:100% 54px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.18),transparent 55%)}
+:root[data-piura-contest="module"] :where(.wrap,.content,.app,.main,.page){max-width:1760px!important;padding-left:clamp(30px,4vw,72px)!important;padding-right:clamp(30px,4vw,72px)!important}
+:root[data-piura-contest="module"] :where(h1,.logo,.page-title,.hero-name){font-family:Inter,-apple-system,sans-serif!important;font-weight:790!important;letter-spacing:-.055em!important;text-wrap:balance!important}
+:root[data-piura-contest="module"] :where(h2,h3,.title,.block-title,.card-title){font-family:Inter,-apple-system,sans-serif!important;letter-spacing:-.03em!important;text-wrap:balance!important}
+:root[data-piura-contest="module"] :where(.eyebrow,.kicker,.lbl,.label,.metric-label,.section-label){font-family:Inter,-apple-system,sans-serif!important;font-weight:720!important;letter-spacing:.11em!important}
+:root[data-piura-contest="module"] :where(.card,.block,.metric,.tile,.level-block,.section-dyn-card,.entry-card,.chart-card,.hist-card,.pie-card,.ov-row,.sc){border-color:rgba(255,255,255,.1)!important;box-shadow:0 22px 55px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.025)!important}
+:root[data-piura-contest="module"] :where(button,.btn,.icon-btn,.tool-btn,.nav-btn,.pill,.period-btn,.cbtn,.cnt-btn){min-height:38px;border-radius:11px!important;transition:transform .18s ease,border-color .18s ease,background .18s ease,color .18s ease!important}
+:root[data-piura-contest="module"] :where(button,.btn,.icon-btn,.tool-btn,.nav-btn,.pill,.period-btn,.cbtn,.cnt-btn):hover{transform:translateY(-1px)}
+:root[data-piura-contest="module"] :where(.card,.block,.metric,.tile,.level-block,.section-dyn-card,.entry-card,.chart-card,.hist-card,.pie-card,.ov-row,.sc){animation:contestRise .52s cubic-bezier(.2,.75,.25,1) both}
+:root[data-piura-contest="module"] :where(.card,.block,.metric,.tile,.section-dyn-card,.entry-card,.ov-row):nth-child(2){animation-delay:.035s}
+:root[data-piura-contest="module"] :where(.card,.block,.metric,.tile,.section-dyn-card,.entry-card,.ov-row):nth-child(3){animation-delay:.07s}
+@keyframes contestRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* Overview: editorial eight-panel composition. */
+:root[data-piura-contest="module"] body.piura-module-generic .dashboard{gap:16px!important}
+:root[data-piura-contest="module"] body.piura-module-generic .tile{border-radius:24px!important;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))!important;overflow:hidden!important}
+:root[data-piura-contest="module"] body.piura-module-generic .tile:after{content:"";position:absolute;inset:auto -15% -45% 35%;height:65%;pointer-events:none;background:radial-gradient(circle,rgba(120,169,255,.08),transparent 66%)}
+:root[data-piura-contest="module"] body.piura-module-generic .hero-value{letter-spacing:-.075em!important}
+:root[data-piura-contest="module"] body.piura-module-generic .ps{background:radial-gradient(circle at 82% 35%,rgba(80,223,176,.11),transparent 33%),var(--contest-surface)!important}
+:root[data-piura-contest="module"] body.piura-module-generic .lamp{background:radial-gradient(circle at 22% 45%,rgba(170,145,255,.11),transparent 34%),var(--contest-surface)!important}
+:root[data-piura-contest="module"] body.piura-module-generic .lamp-wheel{filter:saturate(.88) brightness(1.04);box-shadow:0 30px 90px color-mix(in srgb,var(--contest-violet) 18%,transparent)!important}
+
+/* Effectiveness */
+:root[data-piura-contest="module"] body.piura-module-effectiveness .topbar{min-height:70px!important;border-bottom-color:rgba(255,255,255,.08)!important;background:rgba(9,11,15,.82)!important;backdrop-filter:blur(20px)!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .tabs{padding:5px!important;border-radius:14px!important;background:rgba(255,255,255,.025)!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .tab{min-height:42px!important;border-radius:10px!important;border-bottom:0!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .tab.act,:root[data-piura-contest="module"] body.piura-module-effectiveness .tab.on{background:rgba(120,169,255,.1)!important;color:#fff!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .ov-summary{border-radius:24px!important;background:radial-gradient(circle at 38% 40%,rgba(80,223,176,.08),transparent 32%),var(--contest-surface)!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .ov-row{min-height:190px!important;border-left-width:3px!important;border-radius:20px!important;background:linear-gradient(110deg,rgba(255,255,255,.025),transparent)!important}
+:root[data-piura-contest="module"] body.piura-module-effectiveness .ov-row-tile{background:rgba(255,255,255,.025)!important}
+
+/* Morning */
+:root[data-piura-contest="module"] body.piura-module-morning .head{min-height:128px!important;background:linear-gradient(120deg,rgba(80,223,176,.07),rgba(255,255,255,.012))!important}
+:root[data-piura-contest="module"] body.piura-module-morning .block{border-radius:22px!important;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.012))!important}
+:root[data-piura-contest="module"] body.piura-module-morning .item{border-radius:12px!important}
+:root[data-piura-contest="module"] body.piura-module-morning .item.checked{background:linear-gradient(90deg,rgba(80,223,176,.13),rgba(80,223,176,.035))!important}
+
+/* Time: denser, more useful analytics. */
+:root[data-piura-contest="module"] body.piura-module-time .hero{min-height:245px!important;border-bottom:1px solid rgba(255,255,255,.08)!important;background:radial-gradient(circle at 14% 52%,rgba(120,169,255,.11),transparent 26%),transparent!important}
+:root[data-piura-contest="module"] body.piura-module-time .hero-big{font-size:clamp(72px,8vw,132px)!important;letter-spacing:-.07em!important}
+:root[data-piura-contest="module"] body.piura-module-time .entry-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:13px!important}
+:root[data-piura-contest="module"] body.piura-module-time .entry-card{min-height:126px!important;border-radius:18px!important;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.01))!important}
+:root[data-piura-contest="module"] body.piura-module-time .charts-row{grid-template-columns:minmax(280px,.72fr) minmax(0,1.55fr)!important}
+:root[data-piura-contest="module"] body.piura-module-time .chart-card{min-height:390px!important;border-radius:20px!important;background:rgba(255,255,255,.018)!important}
+:root[data-piura-contest="module"] body.piura-module-time .chart-card canvas{min-height:280px!important}
+:root[data-piura-contest="module"] body.piura-module-time .hist-card{border-radius:20px!important}
+
+/* PS #1: analytics first, administration second. */
+:root[data-piura-contest="module"] body.piura-module-ps .app{max-width:1620px!important}
+:root[data-piura-contest="module"] body.piura-module-ps .header{min-height:96px!important;background:linear-gradient(120deg,rgba(120,169,255,.06),transparent)!important}
+:root[data-piura-contest="module"] body.piura-module-ps .scores{gap:13px!important}
+:root[data-piura-contest="module"] body.piura-module-ps .sc{min-height:154px!important;border-radius:20px!important;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))!important}
+:root[data-piura-contest="module"] body.piura-module-ps .sc .val{font-family:Inter,-apple-system,sans-serif!important;font-weight:800!important;letter-spacing:-.06em!important}
+:root[data-piura-contest="module"] body.piura-module-ps .progress-block{min-height:100px!important;background:rgba(255,255,255,.018)!important}
+:root[data-piura-contest="module"] body.piura-module-ps .tasks{border-radius:20px!important;overflow:hidden!important}
+:root[data-piura-contest="module"] body.piura-module-ps .task-row:hover{background:rgba(120,169,255,.045)!important}
+:root[data-piura-contest="module"] body.piura-module-ps .weeks-archive{gap:12px!important}
+
+/* Admin scale */
+:root[data-piura-contest="module"] body.piura-module-admin .topbar{min-height:88px!important;background:rgba(9,11,15,.84)!important;backdrop-filter:blur(20px)!important}
+:root[data-piura-contest="module"] body.piura-module-admin .hero{min-height:280px!important;padding:56px!important;background:radial-gradient(circle at 12% 35%,rgba(120,169,255,.095),transparent 24%),var(--contest-surface)!important}
+:root[data-piura-contest="module"] body.piura-module-admin .level-block{border-radius:20px!important;background:linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.01))!important}
+:root[data-piura-contest="module"] body.piura-module-admin .item-row{min-height:58px!important;border-radius:12px!important}
+
+/* My Dynamics: premium analytical table. */
+:root[data-piura-contest="module"] body.piura-module-dynamics .topbar{min-height:76px!important;background:rgba(9,11,15,.86)!important;backdrop-filter:blur(18px)!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics .main-tabs{padding:4px!important;border-radius:14px!important;background:rgba(255,255,255,.025)!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics .main-tab-btn{min-height:42px!important;border-radius:10px!important;border-bottom:0!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics .main-tab-btn.active{background:rgba(120,169,255,.1)!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics #grid{border-radius:20px!important;overflow:hidden!important;box-shadow:0 30px 80px rgba(0,0,0,.18)!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics #grid td,:root[data-piura-contest="module"] body.piura-module-dynamics #grid th{height:58px!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics #grid tr:hover td{background:rgba(120,169,255,.045)!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics #grid td.nextstep-cell{background:linear-gradient(90deg,rgba(120,169,255,.04),rgba(255,255,255,.018))!important}
+:root[data-piura-contest="module"] body.piura-module-dynamics .columns .item{min-height:60px!important}
+
+/* Foundation and portfolios */
+:root[data-piura-contest="module"] body.piura-module-foundation .hero{border-radius:28px!important;background:radial-gradient(circle at 74% 20%,rgba(170,145,255,.095),transparent 28%),linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))!important}
+:root[data-piura-contest="module"] body.piura-module-foundation .hero h1{font-size:clamp(62px,7.3vw,116px)!important}
+:root[data-piura-contest="module"] body.piura-module-foundation .fund-card{min-height:180px!important;border-radius:20px!important;background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.01))!important}
+:root[data-piura-contest="module"] body.piura-module-foundation .fund-card:hover{transform:translateY(-3px)!important;border-color:color-mix(in srgb,var(--card-accent,var(--contest-blue)) 38%,rgba(255,255,255,.12))!important}
+:root[data-piura-contest="module"] body.piura-module-portfolio .hero,:root[data-piura-contest="module"] body.piura-module-portfolio .header{background:radial-gradient(circle at 82% 18%,rgba(120,169,255,.08),transparent 26%),var(--contest-surface)!important}
+:root[data-piura-contest="module"] body.piura-module-portfolio :where(.card,.metric,.asset-row){border-radius:18px!important}
+
+/* Income */
+:root[data-piura-contest="module"] body.piura-module-income .summary-grid,:root[data-piura-contest="module"] body.piura-module-income .month-grid{gap:13px!important}
+:root[data-piura-contest="module"] body.piura-module-income :where(.kpi,.month-card,.chart-card){border-radius:20px!important;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.01))!important}
+:root[data-piura-contest="module"] body.piura-module-income canvas{filter:saturate(.72)!important}
+
+/* Settings page */
+:root[data-piura-contest="shell"] .modal-bg.settings-page{top:48px!important;background:radial-gradient(circle at 88% 0,rgba(120,169,255,.08),transparent 28%),var(--contest-bg)!important}
+:root[data-piura-contest="shell"] .control-panel .panel-head{min-height:96px!important;padding:24px 32px!important;background:rgba(10,12,17,.88)!important}
+:root[data-piura-contest="shell"] .control-shell{grid-template-columns:280px minmax(0,1fr)!important}
+:root[data-piura-contest="shell"] .control-nav{padding:24px 16px!important;background:rgba(255,255,255,.012)!important}
+:root[data-piura-contest="shell"] .control-nav-btn{min-height:58px!important;border:0!important}
+:root[data-piura-contest="shell"] .control-nav-btn.active{background:linear-gradient(90deg,rgba(120,169,255,.12),rgba(255,255,255,.02))!important}
+:root[data-piura-contest="shell"] .control-main{padding:36px 40px 56px!important}
+:root[data-piura-contest="shell"] .control-hero h3{font-size:40px!important}
+:root[data-piura-contest="shell"] .theme-card,:root[data-piura-contest="shell"] .palette-card,:root[data-piura-contest="shell"] .field,:root[data-piura-contest="shell"] .service-setting-card{border-radius:18px!important;background:linear-gradient(145deg,rgba(255,255,255,.03),rgba(255,255,255,.012))!important}
+:root[data-piura-contest="shell"] .theme-card.active,:root[data-piura-contest="shell"] .palette-card.active{box-shadow:0 0 0 1px var(--contest-blue),0 24px 70px rgba(0,0,0,.16)!important}
+
+/* Light concept */
+:root[data-piura-contest][data-theme="light"]{
+  --contest-bg:#f1f4f8;--contest-surface:#fff;--contest-raised:#f7f9fc;--contest-line:rgba(17,30,49,.12);--contest-text:#101827;--contest-muted:#536278;--contest-faint:#7d899b
+}
+:root[data-piura-contest="shell"][data-theme="light"] .nav-column,:root[data-piura-contest="shell"][data-theme="light"] .sidebar{background:rgba(255,255,255,.94)!important}
+:root[data-piura-contest="shell"][data-theme="light"] .contest-command-bar{border-bottom-color:rgba(17,30,49,.1);background:rgba(255,255,255,.78);color:#68768a}
+:root[data-piura-contest="shell"][data-theme="light"] .contest-command-brand strong{color:#111827}
+:root[data-piura-contest="module"] body.piura-light:before{opacity:.14}
+:root[data-piura-contest="module"] body.piura-light{background:radial-gradient(circle at 86% 0,rgba(84,142,232,.09),transparent 26%),#f3f6fa!important;color:#101827!important}
+:root[data-piura-contest="module"] body.piura-light :where(.card,.block,.metric,.tile,.level-block,.section-dyn-card,.entry-card,.chart-card,.hist-card,.pie-card,.ov-row,.sc){border-color:rgba(17,30,49,.115)!important;box-shadow:0 22px 55px rgba(43,66,101,.075),inset 0 1px 0 #fff!important}
+
+@media(max-width:1100px){
+  :root[data-piura-contest="shell"] .shell{grid-template-columns:90px minmax(0,1fr)!important}
+  :root[data-piura-contest="shell"] .brand-copy,:root[data-piura-contest="shell"] .group-heading span,:root[data-piura-contest="shell"] .group-heading b,:root[data-piura-contest="shell"] .item-copy,:root[data-piura-contest="shell"] .live span,:root[data-piura-contest="shell"] .version{display:none!important}
+  :root[data-piura-contest="shell"] .brand-row,:root[data-piura-contest="shell"] .group-heading,:root[data-piura-contest="shell"] .menu-item{justify-content:center!important}
+  :root[data-piura-contest="module"] body.piura-module-time .entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:760px){
+  .contest-command-bar{padding:0 14px}.contest-command-brand span,.contest-command-context b,.contest-command-context time{display:none}
+  :root[data-piura-contest="module"] :where(.wrap,.content,.app,.main,.page){padding-left:18px!important;padding-right:18px!important}
+  :root[data-piura-contest="module"] body.piura-module-time .entry-grid{grid-template-columns:1fr!important}
+  :root[data-piura-contest="module"] body.piura-module-time .charts-row{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){:root[data-piura-contest] *{animation:none!important;transition:none!important}}
