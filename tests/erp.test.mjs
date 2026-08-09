@@ -133,11 +133,26 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /climateProfile\('air'/);
   assert.match(overview, /Слишком влажно/);
   assert.match(overview, /Нужно проветрить/);
+  assert.match(overview, /function climateNumber\(raw\)/);
+  assert.match(overview, /raw==null\|\|raw===''/);
+  assert.doesNotMatch(overview, /Number\.isFinite\(Number\(data\?\.\[name\]\)\)/);
   assert.match(read('piura-erp-restored 3/modules/EFFECTIVNESS.html'), /source:'effectiveness'/);
   assert.doesNotMatch(overview, /localStorage\.setItem\(EFFECTIVENESS_SUMMARY_KEY/);
   const shell = read('index.html');
   assert.match(shell, /function saveServicePrefs\(\)/);
   assert.match(shell, /cloud\.lastLocalChangeAt=Date\.now\(\)/);
+});
+
+test('главная сокращает большие суммы, а управление фондами остаётся просторным', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  const funds = read('piura-erp-restored 3/modules/Fonds.html');
+  assert.match(overview, /compactMoney=value=>/);
+  assert.match(overview, /\+'M'/);
+  assert.match(overview, /\+'K'/);
+  assert.match(overview, /\.lamp\{min-height:330px;padding:30px 36px\}/);
+  assert.match(funds, /#view-manage\{width:100%;max-width:1880px/);
+  assert.match(funds, /#view-manage \.fc\{min-height:390px/);
+  assert.match(funds, /@media\(max-width:1400px\)\{#view-manage \.fund-row\{grid-template-columns:repeat\(2/);
 });
 
 test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {

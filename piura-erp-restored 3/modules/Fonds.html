@@ -205,10 +205,27 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   .header{justify-content:flex-end}.wrap{padding-top:34px;gap:34px}.tree-wrap{width:100%}
   .root-card{display:block!important;padding:42px 46px!important;border-radius:24px!important;background:var(--bg2)!important}.root-name{display:block!important}.root-sub{display:block!important}.root-metrics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:28px 0 0!important}.root-metrics .rm{min-height:126px;padding:24px;border:1px solid var(--border);border-radius:16px;background:var(--bg3)}.management-tools{display:grid!important;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}.management-tool{display:block!important;margin:0!important;padding:12px 16px;border:1px solid var(--border);border-radius:14px;background:var(--bg3)}.management-tool>button{width:100%;justify-content:flex-start}.management-tool>div{margin-top:12px!important}#view-donations>.portfolio-hero{display:none!important}#view-donations{padding-top:34px!important}
   .fund-row{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:38px}.fc{min-height:340px;padding:40px!important;display:flex;flex-direction:column}.fc-usd{font-size:52px}.fc-data{margin-top:auto}
+  /* Spacious management hierarchy; Endowment and Funds keep their approved layout. */
+  #view-manage{width:100%;max-width:1880px;padding:52px 64px 120px;gap:44px}
+  #view-manage .root-card{padding:54px 56px!important;border-radius:28px!important;background:radial-gradient(circle at 86% 4%,rgba(79,142,247,.13),transparent 35%),radial-gradient(circle at 8% 100%,rgba(31,216,122,.07),transparent 34%),var(--bg2)!important;box-shadow:0 28px 80px rgba(0,0,0,.2)!important}
+  #view-manage .root-name{font-size:clamp(68px,7.4vw,126px)!important;line-height:.88!important;letter-spacing:-.065em!important;margin-bottom:16px!important}
+  #view-manage .root-sub{margin-bottom:0!important}
+  #view-manage .root-metrics{gap:24px;margin:38px 0 0!important}
+  #view-manage .root-metrics .rm{min-height:148px;padding:30px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(255,255,255,.012))}
+  #view-manage .management-tools{gap:24px;margin-top:28px}
+  #view-manage .management-tool{padding:16px 20px;border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.028),var(--bg3))}
+  #view-manage .management-tool>button{min-height:34px}
+  #view-manage .tree-wrap{gap:32px}
+  #view-manage .fund-row{gap:32px}
+  #view-manage .fc{min-height:390px;padding:46px!important;border-radius:26px;background:radial-gradient(circle at 94% 2%,color-mix(in srgb,var(--accent,#4f8ef7) 10%,transparent),transparent 38%),var(--bg2)}
+  #view-manage .fc-name{font-size:28px;margin-bottom:16px}
+  #view-manage .fc-usd{font-size:58px}
   .year-switch{display:flex;padding:4px;border:1px solid var(--border);border-radius:12px;background:var(--bg2)}.year-switch.hidden{display:none}.year-option{min-width:68px;padding:9px 13px;border:0;border-radius:8px;background:transparent;color:var(--text3);font:800 12px inherit;cursor:pointer}.year-option.on{background:rgba(79,142,247,.18);color:#a9c9ff;box-shadow:inset 0 0 0 1px rgba(79,142,247,.3)}
   .goal-copy span:empty{display:none}
   html[data-erp-theme="light"],html[data-erp-theme="light"] body{background:#f3f6fb!important;color:#172033!important}html[data-erp-theme="light"] .header{background:rgba(255,255,255,.94)!important}html[data-erp-theme="light"] .fc,html[data-erp-theme="light"] .portfolio-hero,html[data-erp-theme="light"] .portfolio-metric,html[data-erp-theme="light"] .theme-card,html[data-erp-theme="light"] .analytics-card,html[data-erp-theme="light"] .fund-tab,html[data-erp-theme="light"] .currency-switch,html[data-erp-theme="light"] .year-switch{background:#fff!important;color:#172033!important;box-shadow:0 10px 28px rgba(34,55,90,.07)!important}html[data-erp-theme="light"] .fc-name,html[data-erp-theme="light"] .portfolio-title,html[data-erp-theme="light"] .theme-card>label,html[data-erp-theme="light"] .goal-copy b{color:#172033!important}html[data-erp-theme="light"] .goal-track,html[data-erp-theme="light"] .goal-line{background:#e4eaf3!important}
-  @media(max-width:1100px){.fund-row{grid-template-columns:repeat(2,minmax(0,1fr))}.root-metrics,.management-tools{grid-template-columns:1fr}.fund-goal-setting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){.fund-row{grid-template-columns:1fr}.fc{min-height:240px}.year-switch{margin-left:auto}.fund-tabs{flex-wrap:wrap}.fund-goal-setting-grid{grid-template-columns:1fr}.fund-goal-setting label.wide{grid-column:auto}}
+  @media(max-width:1400px){#view-manage .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:1100px){.fund-row{grid-template-columns:repeat(2,minmax(0,1fr))}.root-metrics,.management-tools{grid-template-columns:1fr}.fund-goal-setting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#view-manage{padding:40px 34px 90px}}
+  @media(max-width:700px){.fund-row,#view-manage .fund-row{grid-template-columns:1fr}.fc,#view-manage .fc{min-height:270px;padding:30px!important}.year-switch{margin-left:auto}.fund-tabs{flex-wrap:wrap}.fund-goal-setting-grid{grid-template-columns:1fr}.fund-goal-setting label.wide{grid-column:auto}#view-manage{padding:26px 20px 70px;gap:28px}#view-manage .root-card{padding:36px 28px!important}#view-manage .root-name{font-size:48px!important}#view-manage .root-metrics .rm{min-height:120px;padding:22px}}
 </style>
 </head>
 <body>
