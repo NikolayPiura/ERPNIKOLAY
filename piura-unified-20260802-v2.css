@@ -208,6 +208,31 @@ body.piura-module-portfolio .piura-asset-extra { display: none !important; }
 /* Income */
 body.piura-module-income .piura-redundant { display: none !important; }
 body.piura-module-income .piura-chart-grid { opacity: 0 !important; }
+
+/* Final product-grade accessibility and rendering polish. */
+:where(button,[role="button"],a,input,select,textarea):focus-visible {
+  outline: 2px solid var(--piura-accent) !important;
+  outline-offset: 3px !important;
+}
+:where(button,[role="button"]):disabled { cursor: not-allowed !important; }
+:where(h1,h2,h3,.display-title) { text-wrap: balance; }
+:where(p,.subtitle,.description,.helper-text) { text-wrap: pretty; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+@media (max-width: 760px) {
+  body.piura-root .piura-settings-modal,
+  body.piura-root [data-piura-settings-modal="true"] {
+    width: 100vw !important;
+    height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+}
 body.piura-module-income .piura-month-secondary { display: none !important; }
 body.piura-light.piura-module-income .piura-legacy-dark { background: var(--piura-surface) !important; color: var(--piura-text) !important; }
 
@@ -216,4 +241,3 @@ body.piura-light.piura-module-income .piura-legacy-dark { background: var(--piur
   body.piura-module-foundation .piura-foundation-grid { grid-template-columns: 1fr !important; }
   body.piura-module-foundation .piura-four-kpis { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
 }
-

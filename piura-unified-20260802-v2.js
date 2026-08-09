@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const CSS_FILE = 'piura-unified-20260802-v2.css?v=20260802b';
+  const CSS_FILE = 'piura-unified-20260802-v2.css?v=20260808e';
   const HIDE_TEXT = [
     'Показывается окно до 12 четвергов',
     'Нажмите точку, чтобы открыть неделю',

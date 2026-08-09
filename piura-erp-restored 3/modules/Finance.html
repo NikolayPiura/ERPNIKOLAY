@@ -352,11 +352,11 @@ function render(data){
   });
 
   var EC=[
-    {nm:'Квартира',key:'apartment',cl:'#4a9eff'},
-    {nm:'Жизнь',key:'life',cl:'#00e5a0'},
-    {nm:'Обучение',key:'education',cl:'#f5c842'},
-    {nm:'Путешествие',key:'travel',cl:'#ff4466'},
-    {nm:'Благотвор.',key:'charity',cl:'#9b6dff'}
+    {nm:'Квартира',key:'apartment',cl:'#6ea8fe'},
+    {nm:'Жизнь',key:'life',cl:'#43d39e'},
+    {nm:'Обучение',key:'education',cl:'#9d8cff'},
+    {nm:'Путешествие',key:'travel',cl:'#7898bd'},
+    {nm:'Благотвор.',key:'charity',cl:'#7f8998'}
   ];
   var maxE=Math.max.apply(null,EC.map(function(c){return(s[c.key]||{}).total||0;}));
 
@@ -383,8 +383,8 @@ function render(data){
     data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return(s[c.key]||{}).total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
     options:DO});
 
-  var SC1=['#00e5a0','#4a9eff','#f5c842','#ff4466','#9b6dff','#00d4ff','#ff8c00','#e040fb','#26c6da'];
-  var SC2=['#4a9eff','#00e5a0','#f5c842','#ff4466','#9b6dff','#00d4ff'];
+  var SC1=['#6ea8fe','#43d39e','#9d8cff','#7898bd','#7f8998'];
+  var SC2=['#6ea8fe','#43d39e','#9d8cff','#7898bd','#7f8998'];
 
   dc('sd1');
   CH.sd1=new Chart(document.getElementById('sd1'),{type:'doughnut',
