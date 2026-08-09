@@ -27,18 +27,25 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор содержит климат и управление лампой', () => {
+test('обзор содержит климат и единое управление Govee и двумя Elgato', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
-  assert.match(overview, /id="lampBrightness"/);
-  assert.match(overview, /id="lampColor"/);
-  assert.match(overview, /id="lampWheel"/);
-  assert.match(overview, /id="lampKelvin"/);
-  assert.match(overview, /colorTemperatureK/);
+  assert.match(overview, /class="lamp-palette"/);
   assert.match(overview, /data-lamp-color/);
+  for (const color of ['Красный','Зелёный','Синий','Жёлтый','Белый']) assert.match(overview,new RegExp(`>${color}<`));
   assert.match(overview, /goveeControl/);
+  assert.match(overview, /ELGATO_BRIDGE='http:\/\/127\.0\.0\.1:45831'/);
+  assert.match(overview, /function controlAllLights\(command,value\)/);
+  assert.match(overview, /elgatoLightCount/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
+  assert.doesNotMatch(overview, /id="lampBrightness"|id="lampColor"|id="lampWheel"|id="lampKelvin"/);
+
+  const bridge = read('integrations/elgato-local-bridge/server.py');
+  assert.match(bridge, /elgato-light-strip-pro-d026\.local/);
+  assert.match(bridge, /elgato-light-strip-pro-8c54\.local/);
+  assert.match(bridge, /Access-Control-Allow-Private-Network/);
+  assert.match(bridge, /"\/lights"/);
 });
 
 test('учёт времени позволяет выбрать дату, а удаление категории оставляет в настройках', () => {
@@ -79,7 +86,7 @@ test('главная объединяет эффективность, время
   for (const id of ['psBar','incomeBar','dphBar','capitalBar','pffBar','endowmentBar','subscribersBar']) assert.match(overview,new RegExp(`id="${id}"`));
   for (const id of ['incomeTarget','dphTarget','capitalTarget','pffTarget','endowmentTarget','subscribersTarget']) assert.match(overview,new RegExp(`id="${id}"`));
   assert.match(overview, /\.income,\.dph,\.capital,\.pff,\.endowment,\.subscribers\{grid-column:span 4/);
-  assert.match(overview, /<h2>Доход сейчас<\/h2>/);
+  assert.match(overview, /<h2>Доход в час<\/h2>/);
   assert.match(overview, /resolvedHourly=number\(hourlyValue\)\|\|cachedHourly\|\|/);
   assert.doesNotMatch(dashboard, /class="progress-caption"/);
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
@@ -133,6 +140,7 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /climateProfile\('air'/);
   assert.match(overview, /Слишком влажно/);
   assert.match(overview, /Нужно проветрить/);
+  assert.doesNotMatch(overview, /Что делать|норма 68/);
   assert.match(overview, /function climateNumber\(raw\)/);
   assert.match(overview, /raw==null\|\|raw===''/);
   assert.doesNotMatch(overview, /Number\.isFinite\(Number\(data\?\.\[name\]\)\)/);
@@ -145,6 +153,13 @@ test('Govee принимает обычный API-ключ и сохраняет
   const shell = read('index.html');
   assert.match(shell, /function saveServicePrefs\(\)/);
   assert.match(shell, /cloud\.lastLocalChangeAt=Date\.now\(\)/);
+});
+
+test('главный экран использует согласованные названия и спокойную типографику', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  assert.match(overview, /'МЕСТ'/);
+  assert.doesNotMatch(overview, /'MEST'/);
+  assert.match(overview, /\.ps \.hero-value\{font-size:clamp\(64px,6\.6vw,96px\)/);
 });
 
 test('главная сокращает большие суммы, а управление фондами остаётся просторным', () => {
