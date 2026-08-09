@@ -735,6 +735,7 @@ function renderOverview(){
     return{tab,data};
   }).sort((a,b)=>b.data.dph-a.data.dph||b.data.avgMonthlyIncome-a.data.avgMonthlyIncome||b.data.total-a.data.total);
   const overallDph=totalHoursPerMonth?Math.round(totalIncomeAll/totalHoursPerMonth):0;
+  if(overallDph>0)localStorage.setItem('piura_effectiveness_overview_v1',JSON.stringify({dph:overallDph,updatedAt:Date.now()}));
   const summary=document.createElement('section');summary.className='ov-summary';summary.innerHTML=`<div class="ov-summary-val">${fmt(overallDph)}<span style="font-size:.28em;color:var(--mu2);margin-left:.35em">/ час</span></div><div class="ov-summary-sub">ДОХОД</div>`;pg.appendChild(summary);
   const list=document.createElement('div');list.className='ov-list';
   tabStats.forEach(({tab,data},index)=>{

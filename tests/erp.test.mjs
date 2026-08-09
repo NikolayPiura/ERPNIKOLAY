@@ -68,6 +68,9 @@ test('главная объединяет эффективность, время
   assert.match(overview, /id="overviewDph"/);
   assert.match(overview, /id="overviewWeekHours"/);
   assert.match(overview, /id="overviewPs"/);
+  assert.match(overview, /time:'https:\/\/script\.google\.com\/macros\/s\//);
+  assert.match(overview, /function loadHourlyIncome/);
+  assert.match(overview, /function overallHourlyIncome/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('</section>'));
   const order=['admin-progress','tile morning','fund-goals','tile income','tile capital','tile lamp'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
@@ -104,6 +107,16 @@ test('эффективность сразу открывает обзор и о�
   assert.match(effectiveness, /ov-summary-sub">ДОХОД/);
   assert.doesNotMatch(effectiveness, /ОБЩИЙ ДОХОД В ЧАС/);
   assert.match(effectiveness, /height:13px/);
+  assert.match(effectiveness, /piura_effectiveness_overview_v1/);
+});
+
+test('Govee принимает обычный API-ключ и сохраняет резервное обнаружение датчика', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  assert.match(overview, /value\.length>=20/);
+  assert.match(overview, /sku:'H5140'/);
+  assert.match(overview, /device:'29:9C:DC:B4:D9:F2:F5:00'/);
+  assert.match(overview, /discoveredGoveeKey/);
+  assert.match(overview, /\.lamp\{grid-column:span 8\}/);
 });
 
 test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {
