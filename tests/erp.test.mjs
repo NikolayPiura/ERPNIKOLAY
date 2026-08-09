@@ -69,18 +69,22 @@ test('главная объединяет эффективность, время
   assert.match(overview, /id="overviewPs"/);
 });
 
-test('фонды содержат прогресс целей продукта, фандрайзинга и аудитории', () => {
+test('фонды содержат точные цели продукта, фандрайзинга, Endowment и дохода', () => {
   const funds = read('piura-erp-restored 3/modules/Fonds.html');
-  assert.match(funds, /Цель фандрайзинга/);
-  assert.match(funds, /Цель продукта/);
-  assert.match(funds, /Цель подписчиков/);
-  assert.match(funds, /До Нового года/);
+  assert.match(funds, /Планета без бездомных домашних животных/);
+  assert.match(funds, /Истребуемый доход/);
+  assert.match(funds, /Итого денежных целей/);
+  assert.match(funds, /fundraising:2250,endowment:50000,income:250,product:1000,total:2500/);
 });
 
 test('главная показывает суммарные программы и синхронизирует утро', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /refreshMorningFromCloud/);
   assert.match(overview, /donePrograms/);
+  assert.match(overview, /fallbackCounts=\[24,20,24,11,6,11,1,1\]/);
+  assert.match(overview, /overview_finance_snapshot_v1/);
+  assert.doesNotMatch(overview, /год прошёл/);
+  assert.doesNotMatch(overview, /hero-value (?:medium )?skeleton/);
   assert.doesNotMatch(overview, /id="weekTrend"|id="roadmapProgress"|id="workdayValue"/);
 });
 
@@ -90,6 +94,7 @@ test('эффективность сразу открывает обзор и о�
   assert.match(shell, /EFFECTIVNESS\.html[^"']*&tab=overview/);
   assert.match(effectiveness, /cycleOverviewPeriod/);
   assert.match(effectiveness, /ov-row-tile[^`]*Время[^`]*ov-row-tile[^`]*Деньги/);
+  assert.match(effectiveness, /ОБЩИЙ ДОХОД В ЧАС/);
 });
 
 test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {
@@ -99,13 +104,17 @@ test('утро и учёт времени сохраняются без отде
   assert.match(morning, /if\(completed\)state\[bid\]\.confirmed=true/);
   assert.doesNotMatch(time, /<button class="pk-(?:save|clear)"/);
   assert.match(time, /function commitPicker/);
+  assert.match(time, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(time, /limit:20,open:false/);
 });
 
 test('ПС №1 разделяет недельные и дневные задачи и сохраняет автоматически', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
   assert.match(weekly, /id="weeklyTasks"/);
   assert.match(weekly, /id="dailyPanel"/);
-  assert.match(weekly, /draggable="true"/);
+  assert.match(weekly, /draggable="\$\{editing\}"/);
+  assert.match(weekly, /data-edit-toggle/);
+  assert.doesNotMatch(weekly, /баллов за выполнение|баллов в день|•••/);
   assert.doesNotMatch(weekly, /Сохранить неделю|прогресс до максимума/i);
 });
 
@@ -115,5 +124,15 @@ test('фонды поддерживают отдельные цели 2026 и 20
   assert.match(funds, /data-goal-year="2027"/);
   assert.match(funds, /all\[year\]=all\[year\]\|\|\{\}/);
   assert.match(funds, /target\[key\]/);
-  assert.match(funds, /<label>Котики<\/label>/);
+  assert.match(funds, /<label>Друг<\/label>/);
+  assert.match(funds, /<label>Уборки<\/label>/);
+  assert.match(funds, /class="root-total-title">Итого/);
+  assert.match(funds, /Проведённая уборка или помощь в её проведении/);
+});
+
+test('светлая тема не оставляет чёрные рамки на админ-шкале и фондах', () => {
+  const shell = read('index.html');
+  assert.match(shell, /\.browse-mode\{border:1px solid/);
+  assert.match(shell, /\.type-card\{border:1px solid/);
+  assert.match(shell, /\.item-row:hover,.level-block:hover,.section-dyn-card:hover\{animation:none/);
 });

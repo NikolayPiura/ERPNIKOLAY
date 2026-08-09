@@ -728,12 +728,14 @@ function closeModal(){document.getElementById('imodal').classList.remove('on');}
 function renderOverview(){
   const pg=document.getElementById('pg');pg.innerHTML='';
   const target=SETTINGS.targetDph;
-  let totalDphSum=0,totalIncomeAll=0;
+  let totalIncomeAll=0,totalHoursPerMonth=0;
   const tabStats=ALL_TABS.map(tab=>{
     const data=getTabData(tab);
-    totalDphSum+=data.dph;totalIncomeAll+=data.total;
+    totalIncomeAll+=data.avgMonthlyIncome;totalHoursPerMonth+=data.hoursPerMonth;
     return{tab,data};
   }).sort((a,b)=>b.data.dph-a.data.dph||b.data.avgMonthlyIncome-a.data.avgMonthlyIncome||b.data.total-a.data.total);
+  const overallDph=totalHoursPerMonth?Math.round(totalIncomeAll/totalHoursPerMonth):0;
+  const summary=document.createElement('section');summary.className='ov-summary';summary.innerHTML=`<div class="ov-summary-val">${fmt(overallDph)}<span style="font-size:.28em;color:var(--mu2);margin-left:.35em">/ час</span></div><div class="ov-summary-sub">ОБЩИЙ ДОХОД В ЧАС</div>`;pg.appendChild(summary);
   const list=document.createElement('div');list.className='ov-list';
   tabStats.forEach(({tab,data},index)=>{
     const ec=data.dph>=target?'var(--accent)':data.dph>=target*0.6?tab.color:'#ff6b85';

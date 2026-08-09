@@ -767,7 +767,15 @@ const DOCS={
 const SK='adminv6';
 let db={};
 function load(){try{const r=localStorage.getItem(SK);if(r)db=JSON.parse(r)}catch(e){}}
-function persist(){try{localStorage.setItem(SK,JSON.stringify(db))}catch(e){}}
+function programSummary(){
+  let total=0,done=0;
+  DYN.forEach(({id})=>{
+    const items=Array.isArray(db[id]?.['проги'])?db[id]['проги']:(PRE[id]?.['проги']||[]).map(t=>({t,done:DONE_SEED.has(t),hidden:false}));
+    items.filter(item=>!item.hidden).forEach(item=>{total++;if(item.done)done++});
+  });
+  return{done,total,updatedAt:Date.now()};
+}
+function persist(){try{localStorage.setItem(SK,JSON.stringify(db));localStorage.setItem('admin_program_summary_v1',JSON.stringify(programSummary()))}catch(e){}}
 
 function getLevels(){
   return (db.__levels||DEFAULT_LEVELS).map(l=>({...l,hidden:!!l.hidden}));
@@ -1516,6 +1524,7 @@ function doSave(block,dynId,lvKey,sb){
 buildTabs();
 buildPanels();
 applyDoneColors();
+persist();
 </script>
 </body>
 </html>
