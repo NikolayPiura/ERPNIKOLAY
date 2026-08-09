@@ -77,7 +77,10 @@ test('главная объединяет эффективность, время
   const order=['admin-progress','tile morning','fund-goals','tile lamp','tile air','tile income','tile capital'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   for (const id of ['psBar','incomeBar','dphBar','capitalBar','pffBar','endowmentBar','subscribersBar']) assert.match(overview,new RegExp(`id="${id}"`));
+  for (const id of ['incomeTarget','dphTarget','capitalTarget','pffTarget','endowmentTarget','subscribersTarget']) assert.match(overview,new RegExp(`id="${id}"`));
   assert.match(overview, /\.income,\.dph,\.capital,\.pff,\.endowment,\.subscribers\{grid-column:span 4/);
+  assert.match(overview, /<h2>Доход сейчас<\/h2>/);
+  assert.doesNotMatch(dashboard, /class="progress-caption"/);
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
   assert.match(overview, /class="ps-badge">ПС №1/);
 });
@@ -122,7 +125,15 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /sku:'H5140'/);
   assert.match(overview, /device:'29:9C:DC:B4:D9:F2:F5:00'/);
   assert.match(overview, /discoveredGoveeKey/);
-  assert.match(overview, /\.lamp,\.air\{grid-column:span 6;min-height:430px/);
+  assert.match(overview, /\.lamp,\.air\{grid-column:span 12/);
+  assert.match(overview, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(overview, /climateProfile\('temperature'/);
+  assert.match(overview, /climateProfile\('humidity'/);
+  assert.match(overview, /climateProfile\('air'/);
+  assert.match(overview, /Слишком влажно/);
+  assert.match(overview, /Нужно проветрить/);
+  assert.match(read('piura-erp-restored 3/modules/EFFECTIVNESS.html'), /source:'effectiveness'/);
+  assert.doesNotMatch(overview, /localStorage\.setItem\(EFFECTIVENESS_SUMMARY_KEY/);
   const shell = read('index.html');
   assert.match(shell, /function saveServicePrefs\(\)/);
   assert.match(shell, /cloud\.lastLocalChangeAt=Date\.now\(\)/);
