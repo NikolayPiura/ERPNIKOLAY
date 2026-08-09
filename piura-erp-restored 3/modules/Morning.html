@@ -2,7 +2,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Дашборд эффективности</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -786,7 +789,7 @@ const STATE_KEY  = 'morn_v8_state';
 const PREFS_KEY  = 'morn_v8_prefs';
 const DATA_VERSION_KEY = 'morn_v8_data_version';
 const DATA_VERSION = 2;
-const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v1';
+const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v2';
 
 // Тексты из предыдущей версии нужны только для безопасной миграции: если
 // пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
@@ -856,13 +859,12 @@ function loadBlocks(){
 
 function restoreHiddenItems(blocks){
   if(localStorage.getItem(HIDDEN_RESTORE_KEY)) return blocks;
-  const hasSavedBlocks=Boolean(localStorage.getItem(BLOCKS_KEY));
-  const alreadyConfigured=blocks.some(block=>(block.items||[]).some(item=>item.hidden===true));
-  if(!hasSavedBlocks || alreadyConfigured){localStorage.setItem(HIDDEN_RESTORE_KEY,'1');return blocks}
   const visibleIds=new Set(['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']);
   blocks.forEach(block=>(block.items||[]).forEach(item=>{item.hidden=!visibleIds.has(item.id)}));
   localStorage.setItem(BLOCKS_KEY,JSON.stringify(blocks));
-  localStorage.setItem(HIDDEN_RESTORE_KEY,'1');
+  // Cloud restore may reload the iframe immediately. Mark the migration only
+  // after that startup window, so the restored copy receives the same layout.
+  setTimeout(()=>localStorage.setItem(HIDDEN_RESTORE_KEY,'1'),15000);
   return blocks;
 }
 
@@ -1457,7 +1459,8 @@ function resetAll(){
   localStorage.removeItem(STATE_KEY);
   localStorage.removeItem(BLOCKS_KEY);
   localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
-  blocksData = JSON.parse(JSON.stringify(DEFAULT_BLOCKS));
+  localStorage.removeItem(HIDDEN_RESTORE_KEY);
+  blocksData = restoreHiddenItems(JSON.parse(JSON.stringify(DEFAULT_BLOCKS)));
   state = blankState();
   renderBlocks();
   window.scrollTo({top:0,behavior:'smooth'});

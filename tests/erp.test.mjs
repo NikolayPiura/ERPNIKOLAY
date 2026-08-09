@@ -43,6 +43,8 @@ test('обзор содержит климат и управление ламп�
 
 test('учёт времени позволяет выбрать дату, а удаление категории оставляет в настройках', () => {
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
+  assert.match(time, /<div class="hero-topbar" id="dateNavigation">[\s\S]*?<div class="hero">/);
+  assert.match(time, /body>\.hero-topbar\{display:grid!important/);
   assert.match(time, /id="dateJump" type="date"/);
   assert.match(time, /function deleteCategory\(key\)/);
   assert.doesNotMatch(time, /class="card-delete"/);
@@ -75,6 +77,9 @@ test('главная объединяет эффективность, время
   const order=['admin-progress','tile morning','fund-goals','tile lamp','tile air','tile income','tile capital'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   for (const id of ['psBar','incomeBar','dphBar','capitalBar','pffBar','endowmentBar','subscribersBar']) assert.match(overview,new RegExp(`id="${id}"`));
+  assert.match(overview, /\.income,\.dph,\.capital,\.pff,\.endowment,\.subscribers\{grid-column:span 4/);
+  assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
+  assert.match(overview, /class="ps-badge">ПС №1/);
 });
 
 test('фонды содержат точные цели продукта, фандрайзинга, Endowment и дохода', () => {
@@ -117,7 +122,10 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /sku:'H5140'/);
   assert.match(overview, /device:'29:9C:DC:B4:D9:F2:F5:00'/);
   assert.match(overview, /discoveredGoveeKey/);
-  assert.match(overview, /\.lamp\{grid-column:span 5/);
+  assert.match(overview, /\.lamp,\.air\{grid-column:span 6;min-height:430px/);
+  const shell = read('index.html');
+  assert.match(shell, /function saveServicePrefs\(\)/);
+  assert.match(shell, /cloud\.lastLocalChangeAt=Date\.now\(\)/);
 });
 
 test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {
@@ -134,6 +142,8 @@ test('утро и учёт времени сохраняются без отде
   assert.match(time, /DIRTY_KEY/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);
   assert.match(time, /function setHistoryOpen/);
+  assert.match(morning, /morn_hidden_restore_v2/);
+  for (const id of ['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']) assert.match(morning,new RegExp(`'${id}'`));
 });
 
 test('ПС №1 разделяет недельные и дневные задачи и сохраняет автоматически', () => {
@@ -162,6 +172,27 @@ test('фонды поддерживают отдельные цели 2026 и 20
   assert.ok(funds.includes("document.querySelector('[data-tab=\"manage\"]')?.click();"));
   assert.match(funds, /#view-donations>\.portfolio-hero\{display:none/);
   assert.match(funds, /Проведённая уборка или помощь в её проведении/);
+  assert.match(funds, /<div class="root-metrics">/);
+  assert.match(funds, /id="inclPanel" style="display:none/);
+  assert.match(funds, /id="filterPanel" style="display:none/);
+  assert.doesNotMatch(funds, /goalProgress\('Итого',''/);
+});
+
+test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
+  const shell = read('index.html');
+  const version = JSON.parse(read('build-version.json')).version;
+  assert.match(shell, new RegExp(`const BUILD_ID='${version}'`));
+  assert.match(shell, /moduleUrl\.searchParams\.set\('build',BUILD_ID\)/);
+  assert.match(shell, /fetch\(`build-version\.json\?t=\$\{Date\.now\(\)\}`/);
+  assert.match(shell, /navigator\.serviceWorker\.getRegistrations/);
+  assert.match(shell, /caches\.delete/);
+  assert.match(shell, /http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/);
+});
+
+test('кнопка настроек использует ту же высоту, что и остальные пункты меню', () => {
+  const shell = read('index.html');
+  assert.match(shell, /\.settings-menu-group \.settings-hub-btn\{width:100%;height:auto;min-height:var\(--item-height\)/);
+  assert.doesNotMatch(shell, /\.settings-menu-group \.settings-hub-btn\{width:100%;height:68px/);
 });
 
 test('цветовые темы применяют выбранную палитру к служебным акцентам', () => {

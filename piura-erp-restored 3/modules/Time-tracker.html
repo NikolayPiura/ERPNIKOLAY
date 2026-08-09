@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 <title>Трекер времени</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -402,13 +405,15 @@ tr:hover td { background: var(--bg); }
 .hero{padding:22px 32px 24px!important;background:radial-gradient(circle at 14% 15%,color-mix(in srgb,var(--blue) 12%,transparent),transparent 34%),radial-gradient(circle at 88% 82%,color-mix(in srgb,var(--lime) 8%,transparent),transparent 38%),var(--bg2)!important}.hero-topbar{position:relative!important;top:auto!important;min-height:56px!important;padding:9px!important;border-radius:17px!important}.hero-date-group{min-height:46px!important;padding:5px 8px!important;border:0!important;background:transparent!important;box-shadow:none!important}.hero-weekday{min-width:78px!important}.hero-fulldate{min-width:154px!important;font-size:15px!important}.nav-btn{flex-basis:38px!important;width:38px!important;height:38px!important}.btn-today,.date-jump{height:38px!important}.hero-total-row{margin-top:12px!important}.hero-big{font-size:clamp(58px,6.2vw,88px)!important}.hero-big-label{padding-bottom:10px!important}.hero-bar{margin-top:11px!important;height:8px!important}.content{width:100%!important;max-width:none!important;padding:22px 32px 48px!important;gap:18px!important}.entry-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:16px!important;margin:0!important;padding:16px!important;border-radius:22px!important;background:linear-gradient(145deg,color-mix(in srgb,var(--blue) 5%,var(--bg2)),color-mix(in srgb,var(--lime) 3%,var(--bg2)))!important}.entry-card{min-height:156px!important;border-left:4px solid var(--cc)!important;border-radius:18px!important;background:radial-gradient(circle at 0 50%,color-mix(in srgb,var(--cc) 12%,transparent),transparent 48%),var(--bg2)!important}.entry-card:hover{transform:translateY(-3px)!important;border-color:color-mix(in srgb,var(--cc) 55%,var(--bord))!important}.card-head{min-height:154px!important;padding:22px 24px!important;gap:17px!important}.card-icon{width:52px!important;height:52px!important;border-radius:15px!important}.card-val{font-size:34px!important}.card-cat-label{font-size:10px!important;margin-bottom:8px!important}.card-toggle{width:36px!important;height:36px!important}.card-picker{padding:18px 22px 22px!important}.pk-presets{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:7px!important;padding-top:10px!important;margin-bottom:10px!important}.pk-pre{padding:9px 0!important}.charts-row{grid-template-columns:.72fr 1.28fr!important;gap:14px!important;margin:0!important}.chart-card{min-height:280px!important;height:280px!important;padding:19px 21px!important;border-radius:17px!important}.chart-card canvas{min-height:0!important;max-height:222px!important}.chart-card h3{margin-bottom:12px!important;font-size:11px!important}.hist-card{margin-top:0!important}.hist-top{min-height:48px!important;padding:10px 13px!important;border:1px solid var(--bord)!important;border-radius:14px!important;background:var(--bg2)!important}.hist-top h3{font-size:11px!important}.hist-toggle{padding:7px 11px!important}.hist-card:not(.collapsed) .hist-scroll{max-height:360px!important;overflow:auto!important;margin-top:10px!important}.history-days{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}.history-day{min-height:110px!important;padding:16px!important;border-radius:14px!important;gap:10px!important}.history-date{font-size:13px!important}.history-total{font-size:24px!important}.history-tag{padding:5px 7px!important;font-size:9px!important}
 @media(max-width:1280px){.entry-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.history-days{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
 @media(max-width:850px){.hero{padding-inline:14px!important}.content{padding-inline:14px!important}.entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.charts-row,.history-days{grid-template-columns:1fr!important}.chart-card{height:auto!important;min-height:240px!important}}
+/* The date dock lives outside the refreshed hero, so sync and restored scroll never hide it. */
+body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;position:sticky!important;inset-block-start:0!important;z-index:1000!important;width:100%!important;min-height:64px!important;margin:0!important;padding:10px 32px!important;border:0!important;border-bottom:1px solid var(--bord)!important;border-radius:0!important;background:color-mix(in srgb,var(--bg2) 96%,transparent)!important;backdrop-filter:blur(22px)!important;box-shadow:0 12px 30px rgba(0,0,0,.18)!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;min-width:0!important;pointer-events:auto!important}.hero-date-group>*{visibility:visible!important;opacity:1!important;pointer-events:auto!important}.hero-right{display:flex!important;visibility:visible!important;opacity:1!important}.hero{padding-top:18px!important}
+@media(max-width:850px){body>.hero-topbar{grid-template-columns:1fr!important;padding:9px 14px!important}.hero-right{display:none!important}.hero-date-group{width:100%!important;overflow-x:auto!important}}
 </style>
 </head>
 <body>
 
-<!-- ═══ HERO ═══ -->
-<div class="hero">
-  <div class="hero-topbar">
+<!-- Persistent day navigation: deliberately outside the live-data hero. -->
+<div class="hero-topbar" id="dateNavigation">
     <div class="hero-date-group">
       <span class="hero-weekday" id="lblWD"></span>
       <span class="hero-fulldate" id="lblDate"></span>
@@ -431,7 +436,10 @@ tr:hover td { background: var(--bg); }
         Скачать Excel
       </button>
     </div>
-  </div>
+</div>
+
+<!-- ═══ HERO ═══ -->
+<div class="hero">
 
   <div class="hero-total-row">
     <div class="hero-big" id="heroTotal">0:00</div>
