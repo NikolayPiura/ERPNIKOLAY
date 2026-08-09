@@ -84,8 +84,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .ov-row-dph:hover{opacity:0.8;}
 .ov-row-dph-val{font-family:'Orbitron',sans-serif;font-size:calc(var(--fs)*2.8);font-weight:800;line-height:1;}
 .ov-row-dph-of{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*1);color:var(--mu3);}
-.ov-row-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.ov-row-tile{background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:12px 16px;}
+.ov-row-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;cursor:pointer;border-radius:12px;}
+.ov-row-tile{min-height:88px;background:var(--bg3);border:1px solid var(--brd);border-radius:11px;padding:17px 18px;display:flex;flex-direction:column;justify-content:center;}
 .ov-row-tile-lbl{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*0.6);color:var(--mu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
 .ov-row-tile-val{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*0.9);font-weight:700;}
 @media(max-width:1100px){.ov-row{grid-template-columns:1fr;gap:16px;}.ov-row-tiles{grid-template-columns:1fr 1fr;}}
@@ -559,7 +559,8 @@ function buildTabs(){
     el.onclick=()=>switchTab(t.id);bar.appendChild(el);
   });
 }
-function switchTab(id){curTab=id;buildTabs();renderPage();}
+function switchTab(id='overview'){curTab=['overview',...ALL_TABS.map(tab=>tab.id)].includes(id)?id:'overview';buildTabs();renderPage();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));}
+function cycleOverviewPeriod(id){const order=['week','month','year'],current=getViewPeriod(id),next=order[(order.indexOf(current)+1)%order.length];viewPeriod[id]=next;renderOverview()}
 function toggleBlock(key){
   openBlocks[key]=!openBlocks[key];
   const el=document.getElementById('block-'+key);
@@ -733,22 +734,10 @@ function renderOverview(){
     totalDphSum+=data.dph;totalIncomeAll+=data.total;
     return{tab,data};
   }).sort((a,b)=>b.data.dph-a.data.dph||b.data.avgMonthlyIncome-a.data.avgMonthlyIncome||b.data.total-a.data.total);
-  const avgDph=Math.round(totalDphSum/ALL_TABS.length);
-
-  const summary=document.createElement('div');summary.className='ov-summary';
-  summary.innerHTML=`
-    <div class="ov-summary-val" style="color:${avgDph>=target?'var(--accent)':'#ff6b85'}">${fmt(avgDph)} <span style="color:var(--mu3);font-size:calc(var(--fs)*2.8)">/ ${fmt(target)}</span></div>
-    <div class="ov-summary-sub">средний $/час · ${fmt(totalIncomeAll)} доход за год</div>
-  `;
-  pg.appendChild(summary);
-
-  const sh=document.createElement('div');sh.className='sh static';
-  sh.innerHTML=`<span class="sn">// 01</span><span class="st">ПО НАПРАВЛЕНИЯМ</span><div class="sl"></div>`;
-  pg.appendChild(sh);
-
   const list=document.createElement('div');list.className='ov-list';
   tabStats.forEach(({tab,data},index)=>{
     const ec=data.dph>=target?'var(--accent)':data.dph>=target*0.6?tab.color:'#ff6b85';
+    const periodLabel=VIEW_PERIODS[data.period].label;
     const row=document.createElement('div');row.className='ov-row';
     row.style.setProperty('--oc',tab.color);
     row.innerHTML=`
@@ -759,11 +748,9 @@ function renderOverview(){
           <div style="height:100%;width:0%;background:${ec};border-radius:3px;transition:width 1s ease;" id="pbar-${tab.id}"></div>
         </div>
       </div>
-      <div class="ov-row-tiles">
-        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Доход/мес</div><div class="ov-row-tile-val" style="color:${tab.color}">${fmt(data.avgMonthlyIncome)}</div></div>
-        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Доход/год</div><div class="ov-row-tile-val" style="color:${tab.color}">${fmt(data.total)}</div></div>
-        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Время/нед</div><div class="ov-row-tile-val" style="color:var(--b)">${data.ts.avgHWeek.toFixed(1)}ч</div></div>
-        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Время/мес</div><div class="ov-row-tile-val" style="color:var(--b)">${data.ts.avgHMonth.toFixed(1)}ч</div></div>
+      <div class="ov-row-tiles" role="button" tabindex="0" onclick="cycleOverviewPeriod('${tab.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();cycleOverviewPeriod('${tab.id}')}" title="Нажмите, чтобы сменить период">
+        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Время · ${periodLabel}</div><div class="ov-row-tile-val" style="color:var(--b)">${data.periodHours.toFixed(1)}ч</div></div>
+        <div class="ov-row-tile"><div class="ov-row-tile-lbl">Деньги · ${periodLabel}</div><div class="ov-row-tile-val" style="color:${tab.color}">${fmt(data.periodIncome)}</div></div>
       </div>
     `;
     list.appendChild(row);
@@ -791,10 +778,7 @@ async function loadIncome(){
     b.textContent='● ОШИБКА';b.className='err';
   }
 }
-async function loadAll(){
-  await Promise.all([loadIncome(),loadTimeData()]);
-  renderPage();
-}
+async function loadAll(){await Promise.allSettled([loadIncome(),loadTimeData()]);buildTabs();renderPage();}
 applySettings();buildTabs();renderPage();
 try{const i=JSON.parse(localStorage.getItem(CACHE_KEY+'_income')||'null'),t=JSON.parse(localStorage.getItem(CACHE_KEY+'_time')||'null');if(i)incomeData=i.data;if(t){timeData=t.data;timeDayCount=t.days}if(i||t)renderPage()}catch(e){}
 loadAll();setInterval(loadAll,5*60*1000);

@@ -374,6 +374,7 @@ body.editing .confirm{display:none}
 [data-theme="dark"] .cbtn{background:var(--paper);color:var(--ink)}
 .cbtn:hover:not(:disabled){background:var(--accent);color:var(--paper);transform:translateY(-1px)}
 .cbtn:disabled{background:transparent;color:var(--muted-2);cursor:not-allowed;border:1px dashed var(--line-2)}
+.confirm{display:none!important}
 .cbtn.done{background:var(--lime);color:var(--ink);cursor:default}
 .cbtn .arr{font-size:18px;font-weight:500}
 
@@ -944,7 +945,8 @@ function blankState(){
   });
   return s;
 }
-function saveState(){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+function notifyDataChanged(){try{parent.postMessage({type:'piura:data-changed',source:'morning'},location.origin)}catch(error){}}
+function saveState(){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); notifyDataChanged(); }
 function ensureStateFor(bid, iid){
   if(!state[bid]) state[bid] = { confirmed:false, items:{} };
   if(iid && state[bid].items[iid]===undefined) state[bid].items[iid] = false;
@@ -1028,7 +1030,6 @@ function renderBlocks(){
     const hiddenItems = b.items.filter(it=>it.hidden);
     const checkedCount = visibleItems.filter(it=>s.items[it.id]).length;
     const total = visibleItems.length;
-    const allChecked = total>0 && checkedCount === total;
     const unlocked = isBlockUnlocked(b.id);
     const active = isBlockActive(b.id);
     let cls = 'block';
@@ -1051,10 +1052,6 @@ function renderBlocks(){
       </div>`;
     }).join('');
 
-    const confirmDisabled = !allChecked || s.confirmed;
-    const confirmTxt = s.confirmed ? 'Зафиксировано' : (allChecked ? 'Подтвердить' : 'Отметь все пункты');
-    const confirmCls = s.confirmed ? 'cbtn done' : 'cbtn';
-    const arrow = s.confirmed ? '✓' : (allChecked ? '→' : '');
     const numLabel = String(i+1).padStart(2,'0');
 
     return `<section class="${cls}" data-block-root="${b.id}">
@@ -1076,9 +1073,6 @@ function renderBlocks(){
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
           удалить блок
         </button>
-      </div>
-      <div class="confirm">
-        <button class="${confirmCls}" ${confirmDisabled?'disabled':''} data-confirm="${b.id}">${confirmTxt}${arrow?`<span class="arr">${arrow}</span>`:''}</button>
       </div>
     </section>`;
   }).join('');
@@ -1140,12 +1134,20 @@ function wireBlocks(el){
       const iid = node.dataset.item;
       if(!isBlockUnlocked(bid) || state[bid].confirmed) return;
       state[bid].items[iid] = !state[bid].items[iid];
+      const block=blocksData.find(item=>item.id===bid),visible=(block?.items||[]).filter(item=>!item.hidden);
+      const completed=visible.length>0&&visible.every(item=>state[bid].items[item.id]);
+      if(completed)state[bid].confirmed=true;
       saveState();
       if(state[bid].items[iid]){
         const rect = node.querySelector('.cbox').getBoundingClientRect();
         sparkAt(rect.left+rect.width/2, rect.top+rect.height/2, 'small');
       }
       renderBlocks();
+      if(completed){
+        const index=blocksData.findIndex(item=>item.id===bid),next=blocksData[index+1];
+        if(next)setTimeout(()=>document.querySelector(`[data-block-root="${next.id}"]`)?.scrollIntoView({behavior:'smooth',block:'start'}),120);
+        else setTimeout(finishCycle,180);
+      }
     };
   });
 
@@ -1231,26 +1233,6 @@ function wireBlocks(el){
         const bid = inp.dataset.addBlock;
         el.querySelector(`[data-add-btn="${bid}"]`).click();
       }
-    };
-  });
-  el.querySelectorAll('[data-confirm]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const bid = btn.dataset.confirm;
-      state[bid].confirmed = true;
-      saveState();
-      const rect = btn.getBoundingClientRect();
-      sparkAt(rect.left+rect.width/2, rect.top+rect.height/2, 'big');
-      setTimeout(()=>{
-        const idx = blocksData.findIndex(b=>b.id===bid);
-        const next = blocksData[idx+1];
-        if(next){
-          const elN = document.querySelector(`[data-block-root="${next.id}"]`);
-          if(elN) elN.scrollIntoView({behavior:'smooth',block:'start'});
-        } else {
-          finishCycle();
-        }
-      }, 400);
-      renderBlocks();
     };
   });
 }
@@ -1407,18 +1389,18 @@ function sparkAt(x,y,size){
 function grandFinale(){
   const w = window.innerWidth;
   const h = window.innerHeight;
-  for(let i=0;i<14;i++){
+  for(let i=0;i<5;i++){
     setTimeout(()=>{
       const x = 60+Math.random()*(w-120);
       const y = 80+Math.random()*(h*0.75);
       sparkAt(x, y, Math.random()<.5 ? 'big' : 'huge');
-    }, i*200);
+    }, i*90);
   }
   setTimeout(()=>{
     sparkAt(w/2, h/2, 'huge');
     sparkAt(w/2 - 180, h/2 - 80, 'big');
     sparkAt(w/2 + 180, h/2 - 80, 'big');
-  }, 14*200 + 100);
+  }, 520);
 }
 
 function finishCycle(){
@@ -1431,6 +1413,7 @@ function finishCycle(){
     completedAt:n.toISOString()
   };
   localStorage.setItem('morn_v8_last_completion',JSON.stringify(completion));
+  notifyDataChanged();
   const months = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
   document.getElementById('finishStamp').textContent =
     `${n.getDate()} ${months[n.getMonth()]} · ${pad(n.getHours())}:${pad(n.getMinutes())}`;
@@ -1444,7 +1427,7 @@ function finishCycle(){
   setTimeout(()=>{
     overlay.classList.remove('show');
     window.scrollTo({top:0,behavior:'smooth'});
-  }, 6500);
+  }, 2200);
 }
 
 function openModal(id){ document.getElementById(id).classList.add('show'); }

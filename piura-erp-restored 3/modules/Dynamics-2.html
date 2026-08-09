@@ -1,859 +1,116 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ПС №1</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;600;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:      #08080e;
-    --bg2:     #0d0d1a;
-    --bg3:     #131326;
-    --accent:  #00ff9d;
-    --purple:  #7b5ea7;
-    --red:     #ff4d6d;
-    --gold:    #ffd700;
-    --blue:    #00b4d8;
-    --text:    #e8e8f5;
-    --muted:   #555570;
-    --border:  #1c1c38;
-    --panel-radius:20px;
-    --task-density:13px;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  [hidden]{display:none!important}
-  html, body { height:100%; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  body::before {
-    content:'';
-    position:fixed; inset:0;
-    background-image:
-      linear-gradient(rgba(0,255,157,.022) 1px,transparent 1px),
-      linear-gradient(90deg,rgba(0,255,157,.022) 1px,transparent 1px);
-    background-size:52px 52px;
-    pointer-events:none; z-index:0;
-  }
-  .app {
-    position:relative; z-index:1;
-    max-width:1400px;
-    margin:0 auto;
-    padding:32px 40px 40px;
-    display:flex;
-    flex-direction:column;
-    gap:22px;
-  }
-
-  /* HEADER */
-  .header { display:flex; justify-content:space-between; align-items:flex-start; gap:22px; }
-  .header-copy{display:flex;flex-direction:column;gap:8px}
-  .logo {
-    font-family:'Unbounded',sans-serif;
-    font-weight:900; font-size:clamp(28px,3vw,38px);
-    color:var(--accent);
-    text-shadow:0 0 40px rgba(0,255,157,.55);
-    letter-spacing:-1px;
-  }
-  .logo em { color:var(--muted); font-style:normal; }
-  .header-sub{font:12px 'Space Mono',monospace;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-  .header-tools{position:relative;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px}
-  .tool-btn{width:42px;height:42px;padding:0;display:grid;place-items:center;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,rgba(123,94,167,.12),rgba(0,255,157,.04));color:var(--muted);cursor:pointer;transition:.18s}.tool-btn.settings-primary{width:50px;height:50px;color:var(--accent);border-color:rgba(0,255,157,.28)}
-  .tool-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  #settingsBtn{width:50px;height:50px;color:var(--accent);border-color:rgba(0,255,157,.28)}
-  .tool-btn:hover,.tool-btn.active{border-color:var(--accent);color:var(--accent);box-shadow:0 0 24px rgba(0,255,157,.13);transform:translateY(-2px)}
-  .week-pick {
-    display:flex; align-items:center; gap:14px;
-    background:var(--bg3);
-    border:1px solid var(--border);
-    border-radius:16px; padding:8px 10px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
-  }
-  .week-pick label { font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);letter-spacing:.08em; }
-  .week-nav{width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);color:var(--accent);font-size:20px;cursor:pointer;transition:.15s}.week-nav:hover{border-color:var(--accent);box-shadow:0 0 16px rgba(0,255,157,.15)}
-  .week-pick input[type="date"]{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-  .date-open{display:flex;align-items:center;gap:10px;padding:0 4px;border:0;background:none;color:var(--accent);font:700 14px 'Space Mono',monospace;cursor:pointer}.date-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2}
-  .calendar-pop{position:absolute;right:0;top:55px;z-index:60;width:310px;padding:16px;border:1px solid rgba(0,255,157,.3);border-radius:17px;background:rgba(13,13,26,.98);box-shadow:0 28px 70px rgba(0,0,0,.7),0 0 32px rgba(0,255,157,.09);backdrop-filter:blur(18px)}
-  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.cal-head strong{font:700 13px 'Space Mono',monospace;color:var(--text);text-transform:uppercase}.cal-nav{width:32px;height:32px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--accent);cursor:pointer}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal-weekday{text-align:center;color:var(--muted);font:9px 'Space Mono',monospace;padding:4px 0}.cal-day{aspect-ratio:1;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text);font:11px 'Space Mono',monospace;cursor:pointer}.cal-day:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,255,157,.07)}.cal-day.out{opacity:.28}.cal-day.thu{color:#8dffcf}.cal-day.selected{border-color:var(--accent);background:var(--accent);color:#07110d;font-weight:700;box-shadow:0 0 18px rgba(0,255,157,.3)}
-
-  /* SCORE CARDS */
-  .scores {
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:16px;
-  }
-  .sc {
-    background:var(--bg2);
-    border:1px solid var(--border);
-    border-radius:var(--panel-radius);
-    padding:24px 28px 20px;
-    position:relative; overflow:hidden;
-    min-height:168px;
-    transition:transform .34s cubic-bezier(.2,.9,.25,1),box-shadow .34s,border-color .28s;
-  }
-  .sc:hover { transform:translateY(-8px) scale(1.025); border-color:rgba(110,168,254,.72); box-shadow:0 24px 54px rgba(0,0,0,.28),0 0 28px rgba(110,168,254,.14); }
-  .sc.score-pop{animation:score-pop .56s cubic-bezier(.2,1.25,.25,1)}
-  .task-row.task-pop{animation:task-pop .56s cubic-bezier(.2,1.25,.25,1)}
-  @keyframes score-pop{45%{transform:translateY(-9px) scale(1.04);filter:brightness(1.15)}100%{transform:none;filter:none}}
-  @keyframes task-pop{45%{transform:translateX(8px) scale(1.01);border-color:var(--accent)}100%{transform:none}}
-  .sc::after {
-    content:''; position:absolute;
-    bottom:0; left:0; right:0; height:3px;
-  }
-  .sc.main::after  { background:var(--accent); }
-  .sc.prev::after  { background:var(--purple); }
-  .sc.best::after  { background:var(--gold); }
-  .sc.avg::after   { background:var(--blue); }
-  .sc .lbl {
-    font-family:'Space Mono',monospace;
-    font-size:13px; color:var(--muted);
-    text-transform:uppercase; letter-spacing:1.2px;
-    margin-bottom:10px;
-    display:flex; align-items:center; gap:8px;
-  }
-  .live { width:9px; height:9px; background:var(--accent); border-radius:50%; animation:blink 2s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .sc .val { font-family:'Unbounded',sans-serif; font-weight:900; font-size:clamp(34px,3.6vw,58px); line-height:1; }
-  .sc.main .val { color:var(--accent); text-shadow:0 0 25px rgba(0,255,157,.45); }
-  .sc.prev .val { color:var(--purple); }
-  .sc.best .val { color:var(--gold); }
-  .sc.avg  .val { color:var(--blue); }
-  .sc .sub { font-size:14px; color:var(--muted); margin-top:8px; }
-  .delta { position:absolute; top:20px; right:22px; font-family:'Space Mono',monospace; font-size:16px; font-weight:700; }
-  .delta.up { color:var(--accent); }
-  .delta.dn { color:var(--red); }
-
-  /* HISTORY */
-  .history-block { display:block!important;min-height:440px;background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
-  .block-hd {
-    display:flex; justify-content:space-between; align-items:center;
-    padding:16px 28px;
-    background:var(--bg3);
-    border-bottom:1px solid var(--border);
-  }
-  .block-hd-title { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
-  .block-hd-count { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
-  .history-inner { padding:30px 32px 26px;overflow-x:auto; }
-  .chart-wrap { position:relative; min-height:300px; min-width:900px;width:100%; }
-  .line-chart { display:block; width:100%; height:300px; overflow:visible; }
-  .chart-grid { stroke:rgba(123,94,167,.22); stroke-width:1; stroke-dasharray:4 7; }
-  .chart-area { fill:url(#scoreArea); }
-  .chart-line { fill:none; stroke:var(--accent); stroke-width:4; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 0 8px rgba(0,255,157,.45)); }
-  .chart-point { fill:var(--bg2); stroke:var(--accent); stroke-width:4; cursor:pointer; transition:r .15s,fill .15s; }
-  .chart-point:hover,.chart-point.current { r:7; fill:var(--accent); }
-  .chart-label,.chart-value { font-family:'Space Mono',monospace; text-anchor:middle; }
-  .chart-label { fill:var(--muted); font-size:11px; }
-  .chart-value { fill:var(--text); font-size:12px; font-weight:700; }
-  .chart-axis { font-family:'Space Mono',monospace; fill:var(--muted); font-size:10px; text-anchor:end; }
-  .chart-empty { min-height:210px;display:grid;place-items:center;color:var(--muted);font:13px 'Space Mono',monospace; }
-  .chart-note { color:var(--muted);font:11px 'Space Mono',monospace;margin-top:8px;display:flex;justify-content:space-between;gap:18px; }
-  .weeks-archive{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin-top:22px;min-width:900px}.week-archive-btn{min-height:76px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--bg3);color:var(--text);text-align:left;cursor:pointer}.week-archive-btn:hover,.week-archive-btn.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--bg3))}.week-archive-btn strong{display:block;font:700 18px 'Space Mono',monospace}.week-archive-btn small{display:block;margin-top:6px;color:var(--muted);font:11px 'Space Mono',monospace}.weeks-empty{padding:16px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);font:11px 'Space Mono',monospace}
-
-  /* PROGRESS */
-  .progress-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); padding:20px 28px; }
-  .prog-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-  .prog-lbl { font-family:'Space Mono',monospace; font-size:13px; color:var(--muted); }
-  .prog-pct { font-family:'Unbounded',sans-serif; font-size:22px; color:var(--accent); }
-  .track { height:12px; background:var(--bg); border-radius:6px; overflow:hidden; }
-  .fill {
-    height:100%;
-    background:linear-gradient(90deg,var(--purple),var(--accent));
-    border-radius:6px;
-    transition:width .7s cubic-bezier(.22,1,.36,1);
-    position:relative;
-  }
-  .fill::after {
-    content:''; position:absolute;
-    right:0; top:0; bottom:0; width:40px;
-    background:rgba(255,255,255,.2);
-    filter:blur(6px);
-  }
-
-  /* TASKS */
-  .tasks-block { background:var(--bg2); border:1px solid var(--border); border-radius:var(--panel-radius); overflow:hidden; }
-  .tasks-toolbar{padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,rgba(0,255,157,.05),transparent 50%)}
-  .tasks-toolbar-copy strong{display:block;font:700 13px 'Space Mono',monospace;text-transform:uppercase;letter-spacing:.08em}.tasks-toolbar-copy small{display:block;margin-top:5px;color:var(--muted);font:11px 'Space Mono',monospace}.tasks-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-  .mini-btn{padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--muted);font:700 11px 'Space Mono',monospace;text-transform:uppercase;cursor:pointer;transition:.15s}.mini-btn:hover,.mini-btn.active{border-color:var(--accent);color:var(--accent)}
-  .tasks-head {
-    display:grid;
-    grid-template-columns:1fr 120px 140px 140px;
-    padding:16px 28px;
-    background:var(--bg3);
-    border-bottom:1px solid var(--border);
-    gap:10px;
-  }
-  .tasks-head span { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
-  .tasks-head span:not(:first-child) { text-align:center; }
-  .task-row {
-    display:grid;
-    grid-template-columns:1fr 120px 140px 140px;
-    padding:var(--task-density) 28px;
-    border-bottom:1px solid rgba(28,28,56,.7);
-    gap:10px; align-items:center;
-    transition:background .15s;
-  }
-  .task-row:last-child { border-bottom:none; }
-  .task-row:hover { background:rgba(255,255,255,.02); }
-  .task-row.hidden-task{opacity:.48;background:rgba(255,77,109,.025)}
-  .task-row.hidden-task .t-name{text-decoration:line-through;text-decoration-color:rgba(255,77,109,.5)}
-  .task-row.hidden-task .counter,.task-row.hidden-task .t-score{visibility:hidden}
-  .task-edit-actions{display:none;gap:7px;justify-content:center}.editing .task-edit-actions{display:flex}.editing .counter{display:none}
-  .vis-btn,.plus-icon{width:34px;height:34px;display:grid;place-items:center;padding:0;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--muted);cursor:pointer}.vis-btn:hover,.plus-icon:hover{border-color:var(--accent);color:var(--accent)}.vis-btn svg,.plus-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
-  .edit-input{width:100%;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);color:var(--text);font:500 15px Inter,sans-serif;outline:0}.edit-input:focus{border-color:var(--accent)}.edit-number{text-align:center;font:700 13px 'Space Mono',monospace}
-  .hidden-tray{padding:14px 18px;border-top:1px solid var(--border);background:rgba(255,255,255,.012)}.hidden-tray strong{display:block;margin-bottom:9px;color:var(--muted);font:10px 'Space Mono',monospace;text-transform:uppercase}.hidden-chips{display:flex;gap:7px;flex-wrap:wrap}.hidden-chip{padding:8px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg3);color:var(--muted);font:10px 'Space Mono',monospace;cursor:pointer}.hidden-chip:hover{border-color:var(--accent);color:var(--accent)}
-  .t-name { font-size:18px; font-weight:500; color:var(--text); cursor:pointer; transition:color .15s; line-height:1.3; user-select:none; }
-  .t-name:hover { color:var(--accent); }
-  .t-weight { font-family:'Space Mono',monospace; font-size:17px; color:var(--muted); text-align:center; }
-  .counter { display:flex; align-items:center; justify-content:center; gap:8px; }
-  .cnt-btn {
-    width:34px; height:34px;
-    background:var(--bg3);
-    border:1px solid var(--border);
-    border-radius:8px; color:var(--muted); font-size:22px;
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    transition:all .15s; line-height:1;
-    font-family:'Space Mono',monospace;
-  }
-  .cnt-btn:hover { border-color:var(--accent); color:var(--accent); }
-  .cnt-val { font-family:'Space Mono',monospace; font-size:20px; color:var(--text); min-width:28px; text-align:center; }
-  .t-score { font-family:'Space Mono',monospace; font-size:20px; font-weight:700; text-align:center; transition:color .2s; }
-  .t-score.on  { color:var(--accent); }
-  .t-score.off { color:var(--border); }
-
-  /* BOTTOM */
-  .bottom { display:flex; gap:16px; }
-  .btn {
-    padding:18px 32px; border-radius:14px; border:1px solid;
-    font-family:'Space Mono',monospace; font-size:15px; font-weight:700;
-    cursor:pointer; transition:all .2s; text-transform:uppercase; letter-spacing:.5px;
-  }
-  .btn-save { background:rgba(0,255,157,.1); border-color:var(--accent); color:var(--accent); flex:1; }
-  .btn-save:hover { background:rgba(0,255,157,.2); box-shadow:0 0 24px rgba(0,255,157,.25); }
-  .btn-add { background:var(--bg3); border-color:var(--border); color:var(--muted); flex:.4; }
-  .btn-add:hover { border-color:var(--purple); color:var(--purple); }
-  .btn-rebalance{background:rgba(255,215,0,.07);border-color:rgba(255,215,0,.35);color:var(--gold)}
-
-  /* MODAL */
-  .overlay {
-    position:fixed; inset:0;
-    background:rgba(0,0,0,.88);
-    backdrop-filter:blur(7px);
-    z-index:100;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none;
-    transition:opacity .2s;
-  }
-  .overlay.open { opacity:1; pointer-events:all; }
-  .modal {
-    background:var(--bg2);
-    border:1px solid var(--purple);
-    border-radius:22px; padding:36px; width:min(620px,94vw);max-height:90vh;overflow:auto;
-    box-shadow:0 0 70px rgba(123,94,167,.4);
-    transform:translateY(14px); transition:transform .25s;
-  }
-  .overlay.open .modal { transform:translateY(0); }
-  .modal h3 { font-family:'Unbounded',sans-serif; font-size:20px; color:var(--accent); margin-bottom:28px; }
-  .frow { display:flex; flex-direction:column; gap:7px; margin-bottom:18px; }
-  .frow label { font-family:'Space Mono',monospace; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; }
-  .frow input {
-    background:var(--bg3); border:1px solid var(--border);
-    border-radius:12px; color:var(--text);
-    font-family:'Inter',sans-serif; font-size:17px;
-    padding:14px 16px; outline:none; transition:border-color .2s; width:100%;
-  }
-  .frow input:focus { border-color:var(--purple); }
-
-  /* hint inside modal when editing weight */
-  .weight-hint {
-    font-family:'Space Mono',monospace;
-    font-size:11px; color:var(--accent);
-    margin-top:6px;
-    display:none;
-  }
-  .weight-hint.show { display:block; }
-
-  .modal-btns { display:flex; gap:12px; margin-top:28px; }
-  .modal-btns .btn { flex:1; padding:16px; font-size:14px; }
-  .btn-del { background:rgba(255,77,109,.1); border-color:var(--red); color:var(--red); flex:.5 !important; }
-  .btn-del:hover { background:rgba(255,77,109,.2); }
-  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--bg3);font:12px 'Space Mono',monospace;color:var(--muted)}.switch-row input{width:20px;height:20px;accent-color:var(--accent)}
-  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.settings-card{padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--bg3)}.settings-card label{display:block;margin-bottom:9px;font:11px 'Space Mono',monospace;color:var(--muted);text-transform:uppercase}.settings-card input,.settings-card select{width:100%;padding:10px;border:1px solid var(--border);border-radius:9px;background:var(--bg);color:var(--text)}
-  .rebalance-summary{margin-bottom:14px;padding:14px 16px;border:1px solid rgba(255,215,0,.25);border-radius:13px;background:rgba(255,215,0,.045);color:#d7d2a5;font:12px/1.6 'Space Mono',monospace}.rebalance-list{display:grid;gap:8px}.rebalance-row{display:grid;grid-template-columns:minmax(0,1fr) 115px 82px 92px;gap:9px;align-items:center;padding:11px;border:1px solid var(--border);border-radius:12px;background:var(--bg3)}.rebalance-name{font-size:13px;line-height:1.3}.rebalance-stat{color:var(--muted);font:10px/1.45 'Space Mono',monospace}.rebalance-weight{font:700 13px 'Space Mono',monospace;color:var(--gold);text-align:center}.apply-one{padding:8px;border:1px solid rgba(255,215,0,.3);border-radius:8px;background:rgba(255,215,0,.06);color:var(--gold);font:700 10px 'Space Mono',monospace;cursor:pointer}
-  #rebalanceOverlay .modal{width:min(920px,96vw);padding:34px;max-height:92vh;border-color:rgba(255,204,74,.45);box-shadow:0 28px 100px rgba(0,0,0,.68)}#rebalanceOverlay .modal h3{font-size:22px;margin-bottom:22px;color:#ffcc4a}#rebalanceOverlay .rebalance-summary{font-size:13px;padding:18px 20px;margin-bottom:18px}#rebalanceOverlay .rebalance-list{max-height:62vh;overflow:auto;padding-right:6px}#rebalanceOverlay .rebalance-row{grid-template-columns:minmax(0,1fr) 150px 96px 112px;padding:15px 16px;gap:14px}#rebalanceOverlay .rebalance-name{font-size:15px;font-weight:700}#rebalanceOverlay .rebalance-stat{font-size:10px}#rebalanceOverlay .rebalance-weight{font-size:17px}#rebalanceOverlay .apply-one{font-size:10px;padding:10px 8px}#rebalanceOverlay .modal-btns{margin-top:18px}#rebalanceOverlay .modal-btns .btn{padding:14px;font-size:11px}
-  /* Единая визуальная система «Эффективности»: спокойные панели, четыре смысловых акцента. */
-  :root{--bg:#090c12;--bg2:#11151e;--bg3:#171c27;--accent:#42dda5;--purple:#9a72ed;--gold:#ffcc4a;--blue:#5b9dff;--muted:#718096;--border:rgba(255,255,255,.085);--panel-radius:17px}
-  body::before{background-image:linear-gradient(rgba(91,157,255,.014) 1px,transparent 1px),linear-gradient(90deg,rgba(91,157,255,.014) 1px,transparent 1px);background-size:60px 60px}
-  .app{max-width:1500px;padding:38px 48px 70px;gap:24px}.logo{color:#f4f7fb;text-shadow:none;font-size:clamp(30px,3vw,42px)}.tool-btn,#settingsBtn{background:var(--bg3);border-color:var(--border);color:#9aa8ba}.tool-btn:hover,.tool-btn.active,#settingsBtn:hover{border-color:#5b9dff;color:#5b9dff;box-shadow:none}.week-pick{background:var(--bg2)}.week-nav,.date-open{color:#5b9dff}.sc{box-shadow:none}.sc.main .val{color:#42dda5;text-shadow:none}.chart-line{stroke:#42dda5;filter:none}.chart-grid{stroke:rgba(91,157,255,.15)}.tasks-toolbar{background:linear-gradient(90deg,rgba(91,157,255,.07),transparent 55%)}
-  body.compact-view{--task-density:8px}body.compact-view .sc{padding:18px 22px}body.compact-view .sc .val{font-size:48px}
-  @media(max-width:900px){.app{padding:22px 18px}.header{flex-direction:column}.header-tools{width:100%;justify-content:flex-start}.scores{grid-template-columns:1fr 1fr}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 70px 120px 90px;padding-inline:14px}.logo{font-size:27px}.settings-grid{grid-template-columns:1fr}.weeks-archive{grid-template-columns:repeat(3,minmax(0,1fr))}}
-  @media(max-width:620px){.scores{grid-template-columns:1fr!important}.tasks-head span:nth-child(2),.t-weight{display:none}.tasks-head,.task-row{grid-template-columns:minmax(0,1fr) 112px 72px}.week-pick{width:100%;gap:5px}.week-pick label{display:none}.date-open{flex:1;justify-content:center}.calendar-pop{left:0;right:auto;width:min(310px,calc(100vw - 36px))}.rebalance-row{grid-template-columns:minmax(0,1fr) 78px}.rebalance-row .rebalance-stat{display:none}}
-
-  /* TOAST */
-  .toast {
-    position:fixed; bottom:32px; left:50%;
-    transform:translateX(-50%) translateY(20px);
-    background:var(--bg3); border:1px solid var(--accent); color:var(--accent);
-    font-family:'Space Mono',monospace; font-size:14px;
-    padding:14px 32px; border-radius:12px; z-index:200;
-    opacity:0; transition:all .3s; pointer-events:none; white-space:nowrap;
-  }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ПС №1 — PIURA ERP</title>
+  <style>
+    :root{color-scheme:dark;--bg:#08090c;--surface:#121318;--raised:#191a20;--line:rgba(255,255,255,.09);--text:#f2f4f7;--muted:#9298a4;--faint:#626873;--blue:#6ea8fe;--green:#43d39e;--danger:#ff6b7a;--warning:#f2c45c;--radius:20px}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--erp-bg,var(--bg));color:var(--erp-text,var(--text));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{touch-action:manipulation}.app{width:min(1680px,100%);margin:auto;padding:34px clamp(22px,3vw,54px) 80px;display:grid;gap:24px}
+    .top{display:flex;align-items:center;justify-content:space-between;gap:22px;min-height:84px;padding:18px 22px;border:1px solid var(--erp-line,var(--line));border-radius:var(--radius);background:var(--erp-surface,var(--surface))}.title{font-size:clamp(32px,3.4vw,52px);font-weight:900;letter-spacing:-.06em;line-height:1}.week-nav{display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--erp-line,var(--line));border-radius:14px;background:var(--erp-raised,var(--raised))}.nav,.date-open{height:40px;border:1px solid var(--erp-line,var(--line));border-radius:10px;background:var(--erp-surface,var(--surface));color:var(--erp-text,var(--text));font-weight:800;cursor:pointer}.nav{width:42px;font-size:20px}.date-open{min-width:188px;padding:0 16px;color:var(--erp-primary,var(--blue))}.week-date{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.nav:hover,.date-open:hover{border-color:var(--erp-primary,var(--blue))}
+    .scores{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.score{min-height:154px;padding:24px;border:1px solid var(--erp-line,var(--line));border-radius:var(--radius);background:var(--erp-surface,var(--surface));display:flex;flex-direction:column;justify-content:space-between}.score.primary{border-color:color-mix(in srgb,var(--erp-primary,var(--blue)) 44%,var(--erp-line,var(--line)));background:radial-gradient(circle at 90% 0,color-mix(in srgb,var(--erp-primary,var(--blue)) 12%,transparent),transparent 48%),var(--erp-surface,var(--surface))}.score span{color:var(--erp-muted,var(--muted));font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}.score strong{font-size:clamp(42px,4.4vw,70px);line-height:.85;letter-spacing:-.07em}.score.primary strong{color:var(--erp-primary,var(--blue))}.score small{color:var(--erp-faint,var(--faint));font-size:11px}
+    .panel{border:1px solid var(--erp-line,var(--line));border-radius:var(--radius);background:var(--erp-surface,var(--surface));overflow:hidden}.panel-head{min-height:72px;padding:18px 22px;border-bottom:1px solid var(--erp-line,var(--line));display:flex;align-items:center;justify-content:space-between;gap:18px}.panel-head h2{margin:0;font-size:19px}.panel-head small{display:block;margin-top:6px;color:var(--erp-muted,var(--muted));font-size:11px}.periods{display:flex;gap:6px}.period{height:36px;padding:0 12px;border:1px solid var(--erp-line,var(--line));border-radius:9px;background:var(--erp-raised,var(--raised));color:var(--erp-muted,var(--muted));font-size:11px;font-weight:800;cursor:pointer}.period.on{border-color:var(--erp-primary,var(--blue));color:var(--erp-primary,var(--blue));background:color-mix(in srgb,var(--erp-primary,var(--blue)) 10%,var(--erp-raised,var(--raised)))}
+    .chart-wrap{padding:24px;overflow:auto}.score-chart{display:block;width:100%;min-width:860px;height:280px}.grid-line{stroke:var(--erp-line,var(--line));stroke-dasharray:5 7}.chart-area{fill:color-mix(in srgb,var(--erp-primary,var(--blue)) 14%,transparent)}.chart-line{fill:none;stroke:var(--erp-primary,var(--blue));stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.chart-point{fill:var(--erp-surface,var(--surface));stroke:var(--erp-primary,var(--blue));stroke-width:4}.chart-label,.chart-value,.chart-axis{fill:var(--erp-muted,var(--muted));font-size:11px}.chart-value{fill:var(--erp-text,var(--text));font-weight:800}.weeks-archive{display:flex;gap:9px;padding:0 24px 24px;overflow:auto}.week-chip{min-width:118px;padding:11px 13px;border:1px solid var(--erp-line,var(--line));border-radius:12px;background:var(--erp-raised,var(--raised));color:var(--erp-text,var(--text));text-align:left;cursor:pointer}.week-chip.on{border-color:var(--erp-primary,var(--blue))}.week-chip b{display:block;font-size:18px}.week-chip small{display:block;margin-top:4px;color:var(--erp-muted,var(--muted));font-size:10px}
+    .workbench{display:grid;grid-template-columns:minmax(350px,.7fr) minmax(680px,1.3fr);gap:20px;align-items:start}.task-panel{min-width:0}.task-panel.drag-over{outline:2px solid var(--erp-primary,var(--blue));outline-offset:4px}.task-list{display:grid}.weekly-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;gap:12px;align-items:center;min-height:76px;padding:13px 18px;border-bottom:1px solid var(--erp-line,var(--line));background:var(--erp-surface,var(--surface))}.weekly-row:last-child{border-bottom:0}.drag{color:var(--erp-faint,var(--faint));cursor:grab;text-align:center}.task-copy{min-width:0}.task-copy b{display:block;font-size:14px;line-height:1.35}.task-copy small{display:block;margin-top:5px;color:var(--erp-muted,var(--muted));font-size:10px}.counter{display:flex;align-items:center;gap:9px}.count-btn,.edit-btn,.add-btn{border:1px solid var(--erp-line,var(--line));background:var(--erp-raised,var(--raised));color:var(--erp-text,var(--text));cursor:pointer}.count-btn{width:34px;height:34px;border-radius:10px;font-size:18px}.count{min-width:26px;text-align:center;font-size:16px;font-weight:850}.edit-btn{width:34px;height:34px;border-radius:10px;color:var(--erp-muted,var(--muted))}.add-btn{height:40px;padding:0 14px;border-radius:10px;color:var(--erp-primary,var(--blue));font-size:12px;font-weight:800}.empty{padding:36px;text-align:center;color:var(--erp-muted,var(--muted));font-size:12px}
+    .daily-wrap{overflow:auto}.daily-grid{min-width:880px}.daily-head,.daily-row{display:grid;grid-template-columns:28px minmax(240px,1fr) repeat(7,62px) 38px;gap:7px;align-items:center;padding:10px 16px}.daily-head{min-height:58px;border-bottom:1px solid var(--erp-line,var(--line));background:var(--erp-raised,var(--raised))}.day-head{text-align:center}.day-head b{display:block;font-size:10px;text-transform:uppercase;color:var(--erp-muted,var(--muted))}.day-head span{display:block;margin-top:4px;font-size:13px}.daily-row{min-height:72px;border-bottom:1px solid var(--erp-line,var(--line))}.daily-row:last-child{border-bottom:0}.day-check{width:46px;height:46px;border:1px solid var(--erp-line,var(--line));border-radius:13px;background:var(--erp-raised,var(--raised));color:transparent;cursor:pointer;font-weight:900;font-size:18px}.day-check.on{border-color:var(--erp-success,var(--green));background:color-mix(in srgb,var(--erp-success,var(--green)) 16%,var(--erp-raised,var(--raised)));color:var(--erp-success,var(--green));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--erp-success,var(--green)) 24%,transparent)}.day-check.today{outline:1px solid var(--erp-primary,var(--blue));outline-offset:2px}
+    .auto-note{padding:14px 20px;border-top:1px solid var(--erp-line,var(--line));color:var(--erp-muted,var(--muted));font-size:11px}.modal-bg{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(12px)}.modal-bg.on{display:flex}.modal{width:min(520px,96vw);padding:26px;border:1px solid var(--erp-line,var(--line));border-radius:22px;background:var(--erp-surface,var(--surface));box-shadow:0 40px 120px rgba(0,0,0,.45)}.modal h3{margin:0 0 22px;font-size:24px}.fields{display:grid;grid-template-columns:1fr 150px;gap:12px}.field{display:grid;gap:7px}.field.wide{grid-column:1/-1}.field label{color:var(--erp-muted,var(--muted));font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.field input,.field select{height:44px;padding:0 12px;border:1px solid var(--erp-line,var(--line));border-radius:11px;background:var(--erp-raised,var(--raised));color:var(--erp-text,var(--text))}.modal-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px}.modal-actions div{display:flex;gap:8px}.action{height:42px;padding:0 15px;border:1px solid var(--erp-line,var(--line));border-radius:10px;background:var(--erp-raised,var(--raised));color:var(--erp-text,var(--text));cursor:pointer}.action.primary{border-color:var(--erp-primary,var(--blue));color:var(--erp-primary,var(--blue))}.action.danger{color:var(--erp-danger,var(--danger))}
+    @media(hover:hover){.score,.weekly-row,.daily-row,.week-chip{transition:transform .2s,border-color .2s,background .2s}.score:hover,.week-chip:hover{transform:translateY(-2px)}.weekly-row:hover,.daily-row:hover{background:color-mix(in srgb,var(--erp-primary,var(--blue)) 4%,var(--erp-surface,var(--surface)))}.count-btn:hover,.edit-btn:hover,.add-btn:hover,.day-check:hover{border-color:var(--erp-primary,var(--blue))}}
+    @media(max-width:1120px){.workbench{grid-template-columns:1fr}.scores{grid-template-columns:repeat(2,1fr)}}@media(max-width:720px){.app{padding:18px 14px 60px}.top{align-items:flex-start;flex-direction:column}.week-nav{width:100%}.date-open{flex:1;min-width:0}.scores{grid-template-columns:1fr 1fr;gap:10px}.score{min-height:126px;padding:18px}.score strong{font-size:42px}.panel-head{align-items:flex-start;flex-direction:column}.fields{grid-template-columns:1fr}.field.wide{grid-column:auto}}
+  </style>
 </head>
 <body>
-<div class="app">
+<main class="app">
+  <header class="top">
+    <div class="title" id="serviceTitle">ПС №1</div>
+    <div class="week-nav">
+      <button class="nav" id="prevWeek" type="button" aria-label="Предыдущая неделя">‹</button>
+      <button class="date-open" id="dateOpen" type="button"><span id="dateLabel">—</span></button>
+      <input class="week-date" id="weekDate" type="date" tabindex="-1">
+      <button class="nav" id="nextWeek" type="button" aria-label="Следующая неделя">›</button>
+    </div>
+  </header>
 
-  <div class="header">
-    <div class="header-copy">
-      <div class="logo" id="serviceTitle">ПС №1</div>
-    </div>
-    <div class="header-tools">
-      <button class="tool-btn" id="settingsBtn" title="Настройки" aria-label="Настройки"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.42 1.42-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.55V20h-2v-.09a1.7 1.7 0 0 0-1.1-1.55 1.7 1.7 0 0 0-1.88.34l-.06.06-1.42-1.42.06-.06A1.7 1.7 0 0 0 9.35 15a1.7 1.7 0 0 0-1.55-1.03H7.7v-2h.1a1.7 1.7 0 0 0 1.55-1.1 1.7 1.7 0 0 0-.34-1.88l-.06-.06 1.42-1.42.06.06a1.7 1.7 0 0 0 1.88.34 1.7 1.7 0 0 0 1.03-1.55V6.3h2v.09a1.7 1.7 0 0 0 1.1 1.55 1.7 1.7 0 0 0 1.88-.34l.06-.06 1.42 1.42-.06.06a1.7 1.7 0 0 0-.34 1.88 1.7 1.7 0 0 0 1.55 1.03H21v2h-.09A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
-      <button class="tool-btn" id="editModeBtn" title="Редактировать задачи" aria-label="Редактировать задачи"><svg viewBox="0 0 24 24"><path d="m4 20 4.2-1 10.9-10.9a2.1 2.1 0 0 0-3-3L5.2 16 4 20Z"/><path d="m14.7 6.5 3 3"/></svg></button>
-      <button class="tool-btn" id="rebalanceBtn" title="Ребалансировка" aria-label="Ребалансировка"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-4 7h8L7 7Zm10 0-4 7h8l-4-7Z"/></svg></button>
-      <div class="week-pick">
-        <button class="week-nav" id="prevWeek" aria-label="Предыдущая неделя">‹</button>
-        <button class="date-open" id="dateOpen" aria-haspopup="dialog" aria-expanded="false"><span id="dateLabel">—</span><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></button>
-        <input type="date" id="weekDate" tabindex="-1">
-        <button class="week-nav" id="nextWeek" aria-label="Следующая неделя">›</button>
-      </div>
-      <div class="calendar-pop" id="calendarPop" hidden><div class="cal-head"><button class="cal-nav" id="calPrev" aria-label="Предыдущий месяц">‹</button><strong id="calMonth"></strong><button class="cal-nav" id="calNext" aria-label="Следующий месяц">›</button></div><div class="cal-grid" id="calendarGrid"></div></div>
-    </div>
-  </div>
+  <section class="scores">
+    <article class="score primary"><span>Текущая неделя</span><strong id="currentScore">0</strong><small id="weekRange">—</small></article>
+    <article class="score"><span>Прошлая неделя</span><strong id="previousScore">0</strong><small id="previousDelta">—</small></article>
+    <article class="score"><span>Рекорд</span><strong id="recordScore">0</strong><small>лучший результат</small></article>
+    <article class="score"><span>Среднее</span><strong id="averageScore">0</strong><small id="weeksCount">0 недель</small></article>
+  </section>
 
-  <div class="scores">
-    <div class="sc main">
-      <div class="lbl"><span class="live"></span>Текущая неделя</div>
-      <div class="val" id="curScore">0</div>
-      <div class="sub" id="curLabel">—</div>
-      <div class="delta" id="deltaBadge"></div>
-    </div>
-    <div class="sc prev">
-      <div class="lbl">Прошлая неделя</div>
-      <div class="val" id="prevScore">—</div>
-      <div class="sub" id="prevLabel">—</div>
-    </div>
-    <div class="sc best">
-      <div class="lbl">Рекорд</div>
-      <div class="val" id="bestScore">—</div>
-      <div class="sub" id="bestLabel">—</div>
-    </div>
-    <div class="sc avg">
-      <div class="lbl">Среднее</div>
-      <div class="val" id="avgScore">—</div>
-      <div class="sub">за все недели</div>
-    </div>
-  </div>
+  <section class="panel">
+    <div class="panel-head"><div><h2>Динамика результатов</h2><small>График обновляется автоматически</small></div><div class="periods" id="periods"><button class="period" data-chart-weeks="8">8</button><button class="period on" data-chart-weeks="12">12</button><button class="period" data-chart-weeks="16">16</button><button class="period" data-chart-weeks="all">Все</button></div></div>
+    <div class="chart-wrap" id="scoreChart"></div>
+    <div class="weeks-archive" id="weeksArchive" aria-label="Сохранённые недели"></div>
+  </section>
 
-  <div class="history-block">
-    <div class="block-hd">
-      <span class="block-hd-title">Динамика по четвергам</span>
-      <span class="block-hd-count" id="wkCount">0 нед.</span>
-    </div>
-    <div class="history-inner">
-      <div class="chart-wrap" id="scoreChart"></div>
-      <div class="chart-note"><span>Показаны все сохранённые недели</span><span>Нажмите точку или карточку, чтобы открыть неделю</span></div>
-      <div class="weeks-archive" id="weeksArchive" aria-label="Сохранённые недели"></div>
-    </div>
-  </div>
+  <section class="workbench">
+    <article class="panel task-panel" id="weeklyPanel" data-drop-mode="weekly">
+      <div class="panel-head"><div><h2>Раз в неделю</h2><small>Количество выполнений за выбранную неделю</small></div><button class="add-btn" data-add-mode="weekly" type="button">+ Задача</button></div>
+      <div class="task-list" id="weeklyTasks"></div>
+      <div class="auto-note">Изменения сохраняются сразу. Задачу можно перетащить в ежедневный блок.</div>
+    </article>
+    <article class="panel task-panel" id="dailyPanel" data-drop-mode="daily">
+      <div class="panel-head"><div><h2>Каждый день</h2><small>Отмечайте выполнение отдельно с понедельника по воскресенье</small></div><button class="add-btn" data-add-mode="daily" type="button">+ Задача</button></div>
+      <div class="daily-wrap"><div class="daily-grid"><div class="daily-head" id="dailyHead"></div><div id="dailyTasks"></div></div></div>
+      <div class="auto-note">Итог недели складывается из недельных выполнений и ежедневных отметок.</div>
+    </article>
+  </section>
+</main>
 
-  <div class="progress-block">
-    <div class="prog-top">
-      <span class="prog-lbl">ПРОГРЕСС К МАКСИМУМУ · <span id="maxVal">0</span> БАЛЛОВ</span>
-      <span class="prog-pct" id="pctVal">0%</span>
+<div class="modal-bg" id="taskModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+    <h3 id="taskModalTitle">Задача</h3>
+    <div class="fields">
+      <div class="field wide"><label for="taskName">Название</label><input id="taskName" type="text" autocomplete="off"></div>
+      <div class="field"><label for="taskMode">Ритм</label><select id="taskMode"><option value="weekly">Раз в неделю</option><option value="daily">Каждый день</option></select></div>
+      <div class="field"><label for="taskWeight">Баллы</label><input id="taskWeight" type="number" min="1" step="5"></div>
     </div>
-    <div class="track"><div class="fill" id="fillBar" style="width:0%"></div></div>
-  </div>
-
-  <div class="tasks-block">
-    <div class="tasks-toolbar">
-      <div class="tasks-toolbar-copy"><strong>Активные задачи</strong><small id="taskSummary">0 активных · максимум 0 баллов</small></div>
-      <div class="tasks-actions" id="editActions" hidden><button class="plus-icon" id="addInlineBtn" title="Добавить задачу" aria-label="Добавить задачу"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
-    </div>
-    <div class="tasks-head">
-      <span>Задача</span>
-      <span>Вес</span>
-      <span>Количество</span>
-      <span>Баллы</span>
-    </div>
-    <div id="tasksList"></div>
-    <div class="hidden-tray" id="hiddenTray" hidden><strong>Скрытые задачи · нажмите, чтобы вернуть</strong><div class="hidden-chips" id="hiddenChips"></div></div>
-  </div>
-
-  <div class="bottom">
-    <button class="btn btn-save" onclick="saveWeek()">💾 Сохранить неделю</button>
-  </div>
-
-</div>
-
-<!-- MODAL -->
-<div class="overlay" id="overlay">
-  <div class="modal">
-    <h3 id="mTitle">// ЗАДАЧА</h3>
-    <div class="frow">
-      <label>Название</label>
-      <input type="text" id="fName" placeholder="Название задачи...">
-    </div>
-    <div class="frow">
-      <label>Вес (баллы за 1 раз)</label>
-      <input type="number" id="fWeight" placeholder="100" min="1">
-      <div class="weight-hint" id="weightHint">
-        ↻ История пересчитается автоматически
-      </div>
-    </div>
-    <label class="switch-row"><span>Показывать задачу в рабочем списке</span><input type="checkbox" id="fVisible" checked></label>
-    <div class="modal-btns">
-      <button class="btn btn-save" onclick="saveModal()">Сохранить</button>
-      <button class="btn btn-add" onclick="closeModal()">Отмена</button>
-      <button class="btn btn-del" id="mDel" onclick="deleteTask()" style="display:none">Скрыть</button>
-    </div>
+    <div class="modal-actions"><button class="action danger" id="deleteTask" type="button">Удалить</button><div><button class="action" id="cancelTask" type="button">Отмена</button><button class="action primary" id="saveTask" type="button">Готово</button></div></div>
   </div>
 </div>
-
-<div class="overlay" id="settingsOverlay">
-  <div class="modal">
-    <h3>// НАСТРОЙКИ ПС НОМЕР ОДИН</h3>
-    <div class="settings-grid">
-      <div class="settings-card"><label>Недель на графике</label><select id="setChartWeeks"><option>4</option><option>8</option><option selected>12</option><option>16</option><option>20</option></select></div>
-      <div class="settings-card"><label>Целевой максимум активных задач</label><input id="setTargetBudget" type="number" min="500" max="20000" step="25" value="5000"></div>
-      <div class="settings-card"><label>Период ребалансировки</label><select id="setAnalysisWeeks"><option value="all" selected>Вся история · свежие недели важнее</option></select></div>
-      <div class="settings-card"><label>Акцент интерфейса</label><input id="setAccent" type="color" value="#00ff9d"></div>
-      <div class="settings-card"><label>Название сервиса</label><input id="setServiceTitle" type="text" maxlength="40" value="ПС номер один"></div>
-      <label class="switch-row"><span>Компактные строки задач</span><input type="checkbox" id="setCompact"></label>
-      <label class="switch-row"><span>Показывать значения на графике</span><input type="checkbox" id="setChartValues" checked></label>
-      <label class="switch-row"><span>Показывать прошлую неделю</span><input type="checkbox" id="setPrevCard" checked></label>
-      <label class="switch-row"><span>Показывать среднее</span><input type="checkbox" id="setAvgCard" checked></label>
-    </div>
-    <div class="modal-btns"><button class="btn btn-save" id="saveSettings">Сохранить настройки</button><button class="btn btn-add" onclick="closeSettings()">Отмена</button></div>
-  </div>
-</div>
-
-<div class="overlay" id="rebalanceOverlay">
-  <div class="modal">
-    <h3>// РЕБАЛАНСИРОВКА ВЕСОВ</h3>
-    <div class="rebalance-summary" id="rebalanceSummary"></div>
-    <div class="rebalance-list" id="rebalanceList"></div>
-    <div class="modal-btns"><button class="btn btn-rebalance" id="applyAllWeights">Применить все рекомендации</button><button class="btn btn-add" onclick="closeRebalance()">Закрыть</button></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <script>
-// ─── DEFAULTS ───
-const DEFAULTS = [
-  {id:1,  name:'Все встречи проведены с АРО',             w:1000},
-  {id:2,  name:'Неделя без расстройств',                   w:1000},
-  {id:3,  name:'Встречи в запланированном тайминге',       w:750},
-  {id:4,  name:'Премия по наставничеству от 1000$',        w:350},
-  {id:5,  name:'Уборка парка',                             w:250},
-  {id:6,  name:'Турнир по теннису или шахматам',           w:250},
-  {id:7,  name:'Выучил стих',                              w:200},
-  {id:8,  name:'Заработал $5 000',                         w:175},
-  {id:9,  name:'Сделали более 5 000 000 в Klimate',        w:150},
-  {id:10, name:'PFF вырос на $50 000',                     w:150},
-  {id:11, name:'Новый подписчик в фонде',                  w:100},
-  {id:12, name:'Прочитал 1 куж с текстовыделителями',     w:100},
-  {id:13, name:'Прочтено 50 стр. художественной лит-ры',  w:75},
-  {id:14, name:'Сходил в парк / ресторан / новое место',   w:50},
-  {id:15, name:'Сделан урок',                              w:25},
-  {id:16, name:'Стерилизовали котика',                     w:25},
-  {id:17, name:'Занятие с тренером по хобби',              w:25},
-  {id:18, name:'Присутствовал на спорте',                  w:25},
-  {id:19, name:'Рабочий день начался ровно в 8:00',        w:100},
-  {id:20, name:'Ходил в душ, чистил зубы каждый день',    w:25},
-  {id:21, name:'Засыпал до 11, вставал до 6',             w:25},
-  {id:22, name:'Интервальное голодание',                   w:25},
-  {id:23, name:'Пил витамины каждый день',                 w:25},
-  {id:24, name:'Гулял каждый день',                        w:25},
-  {id:25, name:'Обучался новому (1 час)',                  w:50},
-  {id:26, name:'Образовательное видео',                    w:10},
-  {id:27, name:'Занимался Админ. Школой (1 час)',          w:15},
-  {id:28, name:'Поддерживал здоровое питание',             w:25},
-];
-
-// ─── STATE ───
-const HISTORY_SEED = [
-  ['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],
-  ['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],
-  ['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]
-].map(([date,snapshotTotal])=>({date,scores:{},snapshotTotal}));
-HISTORY_SEED[HISTORY_SEED.length-1].scores={16:6};
-const HISTORY_ANCHOR = '2026-05-14';
-const UI_DEFAULTS={chartWeeks:12,targetBudget:5000,analysisWeeks:'all',accent:'#00ff9d',compact:false,chartValues:true,prevCard:true,avgCard:true,rebalanceVersion:5,serviceTitle:'ПС №1'};
-let S = { tasks:[], counts:{}, history:[], nextId:300, settings:{...UI_DEFAULTS} };
-let editId = null;
-let origWeight = null; // для отслеживания изменения веса в модалке
-let editMode=false,showHidden=false,rebalanceRecommendations=[];
-
-function loadS() {
-  try {
-    const r = localStorage.getItem('wt5');
-    if (r) {
-      S = JSON.parse(r);
-      S.history = Array.isArray(S.history) ? S.history : [];
-      // Старые жёстко записанные итоги сохраняем как исторический снимок.
-      S.history.forEach(w => { if(Number.isFinite(Number(w.total))&&!Number.isFinite(Number(w.snapshotTotal)))w.snapshotTotal=Number(w.total);delete w.total;w.date=thursdayFor(w.date); });
-      // Восстанавливаем известную детализацию контрольной недели, если в старом
-      // сохранении остался только итог 150, а сами шесть отметок потерялись.
-      const seedLast=HISTORY_SEED[HISTORY_SEED.length-1],savedLast=S.history.find(w=>w.date===seedLast.date);
-      if(savedLast&&Number(savedLast.snapshotTotal)===seedLast.snapshotTotal&&!Object.values(savedLast.scores||{}).some(Number))savedLast.scores={...seedLast.scores};
-      if(thursdayFor(today())===seedLast.date&&!Object.values(S.counts||{}).some(Number))S.counts={...seedLast.scores};
-    } else {
-      S.tasks = JSON.parse(JSON.stringify(DEFAULTS));
-      S.history = JSON.parse(JSON.stringify(HISTORY_SEED));
-      S.counts = {16:6};
-    }
-    if (!S.nextId) S.nextId = 300;
-    S.tasks=Array.isArray(S.tasks)?S.tasks:JSON.parse(JSON.stringify(DEFAULTS));
-    S.tasks.forEach(t=>{if(typeof t.active!=='boolean')t.active=true;if(!Number.isFinite(Number(t.targetPerWeek)))t.targetPerWeek=inferTarget(t.name)});
-    const oldSettings=S.settings||{},oldBudget=Number(oldSettings.targetBudget);S.settings={...UI_DEFAULTS,...oldSettings};
-    if(Number(oldSettings.rebalanceVersion||0)<2)S.settings.targetBudget=S.tasks.filter(t=>t.active!==false).reduce((sum,t)=>sum+Number(t.w||0),0)||oldBudget||5000;
-    if(Number(oldSettings.rebalanceVersion||0)<3){S.settings.analysisWeeks='all';S.settings.rebalanceVersion=3}
-    if(Number(oldSettings.rebalanceVersion||0)<5){if(['PS1','PS №1','PS номер один','PS НОМЕР ОДИН','ПС номер один'].includes(S.settings.serviceTitle))S.settings.serviceTitle='ПС №1';S.settings.rebalanceVersion=5}
-  } catch(e) {
-    S = { tasks: JSON.parse(JSON.stringify(DEFAULTS)), counts:{16:6}, history:JSON.parse(JSON.stringify(HISTORY_SEED)), nextId:300,settings:{...UI_DEFAULTS} };
-  }
-}
-function saveS() { localStorage.setItem('wt5', JSON.stringify(S)); }
-function inferTarget(name){return /(каждый день|6000\s*шаг|витамин|гулял|питани|душ|засыпал|голодан)/i.test(name||'')?7:1}
-
-// ─── ВЫЧИСЛЕНИЯ ───
-// Считаем итог недели по текущим весам задач
-function calcTotal(scores) {
-  return S.tasks.filter(t=>t.active!==false).reduce((sum, t) => sum + (scores[t.id] || 0) * t.w, 0);
-}
-function historyTotal(week){return Number.isFinite(Number(week.snapshotTotal))?Number(week.snapshotTotal):calcTotal(week.scores||{});}
-function currentTotal() { return calcTotal(S.counts); }
-function maxPts() { return S.tasks.filter(t=>t.active!==false).reduce((s,t) => s + t.w, 0); }
-
-// ─── RENDER ───
-function render() {
-  applyUiSettings();
-  renderTasks();
-  renderScores();
-  renderChart();
-  saveS();
-}
-
-function renderTasks() {
-  const el = document.getElementById('tasksList');
-  el.innerHTML = '';
-  const visibleTasks=S.tasks.filter(t=>t.active!==false);
-  visibleTasks.forEach(t => {
-    const cnt = S.counts[t.id] || 0;
-    const pts = cnt * t.w;
-    const row = document.createElement('div');
-    row.className = 'task-row'+(t.active===false?' hidden-task':'');
-    row.dataset.taskId=t.id;
-    row.innerHTML = editMode ?
-      `<input class="edit-input" data-name-input="${t.id}" value="${escHtml(t.name)}" aria-label="Название задачи"><input class="edit-input edit-number" data-weight-input="${t.id}" type="number" min="1" value="${t.w}" aria-label="Вес"><input class="edit-input edit-number" data-target-input="${t.id}" type="number" min="1" max="100" value="${t.targetPerWeek||1}" title="Сколько раз планируется выполнить за неделю" aria-label="Цель в неделю"><div class="task-edit-actions"><button class="vis-btn" data-toggle="${t.id}" title="Скрыть задачу" aria-label="Скрыть задачу"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="m4 4 16 16"/></svg></button></div>` :
-      `<div class="t-name">${escHtml(t.name)}</div><div class="t-weight">${t.w}</div><div class="counter"><button class="cnt-btn" data-dec="${t.id}">−</button><span class="cnt-val">${cnt}</span><button class="cnt-btn" data-inc="${t.id}">+</button></div><div class="t-score ${pts>0?'on':'off'}">${pts>0?'+'+pts:'—'}</div>`;
-    el.appendChild(row);
-  });
-  document.querySelector('.tasks-block').classList.toggle('editing',editMode);
-  document.getElementById('editActions').hidden=!editMode;
-  document.getElementById('editModeBtn').classList.toggle('active',editMode);
-  const hidden=S.tasks.filter(t=>t.active===false),tray=document.getElementById('hiddenTray');tray.hidden=!editMode||!hidden.length;document.getElementById('hiddenChips').innerHTML=hidden.map(t=>`<button class="hidden-chip" data-restore="${t.id}">＋ ${escHtml(t.name)}</button>`).join('');
-  document.querySelector('.tasks-head span:nth-child(3)').textContent=editMode?'Цель / нед.':'Количество';document.querySelector('.tasks-head span:nth-child(4)').textContent=editMode?'Видимость':'Баллы';
-  document.getElementById('taskSummary').textContent=S.tasks.filter(t=>t.active!==false).length+' активных · '+S.tasks.filter(t=>t.active===false).length+' скрытых · максимум '+maxPts()+' баллов';
-}
-
-// Единственный делегированный слушатель
-document.getElementById('tasksList').addEventListener('click', function(e) {
-  const inc  = e.target.dataset.inc;
-  const dec  = e.target.dataset.dec;
-  const toggle=e.target.closest('[data-toggle]')?.dataset.toggle;
-  if (inc !== undefined) {
-    S.counts[+inc] = (S.counts[+inc] || 0) + 1;
-    render();
-    requestAnimationFrame(()=>pulsePoints(inc));
-  } else if (dec !== undefined) {
-    if ((S.counts[+dec] || 0) > 0) S.counts[+dec]--;
-    render();
-    requestAnimationFrame(()=>pulsePoints(dec));
-  } else if (toggle !== undefined) {
-    const task=S.tasks.find(t=>t.id===+toggle);if(task){task.active=task.active===false;render();toast(task.active?'Задача возвращена':'Задача скрыта — данные сохранены')}
-  }
-});
-function pulsePoints(id){
-  document.querySelectorAll('.sc').forEach(card=>{card.classList.remove('score-pop');void card.offsetWidth;card.classList.add('score-pop')});
-  const row=document.querySelector(`[data-task-id="${id}"]`);if(row){row.classList.remove('task-pop');void row.offsetWidth;row.classList.add('task-pop')}
-}
-document.getElementById('tasksList').addEventListener('change',e=>{const name=e.target.dataset.nameInput,weight=e.target.dataset.weightInput,target=e.target.dataset.targetInput,id=+(name??weight??target);if(!id)return;const task=S.tasks.find(t=>t.id===id);if(!task)return;if(name!==undefined&&e.target.value.trim())task.name=e.target.value.trim();if(weight!==undefined)task.w=Math.max(1,Number(e.target.value)||task.w);if(target!==undefined)task.targetPerWeek=Math.max(1,Math.min(100,Number(e.target.value)||1));render();toast('Изменение сохранено')});
-document.getElementById('hiddenChips').addEventListener('click',e=>{const id=e.target.closest('[data-restore]')?.dataset.restore;if(id===undefined)return;const task=S.tasks.find(t=>t.id===+id);if(task){task.active=true;render();toast('Задача возвращена')}});
-function addInlineTask(){const task={id:S.nextId++,name:'Новая задача',w:25,targetPerWeek:1,active:true};S.tasks.push(task);render();setTimeout(()=>{const input=document.querySelector(`[data-name-input="${task.id}"]`);input?.focus();input?.select()},0)}
-
-function renderScores() {
-  const tot = currentTotal();
-  const mp  = maxPts();
-  document.getElementById('curScore').textContent = tot;
-  document.getElementById('maxVal').textContent   = mp;
-  const pct = mp ? Math.round(tot / mp * 100) : 0;
-  document.getElementById('pctVal').textContent   = pct + '%';
-  document.getElementById('fillBar').style.width  = pct + '%';
-  const d = document.getElementById('weekDate').value;
-  document.getElementById('curLabel').textContent = d ? fmt(d) : '—';
-  document.getElementById('wkCount').textContent  = S.history.length + ' нед.';
-
-  if (S.history.length) {
-    const computed = S.history.map(w => ({ ...w, _total: historyTotal(w) }));
-    const before= computed.filter(w=>w.date!==thursdayFor(document.getElementById('weekDate').value));
-    const prev = before[before.length - 1] || computed[computed.length - 1];
-    document.getElementById('prevScore').textContent = prev._total;
-    document.getElementById('prevLabel').textContent = fmt(prev.date);
-
-    const best = [...computed].sort((a,b) => b._total - a._total)[0];
-    document.getElementById('bestScore').textContent = best._total;
-    document.getElementById('bestLabel').textContent = fmt(best.date);
-
-    const avg = Math.round(computed.reduce((s,w) => s + w._total, 0) / computed.length);
-    document.getElementById('avgScore').textContent = avg;
-
-    const delta = tot - prev._total;
-    const db = document.getElementById('deltaBadge');
-    if (delta !== 0) {
-      db.textContent = (delta > 0 ? '▲+' : '▼') + delta;
-      db.className   = 'delta ' + (delta > 0 ? 'up' : 'dn');
-    } else {
-      db.textContent = '';
-      db.className   = 'delta';
-    }
-  }
-}
-
-function renderChart() {
-  const el=document.getElementById('scoreChart'),recent=displayWindow();
-  if(!recent.length){el.innerHTML='<div class="chart-empty">Нет сохранённых четвергов</div>';renderWeeksArchive();return;}
-  const W=1180,H=250,L=62,R=22,T=28,B=46,totals=recent.map(historyTotal),mx=Math.max(...totals,1),step=(W-L-R)/Math.max(recent.length-1,1);
-  const x=i=>L+i*step,y=v=>T+(H-T-B)*(1-v/mx),pts=recent.map((w,i)=>[x(i),y(totals[i])]);
-  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-  const area=line+` L ${pts[pts.length-1][0]} ${H-B} L ${pts[0][0]} ${H-B} Z`;
-  const grid=[0,.25,.5,.75,1].map(r=>{const gy=y(mx*r);return `<line class="chart-grid" x1="${L}" x2="${W-R}" y1="${gy}" y2="${gy}"/><text class="chart-axis" x="${L-10}" y="${gy+4}">${Math.round(mx*r)}</text>`}).join('');
-  const marks=recent.map((w,i)=>`<g data-date="${w.date}" tabindex="0" role="button" aria-label="${fmt(w.date)}: ${totals[i]} баллов">${S.settings.chartValues?`<text class="chart-value" x="${x(i)}" y="${Math.max(y(totals[i])-14,14)}">${totals[i]}</text>`:''}<circle class="chart-point ${i===recent.length-1?'current':''}" cx="${x(i)}" cy="${y(totals[i])}" r="5"><title>${fmt(w.date)} · ${totals[i]} баллов</title></circle><text class="chart-label" x="${x(i)}" y="${H-17}">${shortFmt(w.date)}</text></g>`).join('');
-  el.innerHTML=`<svg class="line-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов ПС номер один"><defs><linearGradient id="scoreArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${S.settings.accent}" stop-opacity=".28"/><stop offset="1" stop-color="#7b5ea7" stop-opacity=".02"/></linearGradient></defs>${grid}<path class="chart-area" d="${area}"/><path class="chart-line" d="${line}"/>${marks}</svg>`;
-  el.querySelectorAll('[data-date]').forEach(g=>{const open=()=>{const idx=S.history.findIndex(w=>w.date===g.dataset.date);if(idx>=0)loadWeek(idx)};g.addEventListener('click',open);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open()}})});
-  renderWeeksArchive();
-}
-
-function renderWeeksArchive(){const box=document.getElementById('weeksArchive');if(!box)return;const selected=document.getElementById('weekDate').value,weeks=[...S.history].sort((a,b)=>b.date.localeCompare(a.date));box.innerHTML=weeks.length?weeks.map(week=>`<button class="week-archive-btn ${week.date===selected?'active':''}" data-week-date="${week.date}"><strong>${historyTotal(week).toLocaleString('ru-RU')}</strong><small>${fmt(week.date)}</small></button>`).join(''):'<div class="weeks-empty">Сохранённые недели появятся здесь после первого сохранения.</div>';box.querySelectorAll('[data-week-date]').forEach(button=>button.onclick=()=>{const idx=S.history.findIndex(week=>week.date===button.dataset.weekDate);if(idx>=0)loadWeek(idx)})}
-
-function displayWindow(){
-  return [...S.history].sort((a,b)=>a.date.localeCompare(b.date));
-}
-
-// ─── ACTIONS ───
-function saveWeek() {
-  const date = thursdayFor(document.getElementById('weekDate').value || today());
-  const idx  = S.history.findIndex(w => w.date === date);
-  // Сохраняем только scores (кол-во раз), без total
-  const entry = { date, scores: { ...S.counts } };
-  if (idx >= 0) S.history[idx] = entry; else S.history.push(entry);
-  S.history.sort((a,b) => a.date.localeCompare(b.date));
-  render();
-  toast('✓ Сохранено: ' + currentTotal() + ' баллов');
-}
-
-function loadWeek(idx) {
-  const w = S.history[idx]; if (!w) return;
-  S.counts = { ...(w.scores||{}) };
-  document.getElementById('weekDate').value = w.date;
-  document.getElementById('dateLabel').textContent=fmt(w.date);
-  render();
-  toast('Загружена: ' + fmt(w.date));
-}
-
-function delHist(idx) {
-  if (!confirm('Удалить эту запись?')) return;
-  S.history.splice(idx, 1);
-  render();
-}
-
-// ─── MODAL ───
-function openAdd() {
-  editId = null; origWeight = null;
-  document.getElementById('mTitle').textContent     = '// НОВАЯ ЗАДАЧА';
-  document.getElementById('fName').value            = '';
-  document.getElementById('fWeight').value          = '';
-  document.getElementById('fVisible').checked       = true;
-  document.getElementById('mDel').style.display     = 'none';
-  document.getElementById('weightHint').classList.remove('show');
-  document.getElementById('overlay').classList.add('open');
-  setTimeout(() => document.getElementById('fName').focus(), 60);
-}
-
-function openEdit(id) {
-  const t = S.tasks.find(x => x.id === id); if (!t) return;
-  editId = id; origWeight = t.w;
-  document.getElementById('mTitle').textContent    = '// РЕДАКТИРОВАТЬ ЗАДАЧУ';
-  document.getElementById('fName').value           = t.name;
-  document.getElementById('fWeight').value         = t.w;
-  document.getElementById('fVisible').checked      = t.active!==false;
-  document.getElementById('mDel').style.display    = '';
-  document.getElementById('weightHint').classList.remove('show');
-  document.getElementById('overlay').classList.add('open');
-  setTimeout(() => document.getElementById('fName').focus(), 60);
-}
-
-// показываем подсказку если вес изменился
-document.getElementById('fWeight').addEventListener('input', function() {
-  if (editId === null || origWeight === null) return;
-  const hint = document.getElementById('weightHint');
-  const newW = parseInt(this.value);
-  if (newW && newW !== origWeight) hint.classList.add('show');
-  else hint.classList.remove('show');
-});
-
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('weightHint').classList.remove('show');
-}
-
-function saveModal() {
-  const name = document.getElementById('fName').value.trim();
-  const w    = parseInt(document.getElementById('fWeight').value);
-  if (!name || !w || w < 1) { toast('⚠ Заполните все поля'); return; }
-
-  if (editId !== null) {
-    const t = S.tasks.find(x => x.id === editId);
-    if (t) {
-      const weightChanged = t.w !== w;
-      t.name = name; t.w = w;t.active=document.getElementById('fVisible').checked;
-      // История пересчитается автоматически при render(),
-      // т.к. calcTotal берёт актуальные веса из S.tasks
-      if (weightChanged) toast('✓ Обновлено — история пересчитана');
-      else toast('Задача обновлена');
-    }
-  } else {
-    S.tasks.push({ id: S.nextId++, name, w,active:document.getElementById('fVisible').checked });
-    toast('Задача добавлена');
-  }
-  closeModal();
-  render();
-}
-
-function deleteTask() {
-  if (editId === null) return;
-  const task=S.tasks.find(t=>t.id===editId);if(!task)return;
-  task.active=false;
-  closeModal();
-  render();
-  toast('Задача скрыта — вся история сохранена');
-}
-
-// ─── НАСТРОЙКИ И РЕЖИМ РЕДАКТИРОВАНИЯ ───
-function applyUiSettings(){
-  document.documentElement.style.setProperty('--accent',S.settings.accent||UI_DEFAULTS.accent);
-  document.getElementById('serviceTitle').textContent=(S.settings.serviceTitle||'ПС №1').toUpperCase();
-  document.body.classList.toggle('compact-view',!!S.settings.compact);
-  document.querySelector('.sc.prev').style.display=S.settings.prevCard===false?'none':'';
-  document.querySelector('.sc.avg').style.display=S.settings.avgCard===false?'none':'';
-  const shown=[...document.querySelectorAll('.scores .sc')].filter(x=>x.style.display!=='none').length;
-  document.querySelector('.scores').style.gridTemplateColumns=`repeat(${shown},minmax(0,1fr))`;
-  const note=document.querySelector('.chart-note span');if(note)note.textContent='Показаны все сохранённые недели';
-}
-function openSettings(){
-  document.getElementById('setChartWeeks').value=S.settings.chartWeeks;
-  document.getElementById('setTargetBudget').value=S.settings.targetBudget;
-  document.getElementById('setAnalysisWeeks').value=S.settings.analysisWeeks;
-  document.getElementById('setAccent').value=S.settings.accent;
-  document.getElementById('setServiceTitle').value=S.settings.serviceTitle||'ПС номер один';
-  document.getElementById('setCompact').checked=!!S.settings.compact;
-  document.getElementById('setChartValues').checked=S.settings.chartValues!==false;
-  document.getElementById('setPrevCard').checked=S.settings.prevCard!==false;
-  document.getElementById('setAvgCard').checked=S.settings.avgCard!==false;
-  document.getElementById('settingsOverlay').classList.add('open');
-}
-function closeSettings(){document.getElementById('settingsOverlay').classList.remove('open')}
-function saveSettings(){
-  S.settings={...S.settings,chartWeeks:+document.getElementById('setChartWeeks').value,targetBudget:Math.max(500,+document.getElementById('setTargetBudget').value||5000),analysisWeeks:'all',serviceTitle:document.getElementById('setServiceTitle').value.trim()||'ПС номер один',accent:document.getElementById('setAccent').value,compact:document.getElementById('setCompact').checked,chartValues:document.getElementById('setChartValues').checked,prevCard:document.getElementById('setPrevCard').checked,avgCard:document.getElementById('setAvgCard').checked};
-  closeSettings();render();toast('Настройки ПС номер один сохранены');
-}
-function toggleEditMode(){editMode=!editMode;render();toast(editMode?'Редактирование включено':'Рабочий режим включён')}
-
-// Учитываем фактические единицы, недельную норму и уже заработанные баллы.
-// Нулевое выполнение не обнуляет стратегическую цену задачи, а повышает её.
-function calculateRebalance(){
-  const active=S.tasks.filter(t=>t.active!==false),all=[...S.history].sort((a,b)=>a.date.localeCompare(b.date)),selected=thursdayFor(document.getElementById('weekDate').value),exists=all.some(w=>w.date===selected);
-  if(!exists&&Object.values(S.counts||{}).some(Number))all.push({date:selected,scores:{...S.counts}});
-  const weeks=all.sort((a,b)=>a.date.localeCompare(b.date)),n=Math.max(weeks.length,1),budget=Math.max(500,Number(S.settings.targetBudget)||maxPts()),weighted=weeks.map((week,index)=>({week,factor:Math.pow(.5,(weeks.length-1-index)/26)})),effectiveWeeks=weighted.reduce((s,x)=>s+x.factor,0)||1;
-  const base=active.map(t=>{const target=Math.max(1,Number(t.targetPerWeek)||inferTarget(t.name)),actualUnits=weeks.reduce((s,w)=>s+Math.max(0,Number(w.scores?.[t.id]||0)),0),units=weighted.reduce((s,x)=>s+Math.max(0,Number(x.week.scores?.[t.id]||0))*x.factor,0),expected=effectiveWeeks*target,rate=units/expected,earned=units*t.w;return{task:t,target,actualUnits,units,expected,rate,earned}}),totalEarned=base.reduce((s,x)=>s+x.earned,0)||1,totalExpectedValue=base.reduce((s,x)=>s+x.task.w*x.target,0)||1;
-  const stats=base.map(x=>{const bounded=Math.min(1,x.rate),rarity=1+.55*Math.pow(1-bounded,1.7),expectedShare=x.task.w*x.target/totalExpectedValue,actualShare=x.earned/totalEarned,shareRatio=actualShare/Math.max(expectedShare,.0001),pointPressure=Math.max(.82,Math.min(1.16,1/Math.sqrt(Math.max(shareRatio,.35)))),raw=x.task.w*rarity*pointPressure;return{...x,raw}});
-  const rawTotal=stats.reduce((s,x)=>s+x.raw,0)||1,step=5;
-  let recs=stats.map(x=>({...x,recommended:Math.max(5,Math.round((budget*x.raw/rawTotal)/step)*step)}));
-  let delta=budget-recs.reduce((s,x)=>s+x.recommended,0),guard=0;
-  while(Math.abs(delta)>=step&&guard++<500){const ordered=[...recs].sort((a,b)=>delta>0?b.raw-a.raw:a.raw-b.raw),target=ordered.find(x=>delta>0||x.recommended>5);if(!target)break;target.recommended+=delta>0?step:-step;delta+=delta>0?-step:step}
-  return recs;
-}
-function openRebalance(){
-  rebalanceRecommendations=calculateRebalance();
-  const total=rebalanceRecommendations.reduce((s,x)=>s+x.recommended,0),weeks=S.history.length;
-  document.getElementById('rebalanceSummary').innerHTML=`Анализируется <b>вся история: ${weeks} нед.</b> Свежие недели имеют больший вес, старые не удаляются. Текущий вес сохраняет вашу оценку важности, фактическая регулярность корректирует её. Общий максимум: <b>${total}</b>.`;
-  document.getElementById('rebalanceList').innerHTML=rebalanceRecommendations.map(x=>`<div class="rebalance-row"><div><div class="rebalance-name">${escHtml(x.task.name)}</div><div class="rebalance-stat">факт ${x.actualUnits} раз · взвешенная регулярность ${Math.round(x.rate*100)}%<br>норма ${x.target} / неделю</div></div><div class="rebalance-stat">сейчас ${x.task.w}<br>→ рекомендация</div><div class="rebalance-weight">${x.recommended}</div><button class="apply-one" data-apply-weight="${x.task.id}">Применить</button></div>`).join('');
-  document.getElementById('rebalanceOverlay').classList.add('open');
-}
-function closeRebalance(){document.getElementById('rebalanceOverlay').classList.remove('open')}
-function applyRecommendation(id){const rec=rebalanceRecommendations.find(x=>x.task.id===id);if(!rec)return;rec.task.w=rec.recommended;saveS();render();const button=document.querySelector(`[data-apply-weight="${id}"]`);if(button){button.textContent='Готово';button.disabled=true}toast('Вес задачи обновлён')}
-function applyAllRecommendations(){rebalanceRecommendations.forEach(x=>x.task.w=x.recommended);closeRebalance();render();toast('Все рекомендации применены · максимум '+maxPts())}
-
-// ─── UTILS ───
-function fmt(d) {
-  if (!d) return '—';
-  const [y,m,day] = d.split('-');
-  return `${day}.${m}.${y}`;
-}
-function shortFmt(d) {
-  if (!d) return '';
-  const [,m,day] = d.split('-');
-  return `${day}.${m}`;
-}
-function today() { return new Date().toISOString().split('T')[0]; }
-function thursdayFor(value){const d=new Date((value||today())+'T12:00:00');if(Number.isNaN(d.getTime()))return value;const shift=4-(d.getDay()||7);d.setDate(d.getDate()+shift);return d.toISOString().slice(0,10);}
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2600);
-}
-
-// ─── КАЛЕНДАРЬ ───
-let calendarCursor=new Date(today()+'T12:00:00');
-function setWeekDate(value){const input=document.getElementById('weekDate');input.value=thursdayFor(value);document.getElementById('dateLabel').textContent=fmt(input.value);const idx=S.history.findIndex(w=>w.date===input.value);S.counts=idx>=0?{...(S.history[idx].scores||{})}:{};calendarCursor=new Date(input.value+'T12:00:00');render();renderCalendar()}
-function renderCalendar(){const grid=document.getElementById('calendarGrid'),year=calendarCursor.getFullYear(),month=calendarCursor.getMonth(),first=new Date(year,month,1,12),mondayOffset=(first.getDay()+6)%7,start=new Date(year,month,1-mondayOffset,12),selected=document.getElementById('weekDate').value;document.getElementById('calMonth').textContent=new Intl.DateTimeFormat('ru-RU',{month:'long',year:'numeric'}).format(first);grid.innerHTML=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>`<span class="cal-weekday">${x}</span>`).join('')+Array.from({length:42},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const iso=d.toISOString().slice(0,10);return`<button class="cal-day ${d.getMonth()!==month?'out':''} ${d.getDay()===4?'thu':''} ${iso===selected?'selected':''}" data-cal-date="${iso}">${d.getDate()}</button>`}).join('')}
-function toggleCalendar(force){const pop=document.getElementById('calendarPop'),open=force??pop.hidden;pop.hidden=!open;document.getElementById('dateOpen').setAttribute('aria-expanded',String(open));if(open){calendarCursor=new Date((document.getElementById('weekDate').value||today())+'T12:00:00');renderCalendar()}}
-
-// ─── INIT ───
-document.getElementById('weekDate').value = thursdayFor(today());document.getElementById('dateLabel').textContent=fmt(document.getElementById('weekDate').value);
-function shiftWeek(days){const input=document.getElementById('weekDate'),d=new Date((input.value||today())+'T12:00:00');d.setDate(d.getDate()+days);setWeekDate(d.toISOString().slice(0,10))}
-document.getElementById('prevWeek').onclick=()=>shiftWeek(-7);
-document.getElementById('nextWeek').onclick=()=>shiftWeek(7);
-document.getElementById('settingsBtn').onclick=openSettings;
-document.getElementById('editModeBtn').onclick=toggleEditMode;
-document.getElementById('rebalanceBtn').onclick=openRebalance;
-document.getElementById('addInlineBtn').onclick=addInlineTask;
-document.getElementById('dateOpen').onclick=e=>{e.stopPropagation();toggleCalendar()};document.getElementById('calendarGrid').onclick=e=>{const date=e.target.dataset.calDate;if(date){setWeekDate(date);toggleCalendar(false)}};document.getElementById('calPrev').onclick=()=>{calendarCursor.setMonth(calendarCursor.getMonth()-1);renderCalendar()};document.getElementById('calNext').onclick=()=>{calendarCursor.setMonth(calendarCursor.getMonth()+1);renderCalendar()};document.addEventListener('click',e=>{if(!e.target.closest('.calendar-pop')&&!e.target.closest('#dateOpen'))toggleCalendar(false)});
-document.getElementById('saveSettings').onclick=saveSettings;
-document.getElementById('applyAllWeights').onclick=applyAllRecommendations;
-document.getElementById('rebalanceList').onclick=e=>{const id=e.target.dataset.applyWeight;if(id!==undefined)applyRecommendation(+id)};
-document.getElementById('overlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('overlay')) closeModal();
-});
-['settingsOverlay','rebalanceOverlay'].forEach(id=>document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)id==='settingsOverlay'?closeSettings():closeRebalance()}));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') {closeModal();closeSettings();closeRebalance();toggleCalendar(false)} });
-
-loadS();
-render();
+const DEFAULT_TASKS=[
+  [1,'Все встречи проведены с АРО',1000],[2,'Неделя без расстройств',1000],[3,'Встречи в запланированном тайминге',750],[4,'Премия по наставничеству от 1000$',350],[5,'Уборка парка',250],[6,'Турнир по теннису или шахматам',250],[7,'Выучил стих',200],[8,'Заработал $5 000',175],[9,'Сделали более 5 000 000 в Klimate',150],[10,'PFF вырос на $50 000',150],[11,'Новый подписчик в фонде',100],[12,'Прочитал 1 курс с текстовыделителями',100],[13,'Прочтено 50 стр. художественной литературы',75],[14,'Сходил в парк / ресторан / новое место',50],[15,'Сделан урок',25],[16,'Стерилизовали котика',25],[17,'Занятие с тренером по хобби',25],[18,'Присутствовал на спорте',25],[19,'Рабочий день начался ровно в 8:00',100],[20,'Душ и зубы',25],[21,'Сон до 23:00, подъём до 6:00',25],[22,'Интервальное голодание',25],[23,'Витамины',25],[24,'Прогулка',25],[25,'Обучение новому · 1 час',50],[26,'Образовательное видео',10],[27,'Админ-школа · 1 час',15],[28,'Здоровое питание',25]
+].map(([id,name,w])=>({id,name,w,active:true,mode:id>=19?'daily':'weekly'}));
+const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,scores:{},daily:{},snapshotTotal}));
+const STORE='wt5',DAY_NAMES=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const clone=value=>JSON.parse(JSON.stringify(value));
+const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+function iso(date){const value=new Date(date);return[value.getFullYear(),String(value.getMonth()+1).padStart(2,'0'),String(value.getDate()).padStart(2,'0')].join('-')}
+function today(){return iso(new Date())}
+function thursdayFor(value){const date=new Date((value||today())+'T12:00:00'),day=date.getDay()||7;date.setDate(date.getDate()+4-day);return iso(date)}
+function mondayFor(anchor){const date=new Date(anchor+'T12:00:00');date.setDate(date.getDate()-3);return date}
+function daysFor(anchor){const monday=mondayFor(anchor);return Array.from({length:7},(_,index)=>{const date=new Date(monday);date.setDate(monday.getDate()+index);return date})}
+function shortDate(value){return new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
+function fullRange(anchor){const days=daysFor(anchor);return `${shortDate(iso(days[0]))} — ${shortDate(iso(days[6]))}`}
+function defaultState(){return{tasks:clone(DEFAULT_TASKS),counts:{},weeks:{},history:clone(HISTORY_SEED),nextId:300,settings:{chartWeeks:'12',serviceTitle:'ПС №1',schemaVersion:7},dailyCounts:{}}}
+let S=defaultState(),selectedWeek=thursdayFor(today()),editId=null,dragId=null;
+function loadS(){try{const saved=JSON.parse(localStorage.getItem(STORE)||'null');if(saved)S={...defaultState(),...saved,settings:{...defaultState().settings,...(saved.settings||{})}}}catch(error){S=defaultState()}S.tasks=Array.isArray(S.tasks)&&S.tasks.length?S.tasks:clone(DEFAULT_TASKS);S.history=Array.isArray(S.history)?S.history:clone(HISTORY_SEED);S.weeks=S.weeks&&typeof S.weeks==='object'?S.weeks:{};S.dailyCounts=S.dailyCounts&&typeof S.dailyCounts==='object'?S.dailyCounts:{};S.tasks.forEach((task,index)=>{task.active=task.active!==false;task.mode=task.mode||(/каждый день|витамин|гулял|питани|душ|засыпал|голодан/i.test(task.name||'')?'daily':'weekly');task.order=Number.isFinite(Number(task.order))?Number(task.order):index});S.history.forEach(week=>{week.date=thursdayFor(week.date);if(!Number.isFinite(Number(week.snapshotTotal))&&Number.isFinite(Number(week.total)))week.snapshotTotal=Number(week.total);delete week.total;if(!S.weeks[week.date]&&(Object.keys(week.scores||{}).length||Object.keys(week.daily||{}).length))S.weeks[week.date]={weekly:{...(week.scores||{})},daily:clone(week.daily||{})}});const current=thursdayFor(today());if(!S.weeks[current]&&Object.keys(S.counts||{}).length)S.weeks[current]={weekly:{...S.counts},daily:{}};if(Object.keys(S.dailyCounts).length){const week=S.weeks[current]||(S.weeks[current]={weekly:{},daily:{}});week.daily={...week.daily,...S.dailyCounts}}}
+function activeTasks(mode){return S.tasks.filter(task=>task.active!==false&&task.mode===mode).sort((a,b)=>(a.order||0)-(b.order||0))}
+function ensureWeek(anchor=selectedWeek){return S.weeks[anchor]||(S.weeks[anchor]={weekly:{},daily:{}})}
+function calcWeekTotal(anchor=selectedWeek){const week=ensureWeek(anchor),weekly=activeTasks('weekly').reduce((sum,task)=>sum+(Number(week.weekly[task.id])||0)*(Number(task.w)||0),0),daily=daysFor(anchor).reduce((sum,date)=>sum+activeTasks('daily').reduce((inner,task)=>inner+(week.daily[iso(date)]?.[task.id]?Number(task.w)||0:0),0),0);return weekly+daily}
+function historyTotal(week){return Number.isFinite(Number(week.snapshotTotal))?Number(week.snapshotTotal):0}
+function hasWeekData(week){return Object.values(week.weekly||{}).some(Number)||Object.values(week.daily||{}).some(day=>Object.values(day||{}).some(Boolean))}
+function persistSelected(){const week=ensureWeek(),total=calcWeekTotal(),index=S.history.findIndex(item=>item.date===selectedWeek),entry={date:selectedWeek,scores:{...week.weekly},daily:clone(week.daily),snapshotTotal:total};if(index>=0){const existing=S.history[index],hasStoredDetail=Object.keys(existing.scores||{}).length||Object.keys(existing.daily||{}).length;if(hasWeekData(week)||hasStoredDetail)S.history[index]=entry}else if(hasWeekData(week))S.history.push(entry);S.history.sort((a,b)=>a.date.localeCompare(b.date));const current=thursdayFor(today()),currentWeek=ensureWeek(current);S.counts={...currentWeek.weekly};S.dailyCounts=clone(currentWeek.daily);S.currentSnapshotTotal=calcWeekTotal(current);localStorage.setItem(STORE,JSON.stringify(S));try{parent.postMessage({type:'piura:data-changed',source:'weekly'},location.origin)}catch(error){}}
+function setWeek(value){persistSelected();selectedWeek=thursdayFor(value);ensureWeek();render()}
+function shiftWeek(delta){const date=new Date(selectedWeek+'T12:00:00');date.setDate(date.getDate()+delta*7);setWeek(iso(date))}
+function scoreSeries(){const byDate=new Map(S.history.map(week=>[week.date,historyTotal(week)]));if(hasWeekData(ensureWeek())||byDate.has(selectedWeek))byDate.set(selectedWeek,calcWeekTotal());return [...byDate.entries()].map(([date,total])=>({date,total})).sort((a,b)=>a.date.localeCompare(b.date))}
+function renderScores(){const series=scoreSeries(),current=calcWeekTotal(),previous=[...series].reverse().find(item=>item.date<selectedWeek)?.total||0,record=Math.max(current,...series.map(item=>item.total),0),average=series.length?Math.round(series.reduce((sum,item)=>sum+item.total,0)/series.length):0;document.getElementById('currentScore').textContent=current.toLocaleString('ru-RU');document.getElementById('previousScore').textContent=previous.toLocaleString('ru-RU');document.getElementById('recordScore').textContent=record.toLocaleString('ru-RU');document.getElementById('averageScore').textContent=average.toLocaleString('ru-RU');document.getElementById('weekRange').textContent=fullRange(selectedWeek);const delta=current-previous;document.getElementById('previousDelta').textContent=previous?(delta===0?'без изменений':`${delta>0?'+':''}${delta.toLocaleString('ru-RU')} к прошлой`):'нет данных';document.getElementById('weeksCount').textContent=`${series.length} нед.`;document.getElementById('dateLabel').textContent=fullRange(selectedWeek);document.getElementById('weekDate').value=selectedWeek}
+function renderChart(){const all=scoreSeries(),setting=String(S.settings.chartWeeks||'12'),limit=setting==='all'?all.length:Number(setting)||12,recent=all.slice(-limit),box=document.getElementById('scoreChart');if(!recent.length){box.innerHTML='<div class="empty">Первый результат появится после отметки задачи.</div>';renderWeeksArchive();return}const W=1180,H=260,L=58,R=24,T=24,B=42,max=Math.max(...recent.map(item=>item.total),1),step=(W-L-R)/Math.max(recent.length-1,1),x=index=>L+index*step,y=value=>T+(H-T-B)*(1-value/max),points=recent.map((item,index)=>`${x(index)},${y(item.total)}`).join(' '),area=`${L},${H-B} ${points} ${x(recent.length-1)},${H-B}`,grid=[0,.25,.5,.75,1].map(rate=>`<line class="grid-line" x1="${L}" x2="${W-R}" y1="${y(max*rate)}" y2="${y(max*rate)}"/><text class="chart-axis" x="8" y="${y(max*rate)+4}">${Math.round(max*rate)}</text>`).join(''),marks=recent.map((item,index)=>`<g data-open-week="${item.date}" role="button" tabindex="0"><text class="chart-value" text-anchor="middle" x="${x(index)}" y="${Math.max(16,y(item.total)-14)}">${item.total}</text><circle class="chart-point" cx="${x(index)}" cy="${y(item.total)}" r="5"/><text class="chart-label" text-anchor="middle" x="${x(index)}" y="${H-15}">${shortDate(item.date)}</text></g>`).join('');box.innerHTML=`<svg class="score-chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="График результатов"><polygon class="chart-area" points="${area}"/><polyline class="chart-line" points="${points}"/>${grid}${marks}</svg>`;box.querySelectorAll('[data-open-week]').forEach(node=>{const open=()=>setWeek(node.dataset.openWeek);node.onclick=open;node.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();open()}}});renderWeeksArchive()}
+function renderWeeksArchive(){const box=document.getElementById('weeksArchive'),weeks=[...S.history].sort((a,b)=>b.date.localeCompare(a.date));box.innerHTML=weeks.length?weeks.map(week=>`<button class="week-chip ${week.date===selectedWeek?'on':''}" data-week-date="${week.date}" type="button"><b>${historyTotal(week).toLocaleString('ru-RU')}</b><small>${shortDate(week.date)}</small></button>`).join(''):'<div class="empty">Сохранённых недель пока нет.</div>';box.querySelectorAll('[data-week-date]').forEach(button=>button.onclick=()=>setWeek(button.dataset.weekDate))}
+function taskRow(task){const count=Number(ensureWeek().weekly[task.id])||0;return`<div class="weekly-row" draggable="true" data-task-id="${task.id}"><span class="drag">⋮⋮</span><div class="task-copy"><b>${esc(task.name)}</b><small>${task.w} баллов за выполнение</small></div><div class="counter"><button class="count-btn" data-dec="${task.id}" type="button">−</button><span class="count">${count}</span><button class="count-btn" data-inc="${task.id}" type="button">+</button></div><button class="edit-btn" data-edit="${task.id}" type="button" aria-label="Изменить">•••</button></div>`}
+function renderWeekly(){const box=document.getElementById('weeklyTasks'),tasks=activeTasks('weekly');box.innerHTML=tasks.length?tasks.map(taskRow).join(''):'<div class="empty">Перетащите сюда задачу или добавьте новую.</div>';wireTaskRows(box)}
+function renderDaily(){const days=daysFor(selectedWeek),todayKey=today(),head=document.getElementById('dailyHead');head.innerHTML='<span></span><b>Задача</b>'+days.map((date,index)=>`<div class="day-head"><b>${DAY_NAMES[index]}</b><span>${date.getDate()}</span></div>`).join('')+'<span></span>';const box=document.getElementById('dailyTasks'),tasks=activeTasks('daily'),week=ensureWeek();box.innerHTML=tasks.length?tasks.map(task=>`<div class="daily-row" draggable="true" data-task-id="${task.id}"><span class="drag">⋮⋮</span><div class="task-copy"><b>${esc(task.name)}</b><small>${task.w} баллов в день</small></div>${days.map(date=>{const key=iso(date),on=Boolean(week.daily[key]?.[task.id]);return`<button class="day-check ${on?'on':''} ${key===todayKey?'today':''}" data-day="${key}" data-daily-task="${task.id}" type="button" aria-label="${task.name}, ${DAY_NAMES[date.getDay()?date.getDay()-1:6]}">${on?'✓':'·'}</button>`}).join('')}<button class="edit-btn" data-edit="${task.id}" type="button" aria-label="Изменить">•••</button></div>`).join(''):'<div class="empty">Перетащите сюда ежедневную задачу или добавьте новую.</div>';wireTaskRows(box);box.querySelectorAll('[data-daily-task]').forEach(button=>button.onclick=()=>{const week=ensureWeek(),date=button.dataset.day,id=button.dataset.dailyTask;week.daily[date]??={};if(week.daily[date][id])delete week.daily[date][id];else week.daily[date][id]=1;if(!Object.keys(week.daily[date]).length)delete week.daily[date];persistSelected();render()})}
+function wireTaskRows(box){box.querySelectorAll('[data-inc]').forEach(button=>button.onclick=()=>{const week=ensureWeek(),id=button.dataset.inc;week.weekly[id]=(Number(week.weekly[id])||0)+1;persistSelected();render()});box.querySelectorAll('[data-dec]').forEach(button=>button.onclick=()=>{const week=ensureWeek(),id=button.dataset.dec;week.weekly[id]=Math.max(0,(Number(week.weekly[id])||0)-1);if(!week.weekly[id])delete week.weekly[id];persistSelected();render()});box.querySelectorAll('[data-edit]').forEach(button=>button.onclick=()=>openTask(Number(button.dataset.edit)));box.querySelectorAll('[data-task-id]').forEach(row=>{row.ondragstart=event=>{dragId=Number(row.dataset.taskId);event.dataTransfer.setData('text/plain',String(dragId));event.dataTransfer.effectAllowed='move'};row.ondragend=()=>{dragId=null;document.querySelectorAll('.task-panel').forEach(panel=>panel.classList.remove('drag-over'))}})}
+function render(){document.getElementById('serviceTitle').textContent=S.settings.serviceTitle||'ПС №1';renderScores();renderChart();renderWeekly();renderDaily();document.querySelectorAll('[data-chart-weeks]').forEach(button=>button.classList.toggle('on',String(button.dataset.chartWeeks)===String(S.settings.chartWeeks)));persistSelected()}
+function setServiceTitle(value){const title=String(value||'').trim();if(!title)return;document.getElementById('serviceTitle').textContent=title;if(S.settings.serviceTitle===title)return;S.settings.serviceTitle=title;persistSelected()}
+function setChartWeeks(value){const next=value==='Все'||value==='all'?'all':String(Number(value)||12);if(S.settings.chartWeeks!==next){S.settings.chartWeeks=next;persistSelected()}renderChart();document.querySelectorAll('[data-chart-weeks]').forEach(button=>button.classList.toggle('on',String(button.dataset.chartWeeks)===String(S.settings.chartWeeks)))}
+function openTask(id=null,mode='weekly'){editId=id;const task=S.tasks.find(item=>item.id===id);document.getElementById('taskModalTitle').textContent=task?'Изменить задачу':'Новая задача';document.getElementById('taskName').value=task?.name||'';document.getElementById('taskMode').value=task?.mode||mode;document.getElementById('taskWeight').value=task?.w||25;document.getElementById('deleteTask').style.visibility=task?'visible':'hidden';document.getElementById('taskModal').classList.add('on');setTimeout(()=>document.getElementById('taskName').focus(),0)}
+function closeTask(){document.getElementById('taskModal').classList.remove('on');editId=null}
+function saveTask(){const name=document.getElementById('taskName').value.trim(),mode=document.getElementById('taskMode').value,w=Math.max(1,Number(document.getElementById('taskWeight').value)||25);if(!name)return document.getElementById('taskName').focus();if(editId){const task=S.tasks.find(item=>item.id===editId);if(task){task.name=name;task.mode=mode;task.w=w}}else S.tasks.push({id:S.nextId++,name,mode,w,active:true,order:S.tasks.length});closeTask();persistSelected();render()}
+function deleteTask(){const task=S.tasks.find(item=>item.id===editId);if(!task)return closeTask();task.active=false;closeTask();persistSelected();render()}
+loadS();ensureWeek();document.getElementById('prevWeek').onclick=()=>shiftWeek(-1);document.getElementById('nextWeek').onclick=()=>shiftWeek(1);document.getElementById('dateOpen').onclick=()=>{const input=document.getElementById('weekDate');if(input.showPicker)input.showPicker();else input.click()};document.getElementById('weekDate').onchange=event=>event.target.value&&setWeek(event.target.value);document.getElementById('periods').onclick=event=>{const value=event.target.closest('[data-chart-weeks]')?.dataset.chartWeeks;if(value)setChartWeeks(value)};document.querySelectorAll('[data-add-mode]').forEach(button=>button.onclick=()=>openTask(null,button.dataset.addMode));document.querySelectorAll('[data-drop-mode]').forEach(panel=>{panel.ondragover=event=>{event.preventDefault();panel.classList.add('drag-over')};panel.ondragleave=()=>panel.classList.remove('drag-over');panel.ondrop=event=>{event.preventDefault();panel.classList.remove('drag-over');const id=dragId||Number(event.dataTransfer.getData('text/plain')),task=S.tasks.find(item=>item.id===id);if(task){task.mode=panel.dataset.dropMode;persistSelected();render()}}});document.getElementById('cancelTask').onclick=closeTask;document.getElementById('saveTask').onclick=saveTask;document.getElementById('deleteTask').onclick=deleteTask;document.getElementById('taskModal').onclick=event=>{if(event.target.id==='taskModal')closeTask()};document.getElementById('taskName').onkeydown=event=>{if(event.key==='Enter')saveTask()};render();
 </script>
 </body>
 </html>

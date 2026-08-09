@@ -76,3 +76,44 @@ test('фонды содержат прогресс целей продукта, 
   assert.match(funds, /Цель подписчиков/);
   assert.match(funds, /До Нового года/);
 });
+
+test('главная показывает суммарные программы и синхронизирует утро', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  assert.match(overview, /refreshMorningFromCloud/);
+  assert.match(overview, /donePrograms/);
+  assert.doesNotMatch(overview, /id="weekTrend"|id="roadmapProgress"|id="workdayValue"/);
+});
+
+test('эффективность сразу открывает обзор и оставляет две метрики направления', () => {
+  const shell = read('index.html');
+  const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
+  assert.match(shell, /EFFECTIVNESS\.html[^"']*&tab=overview/);
+  assert.match(effectiveness, /cycleOverviewPeriod/);
+  assert.match(effectiveness, /ov-row-tile[^`]*Время[^`]*ov-row-tile[^`]*Деньги/);
+});
+
+test('утро и учёт времени сохраняются без отдельных кнопок подтверждения', () => {
+  const morning = read('piura-erp-restored 3/modules/Morning.html');
+  const time = read('piura-erp-restored 3/modules/Time-tracker.html');
+  assert.doesNotMatch(morning, /data-confirm=/);
+  assert.match(morning, /if\(completed\)state\[bid\]\.confirmed=true/);
+  assert.doesNotMatch(time, /<button class="pk-(?:save|clear)"/);
+  assert.match(time, /function commitPicker/);
+});
+
+test('ПС №1 разделяет недельные и дневные задачи и сохраняет автоматически', () => {
+  const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
+  assert.match(weekly, /id="weeklyTasks"/);
+  assert.match(weekly, /id="dailyPanel"/);
+  assert.match(weekly, /draggable="true"/);
+  assert.doesNotMatch(weekly, /Сохранить неделю|прогресс до максимума/i);
+});
+
+test('фонды поддерживают отдельные цели 2026 и 2027 без дублирующих названий', () => {
+  const funds = read('piura-erp-restored 3/modules/Fonds.html');
+  assert.match(funds, /data-goal-year="2026"/);
+  assert.match(funds, /data-goal-year="2027"/);
+  assert.match(funds, /all\[year\]=all\[year\]\|\|\{\}/);
+  assert.match(funds, /target\[key\]/);
+  assert.match(funds, /<label>Котики<\/label>/);
+});
