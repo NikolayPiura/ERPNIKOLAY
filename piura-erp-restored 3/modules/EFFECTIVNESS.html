@@ -611,7 +611,7 @@ function renderPage(){
         </div>
       </div>
       <div class="card dph-block">
-        <div class="dph-val" style="color:${ec}" onclick="openHist('${curTab}')">${fmt(dph)} <span class="dph-sep">/</span> <span class="dph-tgt">${fmt(target)}</span></div>
+        <div class="dph-val" style="color:${ec}" onclick="openHist('${curTab}')">${fmt(dph)}</div>
         <div class="dph-goal">Цель · ${fmt(target)} $/час</div>
         <div class="dph-hint">${presetLabel} · ${formulaLabel} · нажми для истории</div>
       </div>
@@ -749,7 +749,7 @@ function renderOverview(){
     row.innerHTML=`
       <div class="ov-row-name" style="color:${tab.color}"><span class="ov-row-rank">${index+1}</span><span>${tab.name}</span></div>
       <div class="ov-row-dph" onclick="openHist('${tab.id}')">
-        <div class="ov-row-dph-val" style="color:${ec}">${fmt(data.dph)} <span class="ov-row-dph-of">/ ${fmt(target)}</span></div>
+        <div class="ov-row-dph-val" style="color:${ec}">${fmt(data.dph)}</div>
         <div class="ov-row-goal">Цель · ${fmt(target)} $/час</div>
         <div style="background:color-mix(in srgb,var(--ink) 12%,var(--bg4));height:13px;border-radius:999px;overflow:hidden;margin-top:16px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 5%,transparent);">
           <div style="height:100%;width:0%;background:linear-gradient(90deg,${ec},color-mix(in srgb,${ec} 65%,white));border-radius:999px;transition:width 1s ease;box-shadow:0 0 18px color-mix(in srgb,${ec} 34%,transparent);" id="pbar-${tab.id}"></div>

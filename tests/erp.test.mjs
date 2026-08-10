@@ -93,7 +93,9 @@ test('главная объединяет эффективность, время
   assert.match(overview, /resolvedHourly=number\(hourlyValue\)\|\|cachedHourly\|\|/);
   assert.doesNotMatch(dashboard, /class="progress-caption"/);
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
-  assert.match(overview, /class="ps-badge">ПС №1/);
+  assert.doesNotMatch(overview, /class="ps-badge">ПС №1/);
+  assert.doesNotMatch(overview, /Сегодня можно начать в любой момент/);
+  assert.doesNotMatch(overview, /id="lampLabel"|id="lampStatus"/);
 });
 
 test('фонды содержат точные цели продукта, фандрайзинга, Endowment и дохода', () => {
@@ -190,7 +192,7 @@ test('утро и учёт времени сохраняются без отде
   assert.match(time, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(time, /SELECTED_DATE_KEY = 'tt_selected_date_v1'/);
   assert.match(time, /function persistSelectedDate\(\)/);
-  assert.match(time, /limit:20,open:false/);
+  assert.match(time, /limit:20,open:true/);
   assert.match(time, /DIRTY_KEY/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);
   assert.match(time, /function setHistoryOpen/);
@@ -198,17 +200,20 @@ test('утро и учёт времени сохраняются без отде
   for (const id of ['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']) assert.match(morning,new RegExp(`'${id}'`));
 });
 
-test('ПС №1 разделяет недельные и дневные задачи и сохраняет автоматически', () => {
+test('ПС №1 работает как ежедневный трекер с быстрым редактированием баллов', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
-  assert.match(weekly, /id="weeklyTasks"/);
+  assert.doesNotMatch(weekly, /id="weeklyTasks"/);
   assert.match(weekly, /id="dailyPanel"/);
+  assert.match(weekly, /daily-only/);
   assert.match(weekly, /draggable="\$\{editing\}"/);
   assert.match(weekly, /data-edit-toggle/);
+  assert.match(weekly, /data-weight-dec/);
+  assert.match(weekly, /data-weight-inc/);
   assert.doesNotMatch(weekly, /баллов за выполнение|баллов в день|•••/);
   assert.doesNotMatch(weekly, /Сохранить неделю|прогресс до максимума/i);
   assert.match(weekly, /function chartSeries\(\)/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+7\)/);
-  assert.match(weekly, /dailyLayoutVersion=2/);
+  assert.match(weekly, /dailyLayoutVersion=9/);
 });
 
 test('фонды поддерживают отдельные цели 2026 и 2027 без дублирующих названий', () => {
@@ -252,7 +257,7 @@ test('цветовые темы применяют выбранную палит
   assert.match(shell, /success:p\[1\],warning:p\[2\]/);
   assert.match(shell, /info:p\[0\]/);
   assert.doesNotMatch(shell, /prefs\.palette==='mono'/);
-  assert.match(shell, /historyOpen:'Скрыта'/);
+  assert.match(shell, /historyOpen:'Раскрыта'/);
 });
 
 test('светлая тема не оставляет чёрные рамки на админ-шкале и фондах', () => {

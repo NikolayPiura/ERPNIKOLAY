@@ -6,7 +6,8 @@
 const PIURA_DOCS = {
   'цели': '14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c',
   'планы': '1J5wux0DZxyQkYwOKkUkBQjgAcPoMp4Fcyq1HC5wOUfM',
-  'проги': '1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM'
+  'проги': '1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',
+  'боевой': '1Gpq4IF8LeyELNCAosFOMYaMwYlypTgeoPi-ju49g8ys'
 };
 
 function doGet(e) {

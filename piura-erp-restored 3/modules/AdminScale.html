@@ -706,6 +706,7 @@ const DEFAULT_LEVELS=[
   {key:"цкп",   label:"ЦКП",               tag:"pt-цкп",   mode:"free",  ph:"Ценный конечный продукт..."},
   {key:"проги", label:"Программы",         tag:"pt-прог",  mode:"items", ph:"Добавить пункт программы..."},
   {key:"планы", label:"Планы",             tag:"pt-планы", mode:"items", ph:"Добавить пункт плана..."},
+  {key:"боевой",label:"Боевой план",       tag:"pt-прог",  mode:"items", ph:"Добавить пункт боевого плана..."},
 ];
 
 const PRE={
@@ -751,6 +752,19 @@ const PRE={
   },
 };
 
+/* Последний боевой план на 10.08.2026. После первого обмена источником
+   становится нативный Google Doc «Боевой план — ERP Sync». */
+const BATTLE_PLAN={
+  1:["Сделать книгу «Саентология 8-80»","Сделать книгу «Саентология 8-8008»","Сходить вместе поиграть в теннис","Сходить на СПА","Купить билеты в Вермонт","Открыть НКО","Сходить в офис Дороги к Счастью","Начать готовить консультационный формат в КЭ","Сходить на уборку парка"],
+  2:["Сделать идеальный план по этике","Добавить этику в ежедневный учет","Переделать ПС и работать по нему ежедневно","Игра по Духовному развитию"],
+  3:["Запустить фонд с Никитой","Запустить фонд с Антоном","Начать делать продукт каждую неделю, запустить фонды","Создать Ассоциацию добрых дел","Создать 1 созвон в месяц для улаживания всех циклов","Выстроить точную систему по привлечению подписчиков","Выстроить цикл по уборке парков","Создать фонд по уборке парков"],
+  4:["Выстроить магию утра","Начать делать по 6.000 шагов в день","Полностью делать программу хиропрактера"],
+  5:["Назначить уроки по английскому и оплатить","Назначить уроки по истории и оплатить","Делать кайдзен каждый день","Настроить сим-карту правильно","Выписать все коммуникационные линии и правила, сделать план, политику и лист","Создать политику проверки на безопасность","Подключить кабельный интернет","Изменить подход к коммуникациям — ПЮ, Александра, Дмитрий","Найти вариант получить миллион в сентябре"],
+  6:["Сделать план с Александрой","Сделать большой план","Сделать опасность","Выстроить циклы по ежедневной гигиене","Раз в месяц ездить в отели","Запланировать следующий отпуск"],
+  7:["Сделать план по белой КЭ","Продать долю Кириллу","Написать политику по маркетингу","Проверить с ПЮ подписанные ЗРС и политики","Улучшить работу в ЧТ","Упростить рабочую таблицу","Написать главу в книге про деньги","Передать коммуникацию по Джастин","Обдумать новые деньги в управление","Купить объект недвижимости в Таиланде и Москве"],
+  8:["Сделать новую структуру по каждому клиенту","Посмотреть на проекты с клиентами","Обдумать новых клиентов"]
+};
+
 const DONE_SEED=new Set([
   'Получить украинский загранпаспорт',
   'Съездить на чемпионат мира по футболу',
@@ -760,7 +774,8 @@ const DONE_SEED=new Set([
 const DOCS={
   цели:{id:'14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c',title:'Цели'},
   планы:{id:'1J5wux0DZxyQkYwOKkUkBQjgAcPoMp4Fcyq1HC5wOUfM',title:'Планы'},
-  проги:{id:'1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',title:'Программы'}
+  проги:{id:'1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',title:'Программы'},
+  боевой:{id:'1Gpq4IF8LeyELNCAosFOMYaMwYlypTgeoPi-ju49g8ys',title:'Боевой план'}
 };
 
 /* ══ STORAGE ══ */
@@ -787,6 +802,7 @@ function saveLevels(arr){db.__levels=arr;persist();}
 function getItems(d,l){
   if(db[d]&&db[d][l]!=null)return db[d][l];
   if(PRE[d]&&PRE[d][l])return PRE[d][l].map(t=>({t,done:DONE_SEED.has(t),hidden:false}));
+  if(l==='боевой'&&BATTLE_PLAN[d])return BATTLE_PLAN[d].map(t=>({t,done:false,hidden:false}));
   return[];
 }
 function getFree(d,l){
@@ -801,13 +817,13 @@ function saveDoneSettings(s){db.__doneSettings=s;persist();}
 
 function getViewSettings(){return {...{limit:6,expandedAll:false,heroDef:true,heroNum:true},...(db.__view||{})};}
 function saveViewSettings(s){db.__view=s;persist();}
-function getSyncSettings(){let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}return {...{url:'',token:'',lastSync:0},...(db.__sync||{}),...(cloud.url?{url:cloud.url,token:cloud.token||''}:{})};}
+function getSyncSettings(){const defaultUrl='https://script.google.com/macros/s/AKfycbwtw3_PxS8KnkI5DAuK8Yg72gLR1rbVuu3c01Vj9CVPLnB7xVZlNzdnWsybyYTBwy1w/exec';let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}return {...{url:defaultUrl,token:'',lastSync:0},...(db.__sync||{}),...(cloud.url?{url:cloud.url,token:cloud.token||''}:{})};}
 function saveSyncSettings(s){db.__sync=s;persist();let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}localStorage.setItem('piura_erp_cloud_v1',JSON.stringify({...cloud,url:s.url||'',token:s.token||''}));}
 
 function migrateDocSnapshot(){
   if(db.__docSeedV1)return;
   Object.keys(db).filter(k=>/^\d+$/.test(k)).forEach(d=>{
-    ['цели','планы','проги'].forEach(l=>{
+    ['цели','планы','проги','боевой'].forEach(l=>{
       if(!Array.isArray(db[d][l]))return;
       db[d][l]=db[d][l].map(item=>({...item,done:item.done||DONE_SEED.has(item.t),hidden:!!item.hidden}));
     });
@@ -826,7 +842,7 @@ function migrateDocSnapshotV2(){
     ['Открыть первый официальный эндаундмент фонд и разобраться','Открыть первый официальный эндаумент фонд и разобраться']
   ]);
   Object.keys(db).filter(k=>/^\d+$/.test(k)).forEach(d=>{
-    ['цели','планы','проги'].forEach(l=>{
+    ['цели','планы','проги','боевой'].forEach(l=>{
       if(!Array.isArray(db[d][l]))return;
       db[d][l]=db[d][l].map(item=>replacements.has(item.t)?{...item,t:replacements.get(item.t)}:item);
     });
@@ -1172,7 +1188,7 @@ function mergeDocSnapshot(items){
   const grouped={};
   (items||[]).forEach(item=>{
     const dyn=Number(item.dyn),section=item.section;
-    if(!dyn||!['цели','планы','проги'].includes(section)||!String(item.text||'').trim())return;
+    if(!dyn||!['цели','планы','проги','боевой'].includes(section)||!String(item.text||'').trim())return;
     (grouped[dyn+':'+section]||(grouped[dyn+':'+section]=[])).push(item);
   });
   let changed=false;
@@ -1197,6 +1213,12 @@ async function refreshDocs(){
     const u=new URL(s.url);u.searchParams.set('action','snapshot');if(s.token)u.searchParams.set('token',s.token);
     const response=await fetch(u.toString(),{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
     const data=await response.json();if(!data.ok)throw new Error(data.error||'Ошибка синхронизации');
+    const battleAvailable=Array.isArray(data.items)&&data.items.some(item=>item.section==='боевой');
+    db.__battleSyncAvailable=battleAvailable;
+    if(battleAvailable&&Array.isArray(db.__battleSyncQueue)&&db.__battleSyncQueue.length){
+      db.__syncQueue=[...(Array.isArray(db.__syncQueue)?db.__syncQueue:[]),...db.__battleSyncQueue];
+      db.__battleSyncQueue=[];
+    }
     mergeDocSnapshot(data.items);s.lastSync=Date.now();saveSyncSettings(s);
     setSyncState('Docs · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),'ok');
   }catch(error){setSyncState('Docs недоступны · снимок сохранён');console.warn('Admin Scale sync:',error);}
@@ -1217,8 +1239,14 @@ async function flushDocQueue(){
   finally{syncFlushing=false;}
 }
 async function queueDocAction(action){
-  if(!['цели','планы','проги'].includes(action.section))return;
+  if(!['цели','планы','проги','боевой'].includes(action.section))return;
   const s=getSyncSettings();if(!s.url)return;
+  if(action.section==='боевой'&&!db.__battleSyncAvailable){
+    if(!Array.isArray(db.__battleSyncQueue))db.__battleSyncQueue=[];
+    db.__battleSyncQueue.push({...action,queuedAt:Date.now()});persist();
+    setSyncState('Боевой план сохранён локально','ok');
+    return;
+  }
   if(!Array.isArray(db.__syncQueue))db.__syncQueue=[];
   db.__syncQueue.push({...action,queuedAt:Date.now()});persist();setSyncState('сохраняем в Docs…','busy');
   try{await flushDocQueue();setSyncState('сохранено в Docs','ok');}
@@ -1232,7 +1260,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* ══ ACTIVE TAB ══ */
 let activeTab=1;
 let browseMode=db.__browseMode==='sections'?'sections':'dynamics';
-let activeSection=['цели','проги','планы'].includes(db.__activeSection)?db.__activeSection:'цели';
+let activeSection=['цели','проги','планы','боевой'].includes(db.__activeSection)?db.__activeSection:'цели';
 function setBrowseMode(mode){browseMode=mode;db.__browseMode=mode;persist();document.getElementById('modeDynamics').classList.toggle('active',mode==='dynamics');document.getElementById('modeSections').classList.toggle('active',mode==='sections');buildTabs();buildPanels();}
 document.getElementById('modeDynamics').addEventListener('click',()=>setBrowseMode('dynamics'));
 document.getElementById('modeSections').addEventListener('click',()=>setBrowseMode('sections'));
@@ -1251,7 +1279,7 @@ function revealActiveTab(container,alignToStart=false){
 function buildTabs(){
   const c=document.getElementById('dynTabs');c.innerHTML='';c.classList.toggle('section-tabs',browseMode==='sections');
   if(browseMode==='sections'){
-    [{key:'цели',label:'Цели'},{key:'планы',label:'Планы'},{key:'проги',label:'Программы'}].forEach(section=>{
+    [{key:'цели',label:'Цели'},{key:'планы',label:'Планы'},{key:'проги',label:'Программы'},{key:'боевой',label:'Боевой план'}].forEach(section=>{
       const b=document.createElement('button');b.className='dyn-tab'+(section.key===activeSection?' active':'');b.innerHTML=`<span class="tab-num">${section.label}</span><span class="tab-name">все 8 динамик</span>`;b.addEventListener('click',()=>{activeSection=section.key;db.__activeSection=activeSection;persist();buildTabs();buildPanels()});c.appendChild(b);
     });revealActiveTab(c,true);return;
   }
