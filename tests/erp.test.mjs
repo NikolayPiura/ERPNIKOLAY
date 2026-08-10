@@ -231,12 +231,28 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="taskDynamic"/);
   assert.match(weekly, /id="taskWeight" type="number" min="1" step="1"/);
   assert.match(weekly, /task\.w=w/);
-  assert.match(weekly, /\.task-row\{min-height:84px/);
-  assert.match(weekly, /\.task-name\{min-width:0;font-size:17px/);
+  assert.match(weekly, /\.task-row\{min-height:60px/);
+  assert.match(weekly, /\.task-name\{min-width:0;font-size:13px/);
+  assert.match(weekly, /DAY_WINDOW=14,WEEK_WINDOW=12/);
+  assert.match(weekly, /function weeklySeries\(dynamicId=null\)/);
+  assert.match(weekly, /length:WEEK_WINDOW/);
+  assert.match(weekly, /length:DAY_WINDOW/);
+  assert.match(weekly, /function freezeWeek\(anchor\)/);
+  assert.match(weekly, /week\.weights/);
+  assert.match(weekly, /week\.taskDynamics/);
+  assert.match(weekly, /localStorage\.setItem\(STORE,JSON\.stringify\(S\)\)/);
+  assert.match(weekly, /function niceScaleMax\(series\)/);
+  const scaleSource = weekly.match(/function niceScaleMax\(series\).*?(?=\nfunction chartSvg)/s)?.[0];
+  const niceScaleMax = Function('num',`return (${scaleSource.replace('function niceScaleMax','function')})`)(value=>Number(value)||0);
+  assert.equal(niceScaleMax([{total:105},{total:35},{total:15},{total:0}]),150);
+  assert.equal(niceScaleMax([{total:195}]),200);
+  assert.equal((weekly.match(/class="score /g)||[]).length,3);
+  assert.match(weekly, /id="dayScore"/);
+  assert.doesNotMatch(weekly, /id="maximumScore"|id="completionScore"/);
   assert.doesNotMatch(weekly, /недельного максимума|8 проверочных списков|Каждый пункт отмечается/);
   assert.match(weekly, /DAY_NAMES=\['Пн','Вт','Ср','Чт','Пт','Сб','Вс'\]/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=10,DYNAMICS_VERSION=1/);
+  assert.match(weekly, /SCHEMA_VERSION=11,DYNAMICS_VERSION=1/);
 });
 
 test('фонды поддерживают отдельные цели 2026 и 2027 без дублирующих названий', () => {
