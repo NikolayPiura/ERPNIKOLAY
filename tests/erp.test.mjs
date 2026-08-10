@@ -61,14 +61,13 @@ test('учёт времени переключает дни без календ�
   assert.match(time, /class="mr-del"/);
 });
 
-test('ПС №1 сохраняет старую шкалу отдельным архивом без пересчёта', () => {
+test('ПС №1 сохраняет старые данные при миграции, но не показывает старую шкалу', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
-  assert.match(weekly, /id="weeksArchive"/);
-  assert.match(weekly, /function renderWeeksArchive\(\)/);
   assert.match(weekly, /legacyHistory/);
   assert.match(weekly, /legacyBackup/);
   assert.match(weekly, /function extractLegacy\(saved\)/);
-  assert.match(weekly, /Старая шкала/);
+  assert.doesNotMatch(weekly, /id="weeksArchive"/);
+  assert.doesNotMatch(weekly, /Старая шкала/);
   assert.equal((weekly.match(/\['2026-\d{2}-\d{2}',\d+\]/g)||[]).length,12);
 });
 
@@ -204,7 +203,7 @@ test('утро и учёт времени сохраняются без отде
   for (const id of ['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']) assert.match(morning,new RegExp(`'${id}'`));
 });
 
-test('ПС №1 работает как восемь редактируемых ежедневных трекеров с отдельными графиками', () => {
+test('ПС №1 использует один дневной или недельный график для общей шкалы и восьми динамик', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
   const dynamicsSource = weekly.match(/const DYNAMICS=\[(.*?)\];/s)?.[1]||'';
   const tasksSource = weekly.match(/const DEFAULT_TASKS=\[(.*?)\n\]\.map/s)?.[1]||'';
@@ -217,12 +216,24 @@ test('ПС №1 работает как восемь редактируемых 
   assert.equal(tasks.find(task=>task.name==='Сессия')?.weight,75);
   assert.equal(tasks.find(task=>task.name==='День без расстройств')?.weight,140);
   assert.equal(tasks.find(task=>task.name==='Описана тэта')?.weight,180);
-  assert.match(weekly, /id="dynamicOverview"/);
+  assert.equal((weekly.match(/id="scoreChart"/g)||[]).length,1);
+  assert.doesNotMatch(weekly, /id="dynamicOverview"/);
   assert.match(weekly, /id="dynamicChecklists"/);
-  assert.match(weekly, /function renderDynamicOverview\(\)/);
+  assert.match(weekly, /id="chartModes"/);
+  assert.match(weekly, /data-chart-mode="daily"/);
+  assert.match(weekly, /data-chart-mode="weekly"/);
+  assert.match(weekly, /function dailySeries\(dynamicId=null\)/);
+  assert.match(weekly, /function selectDynamic\(id\)/);
+  assert.match(weekly, /data-select-dynamic=/);
+  assert.match(weekly, /selectedDynamicId!=null\)selectDynamic\(null\)/);
   assert.match(weekly, /function renderChecklists\(\)/);
   assert.match(weekly, /data-edit-toggle/);
   assert.match(weekly, /id="taskDynamic"/);
+  assert.match(weekly, /id="taskWeight" type="number" min="1" step="1"/);
+  assert.match(weekly, /task\.w=w/);
+  assert.match(weekly, /\.task-row\{min-height:84px/);
+  assert.match(weekly, /\.task-name\{min-width:0;font-size:17px/);
+  assert.doesNotMatch(weekly, /недельного максимума|8 проверочных списков|Каждый пункт отмечается/);
   assert.match(weekly, /DAY_NAMES=\['Пн','Вт','Ср','Чт','Пт','Сб','Вс'\]/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
   assert.match(weekly, /SCHEMA_VERSION=10,DYNAMICS_VERSION=1/);
