@@ -48,11 +48,14 @@ test('обзор содержит климат и единое управлен�
   assert.match(bridge, /"\/lights"/);
 });
 
-test('учёт времени позволяет выбрать дату, а удаление категории оставляет в настройках', () => {
+test('учёт времени переключает дни без календаря, а удаление категории оставляет в настройках', () => {
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
   assert.match(time, /<div class="hero-topbar" id="dateNavigation">[\s\S]*?<div class="hero">/);
   assert.match(time, /body>\.hero-topbar\{display:grid!important/);
-  assert.match(time, /id="dateJump" type="date"/);
+  assert.match(time, /id="prevDay"/);
+  assert.match(time, /id="nextDay"/);
+  assert.match(time, /id="todayDay"/);
+  assert.doesNotMatch(time, /id="dateJump" type="date"/);
   assert.match(time, /function deleteCategory\(key\)/);
   assert.doesNotMatch(time, /class="card-delete"/);
   assert.match(time, /class="mr-del"/);
@@ -98,8 +101,11 @@ test('фонды содержат точные цели продукта, фан
   assert.match(funds, /Планета без бездомных домашних животных/);
   assert.match(funds, /goalProgress\('Доход',''/);
   assert.doesNotMatch(funds, /goalProgress\('Итого',''/);
-  assert.match(funds, /product:'Книги'/);
+  assert.match(funds, /product:'Раздано книг'/);
   assert.match(funds, /fundraising:2250,endowment:50000,income:250,product:1000,total:2500/);
+  assert.match(funds, /пять фондов · общая цель капитала \$1 млн · цель доходности 12%/);
+  assert.match(funds, /Цель каждого фонда<\/label><strong>\$200 тыс\.<\/strong>/);
+  assert.doesNotMatch(funds, /<label>Позиций<\/label>|Средний доход \/ позицию|id="endPositions"/);
 });
 
 test('главная показывает суммарные программы и синхронизирует утро', () => {
@@ -217,7 +223,7 @@ test('фонды поддерживают отдельные цели 2026 и 20
   assert.doesNotMatch(funds, /class="root-total-title">Итого/);
   assert.ok(funds.includes("document.querySelector('[data-tab=\"manage\"]')?.click();"));
   assert.match(funds, /#view-donations>\.portfolio-hero\{display:none/);
-  assert.match(funds, /Проведённая уборка или помощь в её проведении/);
+  for (const product of ['Спасённые котики','Спасённые люди','Раздано книг','Проведено уборок','Посажено деревьев']) assert.match(funds,new RegExp(product));
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
   assert.match(funds, /id="filterPanel" style="display:none/);

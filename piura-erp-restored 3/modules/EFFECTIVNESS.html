@@ -61,6 +61,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .dph-sep{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*2.2);color:var(--mu);}
 .dph-tgt{font-family:'Orbitron',sans-serif;font-size:calc(var(--fs)*2.8);font-weight:600;color:var(--mu3);}
 .dph-hint{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*0.65);color:var(--mu);margin-top:16px;letter-spacing:0.5px;}
+.dph-goal{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:8px 13px;border:1px solid color-mix(in srgb,var(--accent) 36%,var(--brd));border-radius:999px;background:color-mix(in srgb,var(--accent) 9%,var(--bg3));color:var(--tx);font:700 calc(var(--fs)*.68) 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
 .chart-head{display:flex;justify-content:flex-end;align-items:center;margin-bottom:20px;}
 .mbtn{background:transparent;border:1px solid var(--brd2);border-radius:50%;color:var(--mu3);font-family:'JetBrains Mono',monospace;font-size:1rem;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;}
 .mbtn:hover,.mbtn.on{border-color:var(--y);color:var(--y);}
@@ -84,6 +85,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .ov-row-dph:hover{opacity:0.8;}
 .ov-row-dph-val{font-family:'Orbitron',sans-serif;font-size:calc(var(--fs)*3.25);font-weight:800;line-height:1;}
 .ov-row-dph-of{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*1);color:var(--mu3);}
+.ov-row-goal{display:inline-flex;align-items:center;margin-top:14px;padding:7px 11px;border:1px solid color-mix(in srgb,var(--oc,var(--mu)) 40%,var(--brd));border-radius:999px;background:color-mix(in srgb,var(--oc,var(--mu)) 8%,var(--bg3));color:var(--tx);font:700 calc(var(--fs)*.62) 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
 .ov-row-tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;cursor:pointer;border-radius:12px;}
 .ov-row-tile{min-height:116px;background:var(--bg3);border:1px solid var(--brd);border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;}
 .ov-row-tile-lbl{font-family:'JetBrains Mono',monospace;font-size:calc(var(--fs)*0.6);color:var(--mu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
@@ -610,7 +612,8 @@ function renderPage(){
       </div>
       <div class="card dph-block">
         <div class="dph-val" style="color:${ec}" onclick="openHist('${curTab}')">${fmt(dph)} <span class="dph-sep">/</span> <span class="dph-tgt">${fmt(target)}</span></div>
-        <div class="dph-hint">$/час · ${presetLabel} · ${formulaLabel} · нажми для истории</div>
+        <div class="dph-goal">Цель · ${fmt(target)} $/час</div>
+        <div class="dph-hint">${presetLabel} · ${formulaLabel} · нажми для истории</div>
       </div>
     </div>
   `;
@@ -747,6 +750,7 @@ function renderOverview(){
       <div class="ov-row-name" style="color:${tab.color}"><span class="ov-row-rank">${index+1}</span><span>${tab.name}</span></div>
       <div class="ov-row-dph" onclick="openHist('${tab.id}')">
         <div class="ov-row-dph-val" style="color:${ec}">${fmt(data.dph)} <span class="ov-row-dph-of">/ ${fmt(target)}</span></div>
+        <div class="ov-row-goal">Цель · ${fmt(target)} $/час</div>
         <div style="background:color-mix(in srgb,var(--ink) 12%,var(--bg4));height:13px;border-radius:999px;overflow:hidden;margin-top:16px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 5%,transparent);">
           <div style="height:100%;width:0%;background:linear-gradient(90deg,${ec},color-mix(in srgb,${ec} 65%,white));border-radius:999px;transition:width 1s ease;box-shadow:0 0 18px color-mix(in srgb,${ec} 34%,transparent);" id="pbar-${tab.id}"></div>
         </div>

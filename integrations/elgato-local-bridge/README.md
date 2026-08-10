@@ -5,6 +5,6 @@ The dashboard is hosted over HTTPS, while Elgato Light Strip Pro exposes a local
 Configured devices:
 
 - Elgato Light Strip Pro D026
-- Elgato Light Strip Pro 8C54
+- 341
 
 The launch agent starts the bridge automatically at login on `127.0.0.1:45831`. Only the PIURA GitHub Pages origin and local development origins receive CORS access.

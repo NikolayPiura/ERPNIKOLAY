@@ -150,7 +150,7 @@
     .settings-hub-btn.active{border-color:color-mix(in srgb,var(--nav-accent) 45%,transparent);background:color-mix(in srgb,var(--nav-accent) 13%,transparent);color:var(--text)}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
   </style>
-  <link rel="stylesheet" href="piura-unified-20260802-v2.css?v=20260809l">
+  <link rel="stylesheet" href="piura-unified-20260802-v2.css?v=20260809m">
 </head>
 <body>
   <main class="shell" id="shell">
@@ -185,7 +185,7 @@
   </main>
   <div class="tip" id="tip"></div>
   <script>
-    const BUILD_ID='20260809l';
+    const BUILD_ID='20260809m';
     const ICONS={overview:'<path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',finance:'<path d="M4 6h16v12H4zM4 10h16M8 15h3"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',pff:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/>',moscow:'<path d="M4 21h16M6 21V9l6-6 6 6v12M9 21v-6h6v6"/>',safe:'<path d="M12 22s8-3 8-10V5l-8-3-8 3v7c0 7 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/>'};
     const DEFAULT_GROUPS=[
       {id:'core',title:"Главное",accent:"#6ea8fe",items:[
@@ -205,11 +205,11 @@
       {id:'fin',title:"Финансы",accent:"#f2c45c",items:[
         ["finance","Доходы","План, факты и расходы","piura-erp-restored%203/modules/Finance.html?v=20260808e"]]}
     ];
-    const DEFAULTS={width:300,collapsedWidth:112,itemHeight:60,fontSize:13,gap:4,scale:1,radius:22,opacity:.97,blur:18,bg:'#0b0b0c',accent:'#6ea8fe',text:'#f4f4f5',muted:'#8f8f95',theme:'dark',palette:'balanced',neon:0,moduleScale:1,hoverExpand:false,behaviorVersion:10,tooltips:true,showSubtitles:true,showArrows:false,collapsed:false,hidden:[]};
+    const DEFAULTS={width:300,collapsedWidth:112,itemHeight:60,fontSize:13,gap:8,scale:1,radius:22,opacity:.97,blur:18,bg:'#0b0b0c',accent:'#6ea8fe',text:'#f4f4f5',muted:'#8f8f95',theme:'dark',palette:'balanced',neon:0,moduleScale:1,hoverExpand:false,behaviorVersion:11,tooltips:true,showSubtitles:true,showArrows:false,collapsed:false,hidden:[]};
     const KEY='piura_erp_shell_v5',ORDER='piura_erp_shell_order_v5',PROFILES='piura_erp_shell_profiles_v1',SERVICE_PREFS_KEY='piura_erp_service_settings_v1';
     const clone=v=>JSON.parse(JSON.stringify(v));
     function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
-    let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));if(Number(prefs.behaviorVersion||0)<10){prefs.hoverExpand=false;prefs.showArrows=false;prefs.theme=prefs.theme||'dark';prefs.palette=['balanced','ocean','sage','mono'].includes(prefs.palette)?prefs.palette:'balanced';prefs.neon=0;prefs.behaviorVersion=10}
+    let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));if(Number(prefs.behaviorVersion||0)<10){prefs.hoverExpand=false;prefs.showArrows=false;prefs.theme=prefs.theme||'dark';prefs.palette=['balanced','ocean','sage','mono'].includes(prefs.palette)?prefs.palette:'balanced';prefs.neon=0}if(Number(prefs.behaviorVersion||0)<11){prefs.gap=Math.max(8,Number(prefs.gap)||0);prefs.behaviorVersion=11}
     const savedGroups=read(ORDER,DEFAULT_GROUPS),savedItems=new Map((Array.isArray(savedGroups)?savedGroups:[]).flatMap(group=>Array.isArray(group.items)?group.items:[]).map(item=>[item[0],item]));
     let groups=clone(DEFAULT_GROUPS);groups.forEach(group=>group.items=group.items.map(item=>{const old=savedItems.get(item[0]);return old?[item[0],old[1]||item[1],old[2]||item[2],item[3]]:item}));
     // Миграция только старого стандартного имени; пользовательские названия не трогаем.
@@ -255,7 +255,7 @@
     const SERVICE_SETTINGS={effectiveness:'#settbtn',morning:'#btnSettings',time:'button[onclick="openManageModal()"]',weekly:'#settingsBtn',dynamics:'#settingsBtn',mydynamics:'button[onclick="openSettings()"]',finance:'#settingsBtn',funds:'button[onclick="openSettings()"]',pff:'button[onclick="openSP()"]',moscow:'button[onclick="openSP()"]',safe:'button[onclick="openSP()"]'};
     const EMBED_HIDE={effectiveness:'#settbtn',morning:'#btnSettings,#btnTheme',time:'.btn-icon-sq[onclick="openManageModal()"]',weekly:'#settingsBtn',dynamics:'#settingsBtn,#themePill',mydynamics:'button[onclick="openSettings()"],button[onclick="openManage()"]',finance:'#settingsBtn',funds:'button[onclick="openSettings()"],button[onclick="openAdd(0)"]',pff:'button[onclick="openSP()"]',moscow:'button[onclick="openSP()"]',safe:'button[onclick="openSP()"]'};
     const SERVICE_FIELDS={
-      overview:[['Govee · подключение сохраняется автоматически','goveeUrl','password'],['Обновление климата, мин','refresh','select',['5','15','30','60']]],
+      overview:[['Govee · подключение сохраняется автоматически','goveeUrl','password'],['Обновление климата, мин','refresh','select',['1','5','15','30','60']]],
       effectiveness:[['Главная вкладка','overview','select',['Обзор','Инвестиции','Климат','Управление деньгами','Наставничество']],['Сортировка обзора','sort','select',['Доход в час — по убыванию','Вручную']],['Целевой доход, $/час','target','number'],['Период дохода','incomePreset','select',['3 мес','6 мес','12 мес','С января 2026','С июля 2025','Свой период']],['Формула ставки','formula','select',['Среднее','Последние 3 месяца','Взвешенная','Лучший месяц','Медиана']]],
       morning:[['Показывать скрытые пункты','hidden','select',['Нет','Да']]],
       time:[['История, дней','historyDays','select',['15','20','30','60']],['История при открытии','historyOpen','select',['Раскрыта','Скрыта']]],
@@ -283,7 +283,7 @@
     function renderData(){const c=readCloud();controlMain.innerHTML=`<div class="control-hero"><small>Сохранность данных</small><h3>Данные и резервные копии</h3><p>Все заполненные записи сервисов остаются на месте. Здесь можно включить облачную копию и восстановление.</p></div><div class="service-setting-grid"><div class="service-setting-card"><label>Адрес Google Apps Script</label><input id="uiCloudUrl" value="${esc(c.url||'')}" placeholder="https://script.google.com/macros/s/.../exec"></div><div class="service-setting-card"><label>Ключ доступа</label><input id="uiCloudToken" type="password" value="${esc(c.token||'')}" placeholder="Хранится только на этом устройстве"></div></div><label class="field check" style="margin-top:14px"><input type="checkbox" id="uiCloudAuto" ${c.auto!==false?'checked':''}> Автоматическая резервная копия в Google Drive</label><div class="cloud-status" id="uiCloudStatus">${esc(document.getElementById('cloudStatus').textContent||'Локальное сохранение включено')}</div><div class="actions"><button class="action primary" data-data-action="sync">Синхронизировать сейчас</button><button class="action" data-data-action="export">Скачать все данные</button><button class="action" data-data-action="restore">Последний локальный снимок</button></div><div class="settings-note">Изменение дизайна не удаляет и не перезаписывает записи модулей. Перед восстановлением система автоматически создаёт локальный снимок.</div>`}
     function serviceDefault(id,key){
       if(id==='weekly'&&key==='title') return all().find(i=>i[0]==='weekly')?.[1]||'ПС №1';
-      const defaults={currency:'USD',historyDays:'20',historyOpen:'Скрыта',weeks:'12',dateSize:44,font:17,noteHeight:220,tableScale:100,chartSize:340,annualTarget:360000,textScale:100,elementScale:100,maxWidth:1680,metricSize:54,timeSize:84,density:'Свободно',cards:'Просторные',collapseYears:'Да',hiddenYears:'Нет',hidden:'Нет',period:'12 мес',incomePreset:'12 мес',formula:'Среднее',refresh:'15',tab:'Управление',view:'По динамикам',section:'Цели',sort:'Доход в час — по убыванию',overview:'Обзор',chartValues:'Да',prevCard:'Показывать',avgCard:'Показывать'};
+      const defaults={currency:'USD',historyDays:'20',historyOpen:'Скрыта',weeks:'12',dateSize:44,font:17,noteHeight:220,tableScale:100,chartSize:340,annualTarget:360000,textScale:100,elementScale:100,maxWidth:1680,metricSize:54,timeSize:84,density:'Свободно',cards:'Просторные',collapseYears:'Да',hiddenYears:'Нет',hidden:'Нет',period:'12 мес',incomePreset:'12 мес',formula:'Среднее',refresh:id==='overview'?'1':'15',tab:'Управление',view:'По динамикам',section:'Цели',sort:'Доход в час — по убыванию',overview:'Обзор',chartValues:'Да',prevCard:'Показывать',avgCard:'Показывать'};
       if(key==='chartHeight') return id==='time'?360:380;
       return defaults[key]??'';
     }
@@ -370,6 +370,6 @@ ${EMBED_HIDE[id]?EMBED_HIDE[id]+'{display:none!important}':''}`}
     purgeObsoleteCaches();checkPublishedBuild();setInterval(checkPublishedBuild,60000);
     applyPrefs();selectModule(current[0]);initDataSafety();
   </script>
-  <script src="piura-unified-20260802-v2.js?v=20260809l" defer></script>
+  <script src="piura-unified-20260802-v2.js?v=20260809m" defer></script>
 </body>
 </html>
