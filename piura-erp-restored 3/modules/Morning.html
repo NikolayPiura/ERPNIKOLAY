@@ -586,7 +586,7 @@ body.editing .add-block-btn{display:flex}
 .block:hover,.item:hover,.icon-btn:hover,.add-block-btn:hover{transform:none!important;animation:none!important}
 .block::before,.block.active::before{animation:none!important}
 .item.checked{animation:none!important}
-.head-btns{gap:12px}.icon-btn{width:52px;height:52px}.icon-btn#btnEdit{border-color:rgba(91,157,255,.35);color:#8dbaff}.icon-btn#btnEdit.on{background:#5b9dff;color:#08101d;border-color:#5b9dff}
+.head-btns{gap:12px}.icon-btn{width:52px;height:52px}.icon-btn#btnEdit{width:auto;padding:0 18px;gap:9px;border-color:rgba(91,157,255,.35);color:#8dbaff;font-weight:800}.icon-btn#btnEdit span{display:inline}.icon-btn#btnEdit.on{background:#5b9dff;color:#08101d;border-color:#5b9dff}
 .blocks{gap:20px}.block{padding:32px 40px 28px}.item{min-height:46px;padding:11px 8px}.hidden-tray{line-height:1.55}.hidden-chip{font-weight:700}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
@@ -618,6 +618,7 @@ body.editing .add-block-btn{display:flex}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
           </svg>
+          <span>Редактировать</span>
         </button>
         <button class="icon-btn" id="btnSettings" title="Настройки">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -798,6 +799,7 @@ const PREFS_KEY  = 'morn_v8_prefs';
 const DATA_VERSION_KEY = 'morn_v8_data_version';
 const DATA_VERSION = 2;
 const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v2';
+const HIDDEN_REVEAL_KEY = 'morn_hidden_reveal_v3';
 
 // Тексты из предыдущей версии нужны только для безопасной миграции: если
 // пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
@@ -866,13 +868,13 @@ function loadBlocks(){
 }
 
 function restoreHiddenItems(blocks){
-  if(localStorage.getItem(HIDDEN_RESTORE_KEY)) return blocks;
-  const visibleIds=new Set(['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']);
-  blocks.forEach(block=>(block.items||[]).forEach(item=>{item.hidden=!visibleIds.has(item.id)}));
+  if(localStorage.getItem(HIDDEN_REVEAL_KEY)) return blocks;
+  blocks.forEach(block=>(block.items||[]).forEach(item=>{item.hidden=false}));
   localStorage.setItem(BLOCKS_KEY,JSON.stringify(blocks));
   // Mark synchronously. A delayed marker used to repeat the migration after an
   // iframe refresh and could hide a point the user had just restored.
   localStorage.setItem(HIDDEN_RESTORE_KEY,'1');
+  localStorage.setItem(HIDDEN_REVEAL_KEY,'1');
   return blocks;
 }
 
@@ -1298,6 +1300,7 @@ document.getElementById('btnEdit').onclick = ()=>{
   editing = !editing;
   document.body.classList.toggle('editing', editing);
   document.getElementById('btnEdit').classList.toggle('on', editing);
+  document.querySelector('#btnEdit span').textContent=editing?'Готово':'Редактировать';
   renderBlocks();
 };
 
@@ -1468,6 +1471,7 @@ function resetAll(){
   localStorage.removeItem(BLOCKS_KEY);
   localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
   localStorage.removeItem(HIDDEN_RESTORE_KEY);
+  localStorage.removeItem(HIDDEN_REVEAL_KEY);
   blocksData = restoreHiddenItems(JSON.parse(JSON.stringify(DEFAULT_BLOCKS)));
   state = blankState();
   renderBlocks();

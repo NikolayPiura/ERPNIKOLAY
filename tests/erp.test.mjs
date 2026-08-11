@@ -136,7 +136,7 @@ test('эффективность сразу открывает обзор и о�
   assert.match(shell, /switchTab\?\.\(tabMap\[sp\.overview\]\|\|'overview'\)/);
   assert.match(effectiveness, /cycleOverviewPeriod/);
   assert.match(effectiveness, /ov-row-tile[^`]*Время[^`]*ov-row-tile[^`]*Деньги/);
-  assert.match(effectiveness, /ov-summary-sub">ДОХОД/);
+  assert.doesNotMatch(effectiveness, /ov-summary-sub">ДОХОД/);
   assert.doesNotMatch(effectiveness, /ОБЩИЙ ДОХОД В ЧАС/);
   assert.match(effectiveness, /height:13px/);
   assert.match(effectiveness, /piura_effectiveness_overview_v1/);
@@ -251,7 +251,7 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /week\.taskDynamics/);
   assert.match(weekly, /localStorage\.setItem\(STORE,JSON\.stringify\(S\)\)/);
   assert.match(weekly, /function niceScaleMax\(series\)/);
-  const scaleSource = weekly.match(/function niceScaleMax\(series\).*?(?=\nfunction chartSvg)/s)?.[0];
+  const scaleSource = weekly.match(/function niceScaleMax\(series\).*?(?=\nfunction chartSmoothPath)/s)?.[0];
   const niceScaleMax = Function('num',`return (${scaleSource.replace('function niceScaleMax','function')})`)(value=>Number(value)||0);
   assert.equal(niceScaleMax([{total:105},{total:35},{total:15},{total:0}]),150);
   assert.equal(niceScaleMax([{total:195}]),200);
@@ -272,6 +272,8 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /function realignWeeksToThursday\(\)/);
   assert.match(weekly, /needsWeekMigration/);
   assert.match(weekly, /--chart-accent/);
+  assert.match(weekly, /<path class="chart-line"/);
+  assert.doesNotMatch(weekly, /<polyline class="chart-line"/);
   assert.match(weekly, /accent=dynamic\?\.accent\|\|'#70a5ff'/);
   assert.match(weekly, /panel\.style\.setProperty\('--chart-accent',accent\)/);
   assert.match(weekly, /chartSvg\(series,accent\)/);
@@ -346,8 +348,8 @@ test('админ-шкала полностью исключает боевой �
   assert.match(admin, /<title>Админ-шкала<\/title>/);
   assert.match(admin, /class="logo">Админ-шкала<\/div>/);
   assert.doesNotMatch(admin, /Боевой план|BATTLE_PLAN|__battleSync|battleAvailable/);
-  assert.match(admin, /\.level-block:not\(\.block-open\)>:not\(\.level-heading\)\{display:none/);
-  assert.match(admin, /function isBlockOpen/);
+  assert.doesNotMatch(admin, /block-open|function isBlockOpen/);
+  assert.match(admin, /\.level-block:not\(\.block-expanded\) \.item-row\.item-overflow\{display:none\}/);
 });
 
 test('дорожная карта показывает только 2022–2026 и восстанавливает старые кеши', () => {
@@ -355,7 +357,9 @@ test('дорожная карта показывает только 2022–2026 
   assert.match(roadmap, /return \[2022,2023,2024,2025,CURRENT_YEAR\]/);
   assert.match(roadmap, /legacyKeys=\['roadmap_cells','roadmapCells','my_dynamics_cells_v1','myDynamicsCells'\]/);
   assert.match(roadmap, /\.\.\.historicalCells\(\),\s*\.\.\.legacy,\s*\.\.\.stored/);
-  assert.doesNotMatch(roadmap, /years-toggle-btn|Что сделать дальше/);
+  assert.doesNotMatch(roadmap, /years-toggle-btn/);
+  assert.match(roadmap, /nextHead\.textContent='Что сделать дальше'/);
+  assert.match(roadmap, /legacyKeys=\['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'\]/);
   assert.doesNotMatch(read('index.html'), /Показывать скрытые годы/);
 });
 

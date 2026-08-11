@@ -626,7 +626,14 @@ function loadCells(){
 function saveCells(){ localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells)); }
 
 function loadNextSteps(){
-  try{ const raw = localStorage.getItem(NEXTSTEPS_KEY); nextSteps = raw ? JSON.parse(raw) : {}; }
+  try{
+    const raw = localStorage.getItem(NEXTSTEPS_KEY);
+    const stored = raw ? JSON.parse(raw) : {};
+    const legacyKeys=['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'];
+    const legacy=legacyKeys.reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
+    nextSteps={...legacy,...stored};
+    localStorage.setItem(NEXTSTEPS_KEY,JSON.stringify(nextSteps));
+  }
   catch(e){ nextSteps = {}; }
 }
 function saveNextSteps(){ localStorage.setItem(NEXTSTEPS_KEY, JSON.stringify(nextSteps)); }
@@ -766,6 +773,10 @@ function buildTable(){
     if (idx > 0 && yrs[idx-1] !== undefined && y - yrs[idx-1] > 1) th.classList.add('gap-divider');
     headRow.appendChild(th);
   });
+  const nextHead=document.createElement('th');
+  nextHead.className='nextstep-col';
+  nextHead.textContent='Что сделать дальше';
+  headRow.appendChild(nextHead);
   thead.appendChild(headRow);
   table.appendChild(thead);
 
@@ -779,7 +790,7 @@ function buildTable(){
     dynLabel.textContent = d.title;
     dynRow.appendChild(dynLabel);
     const dynFiller = document.createElement('td');
-    dynFiller.colSpan = yrs.length;
+    dynFiller.colSpan = yrs.length + 1;
     dynRow.appendChild(dynFiller);
     tbody.appendChild(dynRow);
 
@@ -813,6 +824,12 @@ function buildTable(){
         tr.appendChild(td);
 
       });
+      const nextTd=document.createElement('td');
+      const step=String(nextSteps[it.id]||'').trim();
+      nextTd.className='cell nextstep-cell'+(step?'':' empty-step');
+      nextTd.textContent=step||'+ заметка';
+      nextTd.addEventListener('click',ev=>{ev.stopPropagation();openNextStepPopover(nextTd,it.id,it.name,d.title)});
+      tr.appendChild(nextTd);
       tbody.appendChild(tr);
     });
   });

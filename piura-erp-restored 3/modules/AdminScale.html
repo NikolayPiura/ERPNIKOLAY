@@ -445,7 +445,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 @media(max-width:1350px){.topbar-inner{gap:.65rem;padding-inline:1.4rem}.logo{font-size:min(var(--layout-logo),2.1rem)}.browse-mode button{padding:6px 8px}.topbar-right{gap:5px}.sync-state{display:none}.dyn-tab{min-width:64px;padding-inline:8px}}
 @media(max-width:1050px){.topbar-inner{height:auto;min-height:var(--layout-topbar);padding-block:8px;display:grid;grid-template-columns:auto auto 1fr;grid-template-areas:"logo mode controls" "tabs tabs tabs";column-gap:.7rem;row-gap:6px}.logo{grid-area:logo}.browse-mode{grid-area:mode}.dyn-tabs{grid-area:tabs;width:100%;max-width:none}.topbar-right{grid-area:controls;justify-self:end;background:var(--bg)}.section-overview-grid{grid-template-columns:1fr}.theme-pill{display:none}}
 @media(max-width:650px){.topbar-inner{padding:8px 1rem;grid-template-columns:1fr auto;grid-template-areas:"mode controls" "tabs tabs"}.logo{display:none}.main{padding:2rem 1rem 5rem}.section-overview-head h2{font-size:2.2rem}.section-dyn-card{padding:.55rem}.browse-mode{position:static;justify-self:start}.dyn-tabs{max-width:none;gap:2px}.dyn-tabs:not(.section-tabs) .dyn-tab,.dyn-tabs.section-tabs .dyn-tab{flex:1 1 0;min-width:0;max-width:none;padding-inline:4px}.dyn-tabs .tab-name{display:none}.text-btn{display:none}}
-.level-block:not(.block-open)>:not(.level-heading){display:none!important}.level-heading{cursor:pointer}.level-heading::after{content:'+';margin-left:auto;color:var(--text3);font:700 1.05rem 'Space Mono',monospace}.level-block.block-open .level-heading::after{content:'−';color:var(--accent)}.level-block:not(.block-open){box-shadow:none}.hero-label,.section-overview-head small{display:none!important}.logo{font-size:1.08rem;letter-spacing:-.02em}.tab-name:empty{display:none}
+.hero-label,.section-overview-head small{display:none!important}.logo{font-size:1.08rem;letter-spacing:-.02em}.tab-name:empty{display:none}
 </style>
 </head>
 <body data-theme="dark">
@@ -1343,18 +1343,14 @@ function buildPanels(){
 
 function isBlockExpanded(dynId,lvKey){return getViewSettings().expandedAll||!!((db.__expanded||{})[dynId+':'+lvKey]);}
 function setBlockExpanded(dynId,lvKey,value){if(!db.__expanded)db.__expanded={};db.__expanded[dynId+':'+lvKey]=value;persist();}
-function isBlockOpen(dynId,lvKey){return Boolean((db.__blockOpen||{})[dynId+':'+lvKey])}
-function setBlockOpen(dynId,lvKey,value){if(!db.__blockOpen)db.__blockOpen={};db.__blockOpen[dynId+':'+lvKey]=Boolean(value);persist()}
-
 function makeBlock(dynId, lv){
   const block=document.createElement('div');
-  block.className='level-block'+(editMode?' edit-mode':'')+(isBlockExpanded(dynId,lv.key)?' block-expanded':'')+(isBlockOpen(dynId,lv.key)?' block-open':'');
+  block.className='level-block'+(editMode?' edit-mode':'')+(isBlockExpanded(dynId,lv.key)?' block-expanded':'');
   block.dataset.dyn=dynId;block.dataset.lv=lv.key;
 
   // heading
   const heading=document.createElement('div');
   heading.className='level-heading';
-  heading.addEventListener('click',event=>{if(event.target.closest('button,input')||(editMode&&event.target.closest('.level-name')))return;const open=!block.classList.contains('block-open');block.classList.toggle('block-open',open);setBlockOpen(dynId,lv.key,open)});
   // editable name span
   const nameSpan=document.createElement('span');
   nameSpan.className='level-name';
