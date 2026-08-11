@@ -345,7 +345,6 @@ body{background-image:linear-gradient(rgba(61,219,160,.014) 1px,transparent 1px)
       <div><h1>Дорожная карта</h1></div>
       <div class="controls">
         <button onclick="openManage()">+ Добавить / удалить пункт</button>
-        <button id="years-toggle-btn" onclick="toggleYearsExpanded()">+ Показать скрытые года</button>
         <button onclick="openSettings()">⚙ Настройки</button>
       </div>
     </div>
@@ -498,7 +497,6 @@ const DYNSORT_KEY = 'roadmap_dynsort_v1';
 
 let YEARS = [2022,2023,2024,2025,2026,2027,2028,2029,2030,2040,2050,2060];
 let hiddenYears = [2027,2029,2030,2040,2050,2060];
-let yearsExpanded = false;
 
 const ROADMAP = [
   {n:1, title:'1 ДИНАМИКА', items:[
@@ -615,7 +613,11 @@ function loadCells(){
   try{
     const raw = localStorage.getItem(CELLS_KEY);
     const stored = raw ? JSON.parse(raw) : {};
-    rmCells = { ...defaultCells(), ...historicalCells(), ...stored };
+    // Recover older cache names used by previous roadmap builds. The current
+    // key wins, so this can only restore missing cells and never roll data back.
+    const legacyKeys=['roadmap_cells','roadmapCells','my_dynamics_cells_v1','myDynamicsCells'];
+    const legacy=legacyKeys.reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
+    rmCells = { ...defaultCells(), ...historicalCells(), ...legacy, ...stored };
     /* Persist the merged snapshot so recovered history survives future builds. */
     localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells));
   }
@@ -705,13 +707,9 @@ function buildGradientLegend(containerId){
    YEARS
 ========================================================= */
 function visibleYearsList(){
-  const list = yearsExpanded ? YEARS.slice() : YEARS.filter(y => !hiddenYears.includes(y) || y === CURRENT_YEAR);
-  return list.sort((a,b) => a - b);
-}
-function toggleYearsExpanded(){
-  yearsExpanded = !yearsExpanded;
-  document.getElementById('years-toggle-btn').textContent = yearsExpanded ? '− Скрыть года' : '+ Показать скрытые года';
-  buildTable();
+  // The working roadmap intentionally ends at the current year. Future-year
+  // values remain untouched in storage and can be restored in a later view.
+  return [2022,2023,2024,2025,CURRENT_YEAR];
 }
 function toggleYearHidden(y){
   if (y === CURRENT_YEAR) return;
@@ -735,7 +733,7 @@ function addYear(){
 function renderYearChips(){
   const wrap = document.getElementById('year-chips');
   wrap.innerHTML = '';
-  YEARS.forEach(y => {
+  YEARS.filter(y=>y<=CURRENT_YEAR).forEach(y => {
     const chip = document.createElement('div');
     const isHidden = hiddenYears.includes(y) && y !== CURRENT_YEAR;
     chip.className = 'year-chip' + (isHidden ? '' : ' visible') + (y === CURRENT_YEAR ? ' locked' : '');
@@ -767,12 +765,6 @@ function buildTable(){
     else th.querySelector('button').onclick = event => { event.stopPropagation(); toggleYearHidden(y); };
     if (idx > 0 && yrs[idx-1] !== undefined && y - yrs[idx-1] > 1) th.classList.add('gap-divider');
     headRow.appendChild(th);
-    if (y === CURRENT_YEAR){
-      const stepTh = document.createElement('th');
-      stepTh.className = 'nextstep-col';
-      stepTh.textContent = 'Что сделать дальше';
-      headRow.appendChild(stepTh);
-    }
   });
   thead.appendChild(headRow);
   table.appendChild(thead);
@@ -787,7 +779,7 @@ function buildTable(){
     dynLabel.textContent = d.title;
     dynRow.appendChild(dynLabel);
     const dynFiller = document.createElement('td');
-    dynFiller.colSpan = yrs.length + 1;
+    dynFiller.colSpan = yrs.length;
     dynRow.appendChild(dynFiller);
     tbody.appendChild(dynRow);
 
@@ -820,20 +812,6 @@ function buildTable(){
         td.addEventListener('click', (ev) => { ev.stopPropagation(); openCellPopover(td, key, d.title, it.name, y); });
         tr.appendChild(td);
 
-        if (y === CURRENT_YEAR){
-          const stepTd = document.createElement('td');
-          stepTd.className = 'cell nextstep-cell';
-          const val = nextSteps[it.id] || '';
-          if (val){
-            stepTd.textContent = val.length > 50 ? val.slice(0,50) + '…' : val;
-            stepTd.title = val;
-          } else {
-            stepTd.textContent = '+ заметка';
-            stepTd.classList.add('empty-step');
-          }
-          stepTd.addEventListener('click', (ev) => { ev.stopPropagation(); openNextStepPopover(stepTd, it.id, it.name, d.title); });
-          tr.appendChild(stepTd);
-        }
       });
       tbody.appendChild(tr);
     });

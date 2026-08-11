@@ -409,6 +409,9 @@ tr:hover td { background: var(--bg); }
 /* The date dock lives outside the refreshed hero, so sync and restored scroll never hide it. */
 body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;position:sticky!important;inset-block-start:0!important;z-index:1000!important;width:100%!important;min-height:64px!important;margin:0!important;padding:10px 32px!important;border:0!important;border-bottom:1px solid var(--bord)!important;border-radius:0!important;background:color-mix(in srgb,var(--bg2) 96%,transparent)!important;backdrop-filter:blur(22px)!important;box-shadow:0 12px 30px rgba(0,0,0,.18)!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;min-width:0!important;pointer-events:auto!important}.hero-date-group>*{visibility:visible!important;opacity:1!important;pointer-events:auto!important}.hero-right{display:flex!important;visibility:visible!important;opacity:1!important}.hero{padding-top:18px!important}
 @media(max-width:850px){body>.hero-topbar{grid-template-columns:1fr!important;padding:9px 14px!important}.hero-right{display:none!important}.hero-date-group{width:100%!important;overflow-x:auto!important}}
+/* 2026-08-11: centred working surface, calmer cards, no history panel. */
+.hero{padding:44px max(54px,calc((100vw - 1480px)/2)) 36px!important;gap:26px!important}.hero-total-row{gap:18px!important}.hero-big-label{padding-bottom:17px!important}.content{width:min(1480px,calc(100% - 72px));margin:0 auto;padding:34px 0 96px!important}.entry-grid{gap:20px!important}.entry-card,.add-card{min-height:152px!important;transition:border-color .14s ease,background-color .14s ease!important}.entry-card:hover,.add-card:hover{transform:none!important;animation:none!important}.entry-card.active{min-height:340px!important}.card-picker{transition:none!important}.hist-card{display:none!important}.mr-name-input{width:100%;padding:9px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font:700 14px Inter,sans-serif;outline:none}.mr-name-input:focus{border-color:var(--blue);background:var(--bg3)}
+@media(max-width:850px){.hero{padding:30px 18px!important}.content{width:calc(100% - 28px)}}
 </style>
 </head>
 <body>
@@ -427,7 +430,7 @@ body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) aut
         <div class="dot"></div>
         <span id="syncText">Google Sheets</span>
       </div>
-      <button class="btn-icon-sq" onclick="openManageModal()" title="Категории">⚙</button>
+      <button class="btn-icon-sq" onclick="openManageModal()" title="Редактировать категории" aria-label="Редактировать категории">✎</button>
       <button class="btn-export" onclick="doExport()">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
           <path d="M8 1v9m0 0L5 7m3 3 3-3M2 12v1.5A1.5 1.5 0 003.5 15h9a1.5 1.5 0 001.5-1.5V12"
@@ -464,10 +467,6 @@ body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) aut
 <div class="content">
   <div class="entry-grid" id="entryGrid"></div>
 
-  <div class="hist-card" id="historyCard">
-    <div class="hist-top"><h3 id="historyTitle">История</h3><button class="hist-toggle" id="historyToggle" onclick="toggleHistory()">Скрыть</button></div>
-    <div class="hist-scroll" id="histWrap"></div>
-  </div>
 </div>
 
 <!-- ═══ MANAGE CATEGORIES MODAL ═══ -->
@@ -476,13 +475,6 @@ body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) aut
     <div class="modal-head">
       <h2>Настройки времени</h2>
       <button class="modal-close" onclick="closeManageModal()">✕</button>
-    </div>
-
-    <div class="history-settings">
-      <label for="historyLimit">Показывать в истории</label>
-      <select id="historyLimit" onchange="setHistoryLimit(this.value)">
-        <option value="15">15 дней</option><option value="20">20 дней</option><option value="30">30 дней</option><option value="60">60 дней</option>
-      </select>
     </div>
 
     <div class="field-label" style="margin-bottom:.65rem">Источники времени</div>
@@ -543,7 +535,6 @@ const COLOR_CHOICES = ['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366
 const PRESETS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10];
 const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ ключ, чтобы не терять историю
 const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
-const HISTORY_PREF_KEY = 'tt_history_pref_v1';
 const DIRTY_KEY = 'tt_local_dirty_v1';
 const OPEN_KEY = 'tt_open_picker_v1';
 const SELECTED_DATE_KEY = 'tt_selected_date_v1';
@@ -552,8 +543,6 @@ let curDate = (()=>{const saved=localStorage.getItem(SELECTED_DATE_KEY),parsed=/
 let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
 let chartPie = null, chartBar = null;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
-let historyPrefs = (()=>{try{return{limit:20,open:true,...JSON.parse(localStorage.getItem(HISTORY_PREF_KEY)||'{}')}}catch{return{limit:20,open:true}}})();
-if(!localStorage.getItem('tt_history_default_v3')){historyPrefs.open=true;localStorage.setItem('tt_history_default_v3','1');localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs))}
 const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
 /* ── CATEGORIES STORAGE ── */
@@ -759,7 +748,7 @@ function toggleCard(key, curVal) {
 
 function presetPick(e, key, mins) {
   e.stopPropagation(); pH = Math.floor(mins/60); pM = mins%60;
-  setVal(key,mins);openKey=key;sessionStorage.setItem(OPEN_KEY,key);renderAll();queueSheetSync();
+  setVal(key,mins);openKey=null;sessionStorage.removeItem(OPEN_KEY);renderAll();queueSheetSync();
 }
 function adj(e, key, part, delta) {
   e.stopPropagation();
@@ -790,7 +779,7 @@ function updPresets(key) {
 }
 let pickerSyncTimer;
 function queueSheetSync(){clearTimeout(pickerSyncTimer);pickerSyncTimer=setTimeout(()=>{syncToSheets(dk(curDate));try{parent.postMessage({type:'piura:data-changed',source:'time'},location.origin)}catch(error){}},500)}
-function commitPicker(key){setVal(key,pH*60+pM);const card=[...document.getElementById('entryGrid').children].find(node=>node.querySelector?.('#dh_'+key)),value=card?.querySelector('.card-val');if(value){value.textContent=fmt(pH*60+pM);value.classList.toggle('zero',pH*60+pM===0)}renderHero();renderPie();renderBar();renderHistory();queueSheetSync()}
+function commitPicker(key){setVal(key,pH*60+pM);const card=[...document.getElementById('entryGrid').children].find(node=>node.querySelector?.('#dh_'+key)),value=card?.querySelector('.card-val');if(value){value.textContent=fmt(pH*60+pM);value.classList.toggle('zero',pH*60+pM===0)}renderHero();renderPie();renderBar();queueSheetSync()}
 
 /* ── PIE ── */
 function renderPie() {
@@ -852,31 +841,10 @@ function renderBar() {
   });
 }
 
-/* ── HISTORY ── */
-function renderHistory() {
-  const cats = getCats();
-  const allData = load(), wrap = document.getElementById('histWrap');
-  const allowed=[15,20,30,60],limit=allowed.includes(Number(historyPrefs.limit))?Number(historyPrefs.limit):20;
-  const keys = Object.keys(allData).sort().reverse().slice(0,limit);
-  const card=document.getElementById('historyCard'),toggle=document.getElementById('historyToggle'),title=document.getElementById('historyTitle');
-  card.classList.toggle('collapsed',historyPrefs.open===false);toggle.textContent=historyPrefs.open===false?'Показать':'Скрыть';title.textContent=`История · ${keys.length} дн.`;
-  if (!keys.length) {
-    wrap.innerHTML = `<div class="empty"><div class="ei">📋</div><p>Записей пока нет. Заполни первый день!</p></div>`;
-    return;
-  }
-  wrap.innerHTML=`<div class="history-days">${keys.map(k=>{const day=allData[k]||{},total=cats.reduce((sum,cat)=>sum+(day[cat.key]||0),0),date=new Date(k+'T00:00:00'),tags=cats.filter(cat=>day[cat.key]).map(cat=>`<span class="history-tag">${cat.label} <b>${fmt(day[cat.key])}</b></span>`).join('');return`<article class="history-day"><div class="history-date">${date.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}</div><div class="history-total">${fmt(total)}</div><div class="history-tags">${tags}</div></article>`}).join('')}</div>`;
-}
-
-function saveHistoryPrefs(){localStorage.setItem(HISTORY_PREF_KEY,JSON.stringify(historyPrefs));}
-function toggleHistory(){historyPrefs.open=historyPrefs.open===false;saveHistoryPrefs();renderHistory();}
-function setHistoryLimit(value){historyPrefs.limit=[15,20,30,60].includes(Number(value))?Number(value):20;saveHistoryPrefs();renderHistory();}
-function setHistoryOpen(value){historyPrefs.open=Boolean(value);saveHistoryPrefs();renderHistory();}
-
-function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); renderHistory(); }
+function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); }
 
 /* ── MANAGE CATEGORIES MODAL ── */
 function openManageModal() {
-  document.getElementById('historyLimit').value=String(historyPrefs.limit||20);
   renderManageList();
   hideNewCatForm();
   document.getElementById('manageOverlay').classList.add('open');
@@ -894,18 +862,25 @@ function renderManageList() {
     row.className = 'manage-row';
     row.innerHTML = `
       <div class="mr-icon" style="background:color-mix(in srgb, ${c.color} 16%, white)">${c.icon}</div>
-      <div class="mr-name">${c.label}</div>
+      <input class="mr-name-input" value="${escapeAttribute(c.label)}" onchange="renameCategory('${c.key}',this.value)" aria-label="Название категории">
       <button class="mr-del" onclick="deleteCategory('${c.key}')" title="Удалить">✕</button>
     `;
     list.appendChild(row);
   });
 }
 
+function escapeAttribute(value){return String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function renameCategory(key,value){
+  const name=String(value||'').trim();if(!name){renderManageList();return;}
+  const cats=getCats(),cat=cats.find(item=>item.key===key);if(!cat||cat.label===name)return;
+  cat.label=name;saveCats(cats);renderManageList();renderAll();queueSheetSync();
+}
+
 function deleteCategory(key) {
   const cats = getCats();
   if (cats.length <= 1) { alert('Должна остаться хотя бы одна категория.'); return; }
   const cat = cats.find(c => c.key === key);
-  if (!confirm(`Удалить категорию «${cat ? cat.label : key}»? История по ней останется в данных, но карточка пропадёт из дашборда.`)) return;
+  if (!confirm(`Удалить категорию «${cat ? cat.label : key}»? Прошлые записи останутся в данных, но карточка пропадёт из дашборда.`)) return;
   const updated = cats.filter(c => c.key !== key);
   saveCats(updated);
   if (openKey === key) openKey = null;

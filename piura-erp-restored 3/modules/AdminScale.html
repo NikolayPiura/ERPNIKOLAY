@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Админ × 8 Динамик</title>
+<title>Админ-шкала</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -445,6 +445,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 @media(max-width:1350px){.topbar-inner{gap:.65rem;padding-inline:1.4rem}.logo{font-size:min(var(--layout-logo),2.1rem)}.browse-mode button{padding:6px 8px}.topbar-right{gap:5px}.sync-state{display:none}.dyn-tab{min-width:64px;padding-inline:8px}}
 @media(max-width:1050px){.topbar-inner{height:auto;min-height:var(--layout-topbar);padding-block:8px;display:grid;grid-template-columns:auto auto 1fr;grid-template-areas:"logo mode controls" "tabs tabs tabs";column-gap:.7rem;row-gap:6px}.logo{grid-area:logo}.browse-mode{grid-area:mode}.dyn-tabs{grid-area:tabs;width:100%;max-width:none}.topbar-right{grid-area:controls;justify-self:end;background:var(--bg)}.section-overview-grid{grid-template-columns:1fr}.theme-pill{display:none}}
 @media(max-width:650px){.topbar-inner{padding:8px 1rem;grid-template-columns:1fr auto;grid-template-areas:"mode controls" "tabs tabs"}.logo{display:none}.main{padding:2rem 1rem 5rem}.section-overview-head h2{font-size:2.2rem}.section-dyn-card{padding:.55rem}.browse-mode{position:static;justify-self:start}.dyn-tabs{max-width:none;gap:2px}.dyn-tabs:not(.section-tabs) .dyn-tab,.dyn-tabs.section-tabs .dyn-tab{flex:1 1 0;min-width:0;max-width:none;padding-inline:4px}.dyn-tabs .tab-name{display:none}.text-btn{display:none}}
+.level-block:not(.block-open)>:not(.level-heading){display:none!important}.level-heading{cursor:pointer}.level-heading::after{content:'+';margin-left:auto;color:var(--text3);font:700 1.05rem 'Space Mono',monospace}.level-block.block-open .level-heading::after{content:'−';color:var(--accent)}.level-block:not(.block-open){box-shadow:none}.hero-label,.section-overview-head small{display:none!important}.logo{font-size:1.08rem;letter-spacing:-.02em}.tab-name:empty{display:none}
 </style>
 </head>
 <body data-theme="dark">
@@ -452,7 +453,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="logo">Админ<em>×</em>8</div>
+    <div class="logo">Админ-шкала</div>
     <div class="browse-mode" aria-label="Вид админ-шкалы">
       <button id="modeDynamics" class="active">По динамикам</button>
       <button id="modeSections">По разделам</button>
@@ -706,7 +707,6 @@ const DEFAULT_LEVELS=[
   {key:"цкп",   label:"ЦКП",               tag:"pt-цкп",   mode:"free",  ph:"Ценный конечный продукт..."},
   {key:"проги", label:"Программы",         tag:"pt-прог",  mode:"items", ph:"Добавить пункт программы..."},
   {key:"планы", label:"Планы",             tag:"pt-планы", mode:"items", ph:"Добавить пункт плана..."},
-  {key:"боевой",label:"Боевой план",       tag:"pt-прог",  mode:"items", ph:"Добавить пункт боевого плана..."},
 ];
 
 const PRE={
@@ -752,19 +752,6 @@ const PRE={
   },
 };
 
-/* Последний боевой план на 10.08.2026. После первого обмена источником
-   становится нативный Google Doc «Боевой план — ERP Sync». */
-const BATTLE_PLAN={
-  1:["Сделать книгу «Саентология 8-80»","Сделать книгу «Саентология 8-8008»","Сходить вместе поиграть в теннис","Сходить на СПА","Купить билеты в Вермонт","Открыть НКО","Сходить в офис Дороги к Счастью","Начать готовить консультационный формат в КЭ","Сходить на уборку парка"],
-  2:["Сделать идеальный план по этике","Добавить этику в ежедневный учет","Переделать ПС и работать по нему ежедневно","Игра по Духовному развитию"],
-  3:["Запустить фонд с Никитой","Запустить фонд с Антоном","Начать делать продукт каждую неделю, запустить фонды","Создать Ассоциацию добрых дел","Создать 1 созвон в месяц для улаживания всех циклов","Выстроить точную систему по привлечению подписчиков","Выстроить цикл по уборке парков","Создать фонд по уборке парков"],
-  4:["Выстроить магию утра","Начать делать по 6.000 шагов в день","Полностью делать программу хиропрактера"],
-  5:["Назначить уроки по английскому и оплатить","Назначить уроки по истории и оплатить","Делать кайдзен каждый день","Настроить сим-карту правильно","Выписать все коммуникационные линии и правила, сделать план, политику и лист","Создать политику проверки на безопасность","Подключить кабельный интернет","Изменить подход к коммуникациям — ПЮ, Александра, Дмитрий","Найти вариант получить миллион в сентябре"],
-  6:["Сделать план с Александрой","Сделать большой план","Сделать опасность","Выстроить циклы по ежедневной гигиене","Раз в месяц ездить в отели","Запланировать следующий отпуск"],
-  7:["Сделать план по белой КЭ","Продать долю Кириллу","Написать политику по маркетингу","Проверить с ПЮ подписанные ЗРС и политики","Улучшить работу в ЧТ","Упростить рабочую таблицу","Написать главу в книге про деньги","Передать коммуникацию по Джастин","Обдумать новые деньги в управление","Купить объект недвижимости в Таиланде и Москве"],
-  8:["Сделать новую структуру по каждому клиенту","Посмотреть на проекты с клиентами","Обдумать новых клиентов"]
-};
-
 const DONE_SEED=new Set([
   'Получить украинский загранпаспорт',
   'Съездить на чемпионат мира по футболу',
@@ -774,8 +761,7 @@ const DONE_SEED=new Set([
 const DOCS={
   цели:{id:'14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c',title:'Цели'},
   планы:{id:'1J5wux0DZxyQkYwOKkUkBQjgAcPoMp4Fcyq1HC5wOUfM',title:'Планы'},
-  проги:{id:'1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',title:'Программы'},
-  боевой:{id:'1Gpq4IF8LeyELNCAosFOMYaMwYlypTgeoPi-ju49g8ys',title:'Боевой план'}
+  проги:{id:'1d9I_5iUwRWL5O3o-RmcFjYxUQviq0gjhWdTqNelTUEM',title:'Программы'}
 };
 
 /* ══ STORAGE ══ */
@@ -795,14 +781,13 @@ function programSummary(){
 function persist(){try{localStorage.setItem(SK,JSON.stringify(db));localStorage.setItem('admin_program_summary_v1',JSON.stringify(programSummary()))}catch(e){}}
 
 function getLevels(){
-  return (db.__levels||DEFAULT_LEVELS).map(l=>({...l,hidden:!!l.hidden}));
+  return (db.__levels||DEFAULT_LEVELS).filter(level=>level.key!=='боевой').map(l=>({...l,hidden:!!l.hidden}));
 }
 function saveLevels(arr){db.__levels=arr;persist();}
 
 function getItems(d,l){
   if(db[d]&&db[d][l]!=null)return db[d][l];
   if(PRE[d]&&PRE[d][l])return PRE[d][l].map(t=>({t,done:DONE_SEED.has(t),hidden:false}));
-  if(l==='боевой'&&BATTLE_PLAN[d])return BATTLE_PLAN[d].map(t=>({t,done:false,hidden:false}));
   return[];
 }
 function getFree(d,l){
@@ -823,7 +808,7 @@ function saveSyncSettings(s){db.__sync=s;persist();let cloud={};try{cloud=JSON.p
 function migrateDocSnapshot(){
   if(db.__docSeedV1)return;
   Object.keys(db).filter(k=>/^\d+$/.test(k)).forEach(d=>{
-    ['цели','планы','проги','боевой'].forEach(l=>{
+    ['цели','планы','проги'].forEach(l=>{
       if(!Array.isArray(db[d][l]))return;
       db[d][l]=db[d][l].map(item=>({...item,done:item.done||DONE_SEED.has(item.t),hidden:!!item.hidden}));
     });
@@ -842,7 +827,7 @@ function migrateDocSnapshotV2(){
     ['Открыть первый официальный эндаундмент фонд и разобраться','Открыть первый официальный эндаумент фонд и разобраться']
   ]);
   Object.keys(db).filter(k=>/^\d+$/.test(k)).forEach(d=>{
-    ['цели','планы','проги','боевой'].forEach(l=>{
+    ['цели','планы','проги'].forEach(l=>{
       if(!Array.isArray(db[d][l]))return;
       db[d][l]=db[d][l].map(item=>replacements.has(item.t)?{...item,t:replacements.get(item.t)}:item);
     });
@@ -1188,7 +1173,7 @@ function mergeDocSnapshot(items){
   const grouped={};
   (items||[]).forEach(item=>{
     const dyn=Number(item.dyn),section=item.section;
-    if(!dyn||!['цели','планы','проги','боевой'].includes(section)||!String(item.text||'').trim())return;
+    if(!dyn||!['цели','планы','проги'].includes(section)||!String(item.text||'').trim())return;
     (grouped[dyn+':'+section]||(grouped[dyn+':'+section]=[])).push(item);
   });
   let changed=false;
@@ -1213,12 +1198,6 @@ async function refreshDocs(){
     const u=new URL(s.url);u.searchParams.set('action','snapshot');if(s.token)u.searchParams.set('token',s.token);
     const response=await fetch(u.toString(),{cache:'no-store'});if(!response.ok)throw new Error('HTTP '+response.status);
     const data=await response.json();if(!data.ok)throw new Error(data.error||'Ошибка синхронизации');
-    const battleAvailable=Array.isArray(data.items)&&data.items.some(item=>item.section==='боевой');
-    db.__battleSyncAvailable=battleAvailable;
-    if(battleAvailable&&Array.isArray(db.__battleSyncQueue)&&db.__battleSyncQueue.length){
-      db.__syncQueue=[...(Array.isArray(db.__syncQueue)?db.__syncQueue:[]),...db.__battleSyncQueue];
-      db.__battleSyncQueue=[];
-    }
     mergeDocSnapshot(data.items);s.lastSync=Date.now();saveSyncSettings(s);
     setSyncState('Docs · '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),'ok');
   }catch(error){setSyncState('Docs недоступны · снимок сохранён');console.warn('Admin Scale sync:',error);}
@@ -1239,14 +1218,8 @@ async function flushDocQueue(){
   finally{syncFlushing=false;}
 }
 async function queueDocAction(action){
-  if(!['цели','планы','проги','боевой'].includes(action.section))return;
+  if(!['цели','планы','проги'].includes(action.section))return;
   const s=getSyncSettings();if(!s.url)return;
-  if(action.section==='боевой'&&!db.__battleSyncAvailable){
-    if(!Array.isArray(db.__battleSyncQueue))db.__battleSyncQueue=[];
-    db.__battleSyncQueue.push({...action,queuedAt:Date.now()});persist();
-    setSyncState('Боевой план сохранён локально','ok');
-    return;
-  }
   if(!Array.isArray(db.__syncQueue))db.__syncQueue=[];
   db.__syncQueue.push({...action,queuedAt:Date.now()});persist();setSyncState('сохраняем в Docs…','busy');
   try{await flushDocQueue();setSyncState('сохранено в Docs','ok');}
@@ -1260,7 +1233,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 /* ══ ACTIVE TAB ══ */
 let activeTab=1;
 let browseMode=db.__browseMode==='sections'?'sections':'dynamics';
-let activeSection=['цели','проги','планы','боевой'].includes(db.__activeSection)?db.__activeSection:'цели';
+let activeSection=['цели','проги','планы'].includes(db.__activeSection)?db.__activeSection:'цели';
 function setBrowseMode(mode){browseMode=mode;db.__browseMode=mode;persist();document.getElementById('modeDynamics').classList.toggle('active',mode==='dynamics');document.getElementById('modeSections').classList.toggle('active',mode==='sections');buildTabs();buildPanels();}
 document.getElementById('modeDynamics').addEventListener('click',()=>setBrowseMode('dynamics'));
 document.getElementById('modeSections').addEventListener('click',()=>setBrowseMode('sections'));
@@ -1279,8 +1252,8 @@ function revealActiveTab(container,alignToStart=false){
 function buildTabs(){
   const c=document.getElementById('dynTabs');c.innerHTML='';c.classList.toggle('section-tabs',browseMode==='sections');
   if(browseMode==='sections'){
-    [{key:'цели',label:'Цели'},{key:'планы',label:'Планы'},{key:'проги',label:'Программы'},{key:'боевой',label:'Боевой план'}].forEach(section=>{
-      const b=document.createElement('button');b.className='dyn-tab'+(section.key===activeSection?' active':'');b.innerHTML=`<span class="tab-num">${section.label}</span><span class="tab-name">все 8 динамик</span>`;b.addEventListener('click',()=>{activeSection=section.key;db.__activeSection=activeSection;persist();buildTabs();buildPanels()});c.appendChild(b);
+    [{key:'цели',label:'Цели'},{key:'планы',label:'Планы'},{key:'проги',label:'Программы'}].forEach(section=>{
+      const b=document.createElement('button');b.className='dyn-tab'+(section.key===activeSection?' active':'');b.innerHTML=`<span class="tab-num">${section.label}</span>`;b.addEventListener('click',()=>{activeSection=section.key;db.__activeSection=activeSection;persist();buildTabs();buildPanels()});c.appendChild(b);
     });revealActiveTab(c,true);return;
   }
   const names=getDynNames();
@@ -1301,7 +1274,7 @@ function buildPanels(){
   const view=getViewSettings();
   if(browseMode==='sections'){
     const lv=getLevels().find(level=>level.key===activeSection)||DEFAULT_LEVELS.find(level=>level.key===activeSection);
-    const names=getDynNames(),head=document.createElement('div');head.className='section-overview-head';head.innerHTML=`<small>Все восемь динамик</small><h2>${lv?.label||activeSection}</h2>`;wrap.appendChild(head);
+    const names=getDynNames(),head=document.createElement('div');head.className='section-overview-head';head.innerHTML=`<h2>${lv?.label||activeSection}</h2>`;wrap.appendChild(head);
     const grid=document.createElement('div');grid.className='section-overview-grid';
     DYN.forEach((d,index)=>{const card=document.createElement('section');card.className='section-dyn-card';card.innerHTML=`<div class="section-dyn-title"><b>${d.id}</b><span>${names[index]||d.name}</span></div>`;card.appendChild(makeBlock(d.id,lv));grid.appendChild(card)});wrap.appendChild(grid);return;
   }
@@ -1370,15 +1343,18 @@ function buildPanels(){
 
 function isBlockExpanded(dynId,lvKey){return getViewSettings().expandedAll||!!((db.__expanded||{})[dynId+':'+lvKey]);}
 function setBlockExpanded(dynId,lvKey,value){if(!db.__expanded)db.__expanded={};db.__expanded[dynId+':'+lvKey]=value;persist();}
+function isBlockOpen(dynId,lvKey){return Boolean((db.__blockOpen||{})[dynId+':'+lvKey])}
+function setBlockOpen(dynId,lvKey,value){if(!db.__blockOpen)db.__blockOpen={};db.__blockOpen[dynId+':'+lvKey]=Boolean(value);persist()}
 
 function makeBlock(dynId, lv){
   const block=document.createElement('div');
-  block.className='level-block'+(editMode?' edit-mode':'')+(isBlockExpanded(dynId,lv.key)?' block-expanded':'');
+  block.className='level-block'+(editMode?' edit-mode':'')+(isBlockExpanded(dynId,lv.key)?' block-expanded':'')+(isBlockOpen(dynId,lv.key)?' block-open':'');
   block.dataset.dyn=dynId;block.dataset.lv=lv.key;
 
   // heading
   const heading=document.createElement('div');
   heading.className='level-heading';
+  heading.addEventListener('click',event=>{if(event.target.closest('button,input')||(editMode&&event.target.closest('.level-name')))return;const open=!block.classList.contains('block-open');block.classList.toggle('block-open',open);setBlockOpen(dynId,lv.key,open)});
   // editable name span
   const nameSpan=document.createElement('span');
   nameSpan.className='level-name';

@@ -132,6 +132,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 #imodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center;cursor:pointer;}
 #imodal.on{display:flex;}
 #imodal img{max-width:92vw;max-height:92vh;border:1px solid var(--brd2);border-radius:8px;}
+/* 2026-08-11: a spacious, stable dashboard without distracting card motion. */
+.pg{max-width:1680px;margin:0 auto;padding:148px 5vw 120px}.sec{margin-bottom:calc(92px * var(--spacing))}.ov-summary{margin-bottom:calc(76px * var(--spacing));padding:calc(64px * var(--spacing)) 72px}.ov-list{gap:calc(38px * var(--spacing))}.ov-row{min-height:238px;padding:calc(58px * var(--spacing)) calc(66px * var(--spacing));gap:54px;transition:border-color .14s ease,background-color .14s ease}.ov-row:hover{transform:none;box-shadow:none}.card,.ti-box{transition:border-color .14s ease}.card:hover,.ti-box:hover{transform:none!important;box-shadow:none!important}@media(max-width:900px){.pg{padding:122px 22px 80px}.sec{margin-bottom:64px}.ov-row{padding:36px 28px;gap:24px}}
 </style>
 </head>
 <body>

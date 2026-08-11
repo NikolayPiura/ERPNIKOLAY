@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, extname, join } from 'node:path';
+import { Script } from 'node:vm';
 
 const root = process.cwd();
 const files = [];
@@ -24,6 +25,15 @@ if (/Personal-Finance\.html|Finance OS|financeos|Финансовая карти
 if (!source.includes('Тёмная · Premium') || !source.includes('Светлая · Air')) errors.push('Нет обеих премиальных тем');
 if (!source.includes("goveeControl") || !source.includes('lampPower') || !source.includes('lamp-palette') || !source.includes('data-lamp-color') || !source.includes('controlAllLights') || !source.includes('ELGATO_BRIDGE')) errors.push('Нет единого управления лампами Govee и Elgato');
 if (source.includes('body{filter:grayscale')) errors.push('Глобальный монохромный фильтр всё ещё включён');
+
+for (const file of [...indexes, ...serviceViews]) {
+  const html = readFileSync(file, 'utf8');
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+    if (/\bsrc\s*=/.test(match[1])) continue;
+    try { new Script(match[2], { filename: file }); }
+    catch (error) { errors.push(`Ошибка JavaScript в ${file}: ${error.message}`); }
+  }
+}
 
 if (errors.length) {
   console.error(errors.map(error => `✗ ${error}`).join('\n'));
