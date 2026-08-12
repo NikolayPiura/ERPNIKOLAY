@@ -137,6 +137,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   /* 11.08.2026 — full-width, spacious finance view with secondary annotations removed. */
   .pg{max-width:1880px;padding:58px 76px 150px}.hdr{min-height:150px;padding:40px 46px;margin-bottom:48px}.hdr-name{font-size:48px}.hdr-r{display:none}.sec{margin-top:58px;margin-bottom:58px}.plan{padding:48px 52px}.plan-big{font-size:64px}.plan-sub,.plan-pct,.plan-plbl,.plbl,.kb,.mexp,.mpct,.ep,.ftr{display:none!important}.prog{margin:30px 0 0;height:13px}.pm4{margin:30px 0 8px;gap:20px}.pm{min-height:112px;padding:24px}.income-trend{height:330px;margin-top:36px;padding:34px 24px 18px;gap:14px}.k3{gap:24px}.kc{min-height:205px;padding:38px}.kv{font-size:50px}.m12{gap:18px}.mc{min-height:142px;padding:24px}.minc{font-size:26px}.exp-wrap,.src2{gap:28px}.exp-wrap>.cb,.src2>.cb{padding:34px}.src2 .cli{padding:17px}.st{font-size:26px}.sh{margin-bottom:28px}
   @media(max-width:1100px){.pg{padding:36px 28px 110px}.hdr{margin-bottom:34px}.plan{padding:34px}.plan-big{font-size:48px}}
+  /* Finance cockpit: smooth trend, Google-FP expenses and category-only income. */
+  .plan{position:relative;overflow:hidden;border-color:rgba(91,157,255,.24);background:radial-gradient(circle at 92% 0,rgba(154,114,237,.15),transparent 34%),radial-gradient(circle at 7% 5%,rgba(53,216,245,.11),transparent 31%),#11151e}.plan:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#35d8f5,#6f94ff,#9a72ed)}.plan-top{margin-bottom:0}.plan-big{display:flex;align-items:baseline;gap:16px;font-size:clamp(66px,6vw,104px);line-height:.88}.plan-big span{font-size:clamp(24px,2.2vw,38px)!important;color:#8d9aae!important;font-weight:750;letter-spacing:-.035em}.prog{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.035)}.progf{background:linear-gradient(90deg,#35d8f5,#6f94ff 55%,#9a72ed)}.pm4{grid-template-columns:repeat(3,minmax(0,1fr))}.pm{background:linear-gradient(145deg,rgba(255,255,255,.035),rgba(13,17,25,.72))}.income-trend{height:390px!important;padding:24px 20px 10px!important;display:block!important;overflow:hidden!important;background:linear-gradient(180deg,rgba(13,17,25,.96),rgba(9,12,18,.86))}.income-trend svg{display:block;width:100%;height:100%;overflow:visible}.income-trend .trend-area{fill:url(#incomeArea)}.income-trend .trend-line{fill:none;stroke:url(#incomeLine);stroke-width:7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 10px 18px rgba(111,148,255,.2))}.income-trend .trend-point{fill:#10151f;stroke:#43d39e;stroke-width:4}.income-trend .trend-value{fill:#f4f7fb;font:850 12px Inter,sans-serif}.income-trend .trend-label{fill:#718096;font:750 11px 'JetBrains Mono',monospace;text-transform:uppercase}.income-trend .trend-base{stroke:rgba(255,255,255,.09)}.src2{display:block!important}.src2>.cb{padding:0!important;border:0!important;background:transparent!important}.source-category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}.source-card{--source:#5b9dff;position:relative;min-height:180px;padding:25px;border:1px solid color-mix(in srgb,var(--source) 28%,var(--line));border-radius:20px;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--source) 15%,transparent),transparent 55%),#11151e;overflow:hidden}.source-card:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--source)}.source-name{min-height:44px;color:#aeb9c8;font-size:15px;font-weight:800;line-height:1.35}.source-value{margin-top:18px;color:var(--source);font-size:32px;font-weight:900;letter-spacing:-.04em}.source-bar{height:8px;margin-top:20px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}.source-bar i{display:block;height:100%;border-radius:inherit;background:var(--source)}.exp-wrap>.cb{background:linear-gradient(145deg,rgba(91,157,255,.035),#11151e)}.ei{padding:16px 0}.en{width:240px;font-size:16px}.etr{height:10px;border-radius:999px}.ef{border-radius:999px}.ea{width:120px;font-size:15px;color:#d7dfeb}@media(max-width:1200px){.source-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.plan-big{font-size:64px}}@media(max-width:700px){.source-category-grid{grid-template-columns:1fr}.pm4{grid-template-columns:1fr}.plan-big{display:block;font-size:50px}.plan-big span{display:block;margin-top:12px}.income-trend{overflow:auto!important}.income-trend svg{min-width:920px}.en{width:135px}}
 </style>
 </head>
 <body>
@@ -178,7 +180,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="k3">
       <div class="kc g"><div class="kl">Доход итого</div><div class="kv" id="ki">—</div><div class="kb" id="kib">—</div></div>
       <div class="kc r"><div class="kl">Расходы итого</div><div class="kv" id="ke">—</div><div class="kb" id="keb">—</div></div>
-      <div class="kc b"><div class="kl">Пассивный доход</div><div class="kv" id="kp">—</div><div class="kb" id="kpb">—</div></div>
+      <div class="kc b"><div class="kl">Прибыль</div><div class="kv" id="kp">—</div><div class="kb" id="kpb">—</div></div>
     </div>
   </div>
 
@@ -222,19 +224,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
   <div class="sec">
     <div class="sh"><span class="sn">// 05</span><span class="st">ИСТОЧНИКИ ДОХОДА</span><div class="sl"></div></div>
-    <div class="src2">
-      <div class="cb">
-        <div class="cb-ttl">Детальные источники</div>
-        <!-- +22% от 240 = 293px -->
-        <div style="position:relative;height:293px"><canvas id="sd1"></canvas></div>
-        <div class="cleg" id="sl1" style="margin-top:12px"></div>
-      </div>
-      <div class="cb">
-        <div class="cb-ttl">По категориям</div>
-        <div style="position:relative;height:293px"><canvas id="sd2"></canvas></div>
-        <div class="cleg" id="sl2" style="margin-top:12px"></div>
-      </div>
-    </div>
+    <div class="src2"><div class="cb"><div class="source-category-grid" id="sl2"></div></div></div>
   </div>
 
   <div class="ftr">
@@ -250,7 +240,11 @@ var CH={};
 if(!window.Chart){window.Chart=function(){this.destroy=function(){}};}
 var URL='https://script.google.com/macros/s/AKfycbxjg9I0W6r8slpuex8yvQIqO3BR9k9NS6h5grvqLVMN0Wjn7iT_1drEOXT2Sn93Y_x_/exec';
 var CACHE_KEY='piura_cache_finance_v1';
+var FP_CACHE_KEY='piura_cache_fp_expenses_v1';
+var FP_SHEET_URL='https://docs.google.com/spreadsheets/d/1grODwtbQTEmy51OYwFdx4cnKuJXoOxq24vPlwM_XGB4/gviz/tq?sheet=%D0%A4%D0%9F&tq=select%20*';
 var HAS_RENDERED=false;
+var LATEST_DATA=null;
+var FP_DATA=null;
 // Снимок из исходных таблиц на 28.07.2026. Он нужен только для первого
 // запуска на новом устройстве: свежие данные всё равно приходят в фоне.
 var BOOTSTRAP_DATA={
@@ -278,6 +272,7 @@ var BOOTSTRAP_DATA={
 
 function f(v){if(!v&&v!==0)return'—';return'$'+Math.round(v).toLocaleString('ru');}
 function fk(v){if(!v&&v!==0)return'—';return Math.abs(v)>=1000?'$'+(v/1000).toFixed(0)+'k':'$'+Math.round(v);}
+function eh(v){return String(v==null?'':v).replace(/[&<>"']/g,function(ch){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
 function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
 function setSt(m,c){var e=document.getElementById('tst');e.textContent=m;e.style.color=c||'var(--mu2)';}
 
@@ -286,6 +281,45 @@ var AX={
   y:{ticks:{color:'#647890',font:{family:'JetBrains Mono',size:12},callback:function(v){return'$'+(v/1000).toFixed(0)+'k';}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.08)'}}
 };
 var DO={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'65%'};
+
+function fpCell(row,index){return row&&row.c&&row.c[index]?row.c[index]:null;}
+function parseFpExpenses(response){
+  var rows=response&&response.table&&response.table.rows||[];
+  if(!rows.length)throw new Error('Лист ФП пуст');
+  var header=rows[0],expenseIndex=rows.findIndex(function(row){return String((fpCell(row,0)||{}).v||'').trim().toUpperCase()==='РАСХОД';});
+  if(expenseIndex<0)throw new Error('Раздел РАСХОД не найден');
+  var current=new Date(),year=current.getFullYear(),activeColumns=[];
+  for(var column=2;column<(header.c||[]).length;column++){
+    var label=String((fpCell(header,column)||{}).f||''),parts=label.match(/^(\d{1,2})\.(\d{1,2})$/);
+    if(!parts)continue;
+    var date=new Date(year,Number(parts[2])-1,Number(parts[1]),12);
+    if(date<=current)activeColumns.push({index:column,month:MO[date.getMonth()]});
+  }
+  var monthly={};MO.forEach(function(month){monthly[month]=0;});
+  activeColumns.forEach(function(column){monthly[column.month]+=Number((fpCell(rows[expenseIndex],column.index)||{}).v)||0;});
+  var palette=['#6ea8fe','#43d39e','#9a72ed','#ff9d72','#55d8b3','#f2c45c','#79a8d8','#cf79aa','#93c95d','#9ea9b8','#58c5e6','#b58cff','#e3a45d','#7bd1a8'];
+  var categories=[];
+  rows.slice(expenseIndex+1).forEach(function(row){
+    var name=String((fpCell(row,1)||{}).v||'').trim();if(!name)return;
+    var total=activeColumns.reduce(function(sum,column){return sum+(Number((fpCell(row,column.index)||{}).v)||0);},0);
+    if(Math.abs(total)>.001)categories.push({name:name,total:total});
+  });
+  categories.sort(function(a,b){return b.total-a.total;}).forEach(function(item,index){item.cl=palette[index%palette.length];});
+  var total=categories.reduce(function(sum,item){return sum+(Number(item.total)||0);},0);
+  return{monthly:monthly,total:total,categories:categories,updated:Date.now()};
+}
+function useCachedFp(){try{var cached=JSON.parse(localStorage.getItem(FP_CACHE_KEY)||'null');if(cached){FP_DATA=cached;if(LATEST_DATA)render(LATEST_DATA);}}catch(e){}}
+function loadFpExpenses(){
+  var old=document.getElementById('fpExpenseFeed');if(old)old.remove();
+  window.financeExpenseFeed=function(response){
+    try{FP_DATA=parseFpExpenses(response);localStorage.setItem(FP_CACHE_KEY,JSON.stringify(FP_DATA));if(LATEST_DATA)render(LATEST_DATA);}
+    catch(error){useCachedFp();}
+    var node=document.getElementById('fpExpenseFeed');if(node)node.remove();
+  };
+  var script=document.createElement('script');script.id='fpExpenseFeed';script.async=true;script.src=FP_SHEET_URL+'&tqx=responseHandler:financeExpenseFeed&_='+Date.now();script.onerror=function(){script.remove();useCachedFp();};document.head.appendChild(script);
+}
+function smoothPath(points){if(!points.length)return'';if(points.length===1)return'M '+points[0].x+' '+points[0].y;return points.reduce(function(path,point,index){if(!index)return'M '+point.x+' '+point.y;var previous=points[index-1],before=points[index-2]||previous,after=points[index+1]||point,low=Math.min(previous.y,point.y),high=Math.max(previous.y,point.y),cp1x=previous.x+(point.x-before.x)/6,cp1y=Math.max(low,Math.min(high,previous.y+(point.y-before.y)/6)),cp2x=point.x-(after.x-previous.x)/6,cp2y=Math.max(low,Math.min(high,point.y-(after.y-previous.y)/6));return path+' C '+cp1x+' '+cp1y+', '+cp2x+' '+cp2y+', '+point.x+' '+point.y;},'');}
+function renderIncomeTrend(values){var width=1200,height=310,pad={l:38,r:32,t:40,b:48},innerW=width-pad.l-pad.r,innerH=height-pad.t-pad.b,max=Math.max.apply(null,values.concat([1]))*1.12,points=values.map(function(value,index){return{x:pad.l+index*innerW/(values.length-1),y:pad.t+innerH-(value/max*innerH),value:value};}),line=smoothPath(points),area=line+' L '+points[points.length-1].x+' '+(pad.t+innerH)+' L '+points[0].x+' '+(pad.t+innerH)+' Z',labels=points.map(function(point,index){return'<g><circle class="trend-point" cx="'+point.x+'" cy="'+point.y+'" r="6"/>'+(point.value?'<text class="trend-value" x="'+point.x+'" y="'+Math.max(18,point.y-15)+'" text-anchor="middle">'+fk(point.value)+'</text>':'')+'<text class="trend-label" x="'+point.x+'" y="'+(height-12)+'" text-anchor="middle">'+MO[index]+'</text></g>';}).join('');return'<svg viewBox="0 0 '+width+' '+height+'" role="img" aria-label="Доход по месяцам"><defs><linearGradient id="incomeLine" x1="0" x2="1"><stop stop-color="#35d8f5"/><stop offset="1" stop-color="#9a72ed"/></linearGradient><linearGradient id="incomeArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8e78ee" stop-opacity=".34"/><stop offset="1" stop-color="#8e78ee" stop-opacity="0"/></linearGradient></defs><line class="trend-base" x1="'+pad.l+'" x2="'+(width-pad.r)+'" y1="'+(pad.t+innerH)+'" y2="'+(pad.t+innerH)+'"/><path class="trend-area" d="'+area+'"/><path class="trend-line" d="'+line+'"/>'+labels+'</svg>';}
 
 function go(){
   if(!HAS_RENDERED){
@@ -300,6 +334,7 @@ function go(){
       document.getElementById('tupd').textContent='Сохранено: '+new Date(cached.at).toLocaleString('ru');
     }
   }catch(e){}
+  loadFpExpenses();
   setSt('● СИНХРОНИЗАЦИЯ','var(--b)');
   fetch(URL)
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
@@ -314,6 +349,8 @@ function go(){
 
 function render(data){
   HAS_RENDERED=true;
+  LATEST_DATA=data;
+  if(FP_DATA){data=JSON.parse(JSON.stringify(data));data.expenseArticles=FP_DATA.categories;}
   var s=data.summary||{};
   var sr=data.sources||{};
   var sources=sr.sources||[];
@@ -327,13 +364,13 @@ function render(data){
   document.getElementById('hdate').textContent=data.meta&&data.meta.updated?'ОБНОВЛЕНО: '+data.meta.updated:'';
   document.getElementById('frange').textContent=active[0]+'–'+active[active.length-1]+' 2026';
 
-  var iT=(s.income||{}).total||0,eT=(s.expenses||{}).total||0,pT=(s.passive||{}).total||0;
+  var iT=(s.income||{}).total||0,eT=(s.expenses||{}).total||0,pT=iT-eT;
   document.getElementById('ki').textContent=f(iT);
   document.getElementById('ke').textContent=f(eT);
   document.getElementById('kp').textContent=f(pT);
   document.getElementById('kib').textContent=active.length+' МЕС ДАННЫХ';
   document.getElementById('keb').textContent=(iT>0?(eT/iT*100).toFixed(1):0)+'% ОТ ДОХОДА';
-  document.getElementById('kpb').textContent=(eT>0?(pT/eT*100).toFixed(1):0)+'% ОТ РАСХОДОВ';
+  document.getElementById('kpb').textContent=(iT>0?(pT/iT*100).toFixed(1):0)+'% ОТ ДОХОДА';
 
   var mg=document.getElementById('mg');mg.innerHTML='';
   MO.forEach(function(m){
@@ -356,58 +393,45 @@ function render(data){
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:AX}
   });
 
-  var EC=[
-    {nm:'Квартира',key:'apartment',cl:'#6ea8fe'},
-    {nm:'Жизнь',key:'life',cl:'#43d39e'},
-    {nm:'Обучение',key:'education',cl:'#9d8cff'},
-    {nm:'Путешествие',key:'travel',cl:'#7898bd'},
-    {nm:'Благотвор.',key:'charity',cl:'#7f8998'}
-  ];
-  var maxE=Math.max.apply(null,EC.map(function(c){return(s[c.key]||{}).total||0;}));
+  var EC=(data.expenseArticles||[
+    {name:'Обучение',total:(s.education||{}).total||0,cl:'#9d8cff'},
+    {name:'Квартира',total:(s.apartment||{}).total||0,cl:'#6ea8fe'},
+    {name:'Жизнь',total:(s.life||{}).total||0,cl:'#43d39e'},
+    {name:'Путешествие',total:(s.travel||{}).total||0,cl:'#7898bd'},
+    {name:'Благотворительность',total:(s.charity||{}).total||0,cl:'#7f8998'}
+  ]).map(function(item,index){return{nm:item.name,total:Number(item.total)||0,cl:item.cl||['#6ea8fe','#43d39e','#9d8cff','#ff9d72','#55d8b3','#f2c45c'][index%6]};}).sort(function(a,b){return b.total-a.total;});
+  var maxE=Math.max.apply(null,EC.map(function(c){return c.total||0;}).concat([1]));
+  var expenseCategoryTotal=EC.reduce(function(sum,c){return sum+(c.total||0);},0);
 
   dc('ed');
   CH.ed=new Chart(document.getElementById('ed'),{type:'doughnut',
-    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return(s[c.key]||{}).total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
+    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return c.total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
     options:DO});
   var el=document.getElementById('eleg');el.innerHTML='';
   EC.forEach(function(c){
-    el.innerHTML+='<div class="cli"><div class="cld" style="background:'+c.cl+'"></div>'+c.nm+' '+f((s[c.key]||{}).total)+'</div>';
+    el.innerHTML+='<div class="cli"><div class="cld" style="background:'+c.cl+'"></div>'+eh(c.nm)+' '+f(c.total)+'</div>';
   });
 
   var bx=document.getElementById('ebars');
   bx.innerHTML='<div class="cb-ttl">Расходы по категориям</div>';
   EC.forEach(function(c){
-    var v=(s[c.key]||{}).total||0;
-    bx.innerHTML+='<div class="ei"><div class="en">'+c.nm+'</div>'
+    var v=c.total||0;
+    bx.innerHTML+='<div class="ei"><div class="en">'+eh(c.nm)+'</div>'
       +'<div class="etr"><div class="ef" style="width:'+(maxE>0?(v/maxE*100).toFixed(0):0)+'%;background:'+c.cl+'"></div></div>'
-      +'<div class="ea">'+f(v)+'</div><div class="ep">'+(eT>0?(v/eT*100).toFixed(1):0)+'%</div></div>';
+      +'<div class="ea">'+f(v)+'</div><div class="ep">'+(expenseCategoryTotal>0?(v/expenseCategoryTotal*100).toFixed(1):0)+'%</div></div>';
   });
 
   dc('ed2');
   CH.ed2=new Chart(document.getElementById('ed2'),{type:'doughnut',
-    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return(s[c.key]||{}).total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
+    data:{labels:EC.map(function(c){return c.nm;}),datasets:[{data:EC.map(function(c){return c.total||0;}),backgroundColor:EC.map(function(c){return c.cl;}),borderWidth:0}]},
     options:DO});
 
-  var SC1=['#6ea8fe','#43d39e','#9d8cff','#7898bd','#7f8998'];
-  var SC2=['#6ea8fe','#43d39e','#9d8cff','#7898bd','#7f8998'];
-
-  dc('sd1');
-  CH.sd1=new Chart(document.getElementById('sd1'),{type:'doughnut',
-    data:{labels:sources.map(function(x){return x.name;}),datasets:[{data:sources.map(function(x){return x.total||0;}),backgroundColor:sources.map(function(_,i){return SC1[i%SC1.length];}),borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
-  var l1=document.getElementById('sl1');l1.innerHTML='';
-  sources.forEach(function(x,i){
-    l1.innerHTML+='<div class="cli"><div class="cld" style="background:'+SC1[i%SC1.length]+'"></div>'+x.name+' '+f(x.total)+'</div>';
-  });
-
-  dc('sd2');
-  CH.sd2=new Chart(document.getElementById('sd2'),{type:'doughnut',
-    data:{labels:cats.map(function(x){return x.name;}),datasets:[{data:cats.map(function(x){return x.total||0;}),backgroundColor:cats.map(function(_,i){return SC2[i%SC2.length];}),borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}});
-  var l2=document.getElementById('sl2');l2.innerHTML='';
-  cats.forEach(function(x,i){
-    l2.innerHTML+='<div class="cli"><div class="cld" style="background:'+SC2[i%SC2.length]+'"></div>'+x.name+' '+f(x.total)+'</div>';
-  });
+  var allowedSources=['Климат','Инвестиции','Наставничество','Учредитель','Управление деньгами','Снитч','ПЛАН','ДЕЛЬТА'];
+  var sourceColors=['#6ea8fe','#43d39e','#9d8cff','#ff9d72','#55d8b3','#f2c45c','#58c5e6','#cf79aa'];
+  var sourceMap=new Map(cats.map(function(item){return[String(item.name||'').trim().toLowerCase(),Number(item.total)||0];}));
+  var categoryOnly=allowedSources.map(function(name,index){return{name:name,total:sourceMap.get(name.toLowerCase())||0,cl:sourceColors[index]};});
+  var sourceMax=Math.max.apply(null,categoryOnly.map(function(item){return item.total;}).concat([1]));
+  document.getElementById('sl2').innerHTML=categoryOnly.map(function(item){return'<article class="source-card" style="--source:'+item.cl+'"><div class="source-name">'+eh(item.name)+'</div><div class="source-value">'+f(item.total)+'</div><div class="source-bar"><i style="width:'+(item.total/sourceMax*100).toFixed(1)+'%"></i></div></article>';}).join('');
 
   var planY=sr.planYear||0;
   if(!planY||planY<50000||planY>500000)planY=360000;
@@ -429,12 +453,11 @@ function render(data){
   document.getElementById('pmeta').innerHTML=[
     ['Среднемес.',fk(monthly)],
     ['Осталось',f(remain)],
-    ['Нужно/мес',fk(mNeed)],
-    ['Прогноз года',fk(monthly*12)]
+    ['Нужно/мес',fk(mNeed)]
   ].map(function(x){return'<div class="pm"><div class="pml">'+x[0]+'</div><div class="pmv">'+x[1]+'</div></div>';}).join('');
 
-  var trend=document.getElementById('incomeTrend'),monthValues=MO.map(function(m){return(s.income||{})[m]||0;}),trendMax=Math.max.apply(null,monthValues.concat([1]));
-  trend.innerHTML=MO.map(function(m,index){var value=monthValues[index],height=value>0?Math.max(4,value/trendMax*88):0;return'<div class="trend-month"><div class="trend-stick" style="--h:'+height+'%"><b>'+(value?fk(value):'')+'</b><i style="height:'+height+'%"></i></div><span>'+m+'</span></div>';}).join('');
+  var trend=document.getElementById('incomeTrend'),monthValues=MO.map(function(m){return(s.income||{})[m]||0;});
+  trend.innerHTML=renderIncomeTrend(monthValues);
 
   document.getElementById('loader').style.display='none';
   document.getElementById('dash').style.display='block';

@@ -631,12 +631,57 @@ function loadNextSteps(){
     const stored = raw ? JSON.parse(raw) : {};
     const legacyKeys=['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'];
     const legacy=legacyKeys.reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
-    nextSteps={...legacy,...stored};
+    const recovered=recoverNextStepsFromLocalCache();
+    nextSteps={...recovered,...legacy,...stored};
     localStorage.setItem(NEXTSTEPS_KEY,JSON.stringify(nextSteps));
   }
   catch(e){ nextSteps = {}; }
 }
 function saveNextSteps(){ localStorage.setItem(NEXTSTEPS_KEY, JSON.stringify(nextSteps)); }
+
+function recoverNextStepsFromLocalCache(){
+  const items=ROADMAP.flatMap(dynamic=>dynamic.items),byId=new Map(items.map(item=>[item.id,item.id])),byName=new Map(items.map(item=>[item.name.trim().toLowerCase(),item.id])),out={};
+  const put=(key,value)=>{
+    const clean=typeof value==='string'?value.trim():'';
+    if(!clean)return;
+    const id=byId.get(String(key))||byName.get(String(key).trim().toLowerCase());
+    if(id&&!out[id])out[id]=clean;
+  };
+  const visit=(value,depth=0)=>{
+    if(depth>7||value==null)return;
+    if(typeof value==='string'){
+      const text=value.trim();
+      if((text.startsWith('{')||text.startsWith('['))&&text.length<2000000){try{visit(JSON.parse(text),depth+1)}catch(e){}}
+      return;
+    }
+    if(Array.isArray(value)){value.forEach(item=>visit(item,depth+1));return;}
+    if(typeof value!=='object')return;
+    Object.entries(value).forEach(([key,entry])=>{
+      if(typeof entry==='string')put(key,entry);
+      if(entry&&typeof entry==='object'){
+        const itemId=entry.id||entry.itemId||entry.item_id||key;
+        ['nextStep','next_step','step','todo','action','whatNext'].some(field=>{if(typeof entry[field]==='string'&&entry[field].trim()){put(itemId,entry[field]);return true}return false});
+      }
+      visit(entry,depth+1);
+    });
+  };
+  // Ищем прежние снимки/бэкапы ERP, не затрагивая посторонние настройки.
+  for(let index=0;index<localStorage.length;index++){
+    const key=localStorage.key(index)||'';
+    if(/roadmap|dynamic|next|snapshot|backup|cache|erp/i.test(key)){try{visit(JSON.parse(localStorage.getItem(key)||'null'))}catch(e){}}
+  }
+  // До появления отдельной колонки «Что сделать дальше» шаги могли лежать в
+  // заметках будущих годов. Используем их только для ещё пустых направлений.
+  items.forEach(item=>{
+    if(out[item.id])return;
+    YEARS.filter(year=>year>CURRENT_YEAR).sort((a,b)=>a-b).some(year=>{
+      const note=rmCells[item.id+'_'+year]?.comment;
+      if(typeof note==='string'&&note.trim()){out[item.id]=note.trim();return true}
+      return false;
+    });
+  });
+  return out;
+}
 
 function loadYears(){
   try{
