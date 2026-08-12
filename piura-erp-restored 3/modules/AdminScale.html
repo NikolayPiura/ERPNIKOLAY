@@ -448,6 +448,9 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .hero-label,.section-overview-head small{display:none!important}.logo{font-size:1.08rem;letter-spacing:-.02em}.tab-name:empty{display:none}
 .topbar-inner{min-height:148px!important;padding:20px var(--layout-pad)!important;grid-template-columns:minmax(180px,1fr) auto minmax(180px,1fr)!important;grid-template-areas:"logo mode controls" "tabs tabs tabs"!important;column-gap:24px!important;row-gap:18px!important}.logo{justify-self:start;font-size:1.18rem!important}.browse-mode{justify-self:center!important;padding:5px!important;border-radius:14px!important}.browse-mode button{min-height:46px!important;padding:0 20px!important;font-size:.7rem!important}.topbar-right{justify-self:end!important}.dyn-tabs{justify-self:center!important;max-width:1320px!important;padding:12px!important;border:1px solid var(--border)!important;border-radius:16px!important;background:var(--bg2)!important;gap:8px!important}.dyn-tab{min-height:58px!important;border-radius:12px!important}.dyn-tabs.section-tabs{max-width:760px!important}.dyn-tabs.section-tabs .dyn-tab{min-width:180px!important;max-width:none!important}.dyn-tabs.section-tabs .tab-num{font-size:1.05rem!important}.tab-name{font-size:.7rem!important}@media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important}.logo{display:none}.browse-mode{justify-self:start!important}.dyn-tabs{max-width:100%!important}}
 .topbar-inner{grid-template-columns:auto auto 1fr auto!important;grid-template-areas:"logo mode . controls" "tabs tabs tabs tabs"!important}.browse-mode{justify-self:start!important}.dyn-tabs.section-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:min(760px,100%)!important;margin-inline:auto!important}.dyn-tabs.section-tabs .dyn-tab{width:100%!important;min-width:0!important;justify-content:center!important;text-align:center!important}@media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important}}
+/* One control rail: mode and section tabs share the same visual line. */
+.topbar-inner{min-height:104px!important;padding-block:14px!important;grid-template-columns:auto auto minmax(0,1fr) auto!important;grid-template-areas:"logo mode tabs controls"!important;column-gap:18px!important;row-gap:0!important}.dyn-tabs{align-self:center!important;justify-self:stretch!important;width:100%!important;max-width:none!important;margin:0!important;padding:5px!important;gap:5px!important}.dyn-tab{min-height:48px!important}.dyn-tabs.section-tabs{justify-self:start!important;width:min(720px,100%)!important;max-width:720px!important;margin:0!important;padding:5px!important}.dyn-tabs.section-tabs .dyn-tab{min-height:48px!important;padding-block:8px!important}.topbar-right{align-self:center!important}
+@media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:9px!important}.dyn-tabs,.dyn-tabs.section-tabs{max-width:100%!important;width:100%!important}}
 </style>
 </head>
 <body data-theme="dark">
@@ -850,10 +853,17 @@ function migrateCompactDefault(){
   persist();
 }
 
+function resetCompactStartup(){
+  db.__view={...(db.__view||{}),limit:4,expandedAll:false};
+  db.__expanded={};
+  persist();
+}
+
 load();
 migrateDocSnapshot();
 migrateDocSnapshotV2();
 migrateCompactDefault();
+resetCompactStartup();
 
 /* ══ APPLY DONE COLORS ══ */
 function applyDoneColors(){

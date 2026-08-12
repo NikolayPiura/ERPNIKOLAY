@@ -631,7 +631,8 @@ function loadNextSteps(){
     if(raw&&!localStorage.getItem('roadmap_nextsteps_backup_v1')) localStorage.setItem('roadmap_nextsteps_backup_v1',raw);
     const stored = raw ? JSON.parse(raw) : {};
     const legacyKeys=['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'];
-    const legacy=legacyKeys.reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
+    const legacyKeysExtra=['roadmap_next_steps_v1','roadmap_next_actions_v1','dynamics_nextsteps','dynamicsNextSteps'];
+    const legacy=[...legacyKeys,...legacyKeysExtra].reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
     const recovered=recoverNextStepsFromLocalCache();
     nextSteps={...recovered,...legacy,...stored};
     localStorage.setItem(NEXTSTEPS_KEY,JSON.stringify(nextSteps));
@@ -663,7 +664,7 @@ function recoverNextStepsFromLocalCache(){
       if(typeof entry==='string')put(key,entry);
       if(entry&&typeof entry==='object'){
         const itemId=entry.id||entry.itemId||entry.item_id||entry.name||entry.title||key;
-        ['nextStep','next_step','step','todo','action','whatNext','what_next','comment','note','text'].some(field=>{if(typeof entry[field]==='string'&&entry[field].trim()){put(itemId,entry[field]);return true}return false});
+        ['nextStep','next_step','nextAction','next_action','step','todo','action','whatNext','what_next','comment','note','text','value','description'].some(field=>{if(typeof entry[field]==='string'&&entry[field].trim()){put(itemId,entry[field]);return true}return false});
       }
       visit(entry,depth+1);
     });
@@ -671,7 +672,10 @@ function recoverNextStepsFromLocalCache(){
   // Ищем прежние снимки/бэкапы ERP, не затрагивая посторонние настройки.
   for(let index=0;index<localStorage.length;index++){
     const key=localStorage.key(index)||'';
-    if(/roadmap|dynamic|next|snapshot|backup|cache|erp/i.test(key)){try{visit(JSON.parse(localStorage.getItem(key)||'null'))}catch(e){}}
+    if(/roadmap|dynamic|next|snapshot|backup|cache|erp/i.test(key)){
+      const raw=localStorage.getItem(key)||'';
+      try{visit(JSON.parse(raw||'null'))}catch(e){if(raw&&raw.length<10000)put(key,raw)}
+    }
   }
   // До появления отдельной колонки «Что сделать дальше» шаги могли лежать в
   // заметках будущих годов. Используем их только для ещё пустых направлений.
