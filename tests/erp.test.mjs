@@ -200,6 +200,10 @@ test('утро и учёт времени сохраняются без отде
   assert.match(time, /SELECTED_DATE_KEY = 'tt_selected_date_v1'/);
   assert.match(time, /function persistSelectedDate\(\)/);
   assert.match(time, /DIRTY_KEY/);
+  assert.match(time, /id="timeEditButton"/);
+  assert.match(time, /body>\.hero-topbar \.time-edit-button/);
+  const syncStatusBlock = time.match(/<div class="sync-status"[\s\S]*?<\/div>/)?.[0] || '';
+  assert.doesNotMatch(syncStatusBlock, /timeEditButton/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);
   assert.doesNotMatch(time, /id="historyCard"|id="histWrap"|function renderHistory|function setHistoryOpen/);
   assert.match(morning, /morn_hidden_restore_v2/);
@@ -360,7 +364,9 @@ test('утро редактируется локально и восстанав
 test('климат показывает три простых показателя без шкал и считает 73°F нормой', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /const low=68,high=75/);
-  assert.match(overview, /ideal:'Идеал'/);
+  assert.match(overview, /Идеал 68–75°F/);
+  assert.match(overview, /Идеал 45–50%/);
+  assert.match(overview, /Идеал до 500 ppm/);
   const card = overview.match(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/s)?.[0] || '';
   assert.doesNotMatch(card, /air-range|air-delta|marker/);
   assert.match(card, /air-status/);

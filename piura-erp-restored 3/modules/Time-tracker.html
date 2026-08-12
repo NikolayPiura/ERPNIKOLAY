@@ -417,6 +417,8 @@ body>.hero-topbar{min-height:112px!important;padding:22px clamp(42px,5.5vw,104px
 @media(max-width:850px){body>.hero-topbar{padding-inline:16px!important}.hero{padding:38px 18px!important}.hero-big{font-size:72px!important}.content{width:calc(100% - 28px)!important;padding-top:26px!important}}
 /* 12.08.2026 — stronger day navigation rhythm and clearer card separation. */
 body>.hero-topbar{min-height:142px!important;padding:28px clamp(48px,6vw,118px)!important;column-gap:64px!important}.hero-date-group{gap:32px!important;min-height:82px!important}.hero-weekday{min-width:160px!important;font-size:22px!important}.hero-fulldate{min-width:390px!important;font-size:42px!important}.nav-btn{flex-basis:54px!important;width:54px!important;height:54px!important}.btn-today{height:54px!important;padding-inline:28px!important}.hero{padding-top:82px!important}.entry-grid{gap:30px!important;padding:30px!important}.entry-card,.add-card{min-height:186px!important}.card-head{padding:30px 32px!important}@media(max-width:1100px){.hero-fulldate{min-width:300px!important;font-size:34px!important}.hero-date-group{gap:22px!important}}@media(max-width:850px){body>.hero-topbar{min-height:104px!important;padding:16px!important}.hero-date-group{min-height:64px!important;gap:14px!important}.hero-weekday{min-width:110px!important;font-size:17px!important}.hero-fulldate{min-width:220px!important;font-size:27px!important}.hero{padding-top:44px!important}}
+/* The editor is independent from sync state and remains visible after every refresh. */
+body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!important;right:clamp(18px,2.2vw,42px)!important;z-index:1002!important;display:grid!important;visibility:visible!important;opacity:1!important;width:40px!important;height:40px!important;place-items:center!important;transform:translateY(-50%)!important}.hero-right{margin-right:56px!important}@media(max-width:850px){body>.hero-topbar{padding-right:70px!important}.hero-right{display:none!important}.time-edit-button{right:16px!important}}
 </style>
 </head>
 <body>
@@ -435,7 +437,6 @@ body>.hero-topbar{min-height:142px!important;padding:28px clamp(48px,6vw,118px)!
         <div class="dot"></div>
         <span id="syncText">Google Sheets</span>
       </div>
-      <button class="btn-icon-sq" onclick="openManageModal()" title="Редактировать категории" aria-label="Редактировать категории">✎</button>
       <button class="btn-export" onclick="doExport()">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
           <path d="M8 1v9m0 0L5 7m3 3 3-3M2 12v1.5A1.5 1.5 0 003.5 15h9a1.5 1.5 0 001.5-1.5V12"
@@ -444,6 +445,7 @@ body>.hero-topbar{min-height:142px!important;padding:28px clamp(48px,6vw,118px)!
         Скачать Excel
       </button>
     </div>
+    <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Редактировать категории" aria-label="Редактировать категории">✎</button>
 </div>
 
 <!-- ═══ HERO ═══ -->
