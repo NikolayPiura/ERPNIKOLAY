@@ -391,6 +391,12 @@ test('дорожная карта показывает только 2022–2026 
   assert.match(roadmap, /nextHead\.textContent='Что сделать дальше'/);
   assert.match(roadmap, /legacyKeys=\['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'\]/);
   assert.match(roadmap, /roadmap_nextsteps_history_v1/);
+  assert.match(roadmap, /roadmap_nextsteps_restore_20260812_v1/);
+  assert.match(roadmap, /const HISTORICAL_NEXTSTEPS_V1 = Object\.freeze\(\{/);
+  assert.match(roadmap, /'d1-0':'Купить большие шторы, которые будут автоматически открываться'/);
+  assert.match(roadmap, /'d1-12':'Смотреть 1 видео Минаева в неделю, найти видео'/);
+  assert.match(roadmap, /nextSteps=\{\.\.\.historical,\.\.\.recovered,\.\.\.legacy,\.\.\.stored\}/);
+  assert.match(roadmap, /if\(shouldRestoreHistorical\)localStorage\.setItem\(NEXTSTEPS_RESTORE_KEY,'1'\)/);
   assert.match(roadmap, /history\.slice\(-40\)/);
   assert.match(roadmap, /Object\.keys\(stored\|\|\{\}\)\.length/);
   assert.match(roadmap, /hasStored=Object\.keys\(stored\|\|\{\}\)\.length>0,recovered=hasStored\?\{\}:recoverNextStepsFromLocalCache\(\)/);

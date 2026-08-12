@@ -494,6 +494,7 @@ const SETTINGS_KEY = 'roadmap_settings_v3';
 const YEARS_KEY = 'roadmap_years_v1';
 const NEXTSTEPS_KEY = 'roadmap_nextsteps_v1';
 const NEXTSTEPS_HISTORY_KEY = 'roadmap_nextsteps_history_v1';
+const NEXTSTEPS_RESTORE_KEY = 'roadmap_nextsteps_restore_20260812_v1';
 const DYNSORT_KEY = 'roadmap_dynsort_v1';
 
 let YEARS = [2022,2023,2024,2025,2026,2027,2028,2029,2030,2040,2050,2060];
@@ -547,6 +548,29 @@ const ROADMAP = [
 ];
 
 const BASE_NUM = { red:2, yellow:5, green:8 };
+
+/*
+ * Verified «Что сделать дальше» snapshot from 1–8 August 2026.
+ * The archived roadmap had notes in all 13 rows of the first dynamic; the
+ * remaining dynamics were empty. This snapshot is applied once, additively,
+ * so a value already saved by the user always wins and later deletions stay
+ * deleted instead of being silently restored on every page load.
+ */
+const HISTORICAL_NEXTSTEPS_V1 = Object.freeze({
+  'd1-0':'Купить большие шторы, которые будут автоматически открываться',
+  'd1-1':'Достичь 170 и поддерживать',
+  'd1-2':'Не пользоваться телефоном в спальне',
+  'd1-3':'Ходить в душ каждый день',
+  'd1-4':'Выстроить более чёткий график к барберу, купить одежду',
+  'd1-5':'Выстроить магию утра, чётче',
+  'd1-6':'Не есть после 6, вернуть то, что было в прошлом году',
+  'd1-7':'Делать кайдзен-час в течение 6 месяцев',
+  'd1-8':'Закончить цикл с зубами',
+  'd1-9':'Начать учить английский в закрытом подходе',
+  'd1-10':'Изучить курс по инвестициям более ответственно, пройти его',
+  'd1-11':'Делать разминку каждое утро',
+  'd1-12':'Смотреть 1 видео Минаева в неделю, найти видео'
+});
 
 let rmCells = {};
 let nextSteps = {};
@@ -635,10 +659,13 @@ function loadNextSteps(){
     const legacyKeysExtra=['roadmap_next_steps_v1','roadmap_next_actions_v1','dynamics_nextsteps','dynamicsNextSteps'];
     const legacy=[...legacyKeys,...legacyKeysExtra].reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
     const hasStored=Object.keys(stored||{}).length>0,recovered=hasStored?{}:recoverNextStepsFromLocalCache();
-    nextSteps=hasStored?stored:{...recovered,...legacy};
+    const shouldRestoreHistorical=localStorage.getItem(NEXTSTEPS_RESTORE_KEY)!=='1';
+    const historical=shouldRestoreHistorical?HISTORICAL_NEXTSTEPS_V1:{};
+    nextSteps={...historical,...recovered,...legacy,...stored};
     saveNextSteps();
+    if(shouldRestoreHistorical)localStorage.setItem(NEXTSTEPS_RESTORE_KEY,'1');
   }
-  catch(e){ nextSteps = {}; }
+  catch(e){ nextSteps = { ...HISTORICAL_NEXTSTEPS_V1 }; }
 }
 function saveNextSteps(){
   const snapshot=JSON.parse(JSON.stringify(nextSteps||{})),raw=JSON.stringify(snapshot);
