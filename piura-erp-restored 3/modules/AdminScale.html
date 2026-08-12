@@ -451,6 +451,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 /* One control rail: mode and section tabs share the same visual line. */
 .topbar-inner{min-height:104px!important;padding-block:14px!important;grid-template-columns:auto auto minmax(0,1fr) auto!important;grid-template-areas:"logo mode tabs controls"!important;column-gap:18px!important;row-gap:0!important}.dyn-tabs{align-self:center!important;justify-self:stretch!important;width:100%!important;max-width:none!important;margin:0!important;padding:5px!important;gap:5px!important}.dyn-tab{min-height:48px!important}.dyn-tabs.section-tabs{justify-self:start!important;width:min(720px,100%)!important;max-width:720px!important;margin:0!important;padding:5px!important}.dyn-tabs.section-tabs .dyn-tab{min-height:48px!important;padding-block:8px!important}.topbar-right{align-self:center!important}
 @media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:9px!important}.dyn-tabs,.dyn-tabs.section-tabs{max-width:100%!important;width:100%!important}}
+/* Larger, quieter header: controls are the title. */
+.logo{display:none!important}.topbar-inner{min-height:118px!important;padding-block:19px!important;grid-template-columns:auto minmax(0,1fr) auto!important;grid-template-areas:"mode tabs controls"!important;column-gap:22px!important}.dyn-tabs{min-height:60px!important}.dyn-tab{min-height:50px!important}@media(max-width:1050px){.topbar-inner{min-height:138px!important;grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:12px!important}}
 </style>
 </head>
 <body data-theme="dark">

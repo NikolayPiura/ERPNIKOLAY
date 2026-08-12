@@ -493,6 +493,7 @@ const CELLS_KEY = 'roadmap_cells_v1';
 const SETTINGS_KEY = 'roadmap_settings_v3';
 const YEARS_KEY = 'roadmap_years_v1';
 const NEXTSTEPS_KEY = 'roadmap_nextsteps_v1';
+const NEXTSTEPS_HISTORY_KEY = 'roadmap_nextsteps_history_v1';
 const DYNSORT_KEY = 'roadmap_dynsort_v1';
 
 let YEARS = [2022,2023,2024,2025,2026,2027,2028,2029,2030,2040,2050,2060];
@@ -628,18 +629,28 @@ function saveCells(){ localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells)); 
 function loadNextSteps(){
   try{
     const raw = localStorage.getItem(NEXTSTEPS_KEY);
-    if(raw&&!localStorage.getItem('roadmap_nextsteps_backup_v1')) localStorage.setItem('roadmap_nextsteps_backup_v1',raw);
     const stored = raw ? JSON.parse(raw) : {};
+    if(raw&&Object.keys(stored||{}).length&&!localStorage.getItem('roadmap_nextsteps_backup_v1')) localStorage.setItem('roadmap_nextsteps_backup_v1',raw);
     const legacyKeys=['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'];
     const legacyKeysExtra=['roadmap_next_steps_v1','roadmap_next_actions_v1','dynamics_nextsteps','dynamicsNextSteps'];
     const legacy=[...legacyKeys,...legacyKeysExtra].reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
-    const recovered=recoverNextStepsFromLocalCache();
-    nextSteps={...recovered,...legacy,...stored};
-    localStorage.setItem(NEXTSTEPS_KEY,JSON.stringify(nextSteps));
+    const hasStored=Object.keys(stored||{}).length>0,recovered=hasStored?{}:recoverNextStepsFromLocalCache();
+    nextSteps=hasStored?stored:{...recovered,...legacy};
+    saveNextSteps();
   }
   catch(e){ nextSteps = {}; }
 }
-function saveNextSteps(){ localStorage.setItem(NEXTSTEPS_KEY, JSON.stringify(nextSteps)); }
+function saveNextSteps(){
+  const snapshot=JSON.parse(JSON.stringify(nextSteps||{})),raw=JSON.stringify(snapshot);
+  localStorage.setItem(NEXTSTEPS_KEY,raw);
+  if(!Object.values(snapshot).some(value=>String(value||'').trim()))return;
+  let history=[];
+  try{const saved=JSON.parse(localStorage.getItem(NEXTSTEPS_HISTORY_KEY)||'[]');if(Array.isArray(saved))history=saved}catch(e){}
+  if(JSON.stringify(history.at(-1)?.data||{})!==raw){
+    history.push({savedAt:new Date().toISOString(),data:snapshot});
+    localStorage.setItem(NEXTSTEPS_HISTORY_KEY,JSON.stringify(history.slice(-40)));
+  }
+}
 
 function recoverNextStepsFromLocalCache(){
   const items=ROADMAP.flatMap(dynamic=>dynamic.items),normalize=value=>String(value||'').trim().toLowerCase().replace(/[«»"'`]/g,'').replace(/[^a-zа-яё0-9]+/gi,' '),byId=new Map(items.map(item=>[String(item.id),item.id])),byName=new Map(items.map(item=>[normalize(item.name),item.id])),out={};

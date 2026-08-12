@@ -153,8 +153,8 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /climateProfile\('temperature'/);
   assert.match(overview, /climateProfile\('humidity'/);
   assert.match(overview, /climateProfile\('air'/);
-  assert.match(overview, /Слишком влажно/);
-  assert.match(overview, /Нужно проветрить/);
+  assert.match(overview, /\?'Влажно':'Сухо'/);
+  assert.match(overview, /\?'Чисто':'Проветрить'/);
   assert.doesNotMatch(overview, /Что делать|норма 68/);
   assert.match(overview, /function climateNumber\(raw\)/);
   assert.match(overview, /raw==null\|\|raw===''/);
@@ -269,7 +269,19 @@ test('ПС №1 использует один дневной или недель
   const calendar = Function(`${calendarSource};return{thursdayFor,daysFor,iso}`)();
   assert.equal(calendar.thursdayFor('2026-08-10'),'2026-08-06');
   assert.deepEqual(calendar.daysFor('2026-08-06').map(calendar.iso),['2026-08-06','2026-08-07','2026-08-08','2026-08-09','2026-08-10','2026-08-11','2026-08-12']);
+  const toggleSource = weekly.match(/function toggleCheck\(taskId,date\).*?(?=\nfunction shiftIso)/s)?.[0];
+  const toggled = Function(`${calendarSource};const num=value=>Number(value)||0;let selectedWeek='2026-08-13',S={tasks:[{id:301,dynamicId:3,w:20}],weeks:{}};function ensureWeek(anchor=selectedWeek){return S.weeks[anchor]||(S.weeks[anchor]={daily:{}})}function freezeWeek(anchor){const week=ensureWeek(anchor);week.weights=week.weights||{};week.taskDynamics=week.taskDynamics||{};S.tasks.forEach(task=>{if(!Number.isFinite(Number(week.weights[task.id])))week.weights[task.id]=num(task.w);if(!Number.isFinite(Number(week.taskDynamics[task.id])))week.taskDynamics[task.id]=num(task.dynamicId)});return week}function persist(){}function render(){}${toggleSource};toggleCheck(301,'2026-08-06');toggleCheck(301,'2026-08-07');return S`)();
+  assert.deepEqual(Object.keys(toggled.weeks),['2026-08-06']);
+  assert.equal(toggled.weeks['2026-08-06'].daily['2026-08-06']['301'],1);
+  assert.equal(toggled.weeks['2026-08-06'].daily['2026-08-07']['301'],1);
+  const realignSource = weekly.match(/function weeksNeedRealignment\(\).*?(?=\nfunction migrateTaskCatalog)/s)?.[0];
+  const migrated = Function(`${calendarSource};const num=value=>Number(value)||0;let S={weeks:{'2026-08-13':{daily:{'2026-08-06':{'301':1},'2026-08-07':{'301':1}},weights:{301:20},taskDynamics:{301:3}}}};${realignSource};const needed=weeksNeedRealignment();realignWeeksToThursday();return{needed,S}`)();
+  assert.equal(migrated.needed,true);
+  assert.deepEqual(Object.keys(migrated.S.weeks),['2026-08-06']);
   assert.match(weekly, /function realignWeeksToThursday\(\)/);
+  assert.match(weekly, /function weeksNeedRealignment\(\)/);
+  assert.match(weekly, /needsWeekMigration\|\|weeksNeedRealignment\(\)/);
+  assert.match(weekly, /function toggleCheck\(taskId,date\)\{const anchor=thursdayFor\(date\),week=freezeWeek\(anchor\)/);
   assert.match(weekly, /needsWeekMigration/);
   assert.match(weekly, /--chart-accent/);
   assert.match(weekly, /<path class="chart-line"/);
@@ -280,7 +292,7 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="scoreLine"/);
   assert.match(weekly, /'#35d8f5'/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=13,DYNAMICS_VERSION=1,TASKS_VERSION=3,WEEK_CYCLE_VERSION=2/);
+  assert.match(weekly, /SCHEMA_VERSION=13,DYNAMICS_VERSION=1,TASKS_VERSION=3,WEEK_CYCLE_VERSION=3/);
 });
 
 test('фонды поддерживают отдельные цели 2026 и 2027 без дублирующих названий', () => {
@@ -345,10 +357,20 @@ test('утро редактируется локально и восстанав
   assert.doesNotMatch(morning, /setTimeout\([^)]*HIDDEN_RESTORE_KEY/);
 });
 
+test('климат показывает три простых показателя без шкал и считает 73°F нормой', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  assert.match(overview, /const low=68,high=75/);
+  assert.match(overview, /'Комфорт 68–75°F'/);
+  const card = overview.match(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/s)?.[0] || '';
+  assert.doesNotMatch(card, /air-range|air-delta|marker/);
+  assert.match(card, /air-status/);
+});
+
 test('админ-шкала полностью исключает боевой план из интерфейса и синхронизации', () => {
   const admin = read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(admin, /<title>Админ-шкала<\/title>/);
   assert.match(admin, /class="logo">Админ-шкала<\/div>/);
+  assert.match(admin, /\.logo\{display:none!important\}/);
   assert.doesNotMatch(admin, /Боевой план|BATTLE_PLAN|__battleSync|battleAvailable/);
   assert.doesNotMatch(admin, /block-open|function isBlockOpen/);
   assert.match(admin, /\.level-block:not\(\.block-expanded\) \.item-row\.item-overflow\{display:none\}/);
@@ -362,6 +384,10 @@ test('дорожная карта показывает только 2022–2026 
   assert.doesNotMatch(roadmap, /years-toggle-btn/);
   assert.match(roadmap, /nextHead\.textContent='Что сделать дальше'/);
   assert.match(roadmap, /legacyKeys=\['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'\]/);
+  assert.match(roadmap, /roadmap_nextsteps_history_v1/);
+  assert.match(roadmap, /history\.slice\(-40\)/);
+  assert.match(roadmap, /Object\.keys\(stored\|\|\{\}\)\.length/);
+  assert.match(roadmap, /hasStored=Object\.keys\(stored\|\|\{\}\)\.length>0,recovered=hasStored\?\{\}:recoverNextStepsFromLocalCache\(\)/);
   assert.doesNotMatch(read('index.html'), /Показывать скрытые годы/);
 });
 
