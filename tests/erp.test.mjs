@@ -153,7 +153,7 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /climateProfile\('temperature'/);
   assert.match(overview, /climateProfile\('humidity'/);
   assert.match(overview, /climateProfile\('air'/);
-  assert.match(overview, /\?'Влажно':'Сухо'/);
+  assert.match(overview, /v>50\?'Очень влажно'/);
   assert.match(overview, /\?'Чисто':'Проветрить'/);
   assert.doesNotMatch(overview, /Что делать|норма 68/);
   assert.match(overview, /function climateNumber\(raw\)/);
@@ -361,11 +361,13 @@ test('утро редактируется локально и восстанав
   assert.doesNotMatch(morning, /setTimeout\([^)]*HIDDEN_RESTORE_KEY/);
 });
 
-test('климат показывает три простых показателя без шкал и считает 73°F нормой', () => {
+test('климат показывает персональные идеалы 70°F и 45%, считая 73°F жарой', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
-  assert.match(overview, /const low=68,high=75/);
-  assert.match(overview, /Идеал 68–75°F/);
-  assert.match(overview, /Идеал 45–50%/);
+  assert.match(overview, /const target=70,tolerance=\.5/);
+  assert.match(overview, /v>target\?'Жарко':'Прохладно'/);
+  assert.match(overview, /v>50\?'Очень влажно'/);
+  assert.match(overview, /Идеал 70°F/);
+  assert.match(overview, /Идеал 45%/);
   assert.match(overview, /Идеал до 500 ppm/);
   const card = overview.match(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/s)?.[0] || '';
   assert.doesNotMatch(card, /air-range|air-delta|marker/);
