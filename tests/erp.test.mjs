@@ -360,7 +360,7 @@ test('утро редактируется локально и восстанав
 test('климат показывает три простых показателя без шкал и считает 73°F нормой', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /const low=68,high=75/);
-  assert.match(overview, /'Комфорт 68–75°F'/);
+  assert.match(overview, /ideal:'Идеал'/);
   const card = overview.match(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/s)?.[0] || '';
   assert.doesNotMatch(card, /air-range|air-delta|marker/);
   assert.match(card, /air-status/);
