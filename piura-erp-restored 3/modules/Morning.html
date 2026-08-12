@@ -588,9 +588,9 @@ body.editing .add-block-btn{display:flex}
 .item.checked{animation:none!important}
 .head-btns{gap:12px}.icon-btn{width:52px;height:52px}.icon-btn#btnEdit{width:auto;padding:0 18px;gap:9px;border-color:rgba(91,157,255,.35);color:#8dbaff;font-weight:800}.icon-btn#btnEdit span{display:inline}.icon-btn#btnEdit.on{background:#5b9dff;color:#08101d;border-color:#5b9dff}
 .blocks{gap:20px}.block{padding:32px 40px 28px}.item{min-height:46px;padding:11px 8px}.hidden-tray{line-height:1.55}.hidden-chip{font-weight:700}
-.head{grid-template-columns:minmax(260px,1fr) auto auto!important;overflow:visible!important}.head-clock{grid-column:3;min-width:max-content}.head-date{grid-column:2}.head-btns{display:flex!important;align-items:center}.icon-btn#btnEdit{display:inline-flex!important;min-width:174px;justify-content:center;box-shadow:0 12px 34px rgba(91,157,255,.12)}
+.head{grid-template-columns:minmax(260px,1fr) auto auto!important;overflow:visible!important}.head-clock{grid-column:3;min-width:max-content}.head-date{grid-column:2}.head-btns{display:flex!important;align-items:center}.icon-btn#btnEdit{display:inline-flex!important;min-width:174px;justify-content:center;box-shadow:0 12px 34px rgba(91,157,255,.12)}.morning-actions{display:flex;justify-content:flex-end;margin-top:18px}.morning-actions #btnEdit{min-width:188px;height:52px}.morning-actions #btnEdit span{display:inline!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
-@media(max-width:900px){.head{grid-template-columns:1fr auto!important}.head-date{display:none}.head-clock{grid-column:2}.icon-btn#btnEdit{min-width:52px;padding:0!important}.icon-btn#btnEdit span{display:none}}
+@media(max-width:900px){.head{grid-template-columns:1fr auto!important}.head-date{display:none}.head-clock{grid-column:2}.morning-actions #btnEdit{min-width:176px!important;padding:0 16px!important}.morning-actions #btnEdit span{display:inline!important}}
 </style>
 </head>
 <body>
@@ -616,12 +616,6 @@ body.editing .add-block-btn{display:flex}
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
         </button>
-        <button class="icon-btn" id="btnEdit" title="Редактировать">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-          </svg>
-          <span>Редактировать</span>
-        </button>
         <button class="icon-btn" id="btnSettings" title="Настройки">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
@@ -631,6 +625,13 @@ body.editing .add-block-btn{display:flex}
       </div>
     </div>
   </header>
+
+  <div class="morning-actions">
+    <button class="icon-btn" id="btnEdit" title="Редактировать">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Редактировать</span>
+    </button>
+  </div>
 
   <main class="blocks" id="blocks"></main>
 
@@ -802,7 +803,7 @@ const DATA_VERSION_KEY = 'morn_v8_data_version';
 const DATA_VERSION = 2;
 const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v2';
 const HIDDEN_REVEAL_KEY = 'morn_hidden_reveal_v3';
-const HIDDEN_LAYOUT_KEY = 'morn_hidden_layout_v4';
+const HIDDEN_LAYOUT_KEY = 'morn_hidden_layout_v5';
 
 // Тексты из предыдущей версии нужны только для безопасной миграции: если
 // пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
@@ -1095,7 +1096,7 @@ function renderBlocks(){
         <div class="block-count">${checkedCount}<span class="sl">/</span><span class="tot">${total}</span></div>
       </div>
       <div class="block-items" data-block-items="${b.id}">${itemsHTML}</div>
-      <div class="hidden-tray ${hiddenItems.length?'has-items':''}"><b>Скрытые пункты:</b> ${hiddenItems.map(it=>`<button class="hidden-chip" data-show-block="${b.id}" data-show-item="${it.id}" title="Вернуть пункт">${escapeHtml(it.words.map(w=>w.t).join(' '))} · показать</button>`).join('')}</div>
+      <div class="hidden-tray ${hiddenItems.length?'has-items':''}"><b>Скрытые пункты:</b> ${hiddenItems.map(it=>`<button class="hidden-chip" data-show-block="${b.id}" data-show-item="${it.id}" title="Показать пункт">◉ ${escapeHtml(it.words.map(w=>w.t).join(' '))}</button>`).join('')}</div>
       <div class="edit-hint">Текст пункта теперь можно переписать полностью. Тяни за <b>⋮⋮</b> — меняй порядок; «глаз» временно скрывает пункт.</div>
       <div class="additem">
         <input class="additem-input" placeholder="новый пункт…" data-add-block="${b.id}" />

@@ -628,6 +628,7 @@ function saveCells(){ localStorage.setItem(CELLS_KEY, JSON.stringify(rmCells)); 
 function loadNextSteps(){
   try{
     const raw = localStorage.getItem(NEXTSTEPS_KEY);
+    if(raw&&!localStorage.getItem('roadmap_nextsteps_backup_v1')) localStorage.setItem('roadmap_nextsteps_backup_v1',raw);
     const stored = raw ? JSON.parse(raw) : {};
     const legacyKeys=['roadmap_nextsteps','roadmapNextSteps','my_dynamics_nextsteps_v1','myDynamicsNextSteps'];
     const legacy=legacyKeys.reduce((all,key)=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');return value&&typeof value==='object'?{...all,...value}:all}catch{return all}},{});
@@ -640,11 +641,13 @@ function loadNextSteps(){
 function saveNextSteps(){ localStorage.setItem(NEXTSTEPS_KEY, JSON.stringify(nextSteps)); }
 
 function recoverNextStepsFromLocalCache(){
-  const items=ROADMAP.flatMap(dynamic=>dynamic.items),byId=new Map(items.map(item=>[item.id,item.id])),byName=new Map(items.map(item=>[item.name.trim().toLowerCase(),item.id])),out={};
+  const items=ROADMAP.flatMap(dynamic=>dynamic.items),normalize=value=>String(value||'').trim().toLowerCase().replace(/[«»"'`]/g,'').replace(/[^a-zа-яё0-9]+/gi,' '),byId=new Map(items.map(item=>[String(item.id),item.id])),byName=new Map(items.map(item=>[normalize(item.name),item.id])),out={};
   const put=(key,value)=>{
     const clean=typeof value==='string'?value.trim():'';
     if(!clean)return;
-    const id=byId.get(String(key))||byName.get(String(key).trim().toLowerCase());
+    const rawKey=String(key||''),simpleKey=rawKey.replace(/^(?:next|step|todo|action)[_:\- ]*/i,'').replace(/[_:\- ](?:next|step|todo|action|20\d{2})$/i,''),normalized=normalize(simpleKey);
+    const fuzzy=normalized.length>=4?items.find(item=>normalized.includes(normalize(item.name))||normalize(item.name).includes(normalized)):null;
+    const id=byId.get(rawKey)||byId.get(simpleKey)||byName.get(normalized)||fuzzy?.id;
     if(id&&!out[id])out[id]=clean;
   };
   const visit=(value,depth=0)=>{
@@ -659,8 +662,8 @@ function recoverNextStepsFromLocalCache(){
     Object.entries(value).forEach(([key,entry])=>{
       if(typeof entry==='string')put(key,entry);
       if(entry&&typeof entry==='object'){
-        const itemId=entry.id||entry.itemId||entry.item_id||key;
-        ['nextStep','next_step','step','todo','action','whatNext'].some(field=>{if(typeof entry[field]==='string'&&entry[field].trim()){put(itemId,entry[field]);return true}return false});
+        const itemId=entry.id||entry.itemId||entry.item_id||entry.name||entry.title||key;
+        ['nextStep','next_step','step','todo','action','whatNext','what_next','comment','note','text'].some(field=>{if(typeof entry[field]==='string'&&entry[field].trim()){put(itemId,entry[field]);return true}return false});
       }
       visit(entry,depth+1);
     });
@@ -674,8 +677,8 @@ function recoverNextStepsFromLocalCache(){
   // заметках будущих годов. Используем их только для ещё пустых направлений.
   items.forEach(item=>{
     if(out[item.id])return;
-    YEARS.filter(year=>year>CURRENT_YEAR).sort((a,b)=>a-b).some(year=>{
-      const note=rmCells[item.id+'_'+year]?.comment;
+    Object.entries(rmCells).filter(([key])=>key.startsWith(item.id+'_')&&Number(key.slice(key.lastIndexOf('_')+1))>CURRENT_YEAR).sort(([a],[b])=>Number(a.slice(a.lastIndexOf('_')+1))-Number(b.slice(b.lastIndexOf('_')+1))).some(([,cell])=>{
+      const note=cell&&typeof cell==='object'?(cell.comment||cell.note||cell.text||cell.nextStep):'';
       if(typeof note==='string'&&note.trim()){out[item.id]=note.trim();return true}
       return false;
     });
