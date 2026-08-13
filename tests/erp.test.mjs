@@ -7,9 +7,33 @@ const read = path => readFileSync(new URL(path, root), 'utf8');
 
 test('единая оболочка содержит все согласованные сервисы', () => {
   const shell = read('index.html');
-  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Мои динамики','Управление','Фонд PFF','Фонд Москва','SAFE','Доходы']) {
+  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Мои динамики','Управление','Фонд PFF','Фонд Москва','SAFE','Доходы','Личный доход','FP']) {
     assert.match(shell, new RegExp(label));
   }
+});
+
+test('личный доход подключает только согласованные листы Google Sheets в режиме чтения', () => {
+  const shell = read('index.html');
+  const loader = read('piura-erp-restored 3/modules/Personal-Sheets.js');
+  const income = read('piura-erp-restored 3/modules/Personal-Income.html');
+  const fp = read('piura-erp-restored 3/modules/Personal-FP.html');
+  assert.match(shell, /id:'personal-income',title:"Личный доход"/);
+  assert.match(shell, /Personal-Income\.html/);
+  assert.match(shell, /Personal-FP\.html/);
+  assert.match(loader, /1GWFyFKRVq1Z4x68gWICBmlilqP5FzYOXXBkC4xYzEbA/);
+  for (const sheet of ['2026 (НЕД)','2026 (ФП)','2026 (РАСХОД)','2026 (МЕНТОР)','2026 (СРЕД)','2026 (ПЛАН)','2026 (ФП №1)']) assert.ok(loader.includes(sheet));
+  for (const sheet of ['2026 (МЕС)','2026 (ПРИОРИТЕТЫ)','2026 (СОБ. КАП)']) assert.doesNotMatch(loader,new RegExp(sheet.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+  assert.match(loader, /gviz\/tq/);
+  assert.match(income, /data-tab="income">Доход/);
+  assert.match(income, /data-tab="mentor">Ментор/);
+  assert.match(income, /data-tab="average">Средний/);
+  assert.match(income, /data-tab="plan">План/);
+  assert.match(fp, /data-tab="fp">2026 FP/);
+  assert.match(fp, /data-tab="expense">2026 Расход/);
+  assert.match(fp, /data-tab="fp1">FP №1/);
+  assert.match(income, /data-month="-1"/);
+  assert.match(fp, /data-month="-1"/);
+  assert.doesNotMatch(income+fp, /<input|contenteditable|textarea/i);
 });
 
 test('Personal Finance удалён из файлов и навигации', () => {

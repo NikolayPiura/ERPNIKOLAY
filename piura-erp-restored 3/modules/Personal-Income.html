@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Личный доход</title><link rel="stylesheet" href="Personal-Sheets.css"><script src="Personal-Sheets.js"></script></head>
+<body><main class="ps-app">
+  <header class="ps-header"><div class="ps-title"><h1>Личный доход</h1><p>Google Sheets · только чтение</p></div><div class="ps-live" id="syncState"><i></i><span>Подключение…</span><button class="ps-refresh" id="refresh" type="button" title="Обновить данные" aria-label="Обновить данные">↻</button></div></header>
+  <nav class="ps-tabs" id="tabs"><button class="ps-tab on" data-tab="income">Доход</button><button class="ps-tab" data-tab="mentor">Ментор</button><button class="ps-tab" data-tab="average">Средний</button><button class="ps-tab" data-tab="plan">План</button></nav>
+  <section id="content"><div class="ps-loading">Загрузка таблицы</div></section>
+</main><script>
+const S=window.PIURASheet,content=document.getElementById('content'),syncState=document.getElementById('syncState');
+const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const SOURCES=['PFF (Дивиденды)','PFF (Управляющий)','КЭ (Заработная плата)','КЭ (Дивиденды)','Наставник (Абонементы)','Наставник (Доп. проекты)','Москва (Управляющий)','Solid (Управляющий)','Снитч (Итоговый доход)'];
+const CATEGORY_LINKS={'Климат':'КЭ · заработная плата','Инвестиции':'PFF · дивиденды и управление','Наставничество':'Абонементы и дополнительные проекты','Учредитель':'КЭ · дивиденды','Управление деньгами':'Москва и Solid · управление','Снитч':'Итоговый доход Снитч'};
+let tab='income',month=new Date().getMonth(),serial=0;
+function normalized(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
+function rowNamed(rows,name){return rows.find(row=>normalized(S.text(row[0]))===normalized(name))}
+function sum(row,cols){return cols.reduce((total,col)=>total+S.number(row?.[col]),0)}
+function weekCols(rows,header,start){return (rows[header]||[]).map((cell,index)=>index>=start&&S.monthOf(cell)===month?index:-1).filter(index=>index>=0)}
+function toolbar(title,controls=''){return `<section class="ps-toolbar"><h2>${S.esc(title)}</h2>${controls}</section>`}
+function monthControl(){return `<div class="ps-months"><button data-month="-1" aria-label="Предыдущий месяц">‹</button><strong>${MONTHS[month]} 2026</strong><button data-month="1" aria-label="Следующий месяц">›</button></div>`}
+function kpis(items){return `<section class="ps-kpis">${items.map(item=>`<article class="ps-kpi"><span>${S.esc(item[0])}</span><strong>${S.esc(item[1])}</strong><small>${S.esc(item[2]||'')}</small></article>`).join('')}</section>`}
+function table(headers,rows,{title='',note='',totalLast=false}={}){return `<section class="ps-panel"><div class="ps-panel-head"><h3>${S.esc(title)}</h3><span>${S.esc(note)}</span></div><div class="ps-scroll"><table class="ps-table"><thead><tr>${headers.map(h=>`<th>${S.esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr class="${totalLast&&index===rows.length-1?'total':''}">${row.map((value,col)=>`<td class="${col&&Number(value)<0?'negative':''}">${S.esc(value===''||value===null||value===undefined?'—':value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`}
+function display(cell){return S.text(cell)||'—'}
+function bindMonth(){content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{month=(month+Number(button.dataset.month)+12)%12;render()})}
+function renderIncome(payload,planPayload){
+  const rows=S.cells(payload),planRows=S.cells(planPayload),cols=weekCols(rows,0,4),categories=['Климат','Инвестиции','Наставничество','Учредитель','Управление деньгами','Снитч'],categoryRows=categories.map(name=>rowNamed(rows,name)).filter(Boolean),totalRow=rows.at(-1),planTotal=planRows.filter(row=>normalized(S.text(row[0]))==='итого').at(-1),monthTotal=sum(totalRow,cols),annualPlan=S.number(planTotal?.[1]),weeks=cols.length;
+  const categoryCards=categories.map(name=>{const row=rowNamed(rows,name);return `<article class="ps-category"><span>${S.esc(name)}</span><strong>${S.compactMoney(sum(row,cols))}</strong><small>${S.esc(CATEGORY_LINKS[name]||'Категория дохода')}</small></article>`}).join('');
+  const categoryTable=categoryRows.map(row=>[S.text(row[0]),...cols.map(col=>display(row[col])),S.money(sum(row,cols))]);categoryTable.push(['Итого',...cols.map(col=>display(totalRow?.[col])),S.money(monthTotal)]);
+  const sourceRows=SOURCES.map(name=>rowNamed(rows,name)).filter(Boolean).map(row=>[S.text(row[0]),display(row[1]),display(row[2]),display(row[3]),...cols.map(col=>display(row[col]))]);
+  content.innerHTML=toolbar('Доход по неделям',monthControl())+kpis([['Доход за месяц',S.compactMoney(monthTotal),`${weeks} недель`],['Среднее за неделю',S.compactMoney(weeks?monthTotal/weeks:0),'по выбранному месяцу'],['Годовой план',S.compactMoney(annualPlan),'из листа 2026 (ПЛАН)'],['Категории','6','9 источников дохода']])+`<section class="ps-cards">${categoryCards}</section>`+table(['Категория',...cols.map(col=>display(rows[0][col])),'Месяц'],categoryTable,{title:'Категории дохода',note:'Источники суммируются по формулам Google Sheets',totalLast:true})+table(['Источник','Квота','Доля','План',...cols.map(col=>display(rows[0][col]))],sourceRows,{title:'Источники дохода',note:'Все исходные строки листа 2026 (НЕД)'})+`<div class="ps-note">Значения рассчитаны исходными формулами Google Sheets. ERP ничего не изменяет в таблице и показывает её актуальный результат.</div>`;bindMonth();
+}
+function renderMentor(payload){
+  const rows=S.cells(payload),cols=weekCols(rows,0,4),subscriptionRows=rows.slice(1,6),bonusRows=rows.slice(7,12),subscriptionTotal=sum(subscriptionRows.at(-1),cols),bonusTotal=sum(bonusRows.at(-1),cols);
+  const makeRows=list=>list.map(row=>[S.text(row[0])||'Итого',display(row[1]),display(row[2]),display(row[3]),...cols.map(col=>display(row[col]))]);
+  content.innerHTML=toolbar('Доход ментора',monthControl())+kpis([['Абонементы',S.compactMoney(subscriptionTotal),'за выбранный месяц'],['Премии',S.compactMoney(bonusTotal),'за выбранный месяц'],['Всего',S.compactMoney(subscriptionTotal+bonusTotal),'менторский доход'],['Недель',String(cols.length),'в выбранном месяце']])+`<div class="ps-section-grid">${table(['Абонемент','Сумма','Платёж','Пересмотр',...cols.map(col=>display(rows[0][col]))],makeRows(subscriptionRows),{title:'Абонементы',note:'Все строки листа',totalLast:true})}${table(['Участник','Всего','Количество','Среднее',...cols.map(col=>display(rows[6][col]))],makeRows(bonusRows),{title:'Премии',note:'Все строки листа',totalLast:true})}</div>`;bindMonth();
+}
+function renderAverage(payload){
+  const rows=S.cells(payload),columns=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],headers=['Месяц','Доход','Средний доход','Учредитель','Средний · учредитель','Директор','Средний · директор','Наставник','Средний · наставник','Инвестор','Средний · инвестор','Управление деньгами','Средний · управление','Расход','Средний расход'],body=rows.map(row=>columns.map(index=>display(row[index]))),latest=rows.at(-1)||[];
+  content.innerHTML=toolbar('Средние показатели 2026')+kpis([['Доход',display(latest[2]),'последний месяц'],['Средний доход',display(latest[3]),'скользящее среднее'],['Расход',display(latest[14]),'последний месяц'],['Средний расход',display(latest[15]),'скользящее среднее']])+table(headers,body,{title:'Доход, роли и расходы',note:'Январь — декабрь 2026'})+`<div class="ps-note">Каждое среднее и итог рассчитаны формулами листа 2026 (СРЕД). ERP показывает готовые результаты без пересчёта и редактирования.</div>`;
+}
+function renderPlan(payload){
+  const rows=S.cells(payload),headers=(rows[1]||rows[0]||[]).map((cell,index)=>S.text(cell)||['Источник','Всего'][index]||MONTHS[index-2]||`Поле ${index+1}`),body=rows.slice(2).filter(row=>row.some(cell=>S.text(cell))).map(row=>headers.map((_,index)=>display(row[index])));
+  content.innerHTML=toolbar('План дохода 2026')+table(headers,body,{title:'Источники и категории',note:'Годовой план · только чтение'})+`<div class="ps-note">План загружается целиком из листа 2026 (ПЛАН), включая итоговые строки и категории.</div>`;
+}
+async function render(){
+  const token=++serial,name={mentor:'2026 (МЕНТОР)',average:'2026 (СРЕД)',plan:'2026 (ПЛАН)'}[tab];content.innerHTML='<div class="ps-loading">Загрузка таблицы</div>';
+  try{const loaded=tab==='income'?await Promise.all([S.load('2026 (НЕД)'),S.load('2026 (ПЛАН)')]):await S.load(name);if(token!==serial)return;const payloads=Array.isArray(loaded)?loaded:[loaded],payload=payloads[0],cached=payloads.some(item=>item.cached);syncState.classList.toggle('cached',cached);syncState.querySelector('span').textContent=cached?'Резервная копия · '+new Date(payload.updatedAt).toLocaleString('ru-RU'):'Обновлено · '+new Date(payload.updatedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});if(tab==='income')renderIncome(payloads[0],payloads[1]);else ({mentor:renderMentor,average:renderAverage,plan:renderPlan}[tab])(payload)}catch(error){content.innerHTML=`<div class="ps-error"><div><strong>Нет связи с Google Sheets</strong><p>${S.esc(error.message)}</p></div></div>`;syncState.querySelector('span').textContent='Нет соединения'}
+}
+document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));render()};document.getElementById('refresh').onclick=render;render();
+</script></body></html>
