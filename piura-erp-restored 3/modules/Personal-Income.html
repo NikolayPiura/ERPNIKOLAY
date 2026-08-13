@@ -4,131 +4,131 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Личный доход</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260812j">
-  <script src="Personal-Sheets.js?v=20260812j"></script>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260812k">
+  <script src="Personal-Sheets.js?v=20260812k"></script>
 </head>
 <body>
-<main class="ps-app" data-piura-keep-full>
-  <header class="ps-header">
-    <div class="ps-title"><h1>Личный доход</h1></div>
-    <div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" title="Обновить" aria-label="Обновить">↻</button></div>
+<main class="ps-app ps-finance-app" data-piura-keep-full>
+  <header class="ps-header ps-hero-header">
+    <div class="ps-title"><span>ФИНАНСОВЫЙ ПУЛЬС</span><h1>Личный доход</h1></div>
+    <div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" title="Обновить данные" aria-label="Обновить данные">↻</button></div>
   </header>
-  <nav class="ps-tabs" id="tabs">
-    <button class="ps-tab on" data-tab="income">Доход</button>
-    <button class="ps-tab" data-tab="mentor">Ментор</button>
+  <nav class="ps-tabs ps-primary-tabs" id="tabs">
+    <button class="ps-tab on" data-tab="income"><i>↗</i><span>Доход</span></button>
+    <button class="ps-tab" data-tab="mentor"><i>✦</i><span>Ментор</span></button>
   </nav>
-  <section id="content"><div class="ps-loading">Загрузка данных</div></section>
+  <section id="content"><div class="ps-loading">Собираем финансовый пульс</div></section>
 </main>
 <script>
-const S=window.PIURASheet;
-const content=document.getElementById('content');
-const syncState=document.getElementById('syncState');
+const S=window.PIURASheet,content=document.getElementById('content'),syncState=document.getElementById('syncState');
 const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 const MONTHS_SHORT=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
 const SOURCES=['PFF (Дивиденды)','PFF (Управляющий)','КЭ (Заработная плата)','КЭ (Дивиденды)','Наставник (Абонементы)','Наставник (Доп. проекты)','Москва (Управляющий)','Solid (Управляющий)','Снитч (Итоговый доход)'];
 const CATEGORIES=['Климат','Инвестиции','Наставничество','Учредитель','Управление деньгами','Снитч'];
-const COLORS=['var(--blue)','var(--green)','var(--purple)','var(--orange)','var(--yellow)','#79b7d8','#d782b6','#8ea2bf','#5ce0c2'];
-let tab='income',month=new Date().getMonth(),group='category',period='week',mode='fact',mentorKind='subscriptions',mentorPeriod='week',serial=0,lastData=null;
+const COLORS=S.colors;
+let state={tab:'income',month:new Date().getMonth(),group:'category',period:'week',mode:'fact',scope:'month',mentorKind:'subscriptions',mentorPeriod:'week'};
+let serial=0,data=null;
 
-function normalized(value){return String(value||'').trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ')}
-function headerIndex(rows,label){return rows.findIndex(row=>normalized(S.text(row[0]))===normalized(label))}
-function rowNamed(rows,name){return rows.find(row=>normalized(S.text(row[0]))===normalized(name))}
-function sum(values){return values.reduce((total,value)=>total+(Number(value)||0),0)}
-function usd(value){return new Intl.NumberFormat('ru-RU',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(value)||0)}
-function dateLabel(cell){const value=S.text(cell);const match=value.match(/^(\d{1,2})[.\/-](\d{1,2})/);return match?`${Number(match[1])}.${String(Number(match[2])).padStart(2,'0')}`:value}
-function segment(name,items,active,accent=''){return `<div class="ps-segment" ${accent?`data-accent="${accent}"`:''}>${items.map(([value,label])=>`<button type="button" data-control="${name}" data-value="${value}" class="${active===value?'on':''}">${label}</button>`).join('')}</div>`}
-function monthControl(){return `<div class="ps-months"><button type="button" data-month="-1" aria-label="Предыдущий месяц">‹</button><strong>${MONTHS[month]} 2026</strong><button type="button" data-month="1" aria-label="Следующий месяц">›</button></div>`}
-function command(title,left,right){return `<section class="ps-command"><div class="ps-command-left"><h2>${S.esc(title)}</h2>${left||''}</div><div class="ps-command-right">${right||''}</div></section>`}
-function tablePanel(title,headers,rows,totalRow,totalValue){
-  return `<section class="ps-panel"><div class="ps-panel-head"><h3>${S.esc(title)}</h3><strong class="ps-panel-total">${S.esc(totalValue)}</strong></div><div class="ps-scroll"><table class="ps-table"><thead><tr>${headers.map(header=>`<th>${S.esc(header)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr style="--row:${COLORS[index%COLORS.length]}">${row.map((value,col)=>`<td class="${col&&Number(value)===0?'ps-cell-zero':''}">${col===0?`<span class="ps-row-name"><i class="ps-row-dot"></i>${S.esc(value)}</span>`:S.esc(usd(value))}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${totalRow.map((value,col)=>`<td>${col===0?S.esc(value):S.esc(usd(value))}</td>`).join('')}</tr></tfoot></table></div></section>`;
+function rowNamed(rows,name){return rows.find(row=>S.normalize(S.text(row[0]))===S.normalize(name))}
+function command(title,eyebrow,controls,right=''){return `<section class="ps-command ps-reveal"><div class="ps-command-copy"><span>${S.esc(eyebrow)}</span><h2>${S.esc(title)}</h2></div><div class="ps-command-controls">${controls}</div>${right?`<div class="ps-command-right">${right}</div>`:''}</section>`}
+function parseSheet(payload){
+  if(payload?.error)throw new Error(payload.error);
+  const rows=S.cells(payload),header=S.headerIndex(rows,'ИСТОЧНИК');
+  if(header<0)throw new Error('В таблице не найден блок «Источник»');
+  const dateCols=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
+  return {rows,header,dateCols};
 }
-function factModel(payload){
-  const rows=S.cells(payload),header=headerIndex(rows,'ИСТОЧНИК');
-  if(header<0)throw new Error('Не найдена недельная таблица');
-  const dateColumns=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
-  return {rows,header,dateColumns};
+function table(title,subtitle,headers,rows,totals){
+  const max=Math.max(1,...rows.flatMap(row=>row.slice(1).map(Number).filter(Number.isFinite)));
+  return `<section class="ps-panel ps-data-panel ps-reveal"><div class="ps-panel-head"><div><span>${S.esc(subtitle)}</span><h3>${S.esc(title)}</h3></div><strong>${S.money(totals.at(-1),'USD',2)}</strong></div><div class="ps-scroll"><table class="ps-table ps-color-table"><thead><tr>${headers.map(item=>`<th>${S.esc(item)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr style="--row:${COLORS[index%COLORS.length]}">${row.map((cell,col)=>col===0?`<td><span class="ps-row-name"><i></i>${S.esc(cell)}</span></td>`:`<td class="${Number(cell)===0?'ps-cell-zero':''}"><b>${S.money(cell,'USD',2)}</b><em style="--fill:${Math.max(0,Number(cell))/max*100}%"></em></td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr>${totals.map((cell,col)=>`<td>${col?S.money(cell,'USD',2):S.esc(cell)}</td>`).join('')}</tr></tfoot></table></div></section>`;
 }
-function planModel(payload){
-  const rows=S.cells(payload),header=headerIndex(rows,'ИСТОЧНИК');
-  if(header<0)throw new Error('Не найден план дохода');
-  return {rows,header};
+function timeline(model,row,period,month){
+  if(period==='month')return MONTHS.map((_,index)=>S.sum(model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===index).map(col=>S.number(row?.[col]))));
+  const cols=model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===month);
+  return cols.map(col=>S.number(row?.[col]));
 }
-function selectedNames(){return group==='category'?CATEGORIES:SOURCES}
-function renderIncome(factPayload,planPayload){
-  const fact=factModel(factPayload),plan=planModel(planPayload),names=selectedNames();
-  let headers=['Категория'],body=[],total=[],title='';
-  if(group==='source')headers[0]='Источник';
-  if(mode==='plan'){
-    headers.push(...MONTHS_SHORT,'Итого');
-    body=names.map(name=>{const row=rowNamed(plan.rows,name),values=MONTHS.map((_,index)=>S.number(row?.[index+2]));return [name,...values,sum(values)]});
-    title=`План 2026 · ${group==='category'?'по категориям':'по источникам'}`;
-  }else if(period==='month'){
-    headers.push(...MONTHS_SHORT,'Итого');
-    body=names.map(name=>{const row=rowNamed(fact.rows,name),values=MONTHS.map((_,monthIndex)=>sum(fact.dateColumns.filter(col=>S.monthOf(fact.rows[fact.header][col])===monthIndex).map(col=>S.number(row?.[col]))));return [name,...values,sum(values)]});
-    title=`Факт 2026 · ${group==='category'?'по категориям':'по источникам'}`;
-  }else{
-    const cols=fact.dateColumns.filter(col=>S.monthOf(fact.rows[fact.header][col])===month);
-    headers.push(...cols.map(col=>dateLabel(fact.rows[fact.header][col])),'Итого');
-    body=names.map(name=>{const row=rowNamed(fact.rows,name),values=cols.map(col=>S.number(row?.[col]));return [name,...values,sum(values)]});
-    title=`${MONTHS[month]} · ${group==='category'?'по категориям':'по источникам'}`;
-  }
-  total=['Итого',...headers.slice(1).map((_,index)=>sum(body.map(row=>row[index+1])))]
-  const totalValue=usd(total.at(-1));
-  const controls=segment('group',[['category','По категориям'],['source','По источникам']],group)+segment('period',[['week','Понедельно'],['month','Помесячно']],mode==='plan'?'month':period,'green')+segment('mode',[['fact','Факт'],['plan','План']],mode);
-  const chooser=mode==='fact'&&period==='week'?monthControl():'';
-  content.innerHTML=command('Доход',controls,chooser)+tablePanel(title,headers,body,total,totalValue);
-  bindControls();
+function planValues(model,row,period,month,weekCount){
+  const monthly=MONTHS.map((_,index)=>S.number(row?.[index+2]));
+  if(period==='month')return monthly;
+  return Array.from({length:Math.max(1,weekCount)},()=>monthly[month]/Math.max(1,weekCount));
 }
-function mentorModel(payload){
-  const rows=S.cells(payload),subscriptions=headerIndex(rows,'АБОНЕМЕНТЫ'),bonuses=headerIndex(rows,'ПРЕМИИ'),header=mentorKind==='subscriptions'?subscriptions:bonuses;
-  if(header<0)throw new Error('Не найден список ментора');
-  const end=mentorKind==='subscriptions'?bonuses:rows.length;
-  const people=rows.slice(header+1,end).filter(row=>S.text(row[0])).slice(0,4);
-  const dateColumns=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
-  return {rows,header,people,dateColumns};
-}
-function renderMentor(payload){
-  const model=mentorModel(payload);let headers=['Участник'],body=[],title='';
-  if(mentorPeriod==='month'){
-    headers.push(...MONTHS_SHORT,'Итого');
-    body=model.people.map(row=>{const values=MONTHS.map((_,monthIndex)=>sum(model.dateColumns.filter(col=>S.monthOf(model.rows[model.header][col])===monthIndex).map(col=>S.number(row[col]))));return [S.text(row[0]),...values,sum(values)]});
-    title=`${mentorKind==='subscriptions'?'Абонементы':'Премии'} · 2026`;
-  }else{
-    const cols=model.dateColumns.filter(col=>S.monthOf(model.rows[model.header][col])===month);headers.push(...cols.map(col=>dateLabel(model.rows[model.header][col])),'Итого');
-    body=model.people.map(row=>{const values=cols.map(col=>S.number(row[col]));return [S.text(row[0]),...values,sum(values)]});
-    title=`${mentorKind==='subscriptions'?'Абонементы':'Премии'} · ${MONTHS[month]}`;
-  }
-  const total=['Итого',...headers.slice(1).map((_,index)=>sum(body.map(row=>row[index+1])))];
-  const controls=segment('mentorKind',[['subscriptions','Абонементы'],['bonuses','Премии']],mentorKind)+segment('mentorPeriod',[['week','Понедельно'],['month','Помесячно']],mentorPeriod,'green');
-  content.innerHTML=command('Ментор',controls,mentorPeriod==='week'?monthControl():'')+tablePanel(title,headers,body,total,usd(total.at(-1)));
-  bindControls();
-}
-function bindControls(){
-  content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{month=(month+Number(button.dataset.month)+12)%12;paint()});
-  content.querySelectorAll('[data-control]').forEach(button=>button.onclick=()=>{
-    const name=button.dataset.control,value=button.dataset.value;
-    if(name==='group')group=value;
-    if(name==='period'){period=value;if(value==='week'&&mode==='plan')mode='fact'}
-    if(name==='mode'){mode=value;if(value==='plan')period='month'}
-    if(name==='mentorKind')mentorKind=value;
-    if(name==='mentorPeriod')mentorPeriod=value;
-    paint();
+function incomeModel(){
+  const fact=parseSheet(data.fact),plan=parseSheet(data.plan),names=state.group==='category'?CATEGORIES:SOURCES;
+  const period=state.scope==='year'?'month':state.period;
+  const factCols=period==='month'?MONTHS:fact.dateCols.filter(col=>S.monthOf(fact.rows[fact.header][col])===state.month);
+  const labels=period==='month'?MONTHS_SHORT:factCols.map(col=>S.dateLabel(fact.rows[fact.header][col]));
+  const rows=names.map(name=>{
+    const factRow=rowNamed(fact.rows,name),planRow=rowNamed(plan.rows,name);
+    return {name,fact:timeline(fact,factRow,period,state.month),plan:planValues(plan,planRow,period,state.month,labels.length)};
   });
+  return {period,labels,rows};
 }
-function paint(){
-  if(!lastData)return;
-  if(tab==='income')renderIncome(lastData.fact,lastData.plan);else renderMentor(lastData.mentor);
+function renderIncome(){
+  const model=incomeModel(),actual=model.labels.map((_,i)=>S.sum(model.rows.map(row=>row.fact[i]))),planned=model.labels.map((_,i)=>S.sum(model.rows.map(row=>row.plan[i])));
+  const factTotal=S.sum(actual),planTotal=S.sum(planned),delta=factTotal-planTotal,best=Math.max(0,...actual),average=actual.length?factTotal/actual.length:0;
+  const viewValues=state.mode==='plan'?planned:actual;
+  const groupSwitch=S.segment('group',[['category','По категориям'],['source','По источникам']],state.group,{accent:'blue'});
+  const periodSwitch=S.segment('period',[['week','Понедельно'],['month','Помесячно']],state.period,{accent:'green'});
+  const modeSwitch=S.segment('mode',[['fact','Факт'],['plan','План'],['compare','План · факт']],state.mode,{accent:'purple'});
+  const scopeSwitch=S.segment('scope',[['month','Месяц'],['year','Весь год']],state.scope,{accent:'orange'});
+  const chooser=state.scope==='month'?S.monthControl(state.month,MONTHS):'';
+  const metrics=S.metricCards([
+    {label:'Факт',value:S.compactMoney(factTotal),note:state.scope==='year'?'за 2026 год':MONTHS[state.month],color:'#63a4ff'},
+    {label:'План',value:S.compactMoney(planTotal),note:planTotal?`${Math.round(factTotal/planTotal*100)}% выполнено`:'план не задан',color:'#a779ff'},
+    {label:'Разница',value:S.compactMoney(delta),note:delta>=0?'выше плана':'до плана',color:delta>=0?'#43d9a3':'#ff8b64'},
+    {label:'Лучший период',value:S.compactMoney(best),note:`средний ${S.compactMoney(average)}`,color:'#f4c65d'}
+  ]);
+  const series=state.mode==='compare'?[{label:'Факт',values:actual,color:'#43d9a3'},{label:'План',values:planned,color:'#a779ff'}]:[{label:state.mode==='plan'?'План':'Факт',values:viewValues,color:state.mode==='plan'?'#a779ff':'#63a4ff'}];
+  const chart=S.lineChart({title:state.scope==='year'?'Доход по месяцам':`Доход · ${MONTHS[state.month]}`,subtitle:state.group==='category'?'Сумма всех категорий':'Сумма всех источников',labels:model.labels,series,height:300});
+  const rows=model.rows.map(row=>[row.name,...(state.mode==='plan'?row.plan:row.fact),S.sum(state.mode==='plan'?row.plan:row.fact)]);
+  const headers=[state.group==='category'?'Категория':'Источник',...model.labels,'Итого'];
+  const totals=['Итого',...headers.slice(1).map((_,index)=>S.sum(rows.map(row=>row[index+1])))];
+  content.innerHTML=command('Доход','ПЛАНИРОВАНИЕ И АНАЛИТИКА',groupSwitch+periodSwitch+modeSwitch+scopeSwitch,chooser)+metrics+chart+table(state.scope==='year'?'Весь 2026 год':MONTHS[state.month],state.group==='category'?'ПО КАТЕГОРИЯМ':'ПО ИСТОЧНИКАМ',headers,rows,totals);
+  bind();
 }
+function mentorModel(){
+  if(data.mentor?.error)throw new Error(data.mentor.error);
+  const rows=S.cells(data.mentor),subscriptions=S.headerIndex(rows,'АБОНЕМЕНТЫ'),bonuses=S.headerIndex(rows,'ПРЕМИИ');
+  const header=state.mentorKind==='subscriptions'?subscriptions:bonuses;
+  if(header<0)throw new Error('В таблице не найден раздел ментора');
+  const end=state.mentorKind==='subscriptions'?(bonuses>header?bonuses:rows.length):rows.length;
+  const people=rows.slice(header+1,end).filter(row=>S.text(row[0])&&row.slice(1).some(cell=>S.number(cell)!==0));
+  const dateCols=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
+  return {rows,header,people,dateCols};
+}
+function renderMentor(){
+  const model=mentorModel(),period=state.mentorPeriod,cols=period==='week'?model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===state.month):null;
+  const labels=period==='week'?cols.map(col=>S.dateLabel(model.rows[model.header][col])):MONTHS_SHORT;
+  const rows=model.people.map(row=>{
+    const values=period==='week'?cols.map(col=>S.number(row[col])):MONTHS.map((_,m)=>S.sum(model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===m).map(col=>S.number(row[col]))));
+    return [S.text(row[0]),...values,S.sum(values)];
+  }).sort((a,b)=>b.at(-1)-a.at(-1));
+  const totals=['Итого',...labels.map((_,i)=>S.sum(rows.map(row=>row[i+1]))),S.sum(rows.map(row=>row.at(-1)))];
+  const values=labels.map((_,i)=>totals[i+1]),leader=rows[0];
+  const controls=S.segment('mentorKind',[['subscriptions','Абонементы'],['bonuses','Премии']],state.mentorKind,{accent:'purple'})+S.segment('mentorPeriod',[['week','Понедельно'],['month','Помесячно']],state.mentorPeriod,{accent:'green'});
+  const chooser=state.mentorPeriod==='week'?S.monthControl(state.month,MONTHS):'';
+  const metrics=S.metricCards([
+    {label:'Итого',value:S.compactMoney(totals.at(-1)),note:state.mentorKind==='subscriptions'?'абонементы':'премии',color:'#a779ff'},
+    {label:'Лидер',value:leader?leader[0]:'—',note:leader?S.money(leader.at(-1),'USD',0):'нет данных',color:'#43d9a3'},
+    {label:'Участников',value:String(rows.length),note:'с доходом в периоде',color:'#63a4ff'},
+    {label:'Лучший период',value:S.compactMoney(Math.max(0,...values)),note:state.mentorPeriod==='week'?'за неделю':'за месяц',color:'#f4c65d'}
+  ]);
+  content.innerHTML=command('Ментор','АБОНЕМЕНТЫ И ПРЕМИИ',controls,chooser)+metrics+S.lineChart({title:state.mentorKind==='subscriptions'?'Динамика абонементов':'Динамика премий',subtitle:'Все участники',labels,series:[{label:'Доход',values,color:state.mentorKind==='subscriptions'?'#43d9a3':'#a779ff'}],height:290})+table(state.mentorPeriod==='week'?MONTHS[state.month]:'Весь 2026 год','РЕЙТИНГ УЧАСТНИКОВ',['Участник',...labels,'Итого'],rows,totals);
+  bind();
+}
+function bind(){
+  content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{state.month=(state.month+Number(button.dataset.month)+12)%12;paint()});
+  content.querySelectorAll('[data-control]').forEach(button=>button.onclick=()=>{state[button.dataset.control]=button.dataset.value;if(button.dataset.control==='scope'&&button.dataset.value==='year')state.period='month';paint()});
+}
+function paint(){if(!data)return;try{state.tab==='income'?renderIncome():renderMentor()}catch(error){content.innerHTML=S.errorCard('Не удалось собрать экран',error.message)}}
 async function loadAll(){
-  const token=++serial;content.innerHTML='<div class="ps-loading">Загрузка данных</div>';
-  try{
-    const [fact,plan,mentor]=await Promise.all([S.load('2026 (НЕД)'),S.load('2026 (ПЛАН)'),S.load('2026 (МЕНТОР)')]);
-    if(token!==serial)return;lastData={fact,plan,mentor};const cached=[fact,plan,mentor].some(item=>item.cached);syncState.classList.toggle('cached',cached);syncState.querySelector('span').textContent=cached?'Сохранённые данные':'Данные обновлены';paint();
-  }catch(error){content.innerHTML=`<div class="ps-error"><div><strong>Нет связи с таблицей</strong><p>${S.esc(error.message)}</p></div></div>`;syncState.querySelector('span').textContent='Нет соединения'}
+  const token=++serial;content.innerHTML='<div class="ps-loading">Собираем финансовый пульс</div>';
+  const result=await S.loadMany(['2026 (НЕД)','2026 (ПЛАН)','2026 (МЕНТОР)']);if(token!==serial)return;
+  data={fact:result['2026 (НЕД)'],plan:result['2026 (ПЛАН)'],mentor:result['2026 (МЕНТОР)']};
+  const errors=Object.values(result).filter(item=>item.error&&!item.table);syncState.classList.toggle('cached',Object.values(result).some(item=>item.cached));syncState.querySelector('span').textContent=errors.length?'Часть данных недоступна':Object.values(result).some(item=>item.cached)?'Сохранённые данные':'Данные обновлены';paint();
 }
-document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};
-document.getElementById('refresh').onclick=loadAll;
-loadAll();
+document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;state.tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};
+document.getElementById('refresh').onclick=loadAll;loadAll();
 </script>
 </body>
 </html>

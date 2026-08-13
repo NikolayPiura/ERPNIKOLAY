@@ -7,7 +7,7 @@ const read = path => readFileSync(new URL(path, root), 'utf8');
 
 test('единая оболочка содержит все согласованные сервисы', () => {
   const shell = read('index.html');
-  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Мои динамики','Управление','Фонд PFF','Фонд Москва','SAFE','Доходы','Личный доход','FP']) {
+  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Мои динамики','Управление','Фонд PFF','Фонд Москва','SAFE','Доходы','Личный доход','FP','PFP']) {
     assert.match(shell, new RegExp(label));
   }
 });
@@ -17,27 +17,32 @@ test('личный доход подключает только согласов
   const loader = read('piura-erp-restored 3/modules/Personal-Sheets.js');
   const income = read('piura-erp-restored 3/modules/Personal-Income.html');
   const fp = read('piura-erp-restored 3/modules/Personal-FP.html');
+  const pfp = read('piura-erp-restored 3/modules/Personal-PFP.html');
   assert.match(shell, /id:'personal-income',title:"Личный доход"/);
   assert.match(shell, /Personal-Income\.html/);
   assert.match(shell, /Personal-FP\.html/);
+  assert.match(shell, /Personal-PFP\.html/);
   assert.match(loader, /1GWFyFKRVq1Z4x68gWICBmlilqP5FzYOXXBkC4xYzEbA/);
   for (const sheet of ['2026 (НЕД)','2026 (ФП)','2026 (РАСХОД)','2026 (МЕНТОР)','2026 (СРЕД)','2026 (ПЛАН)','2026 (ФП №1)']) assert.ok(loader.includes(sheet));
   for (const sheet of ['2026 (МЕС)','2026 (ПРИОРИТЕТЫ)','2026 (СОБ. КАП)']) assert.doesNotMatch(loader,new RegExp(sheet.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(loader, /gviz\/tq/);
-  assert.match(income, /data-tab="income">Доход/);
-  assert.match(income, /data-tab="mentor">Ментор/);
+  assert.match(loader, /1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA/);
+  for (const sheet of ['2026 (PFF)','2026 (РЫНОК)','2026 (ЗОЛОТО)','2026 (КРИПТА)','2026 (СТАТ)','2026 (ПОДПИСКИ)','2026 (БАЛАНС)']) assert.ok(loader.includes(sheet));
+  assert.match(income, /data-tab="income"[^>]*>[\s\S]{0,120}Доход/);
+  assert.match(income, /data-tab="mentor"[^>]*>[\s\S]{0,120}Ментор/);
   assert.doesNotMatch(income, /data-tab="average">Средний/);
   assert.doesNotMatch(income, /data-tab="plan">План/);
   for (const control of ['По категориям','По источникам','Понедельно','Помесячно','Факт','План','Абонементы','Премии']) assert.match(income,new RegExp(control));
   assert.doesNotMatch(income, />Квота<|>Доля<|>Средний доход</);
-  assert.match(fp, /data-tab="fp">FP/);
-  assert.match(fp, /data-tab="expense">Расходы/);
-  assert.match(fp, /data-tab="fp1">FP №1/);
+  assert.match(fp, /data-tab="fp"[^>]*>[\s\S]{0,120}Планирование/);
+  assert.match(fp, /data-tab="expense"[^>]*>[\s\S]{0,120}Расходы/);
+  assert.match(fp, /data-tab="fp1"[^>]*>[\s\S]{0,120}FP №1/);
   for (const metric of ['Остаток','Выделено','Баланс','Расход']) assert.match(fp,new RegExp(metric,'i'));
-  assert.doesNotMatch(fp, /Пассивный доход/i);
-  assert.match(income, /data-month="-1"/);
-  assert.match(fp, /data-month="-1"/);
+  assert.doesNotMatch(fp, />\s*Пассивный доход\s*</i);
+  assert.match(loader, /data-month="-1"/);
   assert.doesNotMatch(income+fp, /<input|contenteditable|textarea/i);
+  for (const view of ['PFF','Рынок','Золото','Крипта','Статистика','Подписки','Баланс']) assert.match(pfp,new RegExp(view));
+  assert.doesNotMatch(pfp, /<input|contenteditable|textarea/i);
 });
 
 test('Personal Finance удалён из файлов и навигации', () => {
