@@ -1,30 +1,105 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FP</title><link rel="stylesheet" href="Personal-Sheets.css"><script src="Personal-Sheets.js"></script></head>
-<body><main class="ps-app" data-piura-keep-full>
-  <header class="ps-header"><div class="ps-title"><h1>FP</h1><p>Финансовое планирование · Google Sheets · только чтение</p></div><div class="ps-live" id="syncState"><i></i><span>Подключение…</span><button class="ps-refresh" id="refresh" type="button" title="Обновить данные" aria-label="Обновить данные">↻</button></div></header>
-  <nav class="ps-tabs" id="tabs"><button class="ps-tab on" data-tab="fp">2026 FP</button><button class="ps-tab" data-tab="expense">2026 Расход</button><button class="ps-tab" data-tab="fp1">FP №1</button></nav>
-  <section id="content"><div class="ps-loading">Загрузка таблицы</div></section>
-</main><script>
-const S=window.PIURASheet,content=document.getElementById('content'),syncState=document.getElementById('syncState');
-const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];let tab='fp',month=new Date().getMonth(),serial=0;
-function display(cell){return S.text(cell)||'—'}function sum(row,cols){return cols.reduce((total,col)=>total+S.number(row?.[col]),0)}function weekCols(rows,header,start){return (rows[header]||[]).map((cell,index)=>index>=start&&S.monthOf(cell)===month?index:-1).filter(index=>index>=0)}
-function toolbar(title,controls=''){return `<section class="ps-toolbar"><h2>${S.esc(title)}</h2>${controls}</section>`}function monthControl(){return `<div class="ps-months"><button data-month="-1">‹</button><strong>${MONTHS[month]} 2026</strong><button data-month="1">›</button></div>`}
-function kpis(items){return `<section class="ps-kpis">${items.map(item=>`<article class="ps-kpi"><span>${S.esc(item[0])}</span><strong>${S.esc(item[1])}</strong><small>${S.esc(item[2]||'')}</small></article>`).join('')}</section>`}
-function table(headers,rows,{title='',note='',totalLast=false}={}){return `<section class="ps-panel"><div class="ps-panel-head"><h3>${S.esc(title)}</h3><span>${S.esc(note)}</span></div><div class="ps-scroll"><table class="ps-table"><thead><tr>${headers.map(h=>`<th>${S.esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr class="${totalLast&&index===rows.length-1?'total':''}">${row.map(value=>`<td>${S.esc(value===''||value===null||value===undefined?'—':value)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`}
-function bindMonth(){content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{month=(month+Number(button.dataset.month)+12)%12;render()})}
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FP</title>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260812j">
+  <script src="Personal-Sheets.js?v=20260812j"></script>
+</head>
+<body>
+<main class="ps-app" data-piura-keep-full>
+  <header class="ps-header">
+    <div class="ps-title"><h1>FP</h1></div>
+    <div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" title="Обновить" aria-label="Обновить">↻</button></div>
+  </header>
+  <nav class="ps-tabs" id="tabs">
+    <button class="ps-tab on" data-tab="fp">FP</button>
+    <button class="ps-tab" data-tab="expense">Расходы</button>
+    <button class="ps-tab" data-tab="fp1">FP №1</button>
+  </nav>
+  <section id="content"><div class="ps-loading">Загрузка данных</div></section>
+</main>
+<script>
+const S=window.PIURASheet;
+const content=document.getElementById('content');
+const syncState=document.getElementById('syncState');
+const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_SHORT=['Янв','Фев','Мар','Апр','Май','Июн','Июл','Авг','Сен','Окт','Ноя','Дек'];
+const TYPES=['ОСТАТОК','ВЫДЕЛЕНО','БАЛАНС','РАСХОД'];
+const CATEGORIES=['Жизнь','Квартира','Путешествия','Обучение','Благотворительность'];
+const COLORS=['#68a3ff','#48d5a2','#aa7dff','#ff946d','#f1c766'];
+let tab='fp',month=new Date().getMonth(),week=0,serial=0,lastData=null;
+
+function normalized(value){return String(value||'').trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ')}
+function headerIndex(rows,label){return rows.findIndex(row=>normalized(S.text(row[0]))===normalized(label))}
+function rowNamed(rows,name){return rows.find(row=>normalized(S.text(row[0]))===normalized(name))}
+function sum(values){return values.reduce((total,value)=>total+(Number(value)||0),0)}
+function usd(value){return new Intl.NumberFormat('ru-RU',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:2}).format(Number(value)||0)}
+function dateLabel(cell){const value=S.text(cell),match=value.match(/^(\d{1,2})[.\/-](\d{1,2})/);return match?`${String(Number(match[1])).padStart(2,'0')}.${String(Number(match[2])).padStart(2,'0')}`:value}
+function monthControl(){return `<div class="ps-months"><button type="button" data-month="-1" aria-label="Предыдущий месяц">‹</button><strong>${MONTHS[month]} 2026</strong><button type="button" data-month="1" aria-label="Следующий месяц">›</button></div>`}
+function command(title,right=''){return `<section class="ps-command"><div class="ps-command-left"><h2>${S.esc(title)}</h2></div><div class="ps-command-right">${right}</div></section>`}
+function smoothPath(points){if(points.length<2)return points.length?`M${points[0][0]} ${points[0][1]}`:'';let path=`M${points[0][0]} ${points[0][1]}`;for(let i=0;i<points.length-1;i++){const p0=points[i-1]||points[i],p1=points[i],p2=points[i+1],p3=points[i+2]||p2,c1x=p1[0]+(p2[0]-p0[0])/6,c1y=p1[1]+(p2[1]-p0[1])/6,c2x=p2[0]-(p3[0]-p1[0])/6,c2y=p2[1]-(p3[1]-p1[1])/6;path+=` C${c1x} ${c1y},${c2x} ${c2y},${p2[0]} ${p2[1]}`}return path}
+function lineChart(title,labels,series){
+  const width=1200,height=220,padX=45,padY=28,max=Math.max(1,...series.flatMap(item=>item.values));
+  const x=index=>labels.length===1?width/2:padX+index*(width-padX*2)/(labels.length-1),y=value=>height-padY-(Number(value)||0)*(height-padY*2)/max;
+  const defs=series.map((item,index)=>`<linearGradient id="fill${index}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${item.color}" stop-opacity=".2"/><stop offset="1" stop-color="${item.color}" stop-opacity="0"/></linearGradient>`).join('');
+  const shapes=series.map((item,index)=>{const points=item.values.map((value,i)=>[x(i),y(value)]),path=smoothPath(points),area=`${path} L${points.at(-1)[0]} ${height-padY} L${points[0][0]} ${height-padY} Z`;return `<path d="${area}" fill="url(#fill${index})"/><path d="${path}" fill="none" stroke="${item.color}" stroke-width="5" stroke-linecap="round"/><g>${points.map((point,i)=>`<circle cx="${point[0]}" cy="${point[1]}" r="6" fill="#0d121a" stroke="${item.color}" stroke-width="4"><title>${item.label}: ${usd(item.values[i])}</title></circle>`).join('')}</g>`}).join('');
+  return `<section class="ps-chart"><div class="ps-chart-head"><h3>${S.esc(title)}</h3><div class="ps-chart-legend">${series.map(item=>`<span style="--legend:${item.color}">${S.esc(item.label)}</span>`).join('')}</div></div><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs>${defs}</defs>${shapes}</svg><div class="ps-axis-labels" style="grid-template-columns:repeat(${labels.length},1fr)">${labels.map(label=>`<span>${S.esc(label)}</span>`).join('')}</div></section>`;
+}
+function fpModel(payload){
+  const rows=S.cells(payload),header=headerIndex(rows,'ТИП');if(header<0)throw new Error('Не найдена таблица FP');
+  const sections={};let type='';
+  rows.slice(header+1).forEach(row=>{type=S.text(row[0])||type;if(!TYPES.includes(type))return;const category=S.text(row[1]);if(!category)return;(sections[type]??={})[category]=row});
+  const dateColumns=(rows[header]||[]).map((cell,index)=>index>=2&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
+  return {rows,header,sections,dateColumns};
+}
+function fpTable(model,col){
+  const body=CATEGORIES.map((category,index)=>{const values=TYPES.map(type=>S.number(model.sections[type]?.[category]?.[col]));return `<tr style="--row:${COLORS[index]}"><td><span class="ps-row-name"><i class="ps-row-dot"></i>${S.esc(category)}</span></td>${values.map(value=>`<td class="${value===0?'ps-cell-zero':''}">${S.esc(usd(value))}</td>`).join('')}</tr>`}).join('');
+  const totals=TYPES.map(type=>sum(CATEGORIES.map(category=>S.number(model.sections[type]?.[category]?.[col]))));
+  return `<section class="ps-panel"><div class="ps-panel-head"><h3>${S.esc(dateLabel(model.rows[model.header][col]))}</h3><strong class="ps-panel-total">${S.esc(usd(totals[2]))}</strong></div><div class="ps-scroll"><table class="ps-table ps-matrix"><thead><tr><th>Категория</th>${TYPES.map(type=>`<th>${S.esc(type[0]+type.slice(1).toLowerCase())}</th>`).join('')}</tr></thead><tbody>${body}</tbody><tfoot><tr><td>Итого</td>${totals.map(value=>`<td>${S.esc(usd(value))}</td>`).join('')}</tr></tfoot></table></div></section>`;
+}
 function renderFP(payload){
-  const rows=S.cells(payload),cols=weekCols(rows,0,2),items=[],groups={};let currentType='';rows.slice(1).filter(row=>row.some(cell=>S.text(cell))).forEach(row=>{currentType=S.text(row[0])||currentType||'Прочее';const item={type:currentType,row};items.push(item);(groups[currentType]??=[]).push(row)});
-  const groupTotals=Object.entries(groups).map(([type,list])=>[type,list.reduce((total,row)=>total+sum(row,cols),0)]),body=items.map(({type,row},index)=>[index===0||items[index-1].type!==type?type:'',display(row[1]),...cols.map(col=>display(row[col])),S.money(sum(row,cols))]);
-  content.innerHTML=toolbar('Финансовое планирование',monthControl())+kpis(groupTotals.slice(0,4).map(([type,total])=>[type,S.compactMoney(total),'сумма значений месяца']))+table(['Раздел','Статья',...cols.map(col=>display(rows[0][col])),'Месяц'],body,{title:'FP по неделям',note:'Остаток, выделено, баланс, расход и пассивный доход'})+`<div class="ps-note">Все разделы листа 2026 (ФП) загружены без возможности редактирования.</div>`;bindMonth();
+  const model=fpModel(payload),cols=model.dateColumns.filter(col=>S.monthOf(model.rows[model.header][col])===month);if(!cols.length){content.innerHTML=command('FP',monthControl())+'<div class="ps-empty">В выбранном месяце нет недель</div>';bind();return}week=Math.min(week,cols.length-1);const selected=cols[week];
+  const balances=cols.map(col=>sum(CATEGORIES.map(category=>S.number(model.sections.БАЛАНС?.[category]?.[col]))));
+  const expenses=cols.map(col=>sum(CATEGORIES.map(category=>S.number(model.sections.РАСХОД?.[category]?.[col]))));
+  const rail=`<div class="ps-week-rail">${cols.map((col,index)=>`<button type="button" data-week="${index}" class="${index===week?'on':''}">${S.esc(dateLabel(model.rows[model.header][col]))}</button>`).join('')}</div>`;
+  content.innerHTML=command('Финансовое планирование',monthControl())+rail+lineChart('Баланс и расход',cols.map(col=>dateLabel(model.rows[model.header][col])),[{label:'Баланс',color:'#68a3ff',values:balances},{label:'Расход',color:'#ff946d',values:expenses}])+fpTable(model,selected);bind();
+}
+function expenseModel(payload){
+  const rows=S.cells(payload),header=headerIndex(rows,'ИТОГО');if(header<0)throw new Error('Не найдена таблица расходов');
+  const income=rowNamed(rows,'ДОХОД'),expense=rowNamed(rows,'РАСХОД');
+  const categories=['ЖИЗНЬ','КВАРТИРА','ПУТЕШЕСТВИЕ','ОБУЧЕНИЕ','БЛАГОТВОРИТЕЛЬНОСТЬ'].map(name=>rowNamed(rows,name)).filter(Boolean);
+  return {rows,header,income,expense,categories};
 }
 function renderExpense(payload){
-  const rows=S.cells(payload),header=['Показатель','Итого',...MONTHS],body=rows.map(row=>header.map((_,index)=>display(row[index]))),expenseRows=rows.slice(5),annual=expenseRows.reduce((total,row)=>total+S.number(row?.[1]),0),income=S.number(rows[0]?.[1]),expense=S.number(rows[1]?.[1]);
-  content.innerHTML=toolbar('Расходы 2026')+kpis([['Доход',S.compactMoney(income),'годовой итог'],['Расход',S.compactMoney(expense),'годовой итог'],['Разница',S.compactMoney(income-expense),'доход минус расход'],['Категорий',String(expenseRows.length),'структура FP']])+table(header,body,{title:'Доход, расход и категории',note:'Полный лист 2026 (РАСХОД)'})+`<div class="ps-note">Показатели и проценты отображаются в том виде, в котором рассчитаны в исходной таблице.</div>`;
+  const model=expenseModel(payload),incomeTotal=S.number(model.income?.[1]),expenseTotal=S.number(model.expense?.[1]),profit=incomeTotal-expenseTotal;
+  const incomeMonths=MONTHS.map((_,index)=>S.number(model.income?.[index+2])),expenseMonths=MONTHS.map((_,index)=>S.number(model.expense?.[index+2]));
+  const ranking=model.categories.map((row,index)=>({name:S.text(row[0]),value:S.number(row[1]),color:COLORS[index]})).sort((a,b)=>b.value-a.value),max=Math.max(1,...ranking.map(item=>item.value));
+  const rankingHtml=`<section class="ps-ranking"><h3>Расходы по категориям</h3>${ranking.map(item=>`<div class="ps-rank-row"><span>${S.esc(item.name[0]+item.name.slice(1).toLowerCase())}</span><div class="ps-rank-track"><i style="--rank:${item.color};width:${Math.max(1,item.value/max*100)}%"></i></div><strong>${S.esc(usd(item.value))}</strong></div>`).join('')}</section>`;
+  content.innerHTML=command('Расходы 2026')+`<section class="ps-inline-metrics"><article class="ps-inline-metric"><span>Доход</span><strong>${S.esc(S.compactMoney(incomeTotal))}</strong></article><article class="ps-inline-metric"><span>Расход</span><strong>${S.esc(S.compactMoney(expenseTotal))}</strong></article><article class="ps-inline-metric"><span>Результат</span><strong>${S.esc(S.compactMoney(profit))}</strong></article></section>`+lineChart('Доход и расход по месяцам',MONTHS_SHORT,[{label:'Доход',color:'#68a3ff',values:incomeMonths},{label:'Расход',color:'#ff946d',values:expenseMonths}])+rankingHtml;
+}
+function fp1Model(payload){
+  const rows=S.cells(payload),last=rows.at(-1),lastTitle=normalized(S.text(last?.[1])),body=lastTitle==='итого'||S.number(last?.[2])>=9000?rows.slice(0,-1):rows,groups=[];let group=null;
+  body.forEach(row=>{const title=S.text(row[1]),amount=S.number(row[2]);if(!title)return;if(!amount){group={name:title,items:[]};groups.push(group);return}if(group)group.items.push({name:title,amount})});
+  groups.forEach(item=>item.total=sum(item.items.map(entry=>entry.amount)));return groups.filter(item=>item.total>0);
 }
 function renderFP1(payload){
-  const rows=S.cells(payload),last=rows.at(-1),total=S.number(last?.[2]),body=[],categories=new Set();let category='';rows.slice(0,-1).forEach(row=>{const title=S.text(row[1]),amount=S.text(row[2]);if(!title)return;if(!amount){category=title;categories.add(category);return}body.push([category,title,amount])});
-  content.innerHTML=toolbar('FP №1')+kpis([['Общий объём',S.compactMoney(total),'итог листа'],['Категорий',String(categories.size),'направления'],['Статей',String(body.length),'в финансовом плане'],['Режим','Только чтение','данные из таблицы']])+table(['Раздел','Статья','Сумма'],body,{title:'Структура FP №1',note:'Все статьи и суммы'});
+  const groups=fp1Model(payload),total=sum(groups.map(group=>group.total));let cursor=0;
+  const stops=groups.map((group,index)=>{const start=cursor,end=cursor+group.total/Math.max(total,1)*100;cursor=end;return `${COLORS[index]} ${start}% ${end}%`}).join(',');
+  const ranking=`<section class="ps-distribution"><h2>Структура бюджета</h2>${groups.map((group,index)=>`<div class="ps-rank-row"><span>${S.esc(group.name[0]+group.name.slice(1).toLowerCase())}</span><div class="ps-rank-track"><i style="--rank:${COLORS[index]};width:${group.total/Math.max(total,1)*100}%"></i></div><strong>${S.esc(usd(group.total))}</strong></div>`).join('')}</section>`;
+  const cards=`<section class="ps-budget-grid">${groups.map((group,index)=>`<article class="ps-budget-card" style="--accent:${COLORS[index]}"><div class="ps-budget-head"><h3>${S.esc(group.name[0]+group.name.slice(1).toLowerCase())}</h3><strong>${S.esc(usd(group.total))}</strong></div><div class="ps-budget-list">${group.items.map(item=>`<div class="ps-budget-item"><span>${S.esc(item.name)}</span><strong>${S.esc(usd(item.amount))}</strong></div>`).join('')}</div></article>`).join('')}</section>`;
+  content.innerHTML=command('FP №1')+`<section class="ps-fp1-overview"><article class="ps-donut-panel"><div class="ps-donut" style="--donut:conic-gradient(${stops})"><div class="ps-donut-center"><span>Бюджет</span><strong>${S.esc(S.compactMoney(total))}</strong></div></div></article>${ranking}</section>`+cards;
 }
-async function render(){const token=++serial,name={fp:'2026 (ФП)',expense:'2026 (РАСХОД)',fp1:'2026 (ФП №1)'}[tab];content.innerHTML='<div class="ps-loading">Загрузка таблицы</div>';try{const payload=await S.load(name);if(token!==serial)return;syncState.classList.toggle('cached',payload.cached);syncState.querySelector('span').textContent=payload.cached?'Резервная копия · '+new Date(payload.updatedAt).toLocaleString('ru-RU'):'Обновлено · '+new Date(payload.updatedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});({fp:renderFP,expense:renderExpense,fp1:renderFP1}[tab])(payload)}catch(error){content.innerHTML=`<div class="ps-error"><div><strong>Нет связи с Google Sheets</strong><p>${S.esc(error.message)}</p></div></div>`;syncState.querySelector('span').textContent='Нет соединения'}}
-document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));render()};document.getElementById('refresh').onclick=render;render();
-</script></body></html>
+function bind(){content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{month=(month+Number(button.dataset.month)+12)%12;week=0;paint()});content.querySelectorAll('[data-week]').forEach(button=>button.onclick=()=>{week=Number(button.dataset.week);paint()})}
+function paint(){if(!lastData)return;({fp:renderFP,expense:renderExpense,fp1:renderFP1}[tab])(lastData[tab])}
+async function loadAll(){
+  const token=++serial;content.innerHTML='<div class="ps-loading">Загрузка данных</div>';
+  try{const [fp,expense,fp1]=await Promise.all([S.load('2026 (ФП)'),S.load('2026 (РАСХОД)'),S.load('2026 (ФП №1)')]);if(token!==serial)return;lastData={fp,expense,fp1};const cached=[fp,expense,fp1].some(item=>item.cached);syncState.classList.toggle('cached',cached);syncState.querySelector('span').textContent=cached?'Сохранённые данные':'Данные обновлены';paint()}catch(error){content.innerHTML=`<div class="ps-error"><div><strong>Нет связи с таблицей</strong><p>${S.esc(error.message)}</p></div></div>`;syncState.querySelector('span').textContent='Нет соединения'}
+}
+document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};
+document.getElementById('refresh').onclick=loadAll;
+loadAll();
+</script>
+</body>
+</html>
