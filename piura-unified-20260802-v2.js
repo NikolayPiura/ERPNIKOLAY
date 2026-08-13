@@ -90,6 +90,10 @@
     });
   }
   function compactSync(doc) {
+    // The personal Sheets dashboards own their compact sync indicator. Their
+    // content arrives asynchronously, so collapsing by the initial body text
+    // can otherwise mistake the whole app for a status badge after refresh.
+    if (doc.querySelector('[data-piura-keep-full]')) return;
     doc.querySelectorAll('body *').forEach(el => {
       if (el.children.length > 3) return;
       const t = norm(el.textContent);
