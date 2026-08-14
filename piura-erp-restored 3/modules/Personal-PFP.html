@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PFP</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260812k"><script src="Personal-Sheets.js?v=20260812k"></script>
+  <title>PFF · Инвестиции</title>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260814e"><script src="Personal-Sheets.js?v=20260814e"></script>
 </head>
 <body>
 <main class="ps-app ps-finance-app" data-piura-keep-full>
-  <header class="ps-header ps-hero-header"><div class="ps-title"><span>ЛИЧНЫЙ КАПИТАЛ</span><h1>PFP</h1></div><div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" aria-label="Обновить">↻</button></div></header>
+  <header class="ps-header ps-hero-header"><div class="ps-title"><span>ИНВЕСТИЦИИ</span><h1>PFF</h1></div><div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" aria-label="Обновить">↻</button></div></header>
   <nav class="ps-tabs ps-primary-tabs ps-pfp-tabs" id="tabs">
     <button class="ps-tab on" data-tab="portfolio"><i>◈</i><span>PFF</span></button>
     <button class="ps-tab" data-tab="market"><i>↗</i><span>Рынок</span></button>
@@ -22,7 +22,9 @@
 <script>
 const S=window.PIURASheet,content=document.getElementById('content'),syncState=document.getElementById('syncState'),COLORS=S.colors;
 const SHEETS={portfolio:'2026 (PFF)',market:'2026 (РЫНОК) ',gold:'2026 (ЗОЛОТО)',crypto:'2026 (КРИПТА)',stats:'2026 (СТАТ)',subscriptions:'2026 (ПОДПИСКИ)',balance:'2026 (БАЛАНС)'};
-let state={tab:'portfolio'},data=null,serial=0;
+const STATE_KEY='piura_personal_pff_state_v1';
+let state={tab:'portfolio',weeks:12},data=null,serial=0;try{state={...state,...JSON.parse(localStorage.getItem(STATE_KEY)||'{}')}}catch(e){}
+function saveState(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
 
 function rowsOf(payload){if(payload?.error&&!payload?.table)throw new Error(payload.error);const rows=S.cells(payload);if(!rows.length)throw new Error('Лист пока пуст');return rows}
 function findHeader(rows,names){const normalized=names.map(S.normalize);return rows.findIndex(row=>normalized.every(name=>row.some(cell=>S.normalize(S.text(cell)).includes(name))))}
@@ -30,7 +32,10 @@ function column(header,...names){const normalized=names.map(S.normalize);let ind
 function value(row,index){return index>=0?S.text(row[index]):''}
 function amount(row,index){return index>=0?S.number(row[index]):0}
 function fallback(index,value){return index>=0?index:value}
-function command(title,eyebrow,note=''){return `<section class="ps-command ps-reveal"><div class="ps-command-copy"><span>${S.esc(eyebrow)}</span><h2>${S.esc(title)}</h2></div>${note?`<div class="ps-command-note">${S.esc(note)}</div>`:''}</section>`}
+function command(title,eyebrow,note='',controls=''){return `<section class="ps-command ps-reveal"><div class="ps-command-copy"><span>${S.esc(eyebrow)}</span><h2>${S.esc(title)}</h2></div>${controls?`<div class="ps-command-controls">${controls}</div>`:note?`<div class="ps-command-note">${S.esc(note)}</div>`:''}</section>`}
+function weekControl(){return S.segment('week-window',[['8','8 недель'],['12','12 недель'],['24','24 недели'],['all','Весь год']],String(state.weeks),{accent:'green',icon:false})}
+function isPastWeek(label){const m=String(label||'').match(/^(\d{1,2})[.\/-](\d{1,2})/);if(!m)return false;const date=new Date(2026,Number(m[2])-1,Number(m[1]),23,59,59);return date<=new Date()}
+function shownWeekIndexes(labels){const available=labels.map((label,index)=>({label,index})).filter(item=>isPastWeek(item.label));const limit=state.weeks==='all'?available.length:Number(state.weeks)||12;return available.slice(-limit)}
 function panelTable(title,eyebrow,headers,rows,total=''){
   return `<section class="ps-panel ps-data-panel ps-reveal"><div class="ps-panel-head"><div><span>${S.esc(eyebrow)}</span><h3>${S.esc(title)}</h3></div>${total?`<strong>${S.esc(total)}</strong>`:''}</div><div class="ps-scroll"><table class="ps-table"><thead><tr>${headers.map(item=>`<th>${S.esc(item)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr style="--row:${COLORS[index%COLORS.length]}">${row.map((cell,col)=>col===0?`<td><span class="ps-row-name"><i></i>${S.esc(cell)}</span></td>`:`<td>${S.esc(cell)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
@@ -41,17 +46,20 @@ function assetModel(payload){
   const personal={name:3,type:2,country:-1,risk:-1,currency:-1,liquidity:-1,amount:isMarket?5:4,share:isGold?-1:isMarket?6:5,month:isGold?-1:isMarket?7:6,week:isGold?-1:isMarket?8:7,payout:-1,owner:0,broker:1};
   const institutional={name:0,type:1,country:2,risk:3,currency:4,liquidity:5,amount:6,share:7,month:8,week:9,payout:10,owner:-1,broker:-1};
   const layout=isPersonal?personal:institutional,c={name:fallback(column(header,'актив'),layout.name),type:fallback(column(header,'тип'),layout.type),country:fallback(column(header,'страна'),layout.country),risk:fallback(column(header,'риск'),layout.risk),currency:fallback(column(header,'валюта'),layout.currency),liquidity:fallback(column(header,'ликвидность'),layout.liquidity),amount:fallback(column(header,'сумма'),layout.amount),share:fallback(column(header,'%'),layout.share),month:fallback(column(header,'месяц'),layout.month),week:fallback(column(header,'неделя'),layout.week),payout:fallback(column(header,'выплата'),layout.payout),owner:fallback(column(header,'фио'),layout.owner),broker:fallback(column(header,'брокер'),layout.broker)};
-  const items=rows.slice(head+1).map(row=>{const rawShare=amount(row,c.share);return {name:value(row,c.name),type:value(row,c.type),country:value(row,c.country),risk:value(row,c.risk),currency:value(row,c.currency),liquidity:value(row,c.liquidity),amount:amount(row,c.amount),share:rawShare&&Math.abs(rawShare)<=1?rawShare*100:rawShare,month:amount(row,c.month),week:amount(row,c.week),payout:value(row,c.payout),owner:value(row,c.owner),broker:value(row,c.broker)}}).filter(item=>item.name&&S.normalize(item.name)!=='итого'&&(item.amount||item.month||item.week));
-  return {items,total:S.sum(items.map(item=>item.amount))};
+  const weekColumns=header.map((cell,index)=>({index,label:S.dateLabel(cell)})).filter(item=>/^\d{2}\.\d{2}$/.test(item.label));
+  const items=rows.slice(head+1).map(row=>{const rawShare=amount(row,c.share);return {name:value(row,c.name),type:value(row,c.type),country:value(row,c.country),risk:value(row,c.risk),currency:value(row,c.currency),liquidity:value(row,c.liquidity),amount:amount(row,c.amount),share:rawShare&&Math.abs(rawShare)<=1?rawShare*100:rawShare,month:amount(row,c.month),week:amount(row,c.week),payout:value(row,c.payout),owner:value(row,c.owner),broker:value(row,c.broker),weekly:weekColumns.map(col=>amount(row,col.index))}}).filter(item=>item.name&&S.normalize(item.name)!=='итого'&&(item.amount||item.month||item.week||item.weekly.some(Boolean)));
+  return {items,total:S.sum(items.map(item=>item.amount)),weekLabels:weekColumns.map(item=>item.label)};
 }
 function renderAssets(tab){
-  const model=assetModel(data[tab]),items=[...model.items].sort((a,b)=>b.amount-a.amount),top=items.slice(0,12),monthly=S.sum(items.map(item=>item.month)),largest=items[0];
+  const model=assetModel(data[tab]),items=[...model.items].sort((a,b)=>b.amount-a.amount),monthly=S.sum(items.map(item=>item.month)),largest=items[0],weekIndexes=shownWeekIndexes(model.weekLabels),latestWeek=weekIndexes.at(-1),weeklyTotal=latestWeek?S.sum(items.map(item=>item.weekly[latestWeek.index])):0;
   const title={portfolio:'Piura Family Fund',market:'Рыночный портфель',gold:'Золото',crypto:'Криптовалюта'}[tab],accent={portfolio:'#63a4ff',market:'#43d9a3',gold:'#f4c65d',crypto:'#a779ff'}[tab];
-  const metrics=S.metricCards([{label:'Капитал',value:S.compactMoney(model.total),note:title,color:accent},{label:'Активов',value:String(items.length),note:'в текущем портфеле',color:'#43d9a3'},{label:'Крупнейший актив',value:largest?largest.name:'—',note:largest?S.compactMoney(largest.amount):'нет данных',color:'#a779ff'},{label:'Доход в месяц',value:S.compactMoney(monthly),note:'по данным таблицы',color:'#ff8b64'}]);
-  const chart=S.lineChart({title:'Архитектура портфеля',subtitle:'Крупнейшие позиции по стоимости',labels:top.map(item=>item.name.length>13?item.name.slice(0,12)+'…':item.name),series:[{label:'Стоимость',values:top.map(item=>item.amount),color:accent}],height:305});
+  const metrics=S.metricCards([{label:'Капитал',value:S.compactMoney(model.total),note:title,color:accent},{label:'Доход за неделю',value:S.compactMoney(weeklyTotal),note:latestWeek?.label||'нет недель в источнике',color:'#43d9a3'},{label:'Крупнейший актив',value:largest?largest.name:'—',note:largest?S.compactMoney(largest.amount):'нет данных',color:'#a779ff'},{label:'Доход в месяц',value:S.compactMoney(monthly),note:`${items.length} активов`,color:'#ff8b64'}]);
   const cards=`<section class="ps-asset-grid ps-reveal">${items.slice(0,6).map((item,index)=>`<article class="ps-asset-card" style="--accent:${COLORS[index%COLORS.length]}"><div><span>${S.esc(item.type||item.country||'АКТИВ')}</span><strong>${S.esc(item.name)}</strong></div><b>${S.compactMoney(item.amount)}</b><small>${item.share?`${item.share.toLocaleString('ru-RU',{maximumFractionDigits:1})}% портфеля`:S.esc(item.broker||item.currency||item.risk||'')}</small></article>`).join('')}</section>`;
-  const rows=items.map(item=>[item.name,item.type||'—',item.owner||item.country||item.broker||'—',item.currency||'USD',S.money(item.amount,'USD',2),item.month?S.money(item.month,'USD',2):'—']);
-  content.innerHTML=command(title,'ИНВЕСТИЦИОННЫЙ КОНТУР','Google Sheets · только чтение')+metrics+chart+cards+panelTable('Все активы','СТРУКТУРА',['Актив','Тип','Контур','Валюта','Стоимость','В месяц'],rows,S.compactMoney(model.total));
+  const structureRows=items.map(item=>[item.name,item.type||'—',item.owner||item.country||item.broker||'—',item.currency||'USD',S.money(item.amount,'USD',2),item.month?S.money(item.month,'USD',2):'—',item.week?S.money(item.week,'USD',2):'—',item.payout||'—']);
+  const weeklyRows=items.map(item=>[item.name,...weekIndexes.map(week=>item.weekly[week.index]?S.money(item.weekly[week.index],'USD',2):'—')]);
+  if(weekIndexes.length)weeklyRows.push(['ИТОГО',...weekIndexes.map(week=>S.money(S.sum(items.map(item=>item.weekly[week.index])),'USD',2))]);
+  const weeklyPanel=weekIndexes.length?panelTable('Понедельные выплаты','ИСТОРИЯ ПО АКТИВАМ',['Актив',...weekIndexes.map(week=>week.label)],weeklyRows,latestWeek?`${latestWeek.label} · ${S.compactMoney(weeklyTotal)}`:''):panelTable('Понедельные выплаты','НЕТ КОЛОНОК В ИСТОЧНИКЕ',['Актив','Статус'],items.map(item=>[item.name,'В исходном листе нет недельной истории']));
+  content.innerHTML=command(title,'ИНВЕСТИЦИОННЫЙ КОНТУР','',weekControl())+metrics+cards+weeklyPanel+panelTable('Все активы','ТЕКУЩАЯ СТРУКТУРА',['Актив','Тип','Контур','Валюта','Стоимость','В месяц','За неделю','Выплата'],structureRows,S.compactMoney(model.total));
 }
 function statsModel(payload){
   const rows=rowsOf(payload);let head=rows.findIndex(row=>row.filter(cell=>/\d{1,2}[.\/-]\d{1,2}/.test(S.text(cell))).length>=3);if(head<0)head=0;
@@ -61,11 +69,11 @@ function statsModel(payload){
   return {rows,labels,capital:line('капитал'),revenue:line('выручка'),reinvest:line('ре-инвест'),investments:line('новые инвестиции'),rate:line('фактический %')};
 }
 function renderStats(){
-  const model=statsModel(data.stats),latest=values=>[...values].reverse().find(value=>value!==0)||0;
+  const source=statsModel(data.stats),selected=shownWeekIndexes(source.labels),pick=values=>selected.map(item=>values[item.index]),model={...source,labels:selected.map(item=>item.label),capital:pick(source.capital),revenue:pick(source.revenue),reinvest:pick(source.reinvest),investments:pick(source.investments),rate:pick(source.rate)},latest=values=>[...values].reverse().find(value=>value!==0)||0;
   const metrics=S.metricCards([{label:'Капитал',value:S.compactMoney(latest(model.capital)),note:'последняя фиксация',color:'#63a4ff'},{label:'Выручка',value:S.compactMoney(S.sum(model.revenue)),note:'за весь период',color:'#43d9a3'},{label:'Реинвестировано',value:S.compactMoney(S.sum(model.reinvest)),note:'возвращено в капитал',color:'#a779ff'},{label:'Фактическая ставка',value:`${latest(model.rate).toLocaleString('ru-RU',{maximumFractionDigits:1})}%`,note:'последнее значение',color:'#f4c65d'}]);
   const chart=S.lineChart({title:'Динамика капитала',subtitle:'Капитал, выручка и новые инвестиции',labels:model.labels,series:[{label:'Капитал',values:model.capital,color:'#63a4ff'},{label:'Выручка',values:model.revenue,color:'#43d9a3'},{label:'Новые инвестиции',values:model.investments,color:'#a779ff'}],height:320});
   const rows=model.labels.map((label,index)=>[label,S.money(model.capital[index],'USD',0),S.money(model.revenue[index],'USD',0),S.money(model.reinvest[index],'USD',0),S.money(model.investments[index],'USD',0),`${model.rate[index].toLocaleString('ru-RU',{maximumFractionDigits:1})}%`]);
-  content.innerHTML=command('Статистика PFP','ДИНАМИКА КАПИТАЛА','Все ключевые показатели в одном потоке')+metrics+chart+panelTable('История по неделям','ФИКСАЦИИ',['Период','Капитал','Выручка','Реинвест','Инвестиции','Ставка'],rows);
+  content.innerHTML=command('Статистика PFF','ДИНАМИКА КАПИТАЛА','',weekControl())+metrics+chart+panelTable('История по неделям','ФИКСАЦИИ',['Период','Капитал','Выручка','Реинвест','Инвестиции','Ставка'],rows);
 }
 function subscriptionsModel(payload){
   const rows=rowsOf(payload),head=findHeader(rows,['контрагент']);if(head<0)throw new Error('Не найден реестр подписок');const header=rows[head];
@@ -74,9 +82,9 @@ function subscriptionsModel(payload){
 }
 function renderSubscriptions(){
   const items=subscriptionsModel(data.subscriptions),active=items.filter(item=>item.amount),largest=[...active].sort((a,b)=>b.amount-a.amount)[0],periods=new Map();active.forEach(item=>periods.set(item.period||'Без периода',(periods.get(item.period||'Без периода')||0)+item.amount));
-  const labels=[...periods.keys()],values=[...periods.values()];const metrics=S.metricCards([{label:'Подписок',value:String(items.length),note:'в реестре',color:'#63a4ff'},{label:'Активных сумм',value:String(active.length),note:'с указанной стоимостью',color:'#43d9a3'},{label:'Крупнейшая',value:largest?largest.name:'—',note:largest?largest.raw:'нет данных',color:'#a779ff'},{label:'Периодов',value:String(periods.size),note:'типов списания',color:'#f4c65d'}]);
+  const metrics=S.metricCards([{label:'Подписок',value:String(items.length),note:'в реестре',color:'#63a4ff'},{label:'Активных сумм',value:String(active.length),note:'с указанной стоимостью',color:'#43d9a3'},{label:'Крупнейшая',value:largest?largest.name:'—',note:largest?largest.raw:'нет данных',color:'#a779ff'},{label:'Периодов',value:String(periods.size),note:'типов списания',color:'#f4c65d'}]);
   const rows=items.map(item=>[item.name,item.type||'—',item.purpose||'—',item.period||'—',item.date||'—',item.raw||'—']);
-  content.innerHTML=command('Подписки','РЕГУЛЯРНЫЕ ПЛАТЕЖИ','Единый реестр обязательств')+metrics+S.lineChart({title:'Стоимость по периодам',subtitle:'Сумма подписок по типу списания',labels,series:[{label:'Сумма',values,color:'#ec6fae'}],height:290})+panelTable('Все подписки','РЕЕСТР',['Контрагент','Тип','Назначение','Период','Дата','Сумма'],rows);
+  content.innerHTML=command('Подписки','РЕГУЛЯРНЫЕ ПЛАТЕЖИ','Единый реестр обязательств')+metrics+panelTable('Все подписки','РЕЕСТР',['Контрагент','Тип','Назначение','Период','Дата','Сумма'],rows);
 }
 function balanceModel(payload){
   const rows=rowsOf(payload),head=findHeader(rows,['фио']);if(head<0)throw new Error('Не найден реестр балансов');const header=rows[head];
@@ -84,10 +92,10 @@ function balanceModel(payload){
   return rows.slice(head+1).map(row=>({name:value(row,c.name),type:value(row,c.type),currency:value(row,c.currency),bank:value(row,c.bank),balance:amount(row,c.balance),raw:value(row,c.balance),owner:value(row,c.owner)})).filter(item=>item.name&&item.raw);
 }
 function renderBalance(){
-  const items=balanceModel(data.balance),usd=S.sum(items.filter(item=>item.currency.includes('$')||S.normalize(item.currency).includes('usd')).map(item=>item.balance)),rub=S.sum(items.filter(item=>item.currency.includes('₽')||S.normalize(item.currency).includes('rub')).map(item=>item.balance)),negative=items.filter(item=>item.balance<0),top=[...items].sort((a,b)=>Math.abs(b.balance)-Math.abs(a.balance)).slice(0,12);
+  const items=balanceModel(data.balance),usd=S.sum(items.filter(item=>item.currency.includes('$')||S.normalize(item.currency).includes('usd')).map(item=>item.balance)),rub=S.sum(items.filter(item=>item.currency.includes('₽')||S.normalize(item.currency).includes('rub')).map(item=>item.balance)),negative=items.filter(item=>item.balance<0);
   const metrics=S.metricCards([{label:'Баланс USD',value:S.compactMoney(usd),note:'долларовый контур',color:'#63a4ff'},{label:'Баланс RUB',value:S.compactMoney(rub,'₽'),note:'рублёвый контур',color:'#43d9a3'},{label:'Счетов',value:String(items.length),note:'в общем реестре',color:'#a779ff'},{label:'Отрицательных',value:String(negative.length),note:'требуют внимания',color:negative.length?'#ff8b64':'#43d9a3'}]);
   const rows=[...items].sort((a,b)=>b.balance-a.balance).map(item=>[item.name,item.type||'—',item.bank||'—',item.currency||'—',item.raw,item.owner||'—']);
-  content.innerHTML=command('Баланс','ЛИКВИДНЫЕ СРЕДСТВА','Счета, банки и ответственные')+metrics+S.lineChart({title:'Крупнейшие балансы',subtitle:'Абсолютный размер счетов',labels:top.map(item=>item.name.length>13?item.name.slice(0,12)+'…':item.name),series:[{label:'Баланс',values:top.map(item=>Math.abs(item.balance)),color:'#43d9a3'}],height:300})+panelTable('Все счета','РЕЕСТР',['ФИО','Тип','Банк','Валюта','Баланс','Ответственный'],rows);
+  content.innerHTML=command('Баланс','ЛИКВИДНЫЕ СРЕДСТВА','Счета, банки и ответственные')+metrics+panelTable('Все счета','РЕЕСТР',['ФИО','Тип','Банк','Валюта','Баланс','Ответственный'],rows);
 }
 function paint(){if(!data)return;try{if(['portfolio','market','gold','crypto'].includes(state.tab))renderAssets(state.tab);else if(state.tab==='stats')renderStats();else if(state.tab==='subscriptions')renderSubscriptions();else renderBalance()}catch(error){content.innerHTML=S.errorCard('Не удалось собрать экран',error.message)}}
 async function loadAll(){
@@ -95,7 +103,7 @@ async function loadAll(){
   if(result[SHEETS.market]?.error&&!result[SHEETS.market]?.table){const fallback=await S.load('2026 (РЫНОК)',{book:'pfp'}).catch(error=>({error:error.message}));result[SHEETS.market]=fallback}
   data=Object.fromEntries(Object.entries(SHEETS).map(([key,name])=>[key,result[name]]));const values=Object.values(data);syncState.classList.toggle('cached',values.some(item=>item?.cached));syncState.querySelector('span').textContent=values.some(item=>item?.error&&!item?.table)?'Часть данных недоступна':values.some(item=>item?.cached)?'Сохранённые данные':'Данные обновлены';paint();
 }
-document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;state.tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};document.getElementById('refresh').onclick=loadAll;loadAll();
+document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;state.tab=button.dataset.tab;saveState();document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};content.onclick=event=>{const button=event.target.closest('[data-control="week-window"]');if(!button)return;state.weeks=button.dataset.value;saveState();paint()};document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item.dataset.tab===state.tab));document.getElementById('refresh').onclick=loadAll;loadAll();
 </script>
 </body>
 </html>

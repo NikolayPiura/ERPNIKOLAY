@@ -134,6 +134,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 #imodal img{max-width:92vw;max-height:92vh;border:1px solid var(--brd2);border-radius:8px;}
 /* 2026-08-11: a spacious, stable dashboard without distracting card motion. */
 .pg{max-width:1680px;margin:0 auto;padding:148px 5vw 120px}.sec{margin-bottom:calc(92px * var(--spacing))}.ov-summary{margin-bottom:calc(76px * var(--spacing));padding:calc(64px * var(--spacing)) 72px}.ov-list{gap:calc(38px * var(--spacing))}.ov-row{min-height:238px;padding:calc(58px * var(--spacing)) calc(66px * var(--spacing));gap:54px;transition:border-color .14s ease,background-color .14s ease}.ov-row:hover{transform:none;box-shadow:none}.card,.ti-box{transition:border-color .14s ease}.card:hover,.ti-box:hover{transform:none!important;box-shadow:none!important}@media(max-width:900px){.pg{padding:122px 22px 80px}.sec{margin-bottom:64px}.ov-row{padding:36px 28px;gap:24px}}
+/* Контрольные точки 1-го и 15-го числа. */
+.cp-shell{display:grid;gap:26px}.cp-hero{padding:42px;border:1px solid var(--brd2);border-radius:22px;background:radial-gradient(circle at 8% 0,color-mix(in srgb,var(--b) 16%,transparent),transparent 38%),radial-gradient(circle at 92% 100%,color-mix(in srgb,var(--g) 10%,transparent),transparent 40%),var(--bg2)}.cp-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}.cp-kicker{color:var(--g);font:800 11px 'JetBrains Mono',monospace;letter-spacing:.16em;text-transform:uppercase}.cp-title{margin-top:12px;font:800 clamp(34px,4vw,64px) Inter,sans-serif;letter-spacing:-.045em}.cp-sub{margin-top:13px;max-width:840px;color:var(--mu3);font:500 14px/1.6 Inter,sans-serif}.cp-save{min-height:46px;padding:0 18px;border:1px solid color-mix(in srgb,var(--g) 52%,var(--brd));border-radius:12px;background:color-mix(in srgb,var(--g) 12%,var(--bg3));color:var(--tx);font:800 11px Inter,sans-serif;cursor:pointer}.cp-controls{display:flex;gap:9px;flex-wrap:wrap;margin-top:28px}.cp-period{min-height:42px;padding:0 15px;border:1px solid var(--brd2);border-radius:11px;background:var(--bg3);color:var(--mu3);font:800 11px Inter,sans-serif;cursor:pointer}.cp-period.on{border-color:var(--b);color:#fff;background:color-mix(in srgb,var(--b) 14%,var(--bg3))}.cp-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.cp-card{min-height:190px;padding:25px;border:1px solid var(--brd);border-radius:18px;background:var(--bg2);position:relative;overflow:hidden}.cp-card:before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--cc)}.cp-label{color:var(--mu2);font:800 10px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase}.cp-value{margin-top:20px;color:var(--tx);font:800 clamp(30px,3.2vw,52px) Inter,sans-serif;letter-spacing:-.045em}.cp-delta{display:inline-flex;margin-top:17px;padding:7px 10px;border-radius:999px;background:color-mix(in srgb,var(--cc) 10%,var(--bg3));color:var(--cc);font:800 11px 'JetBrains Mono',monospace}.cp-delta.down{--cc:var(--r)}.cp-meta{margin-top:8px;color:var(--mu2);font:600 10px 'JetBrains Mono',monospace}.cp-chart{min-height:390px;padding:28px;border:1px solid var(--brd);border-radius:18px;background:var(--bg2)}.cp-chart-head{display:flex;justify-content:space-between;gap:18px;margin-bottom:22px}.cp-chart-head h3{font-size:20px}.cp-chart-head span{color:var(--mu2);font:700 11px 'JetBrains Mono',monospace}.cp-chart-box{height:300px}.cp-empty{padding:48px;border:1px dashed var(--brd2);border-radius:18px;color:var(--mu3);text-align:center;font:600 14px/1.7 Inter,sans-serif}.cp-status{font-size:clamp(23px,2.5vw,38px);line-height:1.05}.cp-status small{display:block;margin-top:12px;color:var(--mu2);font:700 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase}@media(max-width:1100px){.cp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:650px){.cp-hero-top{display:block}.cp-save{margin-top:20px}.cp-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -274,7 +276,9 @@ const FORMULAS=[
 ];
 
 const requestedTab=new URLSearchParams(location.search).get('tab');
-let incomeData=null,timeData=null,timeDayCount=0,curTab=['overview',...ALL_TABS.map(tab=>tab.id)].includes(requestedTab)?requestedTab:'overview',mainChart=null,showManual={},openBlocks={},histChart=null;
+const EFFECTIVENESS_TAB_KEY='piura_effectiveness_active_tab_v1';
+const CHECKPOINT_KEY='piura_effectiveness_checkpoints_v1';
+let incomeData=null,timeData=null,timeDayCount=0,curTab=['overview','progress',...ALL_TABS.map(tab=>tab.id)].includes(requestedTab)?requestedTab:(localStorage.getItem(EFFECTIVENESS_TAB_KEY)||'overview'),mainChart=null,showManual={},openBlocks={},histChart=null,progressChart=null,comparisonWeeks=Number(localStorage.getItem('piura_effectiveness_compare_weeks_v1'))||2;
 let viewPeriod={};
 function getViewPeriod(tid){return viewPeriod[tid]||'week';}
 function setViewPeriod(tid,p){viewPeriod[tid]=p;renderPage();}
@@ -452,16 +456,17 @@ async function loadTimeData(){
   }catch(e){console.error('Time load error:',e);timeData=null;}
 }
 function getTime(){return timeData||{};}
-function timeStatsFor(tk){
-  const tt=getTime();let totalMins=0;
-  Object.keys(tt).forEach(k=>{totalMins+=(tt[k]?.[tk]||0);});
-  const days=timeDayCount||1;
+function timeStatsFor(tk,until=''){
+  const tt=getTime(),keys=Object.keys(tt).filter(key=>!until||key<=until).sort();let totalMins=0;
+  keys.forEach(k=>{totalMins+=(tt[k]?.[tk]||0);});
+  let days=timeDayCount||1;
+  if(until&&keys.length){const first=new Date(keys[0]+'T00:00:00'),last=new Date(keys.at(-1)+'T00:00:00');days=Math.max(1,Math.round((last-first)/86400000)+1)}
   const avgMinDay=totalMins/days;
   return{days,totalH:totalMins/60,avgHDay:avgMinDay/60,avgHWeek:(avgMinDay/60)*7,avgHMonth:(avgMinDay/60)*30};
 }
 
-function getSliding12(){
-  const now=new Date(),res=[];
+function getSliding12(referenceDate=''){
+  const now=referenceDate?new Date(referenceDate+'T12:00:00'):new Date(),res=[];
   for(let i=11;i>=0;i--){let m=now.getMonth()-i,y=now.getFullYear();if(m<0){m+=12;y--;}res.push({key:MO[m],year:y,label:MO[m]+(y!==now.getFullYear()?"'"+String(y).slice(2):'')});}
   return res;
 }
@@ -510,8 +515,8 @@ function calcDph(vals, hoursPerMonth){
   return Math.round(ref/hoursPerMonth);
 }
 
-function getTabData(tab){
-  const sliding=getSliding12();
+function getTabData(tab,referenceDate=''){
+  const sliding=getSliding12(referenceDate);
   const cat=getCat(tab.cat);
   const remote=cat?cat.months:{};
   const total=cat?(cat.total||0):0;
@@ -519,7 +524,7 @@ function getTabData(tab){
   const vals=sliding.map(s=>getMonthVal(tab,s.key,s.year,remote,manual));
   const incomeMonths=getIncomeMonths(sliding);
   const incomeVals=incomeMonths.map(s=>getMonthVal(tab,s.key,s.year,remote,manual));
-  const ts=timeStatsFor(tab.tk);
+  const ts=timeStatsFor(tab.tk,referenceDate);
   const hoursPerMonth=ts.avgHDay*30;
   const avgMonthlyIncome=incomeVals.reduce((a,b)=>a+(b||0),0)/Math.max(1,incomeVals.length);
   const dph=calcDph(incomeVals,hoursPerMonth);
@@ -556,6 +561,10 @@ function buildTabs(){
   ov.className='tab overview'+(curTab==='overview'?' act':'');
   ov.style.setProperty('--tc','#f0c84e');ov.textContent='Обзор';
   ov.onclick=()=>switchTab('overview');bar.appendChild(ov);
+  const progress=document.createElement('div');
+  progress.className='tab'+(curTab==='progress'?' act':'');
+  progress.style.setProperty('--tc','#43d39e');progress.textContent='Динамика';
+  progress.onclick=()=>switchTab('progress');bar.appendChild(progress);
   TABS.forEach(t=>{
     const el=document.createElement('div');
     el.className='tab'+(t.id===curTab?' act':'');
@@ -563,7 +572,7 @@ function buildTabs(){
     el.onclick=()=>switchTab(t.id);bar.appendChild(el);
   });
 }
-function switchTab(id='overview'){curTab=['overview',...ALL_TABS.map(tab=>tab.id)].includes(id)?id:'overview';buildTabs();renderPage();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));}
+function switchTab(id='overview'){curTab=['overview','progress',...ALL_TABS.map(tab=>tab.id)].includes(id)?id:'overview';localStorage.setItem(EFFECTIVENESS_TAB_KEY,curTab);buildTabs();renderPage();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));}
 function cycleOverviewPeriod(id){const order=['week','month','year'],current=getViewPeriod(id),next=order[(order.indexOf(current)+1)%order.length];viewPeriod[id]=next;renderOverview()}
 function toggleBlock(key){
   openBlocks[key]=!openBlocks[key];
@@ -577,6 +586,7 @@ function toggleBlock(key){
 // ── RENDER ──
 function renderPage(){
   if(curTab==='overview'){renderOverview();return;}
+  if(curTab==='progress'){renderProgress();return;}
   const tab=TABS.find(t=>t.id===curTab)||ALL_TABS.find(t=>t.id===curTab);
   const pg=document.getElementById('pg');pg.innerHTML='';
   const{sliding,vals,total,ts,dph,manual,remote,period,periodHours,periodIncome,presetLabel,formulaLabel}=getTabData(tab);
@@ -774,6 +784,49 @@ function renderOverview(){
   },50);
 }
 
+function readCheckpoints(){try{const value=JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
+function writeCheckpoints(value){localStorage.setItem(CHECKPOINT_KEY,JSON.stringify(value.sort((a,b)=>a.date.localeCompare(b.date))));try{parent.postMessage({type:'piura:data-changed',source:'effectiveness-checkpoints'},location.origin)}catch(error){}}
+function isoToday(){const d=new Date();return[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function currentCheckpoint(date=isoToday(),reconstructed=false){
+  let totalIncome=0,totalHours=0;
+  const stats=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);totalIncome+=value.avgMonthlyIncome;totalHours+=value.hoursPerMonth;return[tab.id,value]}));
+  const dph=totalHours?Math.round(totalIncome/totalHours):0,investment=Math.round(stats.inv?.dph||0),climate=Math.round(stats.klim?.dph||0);
+  const target=Number(SETTINGS.targetDph)||500,ratio=target?dph/target:0,status=ratio>=1?'Цель достигнута':ratio>=.72?'Уверенный рост':ratio>=.45?'Стабильно':'Требует внимания';
+  return{date,dph,investment,climate,status,createdAt:new Date(date+'T12:00:00').getTime(),reconstructed};
+}
+function saveCheckpoint(force=false){
+  if(!incomeData&&!timeData)return;
+  const list=readCheckpoints(),snapshot=currentCheckpoint(),index=list.findIndex(item=>item.date===snapshot.date);
+  if(index>=0)list[index]=snapshot;else list.push(snapshot);writeCheckpoints(list);
+  if(force)renderProgress();
+}
+function ensureScheduledCheckpoint(){
+  const today=new Date(),day=today.getDate(),list=readCheckpoints();
+  if(!list.length){restoreHistoricalCheckpoints();return}
+  if((day===1||day===15)&&!list.some(item=>item.date===isoToday()))saveCheckpoint();
+}
+function restoreHistoricalCheckpoints(){
+  if(!incomeData&&!timeData)return;
+  const list=readCheckpoints(),known=new Set(list.map(item=>item.date)),start=new Date(2026,6,1,12),today=new Date();
+  for(let cursor=new Date(start);cursor<=today;cursor.setMonth(cursor.getMonth()+1)){
+    for(const day of [1,15]){
+      const date=new Date(cursor.getFullYear(),cursor.getMonth(),day,12);if(date>today)continue;
+      const iso=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(day).padStart(2,'0')].join('-');
+      if(!known.has(iso)){list.push(currentCheckpoint(iso,true));known.add(iso)}
+    }
+  }
+  if(!list.length)list.push(currentCheckpoint());writeCheckpoints(list);
+}
+function selectComparison(weeks){comparisonWeeks=Number(weeks)||2;localStorage.setItem('piura_effectiveness_compare_weeks_v1',String(comparisonWeeks));renderProgress()}
+function checkpointBefore(list,current,weeks){const limit=new Date(current.date+'T12:00:00');limit.setDate(limit.getDate()-weeks*7);return[...list].reverse().find(item=>new Date(item.date+'T12:00:00')<=limit)||null}
+function cpDelta(current,previous,key){if(!previous)return{label:'Первый снимок',down:false};const value=Number(current[key]||0)-Number(previous[key]||0),pct=Number(previous[key])?value/Number(previous[key])*100:0;return{label:`${value>=0?'+':''}${Math.round(value).toLocaleString('ru-RU')} · ${pct>=0?'+':''}${pct.toFixed(1)}%`,down:value<0}}
+function cpMetric(label,value,delta,color,suffix=''){return`<article class="cp-card" style="--cc:${color}"><div class="cp-label">${label}</div><div class="cp-value">${Number(value||0).toLocaleString('ru-RU')}${suffix}</div><div class="cp-delta ${delta.down?'down':''}">${delta.label}</div><div class="cp-meta">за ${comparisonWeeks} нед.</div></article>`}
+function renderProgress(){
+  ensureScheduledCheckpoint();const pg=document.getElementById('pg'),list=readCheckpoints(),current=list.at(-1)||currentCheckpoint(),previous=checkpointBefore(list,current,comparisonWeeks);
+  pg.innerHTML=`<div class="cp-shell"><section class="cp-hero"><div class="cp-hero-top"><div><div class="cp-kicker">Контрольные точки · 1 и 15 числа</div><h1 class="cp-title">Динамика эффективности</h1><p class="cp-sub">Сравнение дохода в час, инвестиций и климата без перезаписи прошлых значений. Каждая точка сохраняется в истории и синхронизируется с Firebase.</p></div><button class="cp-save" onclick="saveCheckpoint(true)">Зафиксировать сейчас</button></div><div class="cp-controls">${[2,4,6].map(value=>`<button class="cp-period ${comparisonWeeks===value?'on':''}" onclick="selectComparison(${value})">${value} недели</button>`).join('')}</div></section><section class="cp-grid">${cpMetric('Долларов в час',current.dph,cpDelta(current,previous,'dph'),'#5b9dff',' $/ч')}${cpMetric('Инвестиции',current.investment,cpDelta(current,previous,'investment'),'#43dba0',' $/ч')}${cpMetric('Климат',current.climate,cpDelta(current,previous,'climate'),'#a779ff',' $/ч')}<article class="cp-card" style="--cc:#f0c84e"><div class="cp-label">Статус</div><div class="cp-value cp-status">${current.status}<small>${current.reconstructed?'восстановлено из истории':previous?`с ${new Date(previous.date+'T12:00:00').toLocaleDateString('ru-RU')}`:'первая контрольная точка'}</small></div></article></section>${list.length?`<section class="cp-chart"><div class="cp-chart-head"><h3>История контрольных точек</h3><span>${list.length} сохранено</span></div><div class="cp-chart-box"><canvas id="checkpointChart"></canvas></div></section>`:`<div class="cp-empty">Первая контрольная точка будет создана после загрузки данных.</div>`}</div>`;
+  if(progressChart){progressChart.destroy();progressChart=null}const canvas=document.getElementById('checkpointChart');if(!canvas)return;progressChart=new Chart(canvas,{type:'line',data:{labels:list.map(item=>new Date(item.date+'T12:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})),datasets:[{label:'$/час',data:list.map(item=>item.dph),borderColor:'#5b9dff',backgroundColor:'#5b9dff18',fill:true,tension:.28},{label:'Инвестиции',data:list.map(item=>item.investment),borderColor:'#43dba0',tension:.28},{label:'Климат',data:list.map(item=>item.climate),borderColor:'#a779ff',tension:.28}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a2b8',font:{family:'Inter',size:11}}}},scales:{x:{ticks:{color:'#6b7990'},grid:{color:'rgba(255,255,255,.03)'}},y:{beginAtZero:true,ticks:{color:'#6b7990',callback:value=>'$'+value},grid:{color:'rgba(255,255,255,.04)'}}}}})
+}
+
 async function loadIncome(){
   const b=document.getElementById('sync');b.textContent='● СИНХР...';b.className='';
   try{
@@ -787,10 +840,11 @@ async function loadIncome(){
     b.textContent='● ОШИБКА';b.className='err';
   }
 }
-async function loadAll(){await Promise.allSettled([loadIncome(),loadTimeData()]);buildTabs();renderPage();}
+async function loadAll(){await Promise.allSettled([loadIncome(),loadTimeData()]);ensureScheduledCheckpoint();buildTabs();renderPage();}
 applySettings();buildTabs();renderPage();
 try{const i=JSON.parse(localStorage.getItem(CACHE_KEY+'_income')||'null'),t=JSON.parse(localStorage.getItem(CACHE_KEY+'_time')||'null');if(i)incomeData=i.data;if(t){timeData=t.data;timeDayCount=t.days}if(i||t)renderPage()}catch(e){}
 loadAll();setInterval(loadAll,5*60*1000);
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied'){SETTINGS=loadSettings();applySettings();renderPage()}});
 </script>
 </body>
 </html>

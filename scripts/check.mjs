@@ -16,7 +16,7 @@ visit(root);
 const indexes = files.filter(file => basename(file) === 'index.html');
 const serviceViews = files.filter(file => extname(file) === '.html' && basename(file) !== 'index.html');
 const source = files.filter(file => /\.(html|js|css)$/.test(file)).map(file => readFileSync(file, 'utf8')).join('\n');
-const expected = ['Overview','EFFECTIVNESS','Morning','Time-tracker','Dynamics-2','AdminScale','My-Dynamics','Finance','Fonds','PFF','MSK','Safe','Personal-Income','Personal-FP','Personal-PFP'];
+const expected = ['Overview','EFFECTIVNESS','Morning','Time-tracker','Dynamics-2','AdminScale','My-Dynamics','Finance','Fonds','Foundation','PFF','MSK','Safe','Solid','Personal-Income','Personal-FP','Personal-PFP'];
 const errors = [];
 
 if (indexes.length !== 1 || indexes[0] !== join(root, 'index.html')) errors.push(`Нужен один корневой index.html, найдено: ${indexes.length}`);
@@ -39,4 +39,4 @@ if (errors.length) {
   console.error(errors.map(error => `✗ ${error}`).join('\n'));
   process.exit(1);
 }
-console.log(`✓ Одна ERP: 1 index, ${expected.length} сервисов, Personal Finance удалён, темы, цели, Govee и Elgato подключены`);
+console.log(`✓ Одна ERP: 1 index, ${expected.length} рабочих экранов, Personal Finance удалён, темы, цели, Govee и Elgato подключены`);

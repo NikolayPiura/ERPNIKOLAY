@@ -9,7 +9,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--erp-bg,var(--bg));color:var(--erp-text,var(--text));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 button{font:inherit}
-.ps-app{width:min(1780px,100%);margin:auto;padding:26px clamp(22px,3.2vw,58px) 90px;display:grid;gap:16px}
+.ps-app{width:100%;max-width:none;margin:0;padding:26px clamp(22px,3.2vw,58px) 90px;display:grid;gap:16px}
 .ps-header{min-height:98px;padding:21px 25px;border:1px solid var(--erp-line,var(--line));border-radius:var(--radius);background:radial-gradient(circle at 7% 0,rgba(104,163,255,.12),transparent 38%),var(--erp-surface,var(--surface));display:flex;align-items:center;justify-content:space-between;gap:22px;box-shadow:var(--shadow)}
 .ps-title h1{margin:0;font-size:clamp(34px,3.1vw,49px);line-height:.95;letter-spacing:-.055em}
 .ps-live{display:flex;align-items:center;gap:9px;color:var(--erp-muted,var(--muted));font-size:10px;font-weight:800;letter-spacing:.025em}
@@ -89,6 +89,17 @@ button{font:inherit}
 @media(max-width:1100px){.ps-command{align-items:flex-start}.ps-command-left,.ps-command-right{width:100%}.ps-tabs .ps-tab{min-width:0;flex:1}.ps-inline-metrics{grid-template-columns:1fr}.ps-inline-metric{border-right:0;border-bottom:1px solid var(--line)}.ps-inline-metric:last-child{border-bottom:0}.ps-fp1-overview{grid-template-columns:1fr}.ps-budget-grid{grid-template-columns:1fr}}
 @media(max-width:720px){.ps-app{padding:14px 11px 60px}.ps-header{align-items:flex-start;flex-direction:column}.ps-live{width:100%}.ps-tabs{display:grid;grid-template-columns:1fr 1fr}.ps-command-left,.ps-command-right{align-items:flex-start;flex-direction:column}.ps-segment,.ps-months{width:100%}.ps-segment button{flex:1;padding:0 8px}.ps-months strong{flex:1;min-width:0}.ps-rank-row{grid-template-columns:110px 1fr 85px}.ps-donut-panel,.ps-distribution{padding:18px}.ps-chart{padding:15px}.ps-chart-legend{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Полноэкранные финансовые таблицы: крупные цифры и спокойные переключатели. */
+.ps-command-controls .ps-segment{padding:6px;border-radius:999px;background:#090d14}
+.ps-command-controls .ps-segment button{min-height:39px;border-radius:999px;padding-inline:18px;font-size:11px}
+.ps-command-controls .ps-segment button.on{color:#08121a;background:var(--blue);border-color:var(--blue);box-shadow:0 7px 22px rgba(104,163,255,.22)}
+.ps-command-controls .ps-segment[data-accent="green"] button.on{background:var(--green);border-color:var(--green);color:#06120d}
+.ps-command-controls .ps-segment[data-accent="purple"] button.on{background:var(--purple);border-color:var(--purple);color:#0b0712}
+.ps-command-controls .ps-segment[data-accent="orange"] button.on{background:var(--orange);border-color:var(--orange);color:#150904}
+.ps-color-table td em{display:none!important}
+.ps-table td{font-size:14px;min-height:58px}.ps-table td b{font-size:14px;font-variant-numeric:tabular-nums}.ps-table th{font-size:10px}
+.ps-pfp-tabs{overflow:auto}.ps-pfp-tabs .ps-tab{min-width:132px}
 
 /* Finance control center · 2026 */
 .ps-finance-app{--finance-blue:#63a6ff;--finance-cyan:#44d7e8;--finance-green:#44d7a0;--finance-violet:#a77cff;--finance-orange:#ff906b;gap:20px;padding-top:32px}

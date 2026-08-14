@@ -453,9 +453,26 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 @media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:9px!important}.dyn-tabs,.dyn-tabs.section-tabs{max-width:100%!important;width:100%!important}}
 /* Larger, quieter header: controls are the title. */
 .logo{display:none!important}.topbar-inner{min-height:118px!important;padding-block:19px!important;grid-template-columns:auto minmax(0,1fr) auto!important;grid-template-areas:"mode tabs controls"!important;column-gap:22px!important}.dyn-tabs{min-height:60px!important}.dyn-tab{min-height:50px!important}@media(max-width:1050px){.topbar-inner{min-height:138px!important;grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:12px!important}}
+.workspace-nav{position:sticky;top:0;z-index:260;display:flex;justify-content:center;gap:8px;padding:12px 20px;background:rgba(9,12,18,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(18px)}
+.workspace-nav button{min-height:44px;padding:0 22px;border:1px solid var(--border2);border-radius:12px;background:var(--bg2);color:var(--text3);cursor:pointer;font:700 .64rem 'Space Mono',monospace;letter-spacing:.09em;text-transform:uppercase;transition:.18s}
+.workspace-nav button:hover{color:var(--text);border-color:var(--border3)}
+.workspace-nav button.active{color:#07110d;background:#55dfa7;border-color:#55dfa7;box-shadow:0 0 0 4px rgba(85,223,167,.1)}
+#scaleWorkspace[hidden],#embeddedWorkspace[hidden]{display:none!important}
+#scaleWorkspace .topbar{top:69px}
+#embeddedWorkspace{height:calc(100vh - 69px);background:#07090e}
+#embeddedFrame{display:block;width:100%;height:100%;border:0;background:#07090e}
+@media(max-width:650px){.workspace-nav{overflow-x:auto;justify-content:flex-start;padding-inline:12px}.workspace-nav button{padding-inline:14px;white-space:nowrap}#scaleWorkspace .topbar{top:69px}}
 </style>
 </head>
 <body data-theme="dark">
+
+<nav class="workspace-nav" aria-label="Разделы админ-шкалы">
+  <button type="button" data-workspace="scale" class="active">Админ-шкала</button>
+  <button type="button" data-workspace="roadmap">Дорожная карта</button>
+  <button type="button" data-workspace="dynamics">Динамики</button>
+</nav>
+
+<section id="scaleWorkspace">
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -670,9 +687,7 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
     <div class="modal-section">
       <h3>Google Docs · двусторонняя синхронизация</h3>
-      <p>Цели, планы и программы сначала открываются из локального снимка, а затем незаметно обновляются из документов. Адрес моста хранится только в этом браузере.</p>
-      <div class="color-row"><label>Адрес Apps Script</label><input id="syncUrl" placeholder="https://script.google.com/macros/s/.../exec" style="width:62%;border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;padding:7px 8px;outline:none"></div>
-      <div class="color-row"><label>Ключ (необязательно)</label><input id="syncToken" type="password" placeholder="Хранится локально" style="width:62%;border:1px solid var(--border2);background:var(--surface);color:var(--text);border-radius:6px;padding:7px 8px;outline:none"></div>
+      <p>Цели, планы и программы обновляются автоматически после входа владельца в Firebase. Отдельный адрес, ключ или повторная авторизация не нужны.</p>
       <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem">
         <button class="text-btn" id="syncNow">↻ синхронизировать</button>
         <a class="text-btn" style="display:inline-flex;align-items:center;text-decoration:none" target="_blank" rel="noopener" href="https://docs.google.com/document/d/14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c/edit">Цели ↗</a>
@@ -692,6 +707,11 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 
 <!-- MAIN -->
 <div class="main" id="mainWrap"></div>
+</section>
+
+<section id="embeddedWorkspace" hidden>
+  <iframe id="embeddedFrame" title="Дорожная карта и динамики"></iframe>
+</section>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
@@ -809,8 +829,9 @@ function saveDoneSettings(s){db.__doneSettings=s;persist();}
 
 function getViewSettings(){return {...{limit:6,expandedAll:false,heroDef:true,heroNum:true},...(db.__view||{})};}
 function saveViewSettings(s){db.__view=s;persist();}
-function getSyncSettings(){const defaultUrl='https://script.google.com/macros/s/AKfycbwtw3_PxS8KnkI5DAuK8Yg72gLR1rbVuu3c01Vj9CVPLnB7xVZlNzdnWsybyYTBwy1w/exec';let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}return {...{url:defaultUrl,token:'',lastSync:0},...(db.__sync||{}),...(cloud.url?{url:cloud.url,token:cloud.token||''}:{})};}
-function saveSyncSettings(s){db.__sync=s;persist();let cloud={};try{cloud=JSON.parse(localStorage.getItem('piura_erp_cloud_v1')||'{}')}catch(e){}localStorage.setItem('piura_erp_cloud_v1',JSON.stringify({...cloud,url:s.url||'',token:s.token||''}));}
+let firebaseBridgeToken='';
+function getSyncSettings(){const defaultUrl='https://script.google.com/macros/s/AKfycbwtw3_PxS8KnkI5DAuK8Yg72gLR1rbVuu3c01Vj9CVPLnB7xVZlNzdnWsybyYTBwy1w/exec';return{url:defaultUrl,token:firebaseBridgeToken,lastSync:Number(db.__sync?.lastSync)||0};}
+function saveSyncSettings(s){db.__sync={lastSync:Number(s.lastSync)||0};persist();}
 
 function migrateDocSnapshot(){
   if(db.__docSeedV1)return;
@@ -1177,12 +1198,6 @@ document.getElementById('addBlockSetting').addEventListener('click',()=>{
 /* ══ GOOGLE DOCS SYNC ══ */
 const syncState=document.getElementById('syncState');
 function setSyncState(text,kind=''){syncState.textContent=text;syncState.className='sync-state '+kind;}
-function syncSyncControls(){const s=getSyncSettings();document.getElementById('syncUrl').value=s.url||'';document.getElementById('syncToken').value=s.token||'';}
-['syncUrl','syncToken'].forEach(id=>document.getElementById(id).addEventListener('change',()=>{
-  const s=getSyncSettings();s.url=document.getElementById('syncUrl').value.trim();s.token=document.getElementById('syncToken').value;saveSyncSettings(s);refreshDocs();
-}));
-syncSyncControls();
-
 function normalizedText(value){return String(value||'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ru');}
 function mergeDocSnapshot(items){
   const grouped={};
@@ -1547,6 +1562,22 @@ function doSave(block,dynId,lvKey,sb){
 }
 
 /* ══ INIT ══ */
+const ADMIN_WORKSPACE_KEY='admin_workspace_v1';
+function setAdminWorkspace(view){
+  const allowed=['scale','roadmap','dynamics'];
+  if(!allowed.includes(view))view='scale';
+  document.querySelectorAll('[data-workspace]').forEach(button=>button.classList.toggle('active',button.dataset.workspace===view));
+  document.getElementById('scaleWorkspace').hidden=view!=='scale';
+  document.getElementById('embeddedWorkspace').hidden=view==='scale';
+  if(view!=='scale'){
+    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814e&embed='+encodeURIComponent(view);
+    if(!frame.src.endsWith(src))frame.src=src;
+  }
+  localStorage.setItem(ADMIN_WORKSPACE_KEY,view);
+}
+    document.querySelectorAll('[data-workspace]').forEach(button=>button.addEventListener('click',()=>setAdminWorkspace(button.dataset.workspace)));
+    window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura:cloud-data-applied')document.getElementById('embeddedFrame')?.contentWindow?.postMessage(event.data,location.origin);if(event.data?.type==='piura:firebase-token'){firebaseBridgeToken=String(event.data.token||'');if(firebaseBridgeToken)refreshDocs()}});
+    setAdminWorkspace(localStorage.getItem(ADMIN_WORKSPACE_KEY)||'scale');
 buildTabs();
 buildPanels();
 applyDoneColors();

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Личный доход</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260812k">
-  <script src="Personal-Sheets.js?v=20260812k"></script>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260814a">
+  <script src="Personal-Sheets.js?v=20260814a"></script>
 </head>
 <body>
 <main class="ps-app ps-finance-app" data-piura-keep-full>
@@ -26,8 +26,11 @@ const MONTHS_SHORT=['Янв','Фев','Мар','Апр','Май','Июн','Ию�
 const SOURCES=['PFF (Дивиденды)','PFF (Управляющий)','КЭ (Заработная плата)','КЭ (Дивиденды)','Наставник (Абонементы)','Наставник (Доп. проекты)','Москва (Управляющий)','Solid (Управляющий)','Снитч (Итоговый доход)'];
 const CATEGORIES=['Климат','Инвестиции','Наставничество','Учредитель','Управление деньгами','Снитч'];
 const COLORS=S.colors;
+const STATE_KEY='piura_personal_income_state_v1';
 let state={tab:'income',month:new Date().getMonth(),group:'category',period:'week',mode:'fact',scope:'month',mentorKind:'subscriptions',mentorPeriod:'week'};
+try{state={...state,...JSON.parse(localStorage.getItem(STATE_KEY)||'{}')}}catch(e){}
 let serial=0,data=null;
+function saveState(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
 
 function rowNamed(rows,name){return rows.find(row=>S.normalize(S.text(row[0]))===S.normalize(name))}
 function command(title,eyebrow,controls,right=''){return `<section class="ps-command ps-reveal"><div class="ps-command-copy"><span>${S.esc(eyebrow)}</span><h2>${S.esc(title)}</h2></div><div class="ps-command-controls">${controls}</div>${right?`<div class="ps-command-right">${right}</div>`:''}</section>`}
@@ -79,11 +82,10 @@ function renderIncome(){
     {label:'Лучший период',value:S.compactMoney(best),note:`средний ${S.compactMoney(average)}`,color:'#f4c65d'}
   ]);
   const series=state.mode==='compare'?[{label:'Факт',values:actual,color:'#43d9a3'},{label:'План',values:planned,color:'#a779ff'}]:[{label:state.mode==='plan'?'План':'Факт',values:viewValues,color:state.mode==='plan'?'#a779ff':'#63a4ff'}];
-  const chart=S.lineChart({title:state.scope==='year'?'Доход по месяцам':`Доход · ${MONTHS[state.month]}`,subtitle:state.group==='category'?'Сумма всех категорий':'Сумма всех источников',labels:model.labels,series,height:300});
   const rows=model.rows.map(row=>[row.name,...(state.mode==='plan'?row.plan:row.fact),S.sum(state.mode==='plan'?row.plan:row.fact)]);
   const headers=[state.group==='category'?'Категория':'Источник',...model.labels,'Итого'];
   const totals=['Итого',...headers.slice(1).map((_,index)=>S.sum(rows.map(row=>row[index+1])))];
-  content.innerHTML=command('Доход','ПЛАНИРОВАНИЕ И АНАЛИТИКА',groupSwitch+periodSwitch+modeSwitch+scopeSwitch,chooser)+metrics+chart+table(state.scope==='year'?'Весь 2026 год':MONTHS[state.month],state.group==='category'?'ПО КАТЕГОРИЯМ':'ПО ИСТОЧНИКАМ',headers,rows,totals);
+  content.innerHTML=command('Доход','ПЛАНИРОВАНИЕ И АНАЛИТИКА',groupSwitch+periodSwitch+modeSwitch+scopeSwitch,chooser)+metrics+table(state.scope==='year'?'Весь 2026 год':MONTHS[state.month],state.group==='category'?'ПО КАТЕГОРИЯМ':'ПО ИСТОЧНИКАМ',headers,rows,totals);
   bind();
 }
 function mentorModel(){
@@ -113,12 +115,12 @@ function renderMentor(){
     {label:'Участников',value:String(rows.length),note:'с доходом в периоде',color:'#63a4ff'},
     {label:'Лучший период',value:S.compactMoney(Math.max(0,...values)),note:state.mentorPeriod==='week'?'за неделю':'за месяц',color:'#f4c65d'}
   ]);
-  content.innerHTML=command('Ментор','АБОНЕМЕНТЫ И ПРЕМИИ',controls,chooser)+metrics+S.lineChart({title:state.mentorKind==='subscriptions'?'Динамика абонементов':'Динамика премий',subtitle:'Все участники',labels,series:[{label:'Доход',values,color:state.mentorKind==='subscriptions'?'#43d9a3':'#a779ff'}],height:290})+table(state.mentorPeriod==='week'?MONTHS[state.month]:'Весь 2026 год','РЕЙТИНГ УЧАСТНИКОВ',['Участник',...labels,'Итого'],rows,totals);
+  content.innerHTML=command('Ментор','АБОНЕМЕНТЫ И ПРЕМИИ',controls,chooser)+metrics+table(state.mentorPeriod==='week'?MONTHS[state.month]:'Весь 2026 год','РЕЙТИНГ УЧАСТНИКОВ',['Участник',...labels,'Итого'],rows,totals);
   bind();
 }
 function bind(){
-  content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{state.month=(state.month+Number(button.dataset.month)+12)%12;paint()});
-  content.querySelectorAll('[data-control]').forEach(button=>button.onclick=()=>{state[button.dataset.control]=button.dataset.value;if(button.dataset.control==='scope'&&button.dataset.value==='year')state.period='month';paint()});
+  content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{state.month=(state.month+Number(button.dataset.month)+12)%12;saveState();paint()});
+  content.querySelectorAll('[data-control]').forEach(button=>button.onclick=()=>{state[button.dataset.control]=button.dataset.value;if(button.dataset.control==='scope'&&button.dataset.value==='year')state.period='month';saveState();paint()});
 }
 function paint(){if(!data)return;try{state.tab==='income'?renderIncome():renderMentor()}catch(error){content.innerHTML=S.errorCard('Не удалось собрать экран',error.message)}}
 async function loadAll(){
@@ -127,7 +129,8 @@ async function loadAll(){
   data={fact:result['2026 (НЕД)'],plan:result['2026 (ПЛАН)'],mentor:result['2026 (МЕНТОР)']};
   const errors=Object.values(result).filter(item=>item.error&&!item.table);syncState.classList.toggle('cached',Object.values(result).some(item=>item.cached));syncState.querySelector('span').textContent=errors.length?'Часть данных недоступна':Object.values(result).some(item=>item.cached)?'Сохранённые данные':'Данные обновлены';paint();
 }
-document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;state.tab=button.dataset.tab;document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};
+document.getElementById('tabs').onclick=event=>{const button=event.target.closest('[data-tab]');if(!button)return;state.tab=button.dataset.tab;saveState();document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item===button));paint()};
+document.querySelectorAll('.ps-tab').forEach(item=>item.classList.toggle('on',item.dataset.tab===state.tab));
 document.getElementById('refresh').onclick=loadAll;loadAll();
 </script>
 </body>

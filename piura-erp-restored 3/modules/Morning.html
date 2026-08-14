@@ -1496,6 +1496,10 @@ function init(){
   setInterval(renderDate, 60000);
   tickClock();
 }
+window.addEventListener('message',event=>{
+  if(event.origin!==location.origin||event.data?.type!=='piura:cloud-data-applied')return;
+  blocksData=restoreHiddenItems(loadBlocks());state=loadState();prefs=loadPrefs();applyPrefs();renderDate();renderBlocks();
+});
 init();
 </script>
 </body>

@@ -249,7 +249,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   </div>
 </div>
 
-<div class="fund-tabs"><button class="fund-tab on" data-tab="manage">Управление</button><button class="fund-tab" data-tab="endowment">Endowment</button><button class="fund-tab" data-tab="donations">Фонды</button><div class="year-switch hidden" id="goalYearSwitch" aria-label="Год целей"><button class="year-option on" data-goal-year="2026">2026</button><button class="year-option" data-goal-year="2027">2027</button></div><div class="currency-switch hidden" id="currencySwitch" aria-label="Валюта Endowment и фондов"><button class="currency-option on" data-currency="usd">$ USD</button><button class="currency-option" data-currency="rub">₽ RUB</button></div></div>
+<div class="fund-tabs"><button class="fund-tab on" data-tab="manage">Управление</button><button class="fund-tab" data-tab="endowment">Endowment</button><div class="year-switch hidden" id="goalYearSwitch" aria-label="Год целей"><button class="year-option on" data-goal-year="2026">2026</button><button class="year-option" data-goal-year="2027">2027</button></div><div class="currency-switch hidden" id="currencySwitch" aria-label="Валюта Endowment"><button class="currency-option on" data-currency="usd">$ USD</button><button class="currency-option" data-currency="rub">₽ RUB</button></div></div>
 
 <div class="wrap tab-view on" id="view-manage">
   <div class="root-card">
@@ -1241,7 +1241,8 @@ document.querySelectorAll('[data-goal-year]').forEach(button=>{button.classList.
 document.querySelectorAll('[data-don-cat]').forEach(button=>button.addEventListener('click',()=>{donationCategory=button.dataset.donCat;renderDonationPeople()}));
 document.getElementById('donSearch').addEventListener('input',renderDonationPeople);
 document.getElementById('donStatusFilter').addEventListener('change',renderDonationPeople);
-document.querySelector('[data-tab="manage"]')?.click();
+const initialFundsTab=['manage','endowment'].includes(localStorage.getItem('piura_funds_tab'))?localStorage.getItem('piura_funds_tab'):'manage';
+document.querySelector(`[data-tab="${initialFundsTab}"]`)?.click();
 fetchRate();
 seedSolid();
 seedEndowment();
@@ -1252,6 +1253,7 @@ renderTree();
 recalcDisplay();
 funds.forEach(f=>fetchFund(f));
 window.addEventListener('resize',()=>{renderTree();recalcDisplay();});
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied'){funds=loadState();renderTree();recalcDisplay()}});
 </script>
 </body>
 </html>

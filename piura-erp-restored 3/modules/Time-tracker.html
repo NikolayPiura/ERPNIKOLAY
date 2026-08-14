@@ -138,7 +138,7 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink
 }
 .entry-card {
   background: var(--white); border: 2px solid var(--bord);
-  border-radius: var(--r); overflow: hidden; cursor: pointer;
+  border-radius: var(--r); overflow: visible; cursor: pointer;
   transition: border-color .15s, box-shadow .15s;
   position: relative;
 }
@@ -192,8 +192,9 @@ body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink
 
 /* ── INLINE PICKER ── */
 .card-picker {
-  display: none; padding: 0 1.5rem 1.5rem;
-  border-top: 1.5px solid var(--bord);
+  display: none; position:absolute;z-index:40;left:18px;right:18px;top:calc(100% + 10px);
+  padding:0 1.5rem 1.5rem;border:1.5px solid var(--bord);border-radius:16px;
+  background:var(--white);box-shadow:0 24px 70px rgba(0,0,0,.42);
   animation: pkIn .16s ease;
 }
 @keyframes pkIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
@@ -410,10 +411,10 @@ tr:hover td { background: var(--bg); }
 body>.hero-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;position:sticky!important;inset-block-start:0!important;z-index:1000!important;width:100%!important;min-height:64px!important;margin:0!important;padding:10px 32px!important;border:0!important;border-bottom:1px solid var(--bord)!important;border-radius:0!important;background:color-mix(in srgb,var(--bg2) 96%,transparent)!important;backdrop-filter:blur(22px)!important;box-shadow:0 12px 30px rgba(0,0,0,.18)!important}.hero-date-group{display:flex!important;visibility:visible!important;opacity:1!important;min-width:0!important;pointer-events:auto!important}.hero-date-group>*{visibility:visible!important;opacity:1!important;pointer-events:auto!important}.hero-right{display:flex!important;visibility:visible!important;opacity:1!important}.hero{padding-top:18px!important}
 @media(max-width:850px){body>.hero-topbar{grid-template-columns:1fr!important;padding:9px 14px!important}.hero-right{display:none!important}.hero-date-group{width:100%!important;overflow-x:auto!important}}
 /* 2026-08-11: centred working surface, calmer cards, no history panel. */
-.hero{padding:44px max(54px,calc((100vw - 1480px)/2)) 36px!important;gap:26px!important}.hero-total-row{gap:18px!important}.hero-big-label{padding-bottom:17px!important}.content{width:min(1480px,calc(100% - 72px));margin:0 auto;padding:34px 0 96px!important}.entry-grid{gap:20px!important}.entry-card,.add-card{min-height:152px!important;transition:border-color .14s ease,background-color .14s ease!important}.entry-card:hover,.add-card:hover{transform:none!important;animation:none!important}.entry-card.active{min-height:340px!important}.card-picker{transition:none!important}.hist-card{display:none!important}.mr-name-input{width:100%;padding:9px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font:700 14px Inter,sans-serif;outline:none}.mr-name-input:focus{border-color:var(--blue);background:var(--bg3)}
+.hero{padding:44px max(54px,calc((100vw - 1480px)/2)) 36px!important;gap:26px!important}.hero-total-row{gap:18px!important}.hero-big-label{padding-bottom:17px!important}.content{width:min(1480px,calc(100% - 72px));margin:0 auto;padding:34px 0 96px!important}.entry-grid{gap:20px!important}.entry-card,.add-card{min-height:152px!important;transition:border-color .14s ease,background-color .14s ease!important}.entry-card:hover,.add-card:hover{transform:none!important;animation:none!important}.entry-card.active{min-height:152px!important;z-index:30}.card-picker{transition:none!important}.hist-card{display:none!important}.mr-name-input{width:100%;padding:9px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--ink);font:700 14px Inter,sans-serif;outline:none}.mr-name-input:focus{border-color:var(--blue);background:var(--bg3)}
 @media(max-width:850px){.hero{padding:30px 18px!important}.content{width:calc(100% - 28px)}}
 /* 11.08.2026 — use the desktop canvas and make the daily total the visual anchor. */
-body>.hero-topbar{min-height:112px!important;padding:22px clamp(42px,5.5vw,104px)!important}.hero-date-group{gap:20px!important;min-height:68px!important}.hero-weekday{min-width:124px!important;font-size:18px!important;letter-spacing:.08em!important}.hero-fulldate{min-width:310px!important;font-size:34px!important;line-height:1!important;letter-spacing:-.035em!important}.nav-btn{flex-basis:48px!important;width:48px!important;height:48px!important;font-size:18px!important}.btn-today{height:48px!important;padding-inline:22px!important;font-size:12px!important}.hero{padding:64px max(64px,calc((100vw - 1760px)/2)) 54px!important;gap:34px!important}.hero-total-row{gap:24px!important}.hero-big{font-size:clamp(98px,9vw,148px)!important;line-height:.8!important}.hero-big-label{padding-bottom:25px!important;font-size:15px!important}.hero-bar{margin-top:20px!important;height:11px!important}.content{width:min(1760px,calc(100% - 96px))!important;padding:52px 0 120px!important}.entry-grid{gap:25px!important;padding:24px!important}.entry-card,.add-card{min-height:180px!important}.card-head{min-height:178px!important;padding:28px 30px!important}.card-val{font-size:40px!important}.entry-card.active{min-height:380px!important}
+body>.hero-topbar{min-height:112px!important;padding:22px clamp(42px,5.5vw,104px)!important}.hero-date-group{gap:20px!important;min-height:68px!important}.hero-weekday{min-width:124px!important;font-size:18px!important;letter-spacing:.08em!important}.hero-fulldate{min-width:310px!important;font-size:34px!important;line-height:1!important;letter-spacing:-.035em!important}.nav-btn{flex-basis:48px!important;width:48px!important;height:48px!important;font-size:18px!important}.btn-today{height:48px!important;padding-inline:22px!important;font-size:12px!important}.hero{padding:64px max(64px,calc((100vw - 1760px)/2)) 54px!important;gap:34px!important}.hero-total-row{gap:24px!important}.hero-big{font-size:clamp(98px,9vw,148px)!important;line-height:.8!important}.hero-big-label{padding-bottom:25px!important;font-size:15px!important}.hero-bar{margin-top:20px!important;height:11px!important}.content{width:min(1760px,calc(100% - 96px))!important;padding:52px 0 120px!important}.entry-grid{gap:25px!important;padding:24px!important}.entry-card,.add-card{min-height:180px!important}.card-head{min-height:178px!important;padding:28px 30px!important}.card-val{font-size:40px!important}.entry-card.active{min-height:180px!important;z-index:30}
 @media(max-width:850px){body>.hero-topbar{padding-inline:16px!important}.hero{padding:38px 18px!important}.hero-big{font-size:72px!important}.content{width:calc(100% - 28px)!important;padding-top:26px!important}}
 /* 12.08.2026 — stronger day navigation rhythm and clearer card separation. */
 body>.hero-topbar{min-height:142px!important;padding:28px clamp(48px,6vw,118px)!important;column-gap:64px!important}.hero-date-group{gap:32px!important;min-height:82px!important}.hero-weekday{min-width:160px!important;font-size:22px!important}.hero-fulldate{min-width:390px!important;font-size:42px!important}.nav-btn{flex-basis:54px!important;width:54px!important;height:54px!important}.btn-today{height:54px!important;padding-inline:28px!important}.hero{padding-top:82px!important}.entry-grid{gap:30px!important;padding:30px!important}.entry-card,.add-card{min-height:186px!important}.card-head{padding:30px 32px!important}@media(max-width:1100px){.hero-fulldate{min-width:300px!important;font-size:34px!important}.hero-date-group{gap:22px!important}}@media(max-width:850px){body>.hero-topbar{min-height:104px!important;padding:16px!important}.hero-date-group{min-height:64px!important;gap:14px!important}.hero-weekday{min-width:110px!important;font-size:17px!important}.hero-fulldate{min-width:220px!important;font-size:27px!important}.hero{padding-top:44px!important}}
@@ -543,6 +544,8 @@ const PRESETS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10];
 const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ ключ, чтобы не терять историю
 const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
 const DIRTY_KEY = 'tt_local_dirty_v1';
+const PENDING_SYNC_KEY = 'tt_pending_sheet_sync_v1';
+const SHEET_SYNC_DELAY = 30000;
 const OPEN_KEY = 'tt_open_picker_v1';
 const SELECTED_DATE_KEY = 'tt_selected_date_v1';
 
@@ -588,6 +591,9 @@ function dayData() { return load()[dk(curDate)] || {}; }
 function dirtyDays(){try{return JSON.parse(localStorage.getItem(DIRTY_KEY)||'{}')}catch{return{}}}
 function markDirty(dateKey){const dirty=dirtyDays(),now=Date.now();Object.keys(dirty).forEach(key=>{if(now-Number(dirty[key]||0)>120000)delete dirty[key]});dirty[dateKey]=now;localStorage.setItem(DIRTY_KEY,JSON.stringify(dirty));}
 function isDirty(dateKey){return Date.now()-Number(dirtyDays()[dateKey]||0)<120000}
+function clearDirty(dateKey){const dirty=dirtyDays();delete dirty[dateKey];localStorage.setItem(DIRTY_KEY,JSON.stringify(dirty))}
+function pendingDates(){try{const value=JSON.parse(localStorage.getItem(PENDING_SYNC_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
+function savePendingDates(value){localStorage.setItem(PENDING_SYNC_KEY,JSON.stringify([...new Set(value)]))}
 
 function setVal(key, mins) {
   const d = load(), k = dk(curDate);
@@ -624,10 +630,12 @@ async function syncToSheets(dateKey) {
     });
     setSyncStatus('ok', '✓ Отправлено в Google Sheets');
     setTimeout(()=>setSyncStatus('', 'Google Sheets'),4000);
+    return true;
   } catch (err) {
     setSyncStatus('error', '✗ Ошибка синхронизации');
     console.error('Sync error:', err);
     setTimeout(() => setSyncStatus('', 'Google Sheets'), 4000);
+    return false;
   }
 }
 
@@ -784,8 +792,31 @@ function updPresets(key) {
     btn.classList.toggle('sel', PRESETS[i]*60 === (pH*60+pM));
   });
 }
-let pickerSyncTimer;
-function queueSheetSync(){clearTimeout(pickerSyncTimer);pickerSyncTimer=setTimeout(()=>{syncToSheets(dk(curDate));try{parent.postMessage({type:'piura:data-changed',source:'time'},location.origin)}catch(error){}},500)}
+let pickerSyncTimer,sheetSyncBusy=false;
+async function flushSheetSync(){
+  if(sheetSyncBusy)return;
+  const dates=pendingDates();if(!dates.length)return;
+  sheetSyncBusy=true;
+  try{
+    for(const dateKey of dates){
+      const syncRevision=Number(dirtyDays()[dateKey]||0),synced=await syncToSheets(dateKey),latestRevision=Number(dirtyDays()[dateKey]||0);
+      if(synced&&latestRevision<=syncRevision){
+        clearDirty(dateKey);
+        savePendingDates(pendingDates().filter(date=>date!==dateKey));
+      }
+    }
+  }finally{
+    sheetSyncBusy=false;
+    if(pendingDates().length){clearTimeout(pickerSyncTimer);pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY)}
+  }
+}
+function queueSheetSync(dateKey=dk(curDate)){
+  savePendingDates([...pendingDates(),dateKey]);
+  setSyncStatus('ok','✓ Сохранено локально · облако через 30 сек');
+  clearTimeout(pickerSyncTimer);
+  pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY);
+  try{parent.postMessage({type:'piura:data-changed',source:'time'},location.origin)}catch(error){}
+}
 function commitPicker(key){setVal(key,pH*60+pM);const card=[...document.getElementById('entryGrid').children].find(node=>node.querySelector?.('#dh_'+key)),value=card?.querySelector('.card-val');if(value){value.textContent=fmt(pH*60+pM);value.classList.toggle('zero',pH*60+pM===0)}renderHero();renderPie();renderBar();queueSheetSync()}
 
 /* ── PIE ── */
@@ -1001,6 +1032,8 @@ renderAll();
 document.getElementById('syncStatus').addEventListener('click',()=>syncFromSheets());
 document.getElementById('syncStatus').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();syncFromSheets();}});
 syncFromSheets();
+if(pendingDates().length){setSyncStatus('ok','✓ Есть локальные изменения · облако через 30 сек');pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY)}
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied')renderAll()});
 </script>
 </body>
 </html>

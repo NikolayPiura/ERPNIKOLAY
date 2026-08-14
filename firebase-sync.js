@@ -3,7 +3,7 @@ import {
   GoogleAuthProvider,
   browserLocalPersistence,
   getAuth,
-  onAuthStateChanged,
+  onIdTokenChanged,
   setPersistence,
   signInWithPopup,
   signOut,
@@ -69,6 +69,14 @@ function emit(phase, message, extra = {}) {
     ...extra,
   };
   window.dispatchEvent(new CustomEvent('piura-firebase-status', { detail: lastStatus }));
+}
+
+async function publishBridgeToken(user) {
+  const token = user ? await user.getIdToken() : '';
+  window.dispatchEvent(new CustomEvent('piura-firebase-token', {
+    detail: { token },
+  }));
+  return token;
 }
 
 function userCollection() {
@@ -170,12 +178,12 @@ async function scanAndPush(force = false) {
 }
 
 function refreshErpAfterRemoteChange() {
-  if (!sessionStorage.getItem('piura_firebase_initial_reload_v1')) {
-    sessionStorage.setItem('piura_firebase_initial_reload_v1', '1');
-    location.reload();
-    return;
-  }
-  window.dispatchEvent(new CustomEvent('piura-firebase-data-applied'));
+  // Modules listen for this event and redraw only the data that changed.
+  // A full shell reload used to reset the selected service, tab, open card,
+  // filters and scroll position whenever Firestore delivered a snapshot.
+  window.dispatchEvent(new CustomEvent('piura-firebase-data-applied', {
+    detail: { appliedAt: Date.now() },
+  }));
 }
 
 async function mergeInitialData() {
@@ -313,6 +321,7 @@ async function syncNow() {
 
 window.piuraFirebase = {
   syncNow,
+  getIdToken: () => currentUser?.getIdToken() || Promise.resolve(''),
   getStatus: () => ({ ...lastStatus }),
 };
 
@@ -324,7 +333,7 @@ if (!isFirebaseConfigured) {
     auth = getAuth(app);
     db = getFirestore(app);
     await setPersistence(auth, browserLocalPersistence);
-    onAuthStateChanged(auth, user => {
+    onIdTokenChanged(auth, user => {
       if (user) {
         const isOwner = user.email?.toLowerCase() === firebaseOwnerEmail.toLowerCase()
           && user.emailVerified;
@@ -335,9 +344,11 @@ if (!isFirebaseConfigured) {
         }
         autoSignInBlocked = false;
         disarmGestureSignIn();
+        publishBridgeToken(user).catch(error => console.warn('Firebase bridge token:', error));
         startSync(user);
       } else {
         currentUser = null;
+        publishBridgeToken(null);
         unsubscribe?.();
         unsubscribe = null;
         clearInterval(scanTimer);
