@@ -434,9 +434,31 @@ function getManual(id){const d=ld();return(d[id]&&d[id].manual)||{};}
 function saveManualKey(id,key,val){const d=ld();if(!d[id])d[id]={};if(!d[id].manual)d[id].manual={};const n=parseFloat(val);if(!isNaN(n)&&n>0)d[id].manual[key]=n;else delete d[id].manual[key];sv(d);}
 
 // ── TIME DATA ──
-async function loadTimeData(){
+function commitTimeData(obj){
+  timeData=obj;
+  const keys=Object.keys(obj).sort();
+  if(keys.length>=2){
+    const first=new Date(keys[0]+'T00:00:00');
+    const last=new Date(keys[keys.length-1]+'T00:00:00');
+    timeDayCount=Math.max(1,Math.round((last-first)/86400000)+1);
+  } else timeDayCount=Math.max(1,keys.length);
+}
+function localTimeData(){
   try{
-    const r=await fetch(TIME_URL);
+    const source=JSON.parse(localStorage.getItem('tt_v4')||'{}'),obj={};
+    Object.entries(source).forEach(([date,row])=>{
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!row||typeof row!=='object')return;
+      obj[date]={klim:Number(row.klim)||0,inv:Number(row.inv)||0,money:Number(row.money)||0,nav:Number(row.nav)||0};
+    });
+    return Object.values(obj).some(row=>Object.values(row).some(value=>value>0))?obj:null;
+  }catch{return null}
+}
+async function loadTimeData(){
+  const local=localTimeData();
+  if(!timeData&&local)commitTimeData(local);
+  try{
+    const r=await fetch(TIME_URL+'?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json();
     if(j.status==='ok'&&j.days){
       const obj={};
@@ -446,16 +468,11 @@ async function loadTimeData(){
           money:d['Управление деньгами']||0,nav:d['Наставник']||0,
         };
       });
-      timeData=obj;
-      const keys=Object.keys(obj).sort();
-      if(keys.length>=2){
-        const first=new Date(keys[0]+'T00:00:00');
-        const last=new Date(keys[keys.length-1]+'T00:00:00');
-        timeDayCount=Math.max(1,Math.round((last-first)/86400000)+1);
-      } else timeDayCount=Math.max(1,keys.length);
+      if(!Object.values(obj).some(row=>Object.values(row).some(value=>Number(value)>0)))throw new Error('Пустой ответ учёта времени');
+      commitTimeData(obj);
       localStorage.setItem(CACHE_KEY+'_time',JSON.stringify({data:timeData,days:timeDayCount,at:Date.now()}));
     }
-  }catch(e){console.error('Time load error:',e);timeData=null;}
+  }catch(e){console.warn('Time load fallback:',e);}
 }
 function getTime(){return timeData||{};}
 function timeStatsFor(tk,until=''){
