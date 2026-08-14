@@ -1,7 +1,8 @@
 /**
  * PIURA ERP · Google Docs ↔ Admin Scale
  * Deploy as a Google Apps Script Web App (execute as yourself).
- * Optional: add Script Property SYNC_TOKEN and enter the same value in ERP settings.
+ * Access is verified by the signed-in Firebase owner automatically.
+ * A Script Property SYNC_TOKEN remains supported only as an emergency override.
  */
 const PIURA_DOCS = {
   'цели': '14LSlYVFN0NZFMw0a-50jEexXjvPf--1KvBVprMK058c',
@@ -309,7 +310,25 @@ function normalize_(value) {
 
 function authorize_(provided) {
   const required = PropertiesService.getScriptProperties().getProperty('SYNC_TOKEN') || '';
-  if (required && provided !== required) throw new Error('Access denied');
+  if (required) {
+    if (provided === required) return;
+    throw new Error('Access denied');
+  }
+  if (!provided) throw new Error('Firebase sign-in required');
+  const response = UrlFetchApp.fetch(
+    'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=AIzaSyBNTLYV4bgG0V-SG6X-A5bsLA_CV7G-ElA',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({idToken: String(provided)}),
+      muteHttpExceptions: true
+    }
+  );
+  if (response.getResponseCode() !== 200) throw new Error('Firebase token rejected');
+  const user = (JSON.parse(response.getContentText()).users || [])[0] || {};
+  if (String(user.email || '').toLowerCase() !== 'kol9932@gmail.com' || user.emailVerified !== true) {
+    throw new Error('Access denied');
+  }
 }
 
 function json_(data) {

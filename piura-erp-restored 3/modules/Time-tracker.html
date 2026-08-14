@@ -612,6 +612,22 @@ function setSyncStatus(state, text) {
   tx.textContent = text;
 }
 
+const syncPause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function verifySheetDate(dateKey,values,cats){
+  for(let attempt=0;attempt<3;attempt++){
+    await syncPause(700+attempt*650);
+    try{
+      const response=await fetch(GAS_URL+'?verify='+encodeURIComponent(dateKey)+'&t='+Date.now(),{cache:'no-store'});
+      if(!response.ok)continue;
+      const payload=await response.json(),serverDay=Array.isArray(payload.days)?payload.days.find(day=>day.date===dateKey):null;
+      if(!serverDay)continue;
+      const matches=cats.every(cat=>Number(serverDay[cat.label]||0)===Number(values[cat.key]||0));
+      if(matches)return true;
+    }catch(error){}
+  }
+  return false;
+}
+
 async function syncToSheets(dateKey) {
   const all = load();
   const values = all[dateKey] || {};
@@ -628,6 +644,7 @@ async function syncToSheets(dateKey) {
       headers: { 'Content-Type': 'application/json' },
       body: payload
     });
+    if(!await verifySheetDate(dateKey,values,cats))throw new Error('Google Sheets не подтвердил запись');
     setSyncStatus('ok', '✓ Отправлено в Google Sheets');
     setTimeout(()=>setSyncStatus('', 'Google Sheets'),4000);
     return true;

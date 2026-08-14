@@ -1570,7 +1570,7 @@ function setAdminWorkspace(view){
   document.getElementById('scaleWorkspace').hidden=view!=='scale';
   document.getElementById('embeddedWorkspace').hidden=view==='scale';
   if(view!=='scale'){
-    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814e&embed='+encodeURIComponent(view);
+    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814f&embed='+encodeURIComponent(view);
     if(!frame.src.endsWith(src))frame.src=src;
   }
   localStorage.setItem(ADMIN_WORKSPACE_KEY,view);

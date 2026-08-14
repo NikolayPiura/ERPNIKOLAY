@@ -455,6 +455,8 @@ test('новая динамика эффективности хранит кон
   assert.match(time, /PENDING_SYNC_KEY/);
   assert.match(time, /latestRevision<=syncRevision/);
   assert.match(time, /if\(synced&&/);
+  assert.match(time, /async function verifySheetDate/);
+  assert.match(time, /Google Sheets не подтвердил запись/);
 });
 
 test('инвестиционный PFF показывает недельные значения без графиков подписок и баланса', () => {
