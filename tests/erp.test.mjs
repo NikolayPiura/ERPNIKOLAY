@@ -25,11 +25,17 @@ test('Firebase синхронизирует рабочие данные и из�
   const config = read('firebase-config.js');
   const rules = read('firestore.rules');
   assert.match(shell, /firebase-sync\.js/);
-  assert.match(shell, /Firebase · основная база/);
+  assert.match(shell, /Firebase уже настроен в системе/);
+  assert.doesNotMatch(shell, /firebase-connect|firebase-disconnect|Войти через Google/);
   assert.match(sync, /GoogleAuthProvider/);
+  assert.match(sync, /browserLocalPersistence/);
+  assert.match(sync, /login_hint: firebaseOwnerEmail/);
+  assert.match(sync, /async function automaticSignIn/);
+  assert.match(sync, /automaticSignIn\(\)/);
   assert.match(sync, /users', currentUser\.uid, 'erpState/);
   assert.match(sync, /setInterval\(\(\) => scanAndPush/);
   assert.match(config, /projectId: 'erp-design-checklist'/);
+  assert.match(config, /firebaseOwnerEmail = 'kol9932@gmail\.com'/);
   assert.doesNotMatch(config, /YOUR_FIREBASE_/);
   assert.match(rules, /request\.auth\.uid == userId/);
   assert.match(rules, /request\.auth\.token\.email == 'kol9932@gmail\.com'/);
