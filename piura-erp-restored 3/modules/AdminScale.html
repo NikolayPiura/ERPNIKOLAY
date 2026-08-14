@@ -1291,7 +1291,8 @@ function buildTabs(){
     const b=document.createElement('button');
     b.className='dyn-tab'+(d.id===activeTab?' active':'');
     const nm=names[i]||d.short;
-    b.innerHTML=`<span class="tab-num">${d.id}</span><span class="tab-name">${nm}</span>`;
+    b.innerHTML=`<span class="tab-num">${d.id}</span>`;
+    b.title=`${d.id} · ${nm}`;b.setAttribute('aria-label',`${d.id} · ${nm}`);
     b.addEventListener('click',()=>{activeTab=d.id;buildTabs();buildPanels();});
     c.appendChild(b);
   });

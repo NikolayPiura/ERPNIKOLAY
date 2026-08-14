@@ -135,9 +135,9 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 /* 2026-08-11: a spacious, stable dashboard without distracting card motion. */
 .pg{max-width:1680px;margin:0 auto;padding:148px 5vw 120px}.sec{margin-bottom:calc(92px * var(--spacing))}.ov-summary{margin-bottom:calc(76px * var(--spacing));padding:calc(64px * var(--spacing)) 72px}.ov-list{gap:calc(38px * var(--spacing))}.ov-row{min-height:238px;padding:calc(58px * var(--spacing)) calc(66px * var(--spacing));gap:54px;transition:border-color .14s ease,background-color .14s ease}.ov-row:hover{transform:none;box-shadow:none}.card,.ti-box{transition:border-color .14s ease}.card:hover,.ti-box:hover{transform:none!important;box-shadow:none!important}@media(max-width:900px){.pg{padding:122px 22px 80px}.sec{margin-bottom:64px}.ov-row{padding:36px 28px;gap:24px}}
 /* История четырёх показателей в той же визуальной системе, что и «Обзор». */
-.cp-shell{display:grid;gap:30px}.cp-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:28px;padding:10px 0 4px}.cp-kicker{color:var(--g);font:800 11px 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase}.cp-title{margin-top:12px;font:800 clamp(38px,4.6vw,70px) Inter,sans-serif;letter-spacing:-.055em}.cp-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.cp-controls{display:flex;gap:7px;padding:5px;border:1px solid var(--brd2);border-radius:13px;background:var(--bg2)}.cp-period,.cp-save{min-height:44px;padding:0 15px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--mu3);font:800 11px Inter,sans-serif;cursor:pointer;white-space:nowrap}.cp-period.on{border-color:color-mix(in srgb,var(--b) 48%,var(--brd));background:color-mix(in srgb,var(--b) 13%,var(--bg3));color:#fff}.cp-save{border-color:color-mix(in srgb,var(--g) 42%,var(--brd));background:color-mix(in srgb,var(--g) 10%,var(--bg2));color:var(--tx)}
-.cp-board{display:grid;gap:18px}.cp-row{--cc:var(--b);display:grid;grid-template-columns:minmax(260px,.7fr) minmax(0,2.3fr);gap:28px;align-items:stretch;min-height:208px;padding:30px 32px;border:1px solid var(--brd);border-radius:22px;background:linear-gradient(112deg,color-mix(in srgb,var(--cc) 9%,var(--bg2)),var(--bg2) 42%);position:relative;overflow:hidden}.cp-row::before{content:'';position:absolute;inset:0 auto 0 0;width:5px;background:var(--cc)}.cp-row-summary{display:flex;flex-direction:column;justify-content:center;padding-left:8px}.cp-label{color:var(--cc);font:800 11px 'JetBrains Mono',monospace;letter-spacing:.13em;text-transform:uppercase}.cp-current{margin-top:16px;color:var(--tx);font:800 clamp(36px,4vw,58px) Inter,sans-serif;line-height:1;letter-spacing:-.05em}.cp-current.status{font-size:clamp(26px,2.5vw,38px);line-height:1.08}.cp-delta{display:inline-flex;align-self:flex-start;margin-top:18px;padding:7px 10px;border-radius:999px;background:color-mix(in srgb,var(--cc) 11%,var(--bg3));color:var(--cc);font:800 11px 'JetBrains Mono',monospace}.cp-delta.down{color:var(--r);background:color-mix(in srgb,var(--r) 10%,var(--bg3))}.cp-history{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(142px,1fr);gap:11px;overflow-x:auto;padding:3px 2px 5px;scrollbar-width:thin}.cp-point{min-height:142px;padding:17px 16px;border:1px solid var(--brd);border-radius:15px;background:color-mix(in srgb,var(--cc) 3%,var(--bg3));display:flex;flex-direction:column;justify-content:space-between}.cp-date{color:var(--mu2);font:800 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase}.cp-point-value{font:800 clamp(22px,2vw,34px) Inter,sans-serif;letter-spacing:-.04em;color:var(--tx)}.cp-point-value.status{font-size:18px;line-height:1.18}.cp-change{min-height:15px;color:var(--mu2);font:700 10px 'JetBrains Mono',monospace}.cp-change.up{color:var(--g)}.cp-change.down{color:var(--r)}.cp-empty{padding:58px;border:1px dashed var(--brd2);border-radius:20px;color:var(--mu3);text-align:center;font:600 14px/1.7 Inter,sans-serif}
-@media(max-width:980px){.cp-hero{align-items:flex-start;flex-direction:column}.cp-actions{justify-content:flex-start}.cp-row{grid-template-columns:1fr}.cp-row-summary{padding-left:0}.cp-history{grid-auto-columns:minmax(150px,44vw)}}@media(max-width:650px){.cp-actions{width:100%;align-items:stretch;flex-direction:column}.cp-controls{width:100%}.cp-period{flex:1}.cp-save{width:100%}.cp-row{padding:25px 21px}.cp-history{grid-auto-columns:minmax(142px,72vw)}}
+.cp-shell{display:grid;gap:34px}.cp-toolbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:10px 0}.cp-toolbar-copy{display:grid;gap:6px}.cp-kicker{color:var(--g);font:800 11px 'JetBrains Mono',monospace;letter-spacing:.18em;text-transform:uppercase}.cp-toolbar-copy p{margin:0;color:var(--mu2);font:650 13px/1.5 Inter,sans-serif}.cp-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.cp-controls{display:flex;gap:7px;padding:5px;border:1px solid var(--brd2);border-radius:13px;background:var(--bg2)}.cp-period,.cp-save{min-height:44px;padding:0 17px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--mu3);font:800 11px Inter,sans-serif;cursor:pointer;white-space:nowrap}.cp-period.on{border-color:color-mix(in srgb,var(--b) 48%,var(--brd));background:color-mix(in srgb,var(--b) 13%,var(--bg3));color:#fff}.cp-save{border-color:color-mix(in srgb,var(--g) 42%,var(--brd));background:color-mix(in srgb,var(--g) 10%,var(--bg2));color:var(--tx)}
+.cp-board{display:grid;gap:calc(38px * var(--spacing))}.cp-row{--cc:var(--b);position:relative;display:grid;grid-template-columns:minmax(215px,.62fr) minmax(205px,.58fr) minmax(0,1.8fr);gap:34px;align-items:center;min-height:238px;padding:calc(48px * var(--spacing)) calc(58px * var(--spacing));border:1px solid var(--brd);border-radius:22px;background:linear-gradient(112deg,color-mix(in srgb,var(--cc) 8%,var(--bg2)),var(--bg2) 42%);overflow:hidden}.cp-row::before{content:'';position:absolute;inset:0 auto 0 0;width:5px;background:var(--cc)}.cp-row-name{display:flex;align-items:center;gap:15px;color:var(--tx);font:800 clamp(18px,1.8vw,27px) Inter,sans-serif;letter-spacing:-.025em}.cp-rank{width:31px;height:31px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--cc) 50%,var(--brd));border-radius:50%;color:var(--cc);font:800 11px 'JetBrains Mono',monospace}.cp-current-wrap{display:grid;align-content:center}.cp-current{color:var(--cc);font:800 clamp(42px,4.2vw,68px) Inter,sans-serif;line-height:.9;letter-spacing:-.055em}.cp-delta{display:inline-flex;align-self:start;margin-top:15px;color:var(--g);font:800 10px 'JetBrains Mono',monospace}.cp-delta.down{color:var(--r)}.cp-history{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(164px,1fr);gap:10px;overflow-x:auto;padding:3px 2px 5px;scrollbar-width:thin}.cp-point{min-height:146px;padding:17px 16px;border:1px solid var(--brd);border-radius:15px;background:color-mix(in srgb,var(--cc) 3%,var(--bg3));display:grid;align-content:space-between;gap:9px}.cp-date{color:var(--mu2);font:800 10px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase}.cp-point-value{font:800 clamp(24px,2vw,35px) Inter,sans-serif;letter-spacing:-.04em;color:var(--tx)}.cp-point-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;color:var(--mu2);font:700 9px 'JetBrains Mono',monospace}.cp-point-meta b{display:block;margin-top:3px;color:var(--tx);font-size:11px}.cp-change{color:var(--mu2);font:700 10px 'JetBrains Mono',monospace}.cp-change.up{color:var(--g)}.cp-change.down{color:var(--r)}.cp-empty{padding:58px;border:1px dashed var(--brd2);border-radius:20px;color:var(--mu3);text-align:center;font:600 14px/1.7 Inter,sans-serif}
+@media(max-width:1180px){.cp-row{grid-template-columns:minmax(190px,.65fr) minmax(185px,.55fr) minmax(0,1.5fr);padding:34px 30px;gap:22px}}@media(max-width:900px){.cp-toolbar{align-items:flex-start;flex-direction:column}.cp-actions{justify-content:flex-start}.cp-row{grid-template-columns:1fr 1fr}.cp-history{grid-column:1/-1;grid-auto-columns:minmax(160px,40vw)}}@media(max-width:650px){.cp-actions{width:100%;align-items:stretch;flex-direction:column}.cp-controls{width:100%}.cp-period{flex:1}.cp-save{width:100%}.cp-row{grid-template-columns:1fr;padding:28px 22px}.cp-history{grid-column:auto;grid-auto-columns:minmax(154px,72vw)}}
 </style>
 </head>
 <body>
@@ -786,15 +786,12 @@ function renderOverview(){
   },50);
 }
 
-function readCheckpoints(){try{const value=JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'[]');return Array.isArray(value)?value:[]}catch{return[]}}
+function readCheckpoints(){try{const value=JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'[]');return Array.isArray(value)?value.filter(item=>item?.version===2&&item?.directions):[]}catch{return[]}}
 function writeCheckpoints(value){localStorage.setItem(CHECKPOINT_KEY,JSON.stringify(value.sort((a,b)=>a.date.localeCompare(b.date))));try{parent.postMessage({type:'piura:data-changed',source:'effectiveness-checkpoints'},location.origin)}catch(error){}}
 function isoToday(){const d=new Date();return[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function currentCheckpoint(date=isoToday(),reconstructed=false){
-  let totalIncome=0,totalHours=0;
-  const stats=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);totalIncome+=value.avgMonthlyIncome;totalHours+=value.hoursPerMonth;return[tab.id,value]}));
-  const dph=totalHours?Math.round(totalIncome/totalHours):0,investment=Math.round(stats.inv?.dph||0),climate=Math.round(stats.klim?.dph||0);
-  const target=Number(SETTINGS.targetDph)||500,ratio=target?dph/target:0,status=ratio>=1?'Цель достигнута':ratio>=.72?'Уверенный рост':ratio>=.45?'Стабильно':'Требует внимания';
-  return{date,dph,investment,climate,status,createdAt:new Date(date+'T12:00:00').getTime(),reconstructed};
+  const directions=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);return[tab.id,{dph:Math.round(value.dph||0),income:Number(value.avgMonthlyIncome)||0,hours:Number(value.hoursPerMonth)||0}]}));
+  return{version:2,date,directions,createdAt:new Date(date+'T12:00:00').getTime(),reconstructed};
 }
 function saveCheckpoint(force=false){
   if(!incomeData&&!timeData)return;
@@ -803,48 +800,43 @@ function saveCheckpoint(force=false){
   if(force)renderProgress();
 }
 function ensureScheduledCheckpoint(){
-  const today=new Date(),day=today.getDate(),list=readCheckpoints();
-  if(!list.length){restoreHistoricalCheckpoints();return}
-  if((day===1||day===15)&&!list.some(item=>item.date===isoToday()))saveCheckpoint();
+  if(!incomeData&&!timeData)return;
+  restoreHistoricalCheckpoints();
 }
 function restoreHistoricalCheckpoints(){
   if(!incomeData&&!timeData)return;
-  const list=readCheckpoints(),known=new Set(list.map(item=>item.date)),start=new Date(2026,6,1,12),today=new Date();
+  const existing=readCheckpoints(),manual=existing.filter(item=>!item.reconstructed),automatic=[],start=new Date(2026,6,1,12),today=new Date();
   for(let cursor=new Date(start);cursor<=today;cursor.setMonth(cursor.getMonth()+1)){
     for(const day of [1,15]){
       const date=new Date(cursor.getFullYear(),cursor.getMonth(),day,12);if(date>today)continue;
       const iso=[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(day).padStart(2,'0')].join('-');
-      if(!known.has(iso)){list.push(currentCheckpoint(iso,true));known.add(iso)}
+      automatic.push(currentCheckpoint(iso,true));
     }
   }
-  if(!list.length)list.push(currentCheckpoint());writeCheckpoints(list);
+  const byDate=new Map(automatic.map(item=>[item.date,item]));manual.forEach(item=>byDate.set(item.date,item));writeCheckpoints([...byDate.values()]);
 }
 function selectComparison(weeks){comparisonWeeks=Number(weeks)||2;localStorage.setItem('piura_effectiveness_compare_weeks_v1',String(comparisonWeeks));renderProgress()}
 function checkpointBefore(list,current,weeks){const limit=new Date(current.date+'T12:00:00');limit.setDate(limit.getDate()-weeks*7);return[...list].reverse().find(item=>new Date(item.date+'T12:00:00')<=limit)||null}
-function cpDelta(current,previous,key){if(!previous)return{label:'Первый снимок',down:false};const value=Number(current[key]||0)-Number(previous[key]||0),pct=Number(previous[key])?value/Number(previous[key])*100:0;return{label:`${value>=0?'+':''}${Math.round(value).toLocaleString('ru-RU')} · ${pct>=0?'+':''}${pct.toFixed(1)}%`,down:value<0}}
 function checkpointsForWindow(list,current,weeks){
   const cutoff=new Date(current.date+'T12:00:00');cutoff.setDate(cutoff.getDate()-weeks*7);
   const shown=list.filter(item=>new Date(item.date+'T12:00:00')>=cutoff),anchor=[...list].reverse().find(item=>new Date(item.date+'T12:00:00')<cutoff);
   return anchor?[anchor,...shown]:shown;
 }
 function checkpointDate(value){return new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'2-digit',month:'long'})}
-function checkpointPoint(point,key,suffix,list,isStatus=false){
-  const index=list.findIndex(item=>item.date===point.date),before=index>0?list[index-1]:null,value=isStatus?point.status:Number(point[key]||0).toLocaleString('ru-RU')+suffix;
-  let change='Первый снимок',tone='';
-  if(before){
-    if(isStatus){change=before.status===point.status?'Без изменений':'Статус изменился';tone=before.status===point.status?'':'up'}
-    else{const diff=Number(point[key]||0)-Number(before[key]||0);change=`${diff>=0?'+':''}${Math.round(diff).toLocaleString('ru-RU')}`;tone=diff>0?'up':diff<0?'down':''}
-  }
-  return `<article class="cp-point"><div class="cp-date">${checkpointDate(point.date)}</div><div class="cp-point-value ${isStatus?'status':''}">${value}</div><div class="cp-change ${tone}">${change}</div></article>`;
+function directionAt(point,id){return point?.directions?.[id]||{dph:0,income:0,hours:0}}
+function directionDelta(current,previous,id){if(!previous)return{label:'Первая точка',down:false};const now=directionAt(current,id).dph,before=directionAt(previous,id).dph,diff=now-before,pct=before?diff/before*100:0;return{label:`${diff>=0?'+':''}${Math.round(diff).toLocaleString('ru-RU')} $/ч · ${pct>=0?'+':''}${pct.toFixed(1)}%`,down:diff<0}}
+function checkpointPoint(point,id,list){
+  const value=directionAt(point,id),index=list.findIndex(item=>item.date===point.date),before=index>0?directionAt(list[index-1],id):null,diff=before?value.dph-before.dph:0,tone=diff>0?'up':diff<0?'down':'';
+  return `<article class="cp-point"><div class="cp-date">${checkpointDate(point.date)}</div><div class="cp-point-value">${fmt(value.dph)} $/ч</div><div class="cp-point-meta"><span>Доход<b>${fmt(value.income)}</b></span><span>Часы<b>${value.hours.toFixed(1)}ч</b></span></div><div class="cp-change ${tone}">${before?`${diff>=0?'+':''}${Math.round(diff)} к прошлой точке`:'Первая точка'}</div></article>`;
 }
-function checkpointRow(label,key,color,suffix,current,previous,shown,list,isStatus=false){
-  const delta=isStatus?{label:previous?(previous.status===current.status?'Без изменений':`Было: ${previous.status}`):'Первый снимок',down:false}:cpDelta(current,previous,key),value=isStatus?current.status:Number(current[key]||0).toLocaleString('ru-RU')+suffix;
-  return `<section class="cp-row" style="--cc:${color}"><div class="cp-row-summary"><div class="cp-label">${label}</div><div class="cp-current ${isStatus?'status':''}">${value}</div><div class="cp-delta ${delta.down?'down':''}">${delta.label}</div></div><div class="cp-history">${shown.map(point=>checkpointPoint(point,key,suffix,list,isStatus)).join('')}</div></section>`;
+function checkpointRow(tab,index,current,previous,shown,list){
+  const value=directionAt(current,tab.id),delta=directionDelta(current,previous,tab.id);
+  return `<section class="cp-row" style="--cc:${tab.color}"><div class="cp-row-name"><span class="cp-rank">${index+1}</span><span>${tab.name}</span></div><div class="cp-current-wrap"><div class="cp-current">${fmt(value.dph)}</div><div class="cp-delta ${delta.down?'down':''}">${delta.label}</div></div><div class="cp-history">${shown.map(point=>checkpointPoint(point,tab.id,list)).join('')}</div></section>`;
 }
 function renderProgress(){
-  ensureScheduledCheckpoint();const pg=document.getElementById('pg'),list=readCheckpoints(),current=list.at(-1)||currentCheckpoint(),previous=checkpointBefore(list,current,comparisonWeeks),shown=checkpointsForWindow(list,current,comparisonWeeks);
+  ensureScheduledCheckpoint();const pg=document.getElementById('pg'),list=readCheckpoints(),current=currentCheckpoint(),previous=checkpointBefore(list,current,comparisonWeeks),shown=checkpointsForWindow(list,current,comparisonWeeks);
   if(progressChart){progressChart.destroy();progressChart=null}
-  pg.innerHTML=`<div class="cp-shell"><header class="cp-hero"><div><div class="cp-kicker">Контрольные даты · история без перезаписи</div><h1 class="cp-title">Эффективность</h1></div><div class="cp-actions"><div class="cp-controls" aria-label="Период сравнения">${[2,4,6].map(value=>`<button class="cp-period ${comparisonWeeks===value?'on':''}" onclick="selectComparison(${value})">${value} нед.</button>`).join('')}</div><button class="cp-save" onclick="saveCheckpoint(true)">Зафиксировать сегодня</button></div></header>${shown.length?`<div class="cp-board">${checkpointRow('Долларов в час','dph','#5b9dff',' $/ч',current,previous,shown,list)}${checkpointRow('Инвестиции','investment','#43dba0',' $/ч',current,previous,shown,list)}${checkpointRow('Климат','climate','#a779ff',' $/ч',current,previous,shown,list)}${checkpointRow('Статус','status','#f0c84e','',current,previous,shown,list,true)}</div>`:`<div class="cp-empty">Первая контрольная точка появится после загрузки данных.</div>`}</div>`;
+  pg.innerHTML=`<div class="cp-shell"><header class="cp-toolbar"><div class="cp-toolbar-copy"><div class="cp-kicker">1 и 15 числа · единая формула с обзором</div><p>Текущая ставка и точная история дохода и часов по четырём направлениям.</p></div><div class="cp-actions"><div class="cp-controls" aria-label="Период сравнения">${[2,4,6].map(value=>`<button class="cp-period ${comparisonWeeks===value?'on':''}" onclick="selectComparison(${value})">${value} нед.</button>`).join('')}</div><button class="cp-save" onclick="saveCheckpoint(true)">Зафиксировать сегодня</button></div></header>${shown.length?`<div class="cp-board">${ALL_TABS.map((tab,index)=>checkpointRow(tab,index,current,previous,shown,list)).join('')}</div>`:`<div class="cp-empty">Первая контрольная точка появится после загрузки данных.</div>`}</div>`;
 }
 
 async function loadIncome(){

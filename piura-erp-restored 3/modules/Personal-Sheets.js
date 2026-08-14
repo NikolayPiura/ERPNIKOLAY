@@ -136,7 +136,7 @@
   }
   function segment(name,items,active,{accent='blue',icon=true}={}){
     const glyphs={category:'◫',source:'◎',week:'⌁',month:'▦',fact:'●',plan:'◇',compare:'↕',year:'∞',subscriptions:'◉',bonuses:'✦'};
-    return `<div class="ps-segment" data-accent="${accent}">${items.map(([value,label])=>`<button type="button" data-control="${name}" data-value="${value}" class="${active===value?'on':''}">${icon?`<i>${glyphs[value]||'•'}</i>`:''}<span>${esc(label)}</span></button>`).join('')}</div>`;
+    return `<div class="ps-segment" data-accent="${accent}">${items.map(([value,label])=>`<button type="button" data-control="${name}" data-value="${value}" class="${active===value?'on':''}" title="${esc(label)}" aria-label="${esc(label)}">${icon?`<i>${glyphs[value]||'•'}</i>`:''}<span>${esc(label)}</span></button>`).join('')}</div>`;
   }
   function monthControl(month,months){
     return `<div class="ps-months"><button type="button" data-month="-1" aria-label="Предыдущий месяц">‹</button><strong>${esc(months[month])} 2026</strong><button type="button" data-month="1" aria-label="Следующий месяц">›</button></div>`;
