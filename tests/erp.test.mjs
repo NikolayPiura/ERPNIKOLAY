@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
+import {
+  detectLocalChanges,
+  durableSnapshot,
+  hashValue,
+  mergeRemoteState,
+  shouldSyncKey,
+} from '../firebase-sync-core.js';
 
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
@@ -10,6 +17,46 @@ test('единая оболочка содержит все согласован
   for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Мои динамики','Управление','Фонд PFF','Фонд Москва','SAFE','Доходы','Личный доход','FP','PFP']) {
     assert.match(shell, new RegExp(label));
   }
+});
+
+test('Firebase синхронизирует рабочие данные и изолирует каждого пользователя', () => {
+  const shell = read('index.html');
+  const sync = read('firebase-sync.js');
+  const config = read('firebase-config.js');
+  const rules = read('firestore.rules');
+  assert.match(shell, /firebase-sync\.js/);
+  assert.match(shell, /Firebase · основная база/);
+  assert.match(sync, /GoogleAuthProvider/);
+  assert.match(sync, /users', currentUser\.uid, 'erpState/);
+  assert.match(sync, /setInterval\(\(\) => scanAndPush/);
+  assert.match(config, /projectId: 'erp-design-checklist'/);
+  assert.doesNotMatch(config, /YOUR_FIREBASE_/);
+  assert.match(rules, /request\.auth\.uid == userId/);
+  assert.match(rules, /request\.auth\.token\.email == 'kol9932@gmail\.com'/);
+  assert.match(rules, /request\.auth\.token\.email_verified == true/);
+  assert.match(rules, /allow read, write: if false/);
+
+  const values = new Map([
+    ['morning_state', '{"done":true}'],
+    ['piura_cache_income', '{"at":1}'],
+    ['piura_erp_cloud_v1', '{}'],
+  ]);
+  const storage = {
+    get length() { return values.size; },
+    key(index) { return [...values.keys()][index] ?? null; },
+    getItem(key) { return values.has(key) ? values.get(key) : null; },
+  };
+  assert.deepEqual(durableSnapshot(storage), { morning_state: '{"done":true}' });
+  assert.equal(shouldSyncKey('piura_cache_income'), false);
+
+  const state = { keys: {}, lastSyncAt: 0 };
+  const local = { morning_state: '{"done":true}' };
+  detectLocalChanges(local, state, 200, false);
+  const merged = mergeRemoteState(local, [{
+    key: 'morning_state', value: '{"done":false}', deleted: false, updatedAt: 100,
+  }], state, 200);
+  assert.deepEqual(merged.apply, [{ key: 'morning_state', value: '{"done":false}', deleted: false }]);
+  assert.equal(state.keys.morning_state.hash, hashValue('{"done":false}'));
 });
 
 test('личный доход подключает только согласованные листы Google Sheets в режиме чтения', () => {
