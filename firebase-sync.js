@@ -17,7 +17,11 @@ import {
   serverTimestamp,
   writeBatch,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
-import { firebaseConfig, isFirebaseConfigured } from './firebase-config.js';
+import {
+  firebaseConfig,
+  firebaseOwnerEmail,
+  isFirebaseConfigured,
+} from './firebase-config.js';
 import {
   FIREBASE_DEVICE_KEY,
   detectLocalChanges,
@@ -31,7 +35,7 @@ import {
 
 const MAX_VALUE_BYTES = 850_000;
 const provider = new GoogleAuthProvider();
-provider.setCustomParameters({ prompt: 'select_account' });
+provider.setCustomParameters({ login_hint: firebaseOwnerEmail });
 
 let auth = null;
 let db = null;
@@ -41,6 +45,9 @@ let unsubscribe = null;
 let scanTimer = null;
 let busy = false;
 let lastStatus = {};
+let autoSignInPending = false;
+let autoSignInBlocked = false;
+let gestureSignInHandler = null;
 
 function deviceId() {
   let value = localStorage.getItem(FIREBASE_DEVICE_KEY);
@@ -242,32 +249,57 @@ async function startSync(user) {
   }
 }
 
-async function connect() {
+function disarmGestureSignIn() {
+  if (!gestureSignInHandler) return;
+  window.removeEventListener('pointerdown', gestureSignInHandler, true);
+  window.removeEventListener('keydown', gestureSignInHandler, true);
+  gestureSignInHandler = null;
+}
+
+function armGestureSignIn() {
+  if (gestureSignInHandler || currentUser || autoSignInBlocked) return;
+  gestureSignInHandler = () => {
+    disarmGestureSignIn();
+    automaticSignIn();
+  };
+  window.addEventListener('pointerdown', gestureSignInHandler, { capture: true, once: true });
+  window.addEventListener('keydown', gestureSignInHandler, { capture: true, once: true });
+}
+
+async function automaticSignIn() {
   if (!isFirebaseConfigured) {
     emit('setup', 'Firebase подготовлен · нужна конфигурация проекта');
     return;
   }
-  emit('syncing', 'Открываем вход через Google…');
+  if (!auth || currentUser || autoSignInPending || autoSignInBlocked) return;
+  autoSignInPending = true;
+  disarmGestureSignIn();
+  emit('syncing', 'Firebase · автоматическое подключение…');
   try {
     await signInWithPopup(auth, provider);
   } catch (error) {
-    const message = error.code === 'auth/unauthorized-domain'
-      ? 'Добавьте домен GitHub Pages в Firebase Authentication → Authorized domains'
-      : error.message;
-    emit('error', `Firebase · ${message}`);
+    const needsGesture = new Set([
+      'auth/cancelled-popup-request',
+      'auth/operation-not-supported-in-this-environment',
+      'auth/popup-blocked',
+      'auth/popup-closed-by-user',
+    ]).has(error.code);
+    if (needsGesture) {
+      emit('ready', 'Firebase · подключится автоматически при первом действии');
+      armGestureSignIn();
+    } else {
+      const message = error.code === 'auth/unauthorized-domain'
+        ? 'домен приложения не разрешён в Firebase Authentication'
+        : error.message;
+      emit('error', `Firebase · ${message}`);
+    }
+  } finally {
+    autoSignInPending = false;
   }
 }
 
-async function disconnect() {
-  unsubscribe?.();
-  unsubscribe = null;
-  clearInterval(scanTimer);
-  scanTimer = null;
-  await signOut(auth);
-}
-
 async function syncNow() {
-  if (!currentUser) return connect();
+  if (!currentUser) return automaticSignIn();
   emit('syncing', 'Firebase · синхронизация…');
   const remoteSnapshot = await getDocs(userCollection());
   const local = durableSnapshot(localStorage);
@@ -280,8 +312,6 @@ async function syncNow() {
 }
 
 window.piuraFirebase = {
-  connect,
-  disconnect,
   syncNow,
   getStatus: () => ({ ...lastStatus }),
 };
@@ -295,14 +325,24 @@ if (!isFirebaseConfigured) {
     db = getFirestore(app);
     await setPersistence(auth, browserLocalPersistence);
     onAuthStateChanged(auth, user => {
-      if (user) startSync(user);
-      else {
+      if (user) {
+        const isOwner = user.email?.toLowerCase() === firebaseOwnerEmail.toLowerCase()
+          && user.emailVerified;
+        if (!isOwner) {
+          autoSignInBlocked = true;
+          signOut(auth).finally(() => emit('error', 'Firebase · доступ разрешён только владельцу ERP'));
+          return;
+        }
+        autoSignInBlocked = false;
+        disarmGestureSignIn();
+        startSync(user);
+      } else {
         currentUser = null;
         unsubscribe?.();
         unsubscribe = null;
         clearInterval(scanTimer);
         scanTimer = null;
-        emit('ready', 'Firebase · войдите через Google');
+        if (!autoSignInBlocked) automaticSignIn();
       }
     });
   } catch (error) {

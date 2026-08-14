@@ -9,6 +9,10 @@ export const firebaseConfig = {
   appId: '1:492208094755:web:6ec64db679907576fe7b96',
 };
 
+// This is an account identifier, not a secret. Firestore Security Rules remain
+// the source of truth and reject every other signed-in account.
+export const firebaseOwnerEmail = 'kol9932@gmail.com';
+
 export const isFirebaseConfigured = Object.values(firebaseConfig).every(
   value => value && !String(value).startsWith('YOUR_'),
 );
