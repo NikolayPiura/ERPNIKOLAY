@@ -453,30 +453,28 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 @media(max-width:1050px){.topbar-inner{grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:9px!important}.dyn-tabs,.dyn-tabs.section-tabs{max-width:100%!important;width:100%!important}}
 /* Larger, quieter header: controls are the title. */
 .logo{display:none!important}.topbar-inner{min-height:118px!important;padding-block:19px!important;grid-template-columns:auto minmax(0,1fr) auto!important;grid-template-areas:"mode tabs controls"!important;column-gap:22px!important}.dyn-tabs{min-height:60px!important}.dyn-tab{min-height:50px!important}@media(max-width:1050px){.topbar-inner{min-height:138px!important;grid-template-columns:1fr auto!important;grid-template-areas:"mode controls" "tabs tabs"!important;row-gap:12px!important}}
-.workspace-nav{position:sticky;top:0;z-index:260;display:flex;justify-content:center;gap:8px;padding:12px 20px;background:rgba(9,12,18,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(18px)}
-.workspace-nav button{min-height:44px;padding:0 22px;border:1px solid var(--border2);border-radius:12px;background:var(--bg2);color:var(--text3);cursor:pointer;font:700 .64rem 'Space Mono',monospace;letter-spacing:.09em;text-transform:uppercase;transition:.18s}
+.workspace-nav{display:flex;flex:0 0 auto;gap:5px;padding:5px;border:1px solid var(--border);border-radius:13px;background:var(--bg2)}
+.workspace-nav button{min-height:42px;padding:0 13px;border:1px solid transparent;border-radius:9px;background:transparent;color:var(--text3);cursor:pointer;font:700 .56rem 'Space Mono',monospace;letter-spacing:.055em;text-transform:uppercase;white-space:nowrap;transition:.18s}
 .workspace-nav button:hover{color:var(--text);border-color:var(--border3)}
-.workspace-nav button.active{color:#07110d;background:#55dfa7;border-color:#55dfa7;box-shadow:0 0 0 4px rgba(85,223,167,.1)}
+.workspace-nav button.active{color:#07110d;background:#55dfa7;border-color:#55dfa7;box-shadow:none}
 #scaleWorkspace[hidden],#embeddedWorkspace[hidden]{display:none!important}
-#scaleWorkspace .topbar{top:69px}
-#embeddedWorkspace{height:calc(100vh - 69px);background:#07090e}
+.topbar-inner{display:flex!important;align-items:center!important;gap:9px!important;width:100%!important;max-width:none!important;min-height:76px!important;padding:10px 14px!important;overflow-x:auto!important}.browse-mode{grid-area:auto!important;justify-self:auto!important;padding:4px!important;border-radius:12px!important}.browse-mode button{min-height:42px!important;padding:0 10px!important;font-size:.54rem!important}.dyn-tabs,.dyn-tabs.section-tabs{grid-area:auto!important;display:flex!important;flex:1 1 380px!important;width:auto!important;min-width:380px!important;max-width:none!important;min-height:52px!important;margin:0!important;padding:4px!important;gap:3px!important;border-radius:12px!important}.dyn-tab,.dyn-tabs.section-tabs .dyn-tab{flex:1 1 0!important;width:auto!important;min-width:44px!important;max-width:none!important;min-height:42px!important;padding:5px 2px!important}.tab-num{font-size:.76rem!important}.tab-name{font-size:.47rem!important;letter-spacing:0!important}.topbar-right{grid-area:auto!important;justify-self:auto!important;gap:4px!important}.text-btn,.icon-btn{width:40px!important;height:40px!important}.sync-state{display:none!important}
+#embeddedWorkspace{height:calc(100vh - 76px);background:#07090e}
 #embeddedFrame{display:block;width:100%;height:100%;border:0;background:#07090e}
-@media(max-width:650px){.workspace-nav{overflow-x:auto;justify-content:flex-start;padding-inline:12px}.workspace-nav button{padding-inline:14px;white-space:nowrap}#scaleWorkspace .topbar{top:69px}}
+body[data-admin-workspace]:not([data-admin-workspace="scale"]) .browse-mode,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .dyn-tabs,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .topbar-right{display:none!important}
+@media(max-width:900px){.topbar-inner{padding-inline:10px!important}.workspace-nav button{padding-inline:9px}.dyn-tabs,.dyn-tabs.section-tabs{min-width:360px!important}.dyn-tabs .tab-name{display:none!important}}
 </style>
 </head>
 <body data-theme="dark">
 
-<nav class="workspace-nav" aria-label="Разделы админ-шкалы">
-  <button type="button" data-workspace="scale" class="active">Админ-шкала</button>
-  <button type="button" data-workspace="roadmap">Дорожная карта</button>
-  <button type="button" data-workspace="dynamics">Динамики</button>
-</nav>
-
-<section id="scaleWorkspace">
-
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-inner">
+    <nav class="workspace-nav" aria-label="Разделы админ-шкалы">
+      <button type="button" data-workspace="scale" class="active">Админ-шкала</button>
+      <button type="button" data-workspace="roadmap">Дорожная карта</button>
+      <button type="button" data-workspace="dynamics">Динамики</button>
+    </nav>
     <div class="logo">Админ-шкала</div>
     <div class="browse-mode" aria-label="Вид админ-шкалы">
       <button id="modeDynamics" class="active">По динамикам</button>
@@ -495,6 +493,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
     </div>
   </div>
 </div>
+
+<section id="scaleWorkspace">
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="modalOverlay">
@@ -1566,11 +1566,12 @@ const ADMIN_WORKSPACE_KEY='admin_workspace_v1';
 function setAdminWorkspace(view){
   const allowed=['scale','roadmap','dynamics'];
   if(!allowed.includes(view))view='scale';
+  document.body.dataset.adminWorkspace=view;
   document.querySelectorAll('[data-workspace]').forEach(button=>button.classList.toggle('active',button.dataset.workspace===view));
   document.getElementById('scaleWorkspace').hidden=view!=='scale';
   document.getElementById('embeddedWorkspace').hidden=view==='scale';
   if(view!=='scale'){
-    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814f&embed='+encodeURIComponent(view);
+    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814g&embed='+encodeURIComponent(view);
     if(!frame.src.endsWith(src))frame.src=src;
   }
   localStorage.setItem(ADMIN_WORKSPACE_KEY,view);

@@ -406,8 +406,10 @@ test('отдельный сервис Фонды показывает шесть
   assert.doesNotMatch(foundation, /name:'Дети'/);
   assert.match(foundation, /Цель 2026/);
   assert.match(foundation, /Цель 2027/);
-  assert.match(foundation, /Подписчики /);
-  assert.match(foundation, /Результат агентов/);
+  assert.match(foundation, /Подписки по сумме/);
+  assert.match(foundation, /data-plan=/);
+  assert.match(foundation, /class="agent-grid"/);
+  assert.doesNotMatch(foundation, /Все подписчики|id="peopleRows"/);
   assert.match(foundation, /piura_cache_friend_analytics_v1/);
   assert.match(foundation, /totalRow\?num\(totalRow\[m\.i\]\)/);
   assert.match(foundation, /findLastIndex\(month=>month\.amount>0\)/);
@@ -438,6 +440,8 @@ test('админ-шкала использует отдельный Docs-мос�
   assert.doesNotMatch(admin, /id="syncUrl"|id="syncToken"/);
   assert.match(admin, /Отдельный адрес, ключ или повторная авторизация не нужны/);
   assert.match(admin, /piura:firebase-token/);
+  assert.match(admin, /<div class="topbar-inner">\s*<nav class="workspace-nav"[\s\S]*?<div class="browse-mode"[\s\S]*?<div class="dyn-tabs" id="dynTabs">/);
+  assert.match(admin, /document\.body\.dataset\.adminWorkspace=view/);
   assert.match(bridge, /identitytoolkit\.googleapis\.com\/v1\/accounts:lookup/);
   assert.match(bridge, /kol9932@gmail\.com/);
 });
@@ -460,7 +464,10 @@ test('единый защищённый мост поддерживает Docs, 
 test('новая динамика эффективности хранит контрольные точки, а время синхронизируется через 30 секунд', () => {
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
-  assert.match(effectiveness, /Контрольные точки · 1 и 15 числа/);
+  assert.match(effectiveness, /Контрольные даты · история без перезаписи/);
+  for (const label of ['Долларов в час','Инвестиции','Климат','Статус']) assert.match(effectiveness,new RegExp(label));
+  assert.match(effectiveness, /function checkpointDate/);
+  assert.doesNotMatch(effectiveness, /id="checkpointChart"/);
   assert.match(effectiveness, /\[2,4,6\]/);
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
