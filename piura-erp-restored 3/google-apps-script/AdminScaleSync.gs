@@ -16,6 +16,8 @@ function doGet(e) {
     const action = e.parameter.action || 'snapshot';
     if (action === 'snapshot') return json_({ok: true, items: snapshot_(), at: new Date().toISOString()});
     if (action === 'backupLoad') return json_({ok: true, backup: loadBackup_(), at: new Date().toISOString()});
+    if (action === 'govee') return json_(goveeOverview_());
+    if (action === 'goveeControl') return json_(goveeControl_(e.parameter));
     throw new Error('Unknown action');
   } catch (error) {
     return json_({ok: false, error: String(error.message || error)});
@@ -60,6 +62,10 @@ function doPost(e) {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+ * GOOGLE DRIVE BACKUPS
+ * ═══════════════════════════════════════════════════════════════════════ */
+
 function loadBackup_() {
   const file = backupFile_();
   if (!file) return null;
@@ -98,7 +104,164 @@ function backupFile_() {
   }
   const files = DriveApp.getFilesByName('PIURA_ERP_BACKUP.json');
   if (!files.hasNext()) return null;
-  const file = files.next();props.setProperty('ERP_BACKUP_FILE_ID', file.getId());return file;
+  const file = files.next();
+  props.setProperty('ERP_BACKUP_FILE_ID', file.getId());
+  return file;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * GOVEE LIFE
+ * Script Properties:
+ *   GOVEE_API_KEY        — required
+ *   GOVEE_SENSOR_DEVICE  — optional MAC for climate sensor
+ *   GOVEE_SENSOR_SKU     — optional sensor SKU
+ *   GOVEE_LIGHT_DEVICE   — optional MAC for lamp
+ *   GOVEE_LIGHT_SKU      — optional lamp SKU
+ * The API key is never returned to the ERP.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+function goveeOverview_() {
+  const devices = goveeDevices_();
+  const props = PropertiesService.getScriptProperties();
+  const sensor = goveeSelectDevice_(devices, 'sensor', props);
+  const light = goveeSelectDevice_(devices, 'light', props);
+  let climate = {}, lamp = {}, sensorError = null, lightError = null;
+
+  if (sensor) {
+    try {
+      const state = goveeState_(sensor);
+      climate.temperature = goveeStateValue_(state, ['sensorTemperature', 'temperature']);
+      climate.humidity = goveeStateValue_(state, ['sensorHumidity', 'humidity']);
+      climate.co2 = goveeStateValue_(state, ['carbonDioxideConcentration', 'co2']);
+      climate.airQuality = goveeStateValue_(state, ['airQuality', 'pm25', 'pm2_5']);
+      climate.online = goveeStateValue_(state, ['online']);
+      climate.deviceName = sensor.deviceName || 'Govee Life';
+    } catch (error) {
+      sensorError = error;
+    }
+  }
+  if (light) {
+    try {
+      const state = sensor && light.device === sensor.device && light.sku === sensor.sku && !sensorError ? goveeState_(sensor) : goveeState_(light);
+      const powerValue = goveeStateValue_(state, ['powerSwitch', 'onOff']);
+      lamp.power = powerValue === 1 || powerValue === true || /^(on|1|true)$/i.test(String(powerValue));
+      lamp.brightness = goveeStateValue_(state, ['brightness']);
+      lamp.colorRgb = goveeStateValue_(state, ['colorRgb']);
+      lamp.colorTemperature = goveeStateValue_(state, ['colorTemperatureK']);
+      lamp.lightName = light.deviceName || 'Govee Light';
+      lamp.lightAvailable = true;
+      if (climate.online == null) climate.online = goveeStateValue_(state, ['online']);
+    } catch (error) {
+      lightError = error;
+      lamp.lightAvailable = false;
+    }
+  }
+  if (!sensor && !light) throw new Error('No compatible Govee devices were found');
+  if (sensorError && lightError) throw sensorError;
+  return Object.assign({ok: true, sensorAvailable: Boolean(sensor) && !sensorError, updatedAt: new Date().toISOString()}, climate, lamp);
+}
+
+function goveeControl_(parameter) {
+  const props = PropertiesService.getScriptProperties();
+  const light = goveeSelectDevice_(goveeDevices_(), 'light', props);
+  if (!light) throw new Error('No controllable Govee light was found');
+  const command = String(parameter.command || '');
+  let instance, value;
+  if (command === 'power') {
+    instance = 'powerSwitch';
+    value = /^(on|1|true)$/i.test(String(parameter.value)) ? 1 : 0;
+  } else if (command === 'brightness') {
+    instance = 'brightness';
+    value = Math.max(1, Math.min(100, Number(parameter.value) || 1));
+  } else if (command === 'color') {
+    instance = 'colorRgb';
+    const hex = String(parameter.value || '').replace('#', '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) throw new Error('Invalid colour value');
+    value = parseInt(hex, 16);
+  } else if (command === 'kelvin') {
+    instance = 'colorTemperatureK';
+    value = Math.max(2000, Math.min(9000, Number(parameter.value) || 4000));
+  } else {
+    throw new Error('Unknown Govee command');
+  }
+  const capability = (light.capabilities || []).find(function(item) { return item.instance === instance; });
+  if (!capability) throw new Error('The light does not support ' + command);
+  goveeFetch_('https://openapi.api.govee.com/router/api/v1/device/control', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {'Govee-API-Key': goveeApiKey_()},
+    payload: JSON.stringify({
+      requestId: Utilities.getUuid(),
+      payload: {
+        sku: light.sku,
+        device: light.device,
+        capability: {type: capability.type, instance: capability.instance, value: value}
+      }
+    })
+  });
+  return {ok: true, command: command, value: value, updatedAt: new Date().toISOString()};
+}
+
+function goveeApiKey_() {
+  const key = String(PropertiesService.getScriptProperties().getProperty('GOVEE_API_KEY') || '').trim();
+  if (!key) throw new Error('GOVEE_API_KEY is not configured in Script Properties');
+  return key;
+}
+
+function goveeDevices_() {
+  const response = goveeFetch_('https://openapi.api.govee.com/router/api/v1/user/devices', {
+    method: 'get', headers: {'Govee-API-Key': goveeApiKey_()}
+  });
+  return Array.isArray(response.data) ? response.data : [];
+}
+
+function goveeSelectDevice_(devices, kind, props) {
+  const prefix = kind === 'light' ? 'GOVEE_LIGHT_' : 'GOVEE_SENSOR_';
+  const configuredDevice = String(props.getProperty(prefix + 'DEVICE') || '').trim().toUpperCase();
+  const configuredSku = String(props.getProperty(prefix + 'SKU') || '').trim().toUpperCase();
+  const required = kind === 'light' ? ['powerSwitch'] : ['sensorTemperature', 'sensorHumidity'];
+  return devices.find(function(device) {
+    const instances = (device.capabilities || []).map(function(capability) { return capability.instance; });
+    const hasCapabilities = kind === 'light'
+      ? required.every(function(instance) { return instances.indexOf(instance) >= 0; })
+      : instances.some(function(instance) { return instance === 'sensorTemperature' || instance === 'temperature'; }) &&
+        instances.some(function(instance) { return instance === 'sensorHumidity' || instance === 'humidity'; });
+    return hasCapabilities && (!configuredDevice || configuredDevice === String(device.device || '').toUpperCase()) &&
+      (!configuredSku || configuredSku === String(device.sku || '').toUpperCase());
+  }) || null;
+}
+
+function goveeState_(device) {
+  const response = goveeFetch_('https://openapi.api.govee.com/router/api/v1/device/state', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {'Govee-API-Key': goveeApiKey_()},
+    payload: JSON.stringify({requestId: Utilities.getUuid(), payload: {sku: device.sku, device: device.device}})
+  });
+  return response.payload && Array.isArray(response.payload.capabilities) ? response.payload.capabilities : [];
+}
+
+function goveeStateValue_(capabilities, instances) {
+  for (let i = 0; i < instances.length; i++) {
+    const capability = capabilities.find(function(item) { return item.instance === instances[i]; });
+    if (!capability || !capability.state) continue;
+    const value = capability.state.value;
+    if (typeof value === 'boolean') return value;
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : value;
+  }
+  return null;
+}
+
+function goveeFetch_(url, options) {
+  const response = UrlFetchApp.fetch(url, Object.assign({muteHttpExceptions: true}, options || {}));
+  const status = response.getResponseCode();
+  let data;
+  try { data = JSON.parse(response.getContentText() || '{}'); }
+  catch (error) { throw new Error('Govee returned an invalid response'); }
+  const apiCode = Number(data.code || status);
+  if (status < 200 || status >= 300 || apiCode < 200 || apiCode >= 300) throw new Error('Govee API error ' + apiCode);
+  return data;
 }
 
 function snapshot_() {

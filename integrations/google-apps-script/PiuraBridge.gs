@@ -15,6 +15,7 @@ function doGet(e) {
     authorize_(e.parameter.token);
     const action = e.parameter.action || 'snapshot';
     if (action === 'snapshot') return json_({ok: true, items: snapshot_(), at: new Date().toISOString()});
+    if (action === 'backupLoad') return json_({ok: true, backup: loadBackup_(), at: new Date().toISOString()});
     if (action === 'govee') return json_(goveeOverview_());
     if (action === 'goveeControl') return json_(goveeControl_(e.parameter));
     throw new Error('Unknown action');
@@ -29,6 +30,10 @@ function doPost(e) {
   try {
     authorize_(e.parameter.token);
     const p = e.parameter;
+    if (p.action === 'backupSave') {
+      const saved = saveBackup_(p.data || '{}');
+      return json_({ok: true, at: saved.updatedAt});
+    }
     const section = p.section;
     if (!PIURA_DOCS[section]) throw new Error('Unknown section');
     const doc = DocumentApp.openById(PIURA_DOCS[section]);
@@ -55,6 +60,53 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * GOOGLE DRIVE BACKUPS
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+function loadBackup_() {
+  const file = backupFile_();
+  if (!file) return null;
+  try { return JSON.parse(file.getBlob().getDataAsString('UTF-8')); }
+  catch (error) { throw new Error('ERP backup is damaged: ' + error.message); }
+}
+
+function saveBackup_(raw) {
+  const parsed = JSON.parse(raw);
+  if (!parsed || typeof parsed !== 'object' || !parsed.data || typeof parsed.data !== 'object') {
+    throw new Error('Invalid ERP backup');
+  }
+  const saved = {version: 1, updatedAt: new Date().toISOString(), data: parsed.data};
+  const json = JSON.stringify(saved);
+  if (json.length > 5000000) throw new Error('ERP backup is larger than 5 MB');
+  let file = backupFile_();
+  if (file) file.setContent(json);
+  else {
+    file = DriveApp.createFile('PIURA_ERP_BACKUP.json', json, MimeType.PLAIN_TEXT);
+    PropertiesService.getScriptProperties().setProperty('ERP_BACKUP_FILE_ID', file.getId());
+  }
+  const day = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('ERP_BACKUP_ARCHIVE_DAY') !== day) {
+    DriveApp.createFile('PIURA_ERP_BACKUP_' + day + '.json', json, MimeType.PLAIN_TEXT);
+    props.setProperty('ERP_BACKUP_ARCHIVE_DAY', day);
+  }
+  return saved;
+}
+
+function backupFile_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty('ERP_BACKUP_FILE_ID');
+  if (id) {
+    try { return DriveApp.getFileById(id); } catch (error) {}
+  }
+  const files = DriveApp.getFilesByName('PIURA_ERP_BACKUP.json');
+  if (!files.hasNext()) return null;
+  const file = files.next();
+  props.setProperty('ERP_BACKUP_FILE_ID', file.getId());
+  return file;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

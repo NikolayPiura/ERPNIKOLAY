@@ -442,6 +442,21 @@ test('админ-шкала использует отдельный Docs-мос�
   assert.match(bridge, /kol9932@gmail\.com/);
 });
 
+test('единый защищённый мост поддерживает Docs, резервные копии и Govee', () => {
+  const adminBridge = read('piura-erp-restored 3/google-apps-script/AdminScaleSync.gs');
+  const integrationBridge = read('integrations/google-apps-script/PiuraBridge.gs');
+  for (const bridge of [adminBridge, integrationBridge]) {
+    assert.match(bridge, /action === 'snapshot'/);
+    assert.match(bridge, /action === 'backupLoad'/);
+    assert.match(bridge, /p\.action === 'backupSave'/);
+    assert.match(bridge, /action === 'govee'/);
+    assert.match(bridge, /action === 'goveeControl'/);
+    assert.match(bridge, /function authorize_\(provided\)/);
+    assert.match(bridge, /Firebase sign-in required/);
+  }
+  assert.equal(adminBridge, integrationBridge);
+});
+
 test('новая динамика эффективности хранит контрольные точки, а время синхронизируется через 30 секунд', () => {
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
