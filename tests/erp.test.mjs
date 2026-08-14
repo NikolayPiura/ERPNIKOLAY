@@ -406,8 +406,12 @@ test('Фонды и Друг являются отдельными сервис�
   const shell = read('index.html');
   for (const label of ['Котики','Наркотики','Саентология','Уборки','Растения','Ассоциация добрых дел']) assert.match(foundation,new RegExp(label));
   assert.doesNotMatch(foundation, /name:'Дети'/);
-  assert.match(foundation, /goal\(2026,fund\.y26,fact\)/);
-  assert.match(foundation, /goal\(2027,fund\.y27,fact\)/);
+  assert.match(foundation, /data-year="2026"/);
+  assert.match(foundation, /data-year="2027"/);
+  assert.match(foundation, /activeYear===2026\?fund\.y26:fund\.y27/);
+  assert.doesNotMatch(foundation, /фактический продукт/i);
+  assert.match(foundation, /Дети, написавшие отзыв о наркотиках/);
+  assert.match(foundation, /product:'Сделано добрых дел'/);
   assert.match(shell, /\["foundation","Фонды"/);
   assert.match(shell, /\["friend","Друг"/);
   assert.match(friend, /ID='167qHytXogtUN8iWVNhOc149oDR2k_0wqGjmbQOx_Db4'/);
@@ -426,10 +430,11 @@ test('SOLID показывает оба объекта, валюты и граф
   assert.match(solid, /Townhouse/);
   assert.match(solid, /Квартира в Мытищах/);
   assert.match(solid, /fx\.toFixed\(2\)/);
-  assert.match(solid, /Собственный капитал/);
-  assert.match(solid, /Платежи/);
+  assert.match(solid, /Ваш капитал в недвижимости/);
+  assert.match(solid, /Обязательные платежи/);
+  assert.match(solid, /Ближайший обязательный платёж/);
   assert.match(solid, /Поступления/);
-  assert.doesNotMatch(solid, /data-tab=|Ближайший платёж|Источник:/);
+  assert.doesNotMatch(solid, /data-tab=|Источник:/);
 });
 
 test('админ-шкала использует отдельный Docs-мост и включает дорожную карту', () => {
@@ -467,12 +472,12 @@ test('единый защищённый мост поддерживает Docs, 
 test('динамика эффективности хранит четыре расчётных направления, а время синхронизируется через 30 секунд', () => {
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
-  assert.match(effectiveness, /1 и 15 числа · единая формула с обзором/);
+  for (const date of ['2026-07-01','2026-07-15','2026-08-01','2026-08-15']) assert.match(effectiveness,new RegExp(date));
   for (const label of ['Инвестиции','Наставничество','Климат','Управление деньгами']) assert.match(effectiveness,new RegExp(label));
   assert.doesNotMatch(effectiveness, /<span>Статус<\/span>|<span>Долларов в час<\/span>/);
   assert.match(effectiveness, /function checkpointDate/);
   assert.doesNotMatch(effectiveness, /id="checkpointChart"/);
-  assert.match(effectiveness, /\[2,4,6\]/);
+  assert.doesNotMatch(effectiveness, /selectComparison|cp-point-meta|cp-change/);
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
   assert.match(effectiveness, /new Date\(2026,6,1,12\)/);
