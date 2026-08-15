@@ -16,7 +16,7 @@ visit(root);
 const indexes = files.filter(file => basename(file) === 'index.html');
 const serviceViews = files.filter(file => extname(file) === '.html' && basename(file) !== 'index.html');
 const source = files.filter(file => /\.(html|js|css)$/.test(file)).map(file => readFileSync(file, 'utf8')).join('\n');
-const expected = ['Overview','EFFECTIVNESS','Morning','Time-tracker','Dynamics-2','AdminScale','My-Dynamics','Finance','Fonds','Foundation','Friend','PFF','MSK','Safe','Solid','Personal-Income','Personal-FP','Personal-PFP'];
+const expected = ['Overview','EFFECTIVNESS','Morning','Time-tracker','Dynamics-2','AdminScale','My-Dynamics','Finance','Fonds','Foundation','Friend','PFF','MSK','Safe','Solid','Personal-Income','Personal-Mentor','Personal-FP','Personal-PFP'];
 const errors = [];
 
 if (indexes.length !== 1 || indexes[0] !== join(root, 'index.html')) errors.push(`Нужен один корневой index.html, найдено: ${indexes.length}`);

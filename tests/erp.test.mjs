@@ -73,10 +73,12 @@ test('личный доход подключает только согласов
   const shell = read('index.html');
   const loader = read('piura-erp-restored 3/modules/Personal-Sheets.js');
   const income = read('piura-erp-restored 3/modules/Personal-Income.html');
+  const mentor = read('piura-erp-restored 3/modules/Personal-Mentor.html');
   const fp = read('piura-erp-restored 3/modules/Personal-FP.html');
   const pfp = read('piura-erp-restored 3/modules/Personal-PFP.html');
   assert.match(shell, /id:'personal-income',title:"Личный доход"/);
   assert.match(shell, /Personal-Income\.html/);
+  assert.match(shell, /Personal-Mentor\.html/);
   assert.match(shell, /Personal-FP\.html/);
   assert.match(shell, /Personal-PFP\.html/);
   assert.match(loader, /1GWFyFKRVq1Z4x68gWICBmlilqP5FzYOXXBkC4xYzEbA/);
@@ -85,11 +87,14 @@ test('личный доход подключает только согласов
   assert.match(loader, /gviz\/tq/);
   assert.match(loader, /1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA/);
   for (const sheet of ['2026 (PFF)','2026 (РЫНОК)','2026 (ЗОЛОТО)','2026 (КРИПТА)','2026 (СТАТ)','2026 (ПОДПИСКИ)','2026 (БАЛАНС)']) assert.ok(loader.includes(sheet));
-  assert.match(income, /data-tab="income"[^>]*>[\s\S]{0,120}Доход/);
-  assert.match(income, /data-tab="mentor"[^>]*>[\s\S]{0,120}Ментор/);
-  assert.doesNotMatch(income, /data-tab="average">Средний/);
-  assert.doesNotMatch(income, /data-tab="plan">План/);
-  for (const control of ['По категориям','По источникам','Понедельно','Помесячно','Факт','План','Абонементы','Премии']) assert.match(income,new RegExp(control));
+  assert.match(income, /<h1>Доход<\/h1>/);
+  assert.doesNotMatch(income, /data-tab="mentor"|2026 \(МЕНТОР\)/);
+  for (const control of ["cycleButton('group','Тип'","cycleButton('period','Период'","cycleButton('showPlan','План'",'Категории','Источники','Понедельно','Помесячно']) assert.ok(income.includes(control));
+  assert.doesNotMatch(income, /План · факт|Весь год|data-control="scope"/);
+  assert.match(mentor, /<h1>Ментор<\/h1>/);
+  assert.match(mentor, /S\.load\('2026 \(МЕНТОР\)'\)/);
+  for (const control of ['Абонементы','Премии','Понедельно','Помесячно','Последняя оплата']) assert.match(mentor,new RegExp(control));
+  assert.doesNotMatch(mentor, /Лидер/);
   assert.doesNotMatch(income, />Квота<|>Доля<|>Средний доход</);
   assert.match(fp, /data-tab="fp"[^>]*>[\s\S]{0,120}Планирование/);
   assert.match(fp, /data-tab="expense"[^>]*>[\s\S]{0,120}Расходы/);
@@ -97,7 +102,7 @@ test('личный доход подключает только согласов
   for (const metric of ['Остаток','Выделено','Баланс','Расход']) assert.match(fp,new RegExp(metric,'i'));
   assert.doesNotMatch(fp, />\s*Пассивный доход\s*</i);
   assert.match(loader, /data-month="-1"/);
-  assert.doesNotMatch(income+fp, /<input|contenteditable|textarea/i);
+  assert.doesNotMatch(income+mentor+fp, /<input|contenteditable|textarea/i);
   for (const view of ['PFF','Рынок','Золото','Крипта','Статистика','Подписки','Баланс']) assert.match(pfp,new RegExp(view));
   assert.doesNotMatch(pfp, /<input|contenteditable|textarea/i);
 });
@@ -418,10 +423,13 @@ test('Фонды и Друг являются отдельными сервис�
   assert.match(friend, /nameI=find\(\/подписчик\/,1\)/);
   assert.match(friend, /sumI=find\(\/сумм\/,4\)/);
   assert.match(friend, /people\.reduce\(\(sum,person\)=>sum\+person\.base,0\)/);
-  assert.match(friend, /class="agents"/);
+  assert.match(friend, /class="agent-grid"/);
+  assert.match(friend, /class="agent-card"/);
   assert.match(friend, /id="typeSelect"/);
   assert.match(friend, /id="tierSelect"/);
-  assert.doesNotMatch(friend, /Все подписчики|id="peopleRows"/);
+  assert.match(friend, /Все подписки/);
+  assert.match(friend, /id="peopleRows"/);
+  assert.doesNotMatch(friend, /class="distribution"/);
 });
 
 test('SOLID показывает оба объекта, валюты и графики на одной странице', () => {
@@ -431,9 +439,9 @@ test('SOLID показывает оба объекта, валюты и граф
   assert.match(solid, /Townhouse/);
   assert.match(solid, /Квартира в Мытищах/);
   assert.match(solid, /two\.capital\/fx/);
-  assert.match(solid, /Ваш капитал/);
+  assert.match(solid, /ЧИСТЫЙ КАПИТАЛ ОБЪЕКТА/);
   assert.match(solid, /chart\('Платежи','обязательства по кредитному графику'/);
-  assert.match(solid, /Следующий платёж/);
+  assert.match(solid, /СЛЕДУЮЩЕЕ ОБЯЗАТЕЛЬСТВО/);
   assert.match(solid, /Поступления/);
   assert.doesNotMatch(solid, /data-tab=|Источник:/);
 });
@@ -473,7 +481,8 @@ test('единый защищённый мост поддерживает Docs, 
 test('динамика эффективности хранит четыре расчётных направления, а время синхронизируется через 30 секунд', () => {
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
-  for (const date of ['2026-07-01','2026-07-15','2026-08-01','2026-08-15']) assert.match(effectiveness,new RegExp(date));
+  for (const date of ['2026-08-01','2026-08-07','2026-08-15']) assert.match(effectiveness,new RegExp(date));
+  assert.doesNotMatch(effectiveness, /2026-07-01|2026-07-15/);
   for (const label of ['Инвестиции','Наставничество','Климат','Управление деньгами']) assert.match(effectiveness,new RegExp(label));
   assert.doesNotMatch(effectiveness, /<span>Статус<\/span>|<span>Долларов в час<\/span>/);
   assert.match(effectiveness, /function checkpointDate/);
@@ -481,8 +490,10 @@ test('динамика эффективности хранит четыре ра
   assert.doesNotMatch(effectiveness, /selectComparison|cp-point-meta|cp-change/);
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
-  assert.match(effectiveness, /new Date\(2026,6,1,12\)/);
-  assert.match(effectiveness, /for\(const day of \[1,15\]\)/);
+  assert.match(effectiveness, /function scheduledCheckpointDates/);
+  assert.match(effectiveness, /new Date\(2026,7,22,12\)/);
+  assert.match(effectiveness, /cursor\.setDate\(cursor\.getDate\(\)\+7\)/);
+  assert.match(effectiveness, /К ПРОШЛОЙ НЕДЕЛЕ/);
   assert.match(time, /SHEET_SYNC_DELAY = 30000/);
   assert.match(time, /PENDING_SYNC_KEY/);
   assert.match(time, /latestRevision<=syncRevision/);
@@ -501,9 +512,14 @@ test('инвестиционный PFF показывает недельные �
   assert.match(pff, /weekIndexes/);
   assert.match(pff, /inferredCurrency/);
   assert.match(pff, /balancePerson/);
+  assert.match(pff, /data-asset-sort/);
+  assert.match(pff, /class="pfp-asset-group" open/);
+  assert.match(pff, /Владелец \/ счёт/);
+  assert.match(pff, /Все подписки/);
   const subscriptions = pff.slice(pff.indexOf('function renderSubscriptions'),pff.indexOf('function balanceModel'));
   const balance = pff.slice(pff.indexOf('function renderBalance'),pff.indexOf('function paint'));
   assert.doesNotMatch(subscriptions, /S\.lineChart/);
+  assert.doesNotMatch(subscriptions, /slice\(0,8\)/);
   assert.doesNotMatch(balance, /S\.lineChart/);
 });
 

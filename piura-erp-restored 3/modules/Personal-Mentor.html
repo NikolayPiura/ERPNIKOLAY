@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ментор</title>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260815a"><script src="Personal-Sheets.js?v=20260815a"></script>
+</head>
+<body>
+<main class="ps-app ps-finance-app ps-mentor-app" data-piura-keep-full>
+  <header class="ps-header ps-hero-header"><div class="ps-title"><span>МЕНТОРСКАЯ ПРАКТИКА</span><h1>Ментор</h1></div><div class="ps-live" id="syncState"><i></i><span>Загрузка</span><button class="ps-refresh" id="refresh" type="button" aria-label="Обновить">↻</button></div></header>
+  <section id="content"><div class="ps-loading">Собираем реестр оплат</div></section>
+</main>
+<script>
+const S=window.PIURASheet,content=document.getElementById('content'),syncState=document.getElementById('syncState');
+const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],SHORT=MONTHS.map(name=>name.slice(0,3));
+const STATE_KEY='piura_personal_mentor_state_v1';let state={kind:'subscriptions',period:'week',month:new Date().getMonth()},data=null,serial=0;
+try{state={...state,...JSON.parse(localStorage.getItem(STATE_KEY)||'{}')}}catch{}
+function saveState(){localStorage.setItem(STATE_KEY,JSON.stringify(state))}
+function cycleButton(key,label,value,detail){return `<button class="ps-cycle-control on" type="button" data-cycle="${key}"><span>${S.esc(label)}</span><strong>${S.esc(value)}</strong><small>${S.esc(detail)}</small><i>↻</i></button>`}
+function model(){
+  if(data?.error&&!data?.table)throw new Error(data.error);const rows=S.cells(data),subscriptions=S.headerIndex(rows,'АБОНЕМЕНТЫ'),bonuses=S.headerIndex(rows,'ПРЕМИИ');
+  const header=state.kind==='subscriptions'?subscriptions:bonuses;if(header<0)throw new Error('В таблице не найден раздел ментора');
+  const end=state.kind==='subscriptions'&&bonuses>header?bonuses:rows.length,dateCols=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
+  const people=rows.slice(header+1,end).filter(row=>{const name=S.normalize(S.text(row[0]));return name&&name!=='итого'&&row.slice(1).some(cell=>S.number(cell)!==0)});
+  return {rows,header,dateCols,people};
+}
+function render(){
+  const m=model(),cols=state.period==='week'?m.dateCols.filter(col=>S.monthOf(m.rows[m.header][col])===state.month):m.dateCols;
+  const labels=state.period==='week'?cols.map(col=>S.dateLabel(m.rows[m.header][col])):SHORT;
+  const people=m.people.map(row=>{
+    const values=state.period==='week'?cols.map(col=>S.number(row[col])):MONTHS.map((_,month)=>S.sum(m.dateCols.filter(col=>S.monthOf(m.rows[m.header][col])===month).map(col=>S.number(row[col]))));
+    const payments=m.dateCols.map(col=>({col,date:S.dateLabel(m.rows[m.header][col]),value:S.number(row[col])})).filter(item=>item.value!==0);
+    return {name:S.text(row[0]),values,total:S.sum(values),last:payments.at(-1)};
+  }).filter(item=>item.total||item.last).sort((a,b)=>b.total-a.total);
+  const total=S.sum(people.map(item=>item.total)),payments=people.flatMap(item=>item.values.filter(Boolean)),best=Math.max(0,...labels.map((_,i)=>S.sum(people.map(item=>item.values[i]||0))));
+  const controls=cycleButton('kind','Тип',state.kind==='subscriptions'?'Абонементы':'Премии','нажмите, чтобы сменить')+cycleButton('period','Период',state.period==='week'?'Понедельно':'Помесячно',state.period==='week'?'выбранный месяц':'весь год');
+  const chooser=state.period==='week'?S.monthControl(state.month,MONTHS):'';
+  const command=`<section class="ps-command ps-command-clean ps-reveal"><div class="ps-command-copy"><span>ДЕНЬГИ РЯДОМ С КЛИЕНТОМ</span><h2>Реестр оплат</h2><p>Сумма и последняя дата видны сразу — без рейтингов и лишних статусов.</p></div><div class="ps-cycle-controls">${controls}</div><div class="ps-command-right">${chooser}</div></section>`;
+  const metrics=S.metricCards([{label:'Получено',value:S.money(total,'USD',0),note:state.kind==='subscriptions'?'абонементы':'премии',color:'#63a4ff'},{label:'Клиентов',value:String(people.length),note:'в полном реестре',color:'#43d9a3'},{label:'Средний платёж',value:S.money(payments.length?S.sum(payments)/payments.length:0,'USD',0),note:`${payments.length} оплат`,color:'#a779ff'},{label:'Лучший период',value:S.money(best,'USD',0),note:state.period==='week'?'за неделю':'за месяц',color:'#f4c65d'}]);
+  const ledger=`<section class="mentor-ledger ps-reveal"><div class="mentor-ledger-head"><div><span>${state.kind==='subscriptions'?'АБОНЕМЕНТЫ':'ПРЕМИИ'}</span><h2>${state.period==='week'?MONTHS[state.month]:'2026 год'}</h2></div><strong>${S.money(total,'USD',0)}</strong></div>${people.length?people.map(person=>`<article class="mentor-row"><div class="mentor-person"><span>КЛИЕНТ</span><h3>${S.esc(person.name)}</h3><p>${person.last?`Последняя оплата · ${S.esc(person.last.date)}`:'Дата оплаты не указана'}</p></div><div class="mentor-periods">${labels.map((label,index)=>`<div class="${person.values[index]?'paid':''}"><span>${S.esc(label)}</span><b>${person.values[index]?S.money(person.values[index],'USD',0):'—'}</b></div>`).join('')}</div><div class="mentor-total"><span>ЗА ПЕРИОД</span><strong>${S.money(person.total,'USD',0)}</strong>${person.last?`<small>${S.money(person.last.value,'USD',0)} · ${S.esc(person.last.date)}</small>`:''}</div></article>`).join(''):`<div class="ps-loading">Нет оплат за выбранный период</div>`}</section>`;
+  content.innerHTML=command+metrics+ledger;bind();
+}
+function bind(){content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{state.month=(state.month+Number(button.dataset.month)+12)%12;saveState();render()});content.querySelectorAll('[data-cycle]').forEach(button=>button.onclick=()=>{if(button.dataset.cycle==='kind')state.kind=state.kind==='subscriptions'?'bonuses':'subscriptions';else state.period=state.period==='week'?'month':'week';saveState();render()})}
+async function loadAll(){const token=++serial;content.innerHTML='<div class="ps-loading">Собираем реестр оплат</div>';data=await S.load('2026 (МЕНТОР)');if(token!==serial)return;syncState.classList.toggle('cached',!!data.cached);syncState.querySelector('span').textContent=data.error&&!data.table?'Данные недоступны':data.cached?'Сохранённые данные':'Данные обновлены';try{render()}catch(error){content.innerHTML=S.errorCard('Не удалось собрать экран',error.message)}}
+document.getElementById('refresh').onclick=loadAll;loadAll();
+</script>
+</body>
+</html>
