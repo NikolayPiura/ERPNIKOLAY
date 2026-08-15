@@ -130,13 +130,17 @@ button{font:inherit}
 @media(max-width:900px){.ps-primary-tabs{overflow:auto}.ps-primary-tabs .ps-tab{min-width:150px}.ps-command-controls{align-items:stretch;flex-direction:column}.ps-command-controls .ps-segment,.ps-command-controls .ps-months{width:100%}.ps-command-controls .ps-segment button{flex:1}.ps-ranking .ps-rank-row,.ps-distribution .ps-rank-row{grid-template-columns:30px minmax(105px,150px) 1fr 82px}.ps-chart{min-height:320px}.ps-chart svg{height:240px}}
 @media(max-width:620px){.ps-finance-app{padding-inline:10px}.ps-hero-header{min-height:150px}.ps-metrics,.ps-asset-grid{grid-template-columns:1fr}.ps-metric{min-height:132px}.ps-title h1{font-size:39px}.ps-primary-tabs{display:flex}.ps-pfp-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}.ps-pfp-tabs .ps-tab{min-width:0}.ps-segment{overflow:auto}.ps-segment button{min-width:max-content}.ps-section-head{align-items:flex-start;flex-direction:column}.ps-ranking .ps-rank-row,.ps-distribution .ps-rank-row{grid-template-columns:27px minmax(90px,120px) 1fr 72px;gap:9px}.ps-rank-row span{font-size:10px}}
 
-/* Personal income: full canvas and compact icon switches with accessible tooltips. */
-.ps-income-app{width:100%;max-width:none;padding-inline:clamp(18px,2.4vw,40px)}
-.ps-income-app .ps-command{display:grid;grid-template-columns:minmax(160px,.45fr) minmax(0,1.55fr) auto;align-items:center}
-.ps-income-app .ps-command-controls{flex-wrap:nowrap}
-.ps-income-app .ps-command-controls .ps-segment button{position:relative;width:48px;min-width:48px;padding:0;display:grid;place-items:center}
+/* Personal income: full canvas, large readable controls and generous table rhythm. */
+.ps-income-app{width:100%;max-width:none;gap:24px;padding-inline:clamp(24px,3.6vw,68px)}
+.ps-income-app .ps-command{display:grid;grid-template-columns:1fr;gap:20px;padding:25px 27px}
+.ps-income-app .ps-command-copy h2{font-size:29px}
+.ps-income-app .ps-command-controls{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:stretch}
+.ps-income-app .ps-command-controls .ps-segment{width:100%;display:flex;padding:7px}
+.ps-income-app .ps-command-controls .ps-segment button{position:relative;min-width:0;min-height:58px;flex:1;padding:0 15px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:12px}
 .ps-income-app .ps-command-controls .ps-segment button i{display:block;font-size:14px;font-style:normal}
-.ps-income-app .ps-command-controls .ps-segment button span{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.ps-income-app .ps-table th,.ps-income-app .ps-table td{height:62px;padding-inline:19px;font-size:14px}
-.ps-income-app .ps-table th{font-size:10px}.ps-income-app .ps-metric{min-height:164px}
-@media(max-width:1180px){.ps-income-app .ps-command{grid-template-columns:1fr}.ps-income-app .ps-command-controls{justify-content:flex-start;overflow-x:auto}.ps-income-app .ps-command-right{justify-content:flex-start}}
+.ps-income-app .ps-command-controls .ps-segment button span{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;white-space:nowrap}
+.ps-income-app .ps-command-right{width:100%}.ps-income-app .ps-months{width:100%;height:66px;padding:7px}.ps-income-app .ps-months strong{flex:1;font-size:15px}.ps-income-app .ps-months button{width:50px;height:50px}
+.ps-income-app .ps-table th,.ps-income-app .ps-table td{height:68px;padding-inline:21px;font-size:15px}
+.ps-income-app .ps-table th{font-size:10px}.ps-income-app .ps-table td b{font-size:15px}.ps-income-app .ps-metric{min-height:176px;padding:25px}
+@media(max-width:1180px){.ps-income-app .ps-command-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.ps-income-app{padding-inline:12px}.ps-income-app .ps-command-controls{grid-template-columns:1fr}.ps-income-app .ps-command-controls .ps-segment button{min-height:52px;font-size:11px}.ps-income-app .ps-command-right{justify-content:flex-start}}

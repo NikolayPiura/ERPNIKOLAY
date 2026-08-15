@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Личный доход</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260814h">
-  <script src="Personal-Sheets.js?v=20260814h"></script>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260814k">
+  <script src="Personal-Sheets.js?v=20260814k"></script>
 </head>
 <body>
 <main class="ps-app ps-finance-app ps-income-app" data-piura-keep-full>
@@ -112,10 +112,10 @@ function renderMentor(){
   const metrics=S.metricCards([
     {label:'Итого',value:S.compactMoney(totals.at(-1)),note:state.mentorKind==='subscriptions'?'абонементы':'премии',color:'#a779ff'},
     {label:'Лидер',value:leader?leader[0]:'—',note:leader?S.money(leader.at(-1),'USD',0):'нет данных',color:'#43d9a3'},
-    {label:'Участников',value:String(rows.length),note:'с доходом в периоде',color:'#63a4ff'},
+    {label:'Клиентов',value:String(rows.length),note:'за выбранный период',color:'#63a4ff'},
     {label:'Лучший период',value:S.compactMoney(Math.max(0,...values)),note:state.mentorPeriod==='week'?'за неделю':'за месяц',color:'#f4c65d'}
   ]);
-  content.innerHTML=command('Ментор','АБОНЕМЕНТЫ И ПРЕМИИ',controls,chooser)+metrics+table(state.mentorPeriod==='week'?MONTHS[state.month]:'Весь 2026 год','РЕЙТИНГ УЧАСТНИКОВ',['Участник',...labels,'Итого'],rows,totals);
+  content.innerHTML=command('Ментор','АБОНЕМЕНТЫ И ПРЕМИИ',controls,chooser)+metrics+table(state.mentorPeriod==='week'?MONTHS[state.month]:'Весь 2026 год','КЛИЕНТЫ',['Клиент',...labels,'Итого'],rows,totals);
   bind();
 }
 function bind(){

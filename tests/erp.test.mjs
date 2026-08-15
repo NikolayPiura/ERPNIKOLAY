@@ -191,15 +191,15 @@ test('главная объединяет эффективность, время
   assert.doesNotMatch(overview, /id="lampLabel"|id="lampStatus"/);
 });
 
-test('фонды содержат точные цели продукта, фандрайзинга, Endowment и дохода', () => {
+test('управление фондами содержит актуальные продукты и годовые цели Endowment', () => {
   const funds = read('piura-erp-restored 3/modules/Fonds.html');
   assert.match(funds, /Планета без бездомных домашних животных/);
   assert.match(funds, /goalProgress\('Доход',''/);
   assert.doesNotMatch(funds, /goalProgress\('Итого',''/);
-  assert.match(funds, /product:'Раздано книг'/);
-  assert.match(funds, /fundraising:2250,endowment:50000,income:250,product:1000,total:2500/);
-  assert.match(funds, /пять фондов · общая цель капитала \$1 млн · цель доходности 12%/);
-  assert.match(funds, /Цель каждого фонда<\/label><strong>\$200 тыс\.<\/strong>/);
+  assert.match(funds, /product:'Разданные книги «Дорога к счастью»'/);
+  assert.match(funds, /fundraising:2250,endowment:200000,income:1000,product:1000,total:2500/);
+  assert.match(funds, /ENDOWMENT_CAPITAL_GOALS=\{2026:\{friend:20000,drugs:1000,scientology:1000,planet:1000,plants:10000\},2027:/);
+  assert.match(funds, /monthlyIncomeGoal:capitalGoal\*\.06\/12/);
   assert.doesNotMatch(funds, /<label>Позиций<\/label>|Средний доход \/ позицию|id="endPositions"/);
 });
 
@@ -410,8 +410,8 @@ test('Фонды и Друг являются отдельными сервис�
   assert.match(foundation, /data-year="2027"/);
   assert.match(foundation, /activeYear===2026\?fund\.y26:fund\.y27/);
   assert.doesNotMatch(foundation, /фактический продукт/i);
-  assert.match(foundation, /Дети, написавшие отзыв о наркотиках/);
-  assert.match(foundation, /product:'Сделано добрых дел'/);
+  assert.match(foundation, /Дети, получившие просветительское образование по наркотикам и написавшие отзыв/);
+  assert.match(foundation, /product:'Сделанные добрые дела'/);
   assert.match(shell, /\["foundation","Фонды"/);
   assert.match(shell, /\["friend","Друг"/);
   assert.match(friend, /ID='167qHytXogtUN8iWVNhOc149oDR2k_0wqGjmbQOx_Db4'/);
@@ -419,7 +419,8 @@ test('Фонды и Друг являются отдельными сервис�
   assert.match(friend, /sumI=find\(\/сумм\/,4\)/);
   assert.match(friend, /people\.reduce\(\(sum,person\)=>sum\+person\.base,0\)/);
   assert.match(friend, /class="agents"/);
-  assert.match(friend, /data-tier=/);
+  assert.match(friend, /id="typeSelect"/);
+  assert.match(friend, /id="tierSelect"/);
   assert.doesNotMatch(friend, /Все подписчики|id="peopleRows"/);
 });
 
@@ -429,10 +430,10 @@ test('SOLID показывает оба объекта, валюты и граф
   assert.match(solid, /№2 АКТИВЫ/);
   assert.match(solid, /Townhouse/);
   assert.match(solid, /Квартира в Мытищах/);
-  assert.match(solid, /fx\.toFixed\(2\)/);
-  assert.match(solid, /Ваш капитал в недвижимости/);
-  assert.match(solid, /Обязательные платежи/);
-  assert.match(solid, /Ближайший обязательный платёж/);
+  assert.match(solid, /two\.capital\/fx/);
+  assert.match(solid, /Ваш капитал/);
+  assert.match(solid, /chart\('Платежи','обязательства по кредитному графику'/);
+  assert.match(solid, /Следующий платёж/);
   assert.match(solid, /Поступления/);
   assert.doesNotMatch(solid, /data-tab=|Источник:/);
 });

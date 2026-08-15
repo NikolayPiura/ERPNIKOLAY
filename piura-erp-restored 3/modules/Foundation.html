@@ -10,24 +10,24 @@
 </head>
 <body>
 <main class="shell" data-piura-keep-full>
-  <header class="header"><div><small>PIURA FOUNDATION · ПРОДУКТ</small><h1>Фонды</h1></div><div class="years" aria-label="Год цели"><button class="year on" data-year="2026">2026</button><button class="year" data-year="2027">2027</button></div></header>
+  <header class="header"><div><small>ЦЕЛИ · ПРОДУКТ · ПРОГРЕСС</small><h1>Фонды</h1></div><div class="years" aria-label="Год цели"><button class="year on" data-year="2026">2026</button><button class="year" data-year="2027">2027</button></div></header>
   <section class="list" id="fundList"></section>
 </main>
 <script>
 const STORE='piura_foundation_goals_v1';
 const FUNDS=[
- {key:'friend',name:'Котики',product:'Спасённые котики',fact:287,y26:75,y27:500,color:'#66a6ff'},
- {key:'drugs',name:'Наркотики',product:'Дети, написавшие отзыв о наркотиках',fact:0,y26:20,y27:10,color:'#47dba3'},
- {key:'scientology',name:'Саентология',product:'Раздано книг «Дорога к счастью»',fact:0,y26:100,y27:1000,color:'#a77aff'},
- {key:'planet',name:'Уборки',product:'Проведено уборок',fact:0,y26:6,y27:50,color:'#58d4ee'},
- {key:'plants',name:'Растения',product:'Посажено деревьев',fact:200,y26:105,y27:5000,color:'#f5c75c'},
- {key:'association',name:'Ассоциация добрых дел',product:'Сделано добрых дел',fact:0,y26:125,y27:300,color:'#ff986f'}
+ {key:'friend',name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',fact:287,y26:400,y27:1000,color:'#66a6ff'},
+ {key:'drugs',name:'Наркотики',mission:'Планета, в которой нет наркотиков',product:'Дети, получившие просветительское образование по наркотикам и написавшие отзыв',fact:0,y26:100,y27:500,color:'#47dba3'},
+ {key:'scientology',name:'Саентология',mission:'Планета, на которой всё больше людей достигают состояния Клир',product:'Разданные книги «Дорога к счастью»',fact:0,y26:100,y27:1000,color:'#a77aff'},
+ {key:'planet',name:'Уборки',mission:'Планета, избавленная от излишнего мусора',product:'Проведённые уборки',fact:0,y26:10,y27:50,color:'#58d4ee'},
+ {key:'plants',name:'Растения',mission:'Планета, в которой численность растений поддерживается в норме',product:'Посаженные деревья',fact:200,y26:500,y27:5000,color:'#f5c75c'},
+ {key:'association',name:'Ассоциация добрых дел',mission:'Планета, в которой люди делают добрые дела',product:'Сделанные добрые дела',fact:0,y26:20,y27:500,color:'#ff986f'}
 ];
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
 function saved(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}}let state=saved(),activeYear=2026;
 function factFor(fund){return Number(state?.[fund.key]?.current?.product??fund.fact)||0}
 function goal(target,fact){const percent=target?fact/target*100:0;return `<article class="goal"><div class="goal-head"><span>Цель ${activeYear}</span><strong>${target.toLocaleString('ru-RU')}</strong></div><div class="track"><i style="width:${Math.min(100,percent)}%"></i></div><div class="goal-foot"><span>${fact.toLocaleString('ru-RU')} из ${target.toLocaleString('ru-RU')}</span><b>${percent.toFixed(0)}%</b></div></article>`}
-function render(){document.getElementById('fundList').innerHTML=FUNDS.map((fund,index)=>{const fact=factFor(fund),target=activeYear===2026?fund.y26:fund.y27;return `<article class="fund" style="--c:${fund.color}"><div class="identity"><span class="number">${String(index+1).padStart(2,'0')} · направление</span><h2>${esc(fund.name)}</h2><p>${esc(fund.product)}</p></div><div class="fact"><span>Сейчас</span><strong>${fact.toLocaleString('ru-RU')}</strong><b>${esc(fund.product)}</b></div>${goal(target,fact)}</article>`}).join('')}
+function render(){document.getElementById('fundList').innerHTML=FUNDS.map((fund,index)=>{const fact=factFor(fund),target=activeYear===2026?fund.y26:fund.y27;return `<article class="fund" style="--c:${fund.color}"><div class="identity"><span class="number">${String(index+1).padStart(2,'0')}</span><h2>${esc(fund.name)}</h2><p>${esc(fund.mission)}</p></div><div class="fact"><span>Сейчас</span><strong>${fact.toLocaleString('ru-RU')}</strong><b>${esc(fund.product)}</b></div>${goal(target,fact)}</article>`}).join('')}
 document.querySelectorAll('[data-year]').forEach(button=>button.onclick=()=>{activeYear=Number(button.dataset.year);document.querySelectorAll('[data-year]').forEach(item=>item.classList.toggle('on',item===button));render()});
 window.addEventListener('message',event=>{if(event.data?.type==='piura:cloud-data-applied'){state=saved();render()}});render();
 </script>
