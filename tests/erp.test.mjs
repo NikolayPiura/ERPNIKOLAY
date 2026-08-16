@@ -14,7 +14,7 @@ const read = path => readFileSync(new URL(path, root), 'utf8');
 
 test('единая оболочка содержит все согласованные сервисы', () => {
   const shell = read('index.html');
-  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Управление','Фонды','Друг']) {
+  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Управление','Фонды']) {
     assert.match(shell, new RegExp(label));
   }
   assert.doesNotMatch(shell, /\["mydynamics","Мои динамики"/);
@@ -137,14 +137,15 @@ test('глобальные размеры применяются и к цент�
   assert.match(shell, /class="choice-btn/);
 });
 
-test('главная оставляет только утренние и управленческие показатели', () => {
+test('главная возвращает полезные сводные цифры без маршрутов финансовых сервисов', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="overviewPs"/);
-  const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('</section>'));
-  const order=['admin-progress','tile ps','fund-goals','tile lamp','tile air'].map(token=>dashboard.indexOf(token));
+  const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
+  const order=['overview-number-grid','admin-progress','tile ps','fund-goals','tile lamp','tile air'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
-  assert.doesNotMatch(dashboard, /Доход за год|Доход в час|Капитал фондов|Piura Family Fund|Endowment|Подписчики/);
-  assert.doesNotMatch(overview, /overview_finance_snapshot_v1|function loadFinance|function refreshFunds|function overallHourlyIncome/);
+  for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
+  assert.match(overview, /function refreshFinancialSummary\(\)/);
+  assert.doesNotMatch(dashboard, /data-go="finance"|data-go="pff"/);
   assert.doesNotMatch(dashboard, /class="progress-caption"/);
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
   assert.doesNotMatch(overview, /class="ps-badge">ПС №1/);
@@ -175,7 +176,7 @@ test('главная показывает суммарные программы 
   assert.match(overview, /id="overviewPsDayRecord"/);
   assert.match(overview, /id="overviewPsWeekRecord"/);
   assert.match(read('piura-erp-restored 3/modules/AdminScale.html'), /return\{done,total,dynamics,updatedAt/);
-  assert.doesNotMatch(overview, /overview_finance_snapshot_v1/);
+  assert.match(overview, /overview_finance_snapshot_v1/);
   assert.doesNotMatch(overview, /год прошёл/);
   assert.doesNotMatch(overview, /hero-value (?:medium )?skeleton/);
   assert.doesNotMatch(overview, /id="weekTrend"|id="roadmapProgress"|id="workdayValue"/);
@@ -228,10 +229,12 @@ test('главный экран использует согласованные 
   assert.match(overview, /\.ps \.hero-value\{font-size:clamp\(64px,6\.6vw,96px\)/);
 });
 
-test('главная не содержит финансовых форматтеров, а управление фондами остаётся просторным', () => {
+test('главная содержит только компактную финансовую сводку, а управление фондами остаётся просторным', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const funds = read('piura-erp-restored 3/modules/Fonds.html');
-  assert.doesNotMatch(overview, /compactMoney=value=>|overview_finance_snapshot_v1/);
+  assert.match(overview, /compactMoney=value=>/);
+  assert.match(overview, /overview_finance_snapshot_v1/);
+  assert.doesNotMatch(overview, /data-go="finance"|data-go="pff"/);
   assert.match(overview, /\.lamp\{min-height:330px;padding:30px 36px\}/);
   assert.match(funds, /#view-manage\{width:100%;max-width:1880px/);
   assert.match(funds, /#view-manage \.fc\{min-height:390px/);
@@ -359,9 +362,8 @@ test('управление фондами сохраняет только Упр
   assert.match(funds, /id="filterPanel" style="display:none/);
 });
 
-test('Фонды и Друг являются отдельными сервисами со своими точными источниками', () => {
+test('Фонды показывают понятный результат и план, а сервис Друг удалён', () => {
   const foundation = read('piura-erp-restored 3/modules/Foundation.html');
-  const friend = read('piura-erp-restored 3/modules/Friend.html');
   const shell = read('index.html');
   for (const label of ['Котики','Наркотики','Саентология','Уборки','Растения','Ассоциация добрых дел']) assert.match(foundation,new RegExp(label));
   assert.doesNotMatch(foundation, /name:'Дети'/);
@@ -371,19 +373,13 @@ test('Фонды и Друг являются отдельными сервис�
   assert.doesNotMatch(foundation, /фактический продукт/i);
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
-  assert.doesNotMatch(foundation, /СДЕЛАНО|ПРОДУКТ|ЦЕЛЬ ФОНДА|heroSummary/);
+  assert.match(foundation, /Прогресс \$\{activeYear\}/);
+  assert.match(foundation, /<small>Сделано<\/small>/);
+  assert.match(foundation, /<small>План<\/small>/);
+  assert.doesNotMatch(foundation, /<h1>Фонды<\/h1>/);
   assert.match(shell, /\["foundation","Фонды"/);
-  assert.match(shell, /\["friend","Друг"/);
-  assert.match(friend, /ID='167qHytXogtUN8iWVNhOc149oDR2k_0wqGjmbQOx_Db4'/);
-  assert.match(friend, /nameI=find\(\/подписчик\/,1\)/);
-  assert.match(friend, /sumI=find\(\/сумм\/,4\)/);
-  assert.match(friend, /people\.reduce\(\(sum,person\)=>sum\+person\.base,0\)/);
-  assert.match(friend, /class="agent-list"/);
-  assert.match(friend, /class="agent-row"/);
-  assert.match(friend, /id="typeSelect"/);
-  assert.match(friend, /id="tierSelect"/);
-  assert.doesNotMatch(friend, /Все подписки|id="peopleRows"|class="person-row"/);
-  assert.doesNotMatch(friend, /class="distribution"/);
+  assert.doesNotMatch(shell, /\["friend","Друг"/);
+  assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Friend.html',root)),false);
 });
 
 test('админ-шкала использует отдельный Docs-мост и включает дорожную карту', () => {
