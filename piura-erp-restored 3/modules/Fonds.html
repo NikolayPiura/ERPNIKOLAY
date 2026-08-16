@@ -461,6 +461,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
 <script>
 /* ── STATE ── */
 const STORE_KEY = 'piura_funds_v4';
+const ALL_FUNDS_DEFAULTS_KEY = 'piura_funds_all_included_v1';
 const DIRECTION_SETTINGS_KEY='piura_foundation_directions_v1';
 let usdRub = 90;
 let displayCurrency = localStorage.getItem('piura_foundation_display_currency')==='rub'?'rub':'usd';
@@ -524,7 +525,12 @@ function loadState() {
       return saved;
     }
     nextId = s.reduce((m,f)=>Math.max(m,f.id+1),20);
-    return mergeLive(s, DEFAULT_FUNDS);
+    const merged=mergeLive(s, DEFAULT_FUNDS);
+    if(!localStorage.getItem(ALL_FUNDS_DEFAULTS_KEY)){
+      allF(merged).forEach(f=>{f.included=true});
+      localStorage.setItem(ALL_FUNDS_DEFAULTS_KEY,'1');
+    }
+    return merged;
   } catch(e){ return JSON.parse(JSON.stringify(DEFAULT_FUNDS)); }
 }
 

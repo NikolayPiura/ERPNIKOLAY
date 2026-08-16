@@ -360,6 +360,8 @@ test('управление фондами сохраняет только Упр
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
   assert.match(funds, /id="filterPanel" style="display:none/);
+  assert.match(funds, /ALL_FUNDS_DEFAULTS_KEY = 'piura_funds_all_included_v1'/);
+  assert.match(funds, /allF\(merged\)\.forEach\(f=>\{f\.included=true\}\)/);
 });
 
 test('Фонды показывают понятный результат и план, а сервис Друг удалён', () => {
@@ -375,6 +377,12 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
   assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);
   assert.doesNotMatch(foundation, /Шесть направлений|<h1>Результаты<\/h1>/);
+  assert.doesNotMatch(foundation, /class="yearbar"/);
+  assert.match(foundation, /class="fund-years"/);
+  assert.match(foundation, /class="fund-goal"/);
+  assert.match(foundation, /class="fund-result"/);
+  assert.match(foundation, /class="fund-label">Цель/);
+  assert.match(foundation, /class="product-label">Продукт/);
   assert.match(foundation, /<span>\$\{activeYear\}<\/span>/);
   assert.match(foundation, /<small>Сделано<\/small>/);
   assert.match(foundation, /<small>План<\/small>/);
