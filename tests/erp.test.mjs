@@ -141,7 +141,7 @@ test('главная возвращает полезные сводные циф
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="overviewPs"/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['overview-number-grid','admin-progress','tile ps','fund-goals','tile lamp','tile air'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','tile ps','fund-goals','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
   assert.match(overview, /function refreshFinancialSummary\(\)/);
@@ -373,7 +373,9 @@ test('Фонды показывают понятный результат и п�
   assert.doesNotMatch(foundation, /фактический продукт/i);
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
-  assert.match(foundation, /Прогресс \$\{activeYear\}/);
+  assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);
+  assert.doesNotMatch(foundation, /Шесть направлений|<h1>Результаты<\/h1>/);
+  assert.match(foundation, /<span>\$\{activeYear\}<\/span>/);
   assert.match(foundation, /<small>Сделано<\/small>/);
   assert.match(foundation, /<small>План<\/small>/);
   assert.doesNotMatch(foundation, /<h1>Фонды<\/h1>/);
@@ -454,6 +456,8 @@ test('оболочка сама подхватывает новую опубли
 test('кнопка настроек использует ту же высоту, что и остальные пункты меню', () => {
   const shell = read('index.html');
   assert.match(shell, /\.settings-menu-group \.settings-hub-btn\{width:100%;height:auto;min-height:var\(--item-height\)/);
+  assert.match(shell, /settings-hub-btn[^}]*<svg|settings-hub-btn[^`]*<svg/);
+  assert.match(shell, /gap:18/);
   assert.doesNotMatch(shell, /\.settings-menu-group \.settings-hub-btn\{width:100%;height:68px/);
 });
 
