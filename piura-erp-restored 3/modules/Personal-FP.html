@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>FP</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260815a"><script src="Personal-Sheets.js?v=20260815a"></script>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260815b"><script src="Personal-Sheets.js?v=20260815b"></script>
+  <style>.fp1-column h3{font-size:clamp(18px,1.7vw,24px);overflow-wrap:anywhere}.fp1-column header strong{white-space:nowrap}</style>
 </head>
 <body>
 <main class="ps-app ps-finance-app" data-piura-keep-full>
@@ -42,29 +43,26 @@ function renderFP(){
 function expenseModel(payload){
   if(payload?.error)throw new Error(payload.error);const rows=S.cells(payload);if(!rows.length)throw new Error('Лист расходов пуст');
   const income=rowNamed(rows,'ДОХОД'),expense=rowNamed(rows,'РАСХОД');
-  const skip=new Set(['доход','расход','итого','прибыль','пассивный доход','факт','план']);
+  const skip=new Set(['доход','расход','итого','прибыль','пассивный доход','факт','план','% от дохода','% от пассивного дохода']);
   const categories=rows.map(row=>({name:S.text(row[0]),values:MONTHS.map((_,m)=>S.number(row[m+2])),total:S.number(row[1])})).filter(item=>item.name&&!skip.has(S.normalize(item.name))&&(item.total||S.sum(item.values)));
   return {income,expense,categories};
 }
 function renderExpense(){
   const model=expenseModel(data.expense),incomeMonths=MONTHS.map((_,m)=>S.number(model.income?.[m+2])),expenseMonths=MONTHS.map((_,m)=>S.number(model.expense?.[m+2]));
-  const monthly=state.expenseScope==='month',selectedIncome=monthly?incomeMonths[state.month]:S.sum(incomeMonths),selectedExpense=monthly?expenseMonths[state.month]:S.sum(expenseMonths),profit=selectedIncome-selectedExpense;
-  const ranking=model.categories.map((item,index)=>({name:item.name,value:monthly?item.values[state.month]:(item.total||S.sum(item.values)),color:COLORS[index%COLORS.length]})).filter(item=>item.value).sort((a,b)=>b.value-a.value),max=Math.max(1,...ranking.map(item=>item.value));
-  const controls=S.segment('expenseScope',[['month','Месяц'],['year','Весь год']],state.expenseScope,{accent:'orange'}),chooser=monthly?S.monthControl(state.month,MONTHS):'';
-  const metrics=S.metricCards([{label:'Доход',value:S.compactMoney(selectedIncome),note:monthly?MONTHS[state.month]:'за 2026 год',color:'#63a4ff'},{label:'Расход',value:S.compactMoney(selectedExpense),note:`${selectedIncome?Math.round(selectedExpense/selectedIncome*100):0}% от дохода`,color:'#ff8b64'},{label:'Результат',value:S.compactMoney(profit),note:profit>=0?'положительный':'дефицит',color:profit>=0?'#43d9a3':'#ec6fae'}]);
-  const rankingHtml=`<section class="ps-ranking ps-reveal"><div class="ps-section-head"><div><span>СТРУКТУРА</span><h3>Расходы по категориям</h3></div><strong>${S.money(selectedExpense,'USD',0)}</strong></div>${ranking.map((item,index)=>`<div class="ps-rank-row"><b>${String(index+1).padStart(2,'0')}</b><span>${S.esc(item.name)}</span><div class="ps-rank-track"><i style="--rank:${item.color};width:${Math.max(1,item.value/max*100)}%"></i></div><strong>${S.money(item.value,'USD',0)}</strong></div>`).join('')}</section>`;
-  content.innerHTML=command('Расходы','ОТДЕЛЬНЫЙ КОНТУР',controls+chooser)+metrics+S.lineChart({title:'Доход, расход и результат',subtitle:'Динамика по месяцам',labels:SHORT,series:[{label:'Доход',values:incomeMonths,color:'#63a4ff'},{label:'Расход',values:expenseMonths,color:'#ff8b64'},{label:'Результат',values:incomeMonths.map((value,i)=>value-expenseMonths[i]),color:'#43d9a3'}],height:300})+rankingHtml;bind();
+  const incomeTotal=S.sum(incomeMonths),expenseTotal=S.sum(expenseMonths),profit=incomeTotal-expenseTotal,cell=(value,index)=>`<td class="${index===state.month?'current-month':''}">${value?S.money(value,'USD',0):'—'}</td>`;
+  const summary=`<section class="expense-summary ps-reveal"><article><span>Доход</span><strong>${S.compactMoney(incomeTotal)}</strong></article><article><span>Расход</span><strong>${S.compactMoney(expenseTotal)}</strong></article><article class="${profit<0?'negative':''}"><span>Результат</span><strong>${S.compactMoney(profit)}</strong></article></section>`;
+  const matrix=`<section class="expense-matrix ps-reveal"><div class="expense-matrix-head"><h2>Расходы по месяцам</h2><strong>2026</strong></div><div class="ps-scroll"><table><thead><tr><th>Статья</th><th>Итого</th>${SHORT.map((month,index)=>`<th class="${index===state.month?'current-month':''}">${month}</th>`).join('')}</tr></thead><tbody><tr class="income-row"><th>Доход</th><td>${S.money(incomeTotal,'USD',0)}</td>${incomeMonths.map(cell).join('')}</tr>${model.categories.map(item=>`<tr><th>${S.esc(item.name)}</th><td>${S.money(item.total||S.sum(item.values),'USD',0)}</td>${item.values.map(cell).join('')}</tr>`).join('')}</tbody><tfoot><tr><th>Расход</th><td>${S.money(expenseTotal,'USD',0)}</td>${expenseMonths.map(cell).join('')}</tr><tr><th>Результат</th><td>${S.money(profit,'USD',0)}</td>${incomeMonths.map((value,index)=>cell(value-expenseMonths[index],index)).join('')}</tr></tfoot></table></div></section>`;
+  content.innerHTML=summary+matrix;
 }
 function fp1Model(payload){
   if(payload?.error)throw new Error(payload.error);const rows=S.cells(payload),groups=[];let group=null;
   rows.forEach(row=>{const name=S.text(row[1]),amount=S.number(row[2]);if(!name||S.normalize(name)==='итого')return;if(!amount){group={name,items:[]};groups.push(group)}else if(group)group.items.push({name,amount})});groups.forEach(item=>item.total=S.sum(item.items.map(entry=>entry.amount)));return groups.filter(item=>item.total);
 }
 function renderFP1(){
-  const groups=fp1Model(data.fp1).sort((a,b)=>b.total-a.total),total=S.sum(groups.map(group=>group.total));
-  const metrics=S.metricCards([{label:'Общий бюджет',value:S.compactMoney(total),note:'финансовый план №1',color:'#63a4ff'},{label:'Направлений',value:String(groups.length),note:'крупных разделов',color:'#43d9a3'},{label:'Статей',value:String(S.sum(groups.map(item=>item.items.length))),note:'внутри бюджета',color:'#a779ff'}]);
-  const architecture=`<section class="fp1-architecture ps-reveal"><div class="fp1-architecture-head"><div><span>АРХИТЕКТУРА БЮДЖЕТА</span><h2>Деньги привязаны к жизненным задачам</h2></div><strong>${S.money(total,'USD',0)}</strong></div><div class="fp1-share-grid">${groups.map(group=>`<article><span>${S.esc(group.name)}</span><strong>${Math.round(group.total/Math.max(1,total)*100)}%</strong><small>${S.money(group.total,'USD',0)}</small></article>`).join('')}</div></section>`;
-  const cards=`<section class="ps-budget-grid fp1-budget-grid">${groups.map(group=>`<article class="ps-budget-card ps-reveal"><div class="ps-budget-head"><div><span>НАПРАВЛЕНИЕ</span><h3>${S.esc(group.name)}</h3><p>${Math.round(group.total/Math.max(1,total)*100)}% общего бюджета</p></div><strong>${S.compactMoney(group.total)}</strong></div><div class="ps-budget-list">${group.items.sort((a,b)=>b.amount-a.amount).map(item=>`<div><span>${S.esc(item.name)}</span><strong>${S.money(item.amount,'USD',0)}</strong></div>`).join('')}</div></article>`).join('')}</section>`;
-  content.innerHTML=command('FP №1','ЖИЗНЬ · КВАРТИРА · ПУТЕШЕСТВИЯ')+metrics+architecture+cards;
+  const groups=fp1Model(data.fp1),total=S.sum(groups.map(group=>group.total));
+  const head=`<section class="fp1-simple-head ps-reveal"><h2>FP №1</h2><strong>${S.money(total,'USD',0)}</strong></section>`;
+  const board=`<section class="fp1-board">${groups.map((group,index)=>`<article class="fp1-column ps-reveal" style="--accent:${COLORS[index%COLORS.length]}"><header><h3>${S.esc(group.name)}</h3><strong>${S.money(group.total,'USD',0)}</strong></header><div class="fp1-share"><i style="width:${group.total/Math.max(1,total)*100}%"></i></div><div class="fp1-items">${group.items.sort((a,b)=>b.amount-a.amount).map(item=>`<div><span>${S.esc(item.name)}</span><strong>${S.money(item.amount,'USD',0)}</strong></div>`).join('')}</div></article>`).join('')}</section>`;
+  content.innerHTML=head+board;
 }
 function bind(){content.querySelectorAll('[data-month]').forEach(button=>button.onclick=()=>{state.month=(state.month+Number(button.dataset.month)+12)%12;state.week=null;paint()});content.querySelectorAll('[data-week]').forEach(button=>button.onclick=()=>{state.week=Number(button.dataset.week);paint()});content.querySelectorAll('[data-control]').forEach(button=>button.onclick=()=>{state[button.dataset.control]=button.dataset.value;paint()})}
 function paint(){if(!data)return;try{({fp:renderFP,expense:renderExpense,fp1:renderFP1}[state.tab])()}catch(error){content.innerHTML=S.errorCard('Не удалось собрать экран',error.message)}}

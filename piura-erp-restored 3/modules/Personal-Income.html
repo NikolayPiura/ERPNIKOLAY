@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Доход</title>
-  <link rel="stylesheet" href="Personal-Sheets.css?v=20260815a">
-  <script src="Personal-Sheets.js?v=20260815a"></script>
+  <link rel="stylesheet" href="Personal-Sheets.css?v=20260815b">
+  <script src="Personal-Sheets.js?v=20260815b"></script>
 </head>
 <body>
 <main class="ps-app ps-finance-app ps-income-app" data-piura-keep-full>
@@ -34,8 +34,8 @@ function parseSheet(payload){
   const dateCols=(rows[header]||[]).map((cell,index)=>index>=4&&S.monthOf(cell)>=0?index:-1).filter(index=>index>=0);
   return {rows,header,dateCols};
 }
-function cycleButton(key,label,value,detail,on=false){return `<button class="ps-cycle-control ${on?'on':''}" type="button" data-cycle="${key}"><span>${S.esc(label)}</span><strong>${S.esc(value)}</strong><small>${S.esc(detail)}</small><i>↻</i></button>`}
-function command(controls,right=''){return `<section class="ps-command ps-command-clean ps-reveal"><div class="ps-command-copy"><span>ФАКТ И ОРИЕНТИР</span><h2>Структура дохода</h2><p>Один клик меняет представление — без дублирующих переключателей.</p></div><div class="ps-cycle-controls">${controls}</div>${right?`<div class="ps-command-right">${right}</div>`:''}</section>`}
+function cycleButton(key,label,value,on=false){return `<button class="ps-mode-button ${on?'on':''}" type="button" data-cycle="${key}"><span>${S.esc(label)}</span><strong>${S.esc(value)}</strong></button>`}
+function command(controls,right=''){return `<section class="ps-modebar ps-reveal"><div class="ps-cycle-controls">${controls}</div>${right?`<div class="ps-command-right">${right}</div>`:''}</section>`}
 function timeline(model,row,period,month){
   if(period==='month')return MONTHS.map((_,index)=>S.sum(model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===index).map(col=>S.number(row?.[col]))));
   return model.dateCols.filter(col=>S.monthOf(model.rows[model.header][col])===month).map(col=>S.number(row?.[col]));
@@ -63,18 +63,13 @@ function table(model){
 }
 function render(){
   const model=incomeModel(),actual=model.labels.map((_,i)=>S.sum(model.rows.map(row=>row.fact[i]))),planned=model.labels.map((_,i)=>S.sum(model.rows.map(row=>row.plan[i])));
-  const factTotal=S.sum(actual),planTotal=S.sum(planned),delta=factTotal-planTotal,average=actual.length?factTotal/actual.length:0;
-  const controls=cycleButton('group','Тип',state.group==='category'?'Категории':'Источники','нажмите, чтобы сменить')+cycleButton('period','Период',state.period==='week'?'Понедельно':'Помесячно',state.period==='week'?'выбранный месяц':'весь год')+cycleButton('showPlan','План',state.showPlan?'Включён':'Показать',state.showPlan?'сравнение с фактом':'добавить ориентир',state.showPlan);
+  const factTotal=S.sum(actual),planTotal=S.sum(planned),delta=factTotal-planTotal;
+  const controls=cycleButton('group','Тип',state.group==='category'?'Категории':'Источники')+cycleButton('period','Период',state.period==='week'?'Понедельно':'Помесячно')+cycleButton('showPlan','План',state.showPlan?'Включён':'Выключен',state.showPlan);
   const chooser=state.period==='week'?S.monthControl(state.month,MONTHS):'';
-  const metrics=S.metricCards([
-    {label:'Факт',value:S.compactMoney(factTotal),note:state.period==='month'?'за 2026 год':MONTHS[state.month],color:'#63a4ff'},
-    {label:'Средний период',value:S.compactMoney(average),note:state.period==='month'?'в месяц':'в неделю',color:'#43d9a3'},
-    {label:state.showPlan?'План':'Лучший период',value:S.compactMoney(state.showPlan?planTotal:Math.max(0,...actual)),note:state.showPlan?(planTotal?`${Math.round(factTotal/planTotal*100)}% выполнено`:'не задан'):'максимальный факт',color:'#a779ff'},
-    {label:state.showPlan?'Отклонение':'Периодов',value:state.showPlan?S.compactMoney(delta):String(actual.length),note:state.showPlan?(delta>=0?'выше плана':'до плана'):'в расчёте',color:state.showPlan?(delta>=0?'#43d9a3':'#ff8b64'):'#f4c65d'}
-  ]);
+  const summary=`<section class="income-summary ps-reveal"><article><span>Факт</span><strong>${S.compactMoney(factTotal)}</strong></article>${state.showPlan?`<article><span>План</span><strong>${S.compactMoney(planTotal)}</strong></article><article class="${delta<0?'negative':''}"><span>Разница</span><strong>${S.compactMoney(delta)}</strong></article>`:''}</section>`;
   const series=[{label:'Факт',values:actual,color:'#43d9a3'}];
   if(state.showPlan)series.push({label:'План',values:planned,color:'#a779ff'});
-  content.innerHTML=command(controls,chooser)+metrics+S.lineChart({title:state.showPlan?'Факт относительно плана':'Динамика фактического дохода',subtitle:state.period==='month'?'Помесячно за 2026 год':MONTHS[state.month],labels:model.labels,series,height:300})+table(model);
+  content.innerHTML=command(controls,chooser)+summary+S.lineChart({title:'Доход',subtitle:'',labels:model.labels,series,height:270})+table(model);
   bind();
 }
 function bind(){
