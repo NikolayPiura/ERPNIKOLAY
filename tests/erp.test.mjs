@@ -14,11 +14,11 @@ const read = path => readFileSync(new URL(path, root), 'utf8');
 
 test('единая оболочка содержит все согласованные сервисы', () => {
   const shell = read('index.html');
-  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Управление','Фонд PFF','Фонд Москва','SAFE','SOLID','Фонды','Друг','Доходы','Личный доход','FP','Инвестиции']) {
+  for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Управление','Фонды','Друг']) {
     assert.match(shell, new RegExp(label));
   }
   assert.doesNotMatch(shell, /\["mydynamics","Мои динамики"/);
-  assert.match(shell, /\["personalpfp","PFF"/);
+  assert.doesNotMatch(shell, /Personal-(?:Income|Mentor|FP|PFP)\.html|modules\/(?:PFF|MSK|Safe|Solid|Finance)\.html/);
 });
 
 test('Firebase синхронизирует рабочие данные и изолирует каждого пользователя', () => {
@@ -69,53 +69,12 @@ test('Firebase синхронизирует рабочие данные и из�
   assert.equal(state.keys.morning_state.hash, hashValue('{"done":false}'));
 });
 
-test('личный доход подключает только согласованные листы Google Sheets в режиме чтения', () => {
-  const shell = read('index.html');
-  const loader = read('piura-erp-restored 3/modules/Personal-Sheets.js');
-  const income = read('piura-erp-restored 3/modules/Personal-Income.html');
-  const mentor = read('piura-erp-restored 3/modules/Personal-Mentor.html');
-  const fp = read('piura-erp-restored 3/modules/Personal-FP.html');
-  const pfp = read('piura-erp-restored 3/modules/Personal-PFP.html');
-  assert.match(shell, /id:'personal-income',title:"Личный доход"/);
-  assert.match(shell, /Personal-Income\.html/);
-  assert.match(shell, /Personal-Mentor\.html/);
-  assert.match(shell, /Personal-FP\.html/);
-  assert.match(shell, /Personal-PFP\.html/);
-  assert.match(loader, /1GWFyFKRVq1Z4x68gWICBmlilqP5FzYOXXBkC4xYzEbA/);
-  for (const sheet of ['2026 (НЕД)','2026 (ФП)','2026 (РАСХОД)','2026 (МЕНТОР)','2026 (СРЕД)','2026 (ПЛАН)','2026 (ФП №1)']) assert.ok(loader.includes(sheet));
-  for (const sheet of ['2026 (МЕС)','2026 (ПРИОРИТЕТЫ)','2026 (СОБ. КАП)']) assert.doesNotMatch(loader,new RegExp(sheet.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
-  assert.match(loader, /gviz\/tq/);
-  assert.match(loader, /1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA/);
-  for (const sheet of ['2026 (PFF)','2026 (РЫНОК)','2026 (ЗОЛОТО)','2026 (КРИПТА)','2026 (СТАТ)','2026 (ПОДПИСКИ)','2026 (БАЛАНС)']) assert.ok(loader.includes(sheet));
-  assert.match(income, /<h1>Доход<\/h1>/);
-  assert.doesNotMatch(income, /data-tab="mentor"|2026 \(МЕНТОР\)/);
-  for (const control of ["cycleButton('group','Тип'","cycleButton('period','Период'","cycleButton('showPlan','План'",'Категории','Источники','Понедельно','Помесячно']) assert.ok(income.includes(control));
-  assert.doesNotMatch(income, /План · факт|Весь год|data-control="scope"/);
-  assert.match(mentor, /<h1>Ментор<\/h1>/);
-  assert.match(mentor, /S\.load\('2026 \(МЕНТОР\)'\)/);
-  for (const control of ['Абонементы','Премии','Понедельно','Помесячно','period-month']) assert.match(mentor,new RegExp(control));
-  assert.doesNotMatch(mentor, /Лидер/);
-  assert.doesNotMatch(mentor, /Последняя оплата|Средний платёж|Лучший период/);
-  assert.match(mentor, /SHORT=MONTHS\.map/);
-  assert.doesNotMatch(income, />Квота<|>Доля<|>Средний доход</);
-  assert.match(fp, /data-tab="fp"[^>]*>[\s\S]{0,120}Планирование/);
-  assert.match(fp, /data-tab="expense"[^>]*>[\s\S]{0,120}Расходы/);
-  assert.match(fp, /data-tab="fp1"[^>]*>[\s\S]{0,120}FP №1/);
-  for (const metric of ['Остаток','Выделено','Баланс','Расход']) assert.match(fp,new RegExp(metric,'i'));
-  const expenseView = fp.slice(fp.indexOf('function renderExpense'),fp.indexOf('function fp1Model'));
-  assert.match(expenseView, /expense-matrix|Расходы по месяцам/);
-  assert.doesNotMatch(expenseView, /S\.lineChart|expenseScope/);
-  assert.doesNotMatch(fp, />\s*Пассивный доход\s*</i);
-  assert.match(loader, /data-month="-1"/);
-  assert.doesNotMatch(income+mentor+fp, /<input|contenteditable|textarea/i);
-  for (const view of ['PFF','Рынок','Золото','Крипта','Статистика','Подписки','Баланс']) assert.match(pfp,new RegExp(view));
-  assert.doesNotMatch(pfp, /<input|contenteditable|textarea/i);
-});
-
-test('Personal Finance удалён из файлов и навигации', () => {
-  assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Personal-Finance.html', root)), false);
-  assert.doesNotMatch(read('index.html'), /financeos|Finance OS|Personal-Finance/i);
-  assert.doesNotMatch(read('piura-erp-restored 3/modules/Overview.html'), /financeos|Finance OS|Personal-Finance/i);
+test('финансовые сервисы полностью вынесены из основной ERP', () => {
+  const shell=read('index.html');
+  for(const name of ['PFF','MSK','Safe','Solid','Finance','Personal-Income','Personal-Mentor','Personal-FP','Personal-PFP'])assert.equal(existsSync(new URL(`piura-erp-restored 3/modules/${name}.html`,root)),false);
+  assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Personal-Sheets.js',root)),false);
+  assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Personal-Sheets.css',root)),false);
+  assert.doesNotMatch(shell,/Фонд PFF|Фонд Москва|SAFE|SOLID|Личный доход|Доходы|Personal-(?:Income|Mentor|FP|PFP)/);
 });
 
 test('premium/light темы и сдержанные палитры доступны из полноэкранных настроек', () => {
@@ -178,22 +137,14 @@ test('глобальные размеры применяются и к цент�
   assert.match(shell, /class="choice-btn/);
 });
 
-test('главная объединяет эффективность, время и новую недельную ПС №1', () => {
+test('главная оставляет только утренние и управленческие показатели', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
-  assert.match(overview, /id="overviewDph"/);
-  assert.match(overview, /id="overviewWeekHours"/);
   assert.match(overview, /id="overviewPs"/);
-  assert.match(overview, /time:'https:\/\/script\.google\.com\/macros\/s\//);
-  assert.match(overview, /function loadHourlyIncome/);
-  assert.match(overview, /function overallHourlyIncome/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('</section>'));
-  const order=['admin-progress','tile ps','fund-goals','tile lamp','tile air','tile income','tile capital'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','tile ps','fund-goals','tile lamp','tile air'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
-  for (const id of ['psBar','incomeBar','dphBar','capitalBar','pffBar','endowmentBar','subscribersBar']) assert.match(overview,new RegExp(`id="${id}"`));
-  for (const id of ['incomeTarget','dphTarget','capitalTarget','pffTarget','endowmentTarget','subscribersTarget']) assert.match(overview,new RegExp(`id="${id}"`));
-  assert.match(overview, /\.income,\.dph,\.capital,\.pff,\.endowment,\.subscribers\{grid-column:span 4/);
-  assert.match(overview, /<h2>Доход в час<\/h2>/);
-  assert.match(overview, /resolvedHourly=number\(hourlyValue\)\|\|cachedHourly\|\|/);
+  assert.doesNotMatch(dashboard, /Доход за год|Доход в час|Капитал фондов|Piura Family Fund|Endowment|Подписчики/);
+  assert.doesNotMatch(overview, /overview_finance_snapshot_v1|function loadFinance|function refreshFunds|function overallHourlyIncome/);
   assert.doesNotMatch(dashboard, /class="progress-caption"/);
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
   assert.doesNotMatch(overview, /class="ps-badge">ПС №1/);
@@ -224,7 +175,7 @@ test('главная показывает суммарные программы 
   assert.match(overview, /id="overviewPsDayRecord"/);
   assert.match(overview, /id="overviewPsWeekRecord"/);
   assert.match(read('piura-erp-restored 3/modules/AdminScale.html'), /return\{done,total,dynamics,updatedAt/);
-  assert.match(overview, /overview_finance_snapshot_v1/);
+  assert.doesNotMatch(overview, /overview_finance_snapshot_v1/);
   assert.doesNotMatch(overview, /год прошёл/);
   assert.doesNotMatch(overview, /hero-value (?:medium )?skeleton/);
   assert.doesNotMatch(overview, /id="weekTrend"|id="roadmapProgress"|id="workdayValue"/);
@@ -277,12 +228,10 @@ test('главный экран использует согласованные 
   assert.match(overview, /\.ps \.hero-value\{font-size:clamp\(64px,6\.6vw,96px\)/);
 });
 
-test('главная сокращает большие суммы, а управление фондами остаётся просторным', () => {
+test('главная не содержит финансовых форматтеров, а управление фондами остаётся просторным', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const funds = read('piura-erp-restored 3/modules/Fonds.html');
-  assert.match(overview, /compactMoney=value=>/);
-  assert.match(overview, /\+'M'/);
-  assert.match(overview, /\+'K'/);
+  assert.doesNotMatch(overview, /compactMoney=value=>|overview_finance_snapshot_v1/);
   assert.match(overview, /\.lamp\{min-height:330px;padding:30px 36px\}/);
   assert.match(funds, /#view-manage\{width:100%;max-width:1880px/);
   assert.match(funds, /#view-manage \.fc\{min-height:390px/);
@@ -437,21 +386,6 @@ test('Фонды и Друг являются отдельными сервис�
   assert.doesNotMatch(friend, /class="distribution"/);
 });
 
-test('SOLID показывает оба объекта как спокойный отчёт без графиков', () => {
-  const solid = read('piura-erp-restored 3/modules/Solid.html');
-  assert.match(solid, /№1 АКТИВЫ/);
-  assert.match(solid, /№2 АКТИВЫ/);
-  assert.match(solid, /Townhouse/);
-  assert.match(solid, /Квартира в Мытищах/);
-  assert.match(solid, /two\.capital\/fx/);
-  assert.match(solid, /Движение денег/);
-  const objectView = solid.slice(solid.indexOf('function renderObject'),solid.indexOf('function render(){'));
-  assert.doesNotMatch(objectView, /chart\(/);
-  assert.match(objectView, /Следующий платёж/);
-  assert.match(solid, /Поступления/);
-  assert.doesNotMatch(solid, /data-tab=|Источник:/);
-});
-
 test('админ-шкала использует отдельный Docs-мост и включает дорожную карту', () => {
   const admin = read('piura-erp-restored 3/modules/AdminScale.html');
   const bridge = read('piura-erp-restored 3/google-apps-script/AdminScaleSync.gs');
@@ -497,9 +431,10 @@ test('динамика эффективности хранит четыре ра
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
   assert.match(effectiveness, /function scheduledCheckpointDates/);
-  assert.match(effectiveness, /new Date\(2026,7,22,12\)/);
-  assert.match(effectiveness, /cursor\.setDate\(cursor\.getDate\(\)\+7\)/);
-  assert.match(effectiveness, /cp-total-only/);
+  assert.match(effectiveness, /function scheduledCheckpointDates\(\)\{return\['2026-08-01','2026-08-07','2026-08-15'\]\}/);
+  assert.doesNotMatch(effectiveness, /new Date\(2026,7,22,12\)|cursor\.setDate/);
+  assert.match(effectiveness, /ov-row cp-overview-row/);
+  assert.match(effectiveness, /ov-summary cp-summary/);
   assert.doesNotMatch(effectiveness, /К ПРОШЛОЙ НЕДЕЛЕ|ТОЧКА ОТСЧЁТА|ЕЖЕНЕДЕЛЬНЫЙ КОНТРОЛЬ|Последняя точка/);
   assert.match(time, /SHEET_SYNC_DELAY = 30000/);
   assert.match(time, /PENDING_SYNC_KEY/);
@@ -507,31 +442,6 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /if\(synced&&/);
   assert.match(time, /async function verifySheetDate/);
   assert.match(time, /Google Sheets не подтвердил запись/);
-});
-
-test('инвестиционный PFF показывает недельные значения без графиков подписок и баланса', () => {
-  const pff = read('piura-erp-restored 3/modules/Personal-PFP.html');
-  assert.match(pff, /<h1>PFF<\/h1>/);
-  assert.match(pff, /Доход месяца/);
-  assert.match(pff, /monthControl/);
-  assert.match(pff, /НЕДЕЛЬНЫЙ ДОХОД/i);
-  assert.match(pff, /weekColumns/);
-  assert.match(pff, /weekIndexes/);
-  assert.match(pff, /inferredCurrency/);
-  assert.match(pff, /balancePerson/);
-  assert.match(pff, /data-asset-sort/);
-  assert.match(pff, /showOwner=items\.some/);
-  assert.match(pff, /headers=\['Актив'/);
-  assert.match(pff, /\.\.\.indexes\.map\(week=>week\.label\)/);
-  assert.match(pff, /panelTable\(MONTHS\[state\.month\]/);
-  const assets = pff.slice(pff.indexOf('function renderAssets'),pff.indexOf('function renderStats'));
-  assert.doesNotMatch(assets, /<details|Не указан/);
-  assert.match(pff, /Все подписки/);
-  const subscriptions = pff.slice(pff.indexOf('function renderSubscriptions'),pff.indexOf('function balanceModel'));
-  const balance = pff.slice(pff.indexOf('function renderBalance'),pff.indexOf('function paint'));
-  assert.doesNotMatch(subscriptions, /S\.lineChart/);
-  assert.doesNotMatch(subscriptions, /slice\(0,8\)/);
-  assert.doesNotMatch(balance, /S\.lineChart/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
@@ -621,21 +531,4 @@ test('дорожная карта показывает только 2022–2026 
   assert.match(roadmap, /Object\.keys\(stored\|\|\{\}\)\.length/);
   assert.match(roadmap, /hasStored=Object\.keys\(stored\|\|\{\}\)\.length>0,recovered=hasStored\?\{\}:recoverNextStepsFromLocalCache\(\)/);
   assert.doesNotMatch(read('index.html'), /Показывать скрытые годы/);
-});
-
-test('доходы используют один главный тренд и спокойную компактную иерархию', () => {
-  const finance = read('piura-erp-restored 3/modules/Finance.html');
-  assert.match(finance, /id="incomeTrend" aria-label="Доход по месяцам"/);
-  assert.match(finance, /class="sec annual-plan-first"/);
-  assert.match(finance, /id="kp">—<\/div>/);
-  assert.match(finance, /<div class="kl">Прибыль<\/div>/);
-  assert.match(finance, /\.exp-wrap>\.cb:nth-child\(2\)\{display:none!important\}/);
-  assert.match(finance, /\.src2 \.cb>div\[style\*="height"\]\{display:none!important\}/);
-  assert.match(finance, /1grODwtbQTEmy51OYwFdx4cnKuJXoOxq24vPlwM_XGB4/);
-  assert.match(finance, /sheet=%D0%A4%D0%9F/);
-  assert.match(finance, /==='РАСХОД'/);
-  assert.match(finance, /categories\.sort\(function\(a,b\)\{return b\.total-a\.total;\}\)/);
-  assert.match(finance, /\['Климат','Инвестиции','Наставничество','Учредитель','Управление деньгами','Снитч','ПЛАН','ДЕЛЬТА'\]/);
-  assert.doesNotMatch(finance, /Детальные источники|Прогноз года/);
-  assert.doesNotMatch(finance, /id="pc"/);
 });
