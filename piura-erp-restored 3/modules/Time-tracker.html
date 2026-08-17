@@ -446,7 +446,6 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
         Скачать Excel
       </button>
     </div>
-    <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Редактировать категории" aria-label="Редактировать категории">✎</button>
 </div>
 
 <!-- ═══ HERO ═══ -->
@@ -527,15 +526,14 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
 /* ── CONFIG ── */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnd2ZyN7B6YzVvIH6wp8Uer5tNqG7OFV20Av7xmCqUrEHH3rREj6AfjDwRBsW_hahAPg/exec';
 
-const DEFAULT_CATS = [
-  {key:'klim',  label:'Климат',             icon:'🌍', color:'#00B4A0', work:false},
-  {key:'inv',   label:'Инвестиции',          icon:'📈', color:'#6C47FF', work:true },
-  {key:'money', label:'Управление деньгами', icon:'💰', color:'#FF8C00', work:true },
-  {key:'nav',   label:'Наставник',           icon:'🧭', color:'#1A5CFF', work:true },
-  {key:'eff',   label:'Эффективность',       icon:'⚡', color:'#8DC900', work:true },
-  {key:'edu',   label:'Обучение',            icon:'📚', color:'#E0366A', work:false},
-  {key:'hobby', label:'Хобби',                icon:'🎯', color:'#A855F7', work:false},
-  {key:'friend',label:'Фонд Друг',            icon:'🐾', color:'#F59E0B', work:true },
+const FIXED_CATS = [
+  {key:'eff',   label:'Основное',             syncLabel:'Эффективность',       aliases:['Основное'], icon:'⚡', color:'#8DC900', work:true },
+  {key:'edu',   label:'Обучение',             syncLabel:'Обучение',            aliases:[],           icon:'📚', color:'#E0366A', work:false},
+  {key:'nav',   label:'Наставник',            syncLabel:'Наставник',           aliases:['Наставничество'], icon:'🧭', color:'#1A5CFF', work:true },
+  {key:'klim',  label:'Климат',               syncLabel:'Климат',              aliases:[],           icon:'🌍', color:'#00B4A0', work:false},
+  {key:'inv',   label:'Инвестиции',           syncLabel:'Инвестиции',          aliases:[],           icon:'📈', color:'#6C47FF', work:true },
+  {key:'money', label:'Управление деньгами',  syncLabel:'Управление деньгами', aliases:[],           icon:'💰', color:'#FF8C00', work:true },
+  {key:'fondy', label:'Фонды',                syncLabel:'Фонды',               aliases:['Фонд Друг'], icon:'◈', color:'#F59E0B', work:true },
 ];
 const EMOJI_CHOICES = ['🎨','🎮','🏋️','🎵','📷','✈️','🍳','🧘','🐶','🎬','📖','🛠️','🎯','🌱','💡','🧩','🚴','🏠','🛒','👨‍👩‍👧','🎸','🧗','🏃','☕'];
 const COLOR_CHOICES = ['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#F472B6','#0EA5E9','#A855F7','#F59E0B','#10B981','#EF4444'];
@@ -557,19 +555,30 @@ const WD = ['Воскресенье','Понедельник','Вторник','
 
 /* ── CATEGORIES STORAGE ── */
 function loadCats() {
+  let parsed = [];
   try {
     const raw = localStorage.getItem(CATS_KEY);
-    if (!raw) { saveCats(DEFAULT_CATS); return DEFAULT_CATS.slice(); }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || !parsed.length) return DEFAULT_CATS.slice();
-    const merged=parsed.slice();
-    DEFAULT_CATS.forEach(def=>{if(!merged.some(cat=>cat.key===def.key||cat.label===def.label))merged.push({...def});});
-    if(merged.length!==parsed.length)saveCats(merged);
-    return merged;
-  } catch { return DEFAULT_CATS.slice(); }
+    parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) parsed = [];
+  } catch { parsed = []; }
+  const fixed = FIXED_CATS.map(def=>({...def,aliases:[...def.aliases]}));
+  if (JSON.stringify(parsed) !== JSON.stringify(fixed)) localStorage.setItem(CATS_KEY, JSON.stringify(fixed));
+  migrateLegacyTimeData();
+  return fixed;
 }
-function saveCats(cats) { localStorage.setItem(CATS_KEY, JSON.stringify(cats)); }
+function saveCats() { localStorage.setItem(CATS_KEY, JSON.stringify(FIXED_CATS)); }
 function getCats() { return loadCats(); }
+
+function migrateLegacyTimeData(){
+  const all=load();let changed=false;
+  Object.values(all).forEach(day=>{
+    if(!day||typeof day!=='object')return;
+    const legacyFunds=Number(day.friend||0),currentFunds=Number(day.fondy||0);
+    if(!currentFunds&&legacyFunds>0){day.fondy=legacyFunds;changed=true;}
+    if(Object.prototype.hasOwnProperty.call(day,'friend')){delete day.friend;changed=true;}
+  });
+  if(changed)save(all);
+}
 
 function slugify(name) {
   const translit = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'i',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'c',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
@@ -621,7 +630,7 @@ async function verifySheetDate(dateKey,values,cats){
       if(!response.ok)continue;
       const payload=await response.json(),serverDay=Array.isArray(payload.days)?payload.days.find(day=>day.date===dateKey):null;
       if(!serverDay)continue;
-      const matches=cats.every(cat=>Number(serverDay[cat.label]||0)===Number(values[cat.key]||0));
+      const matches=cats.every(cat=>Number(serverDay[cat.syncLabel]||0)===Number(values[cat.key]||0));
       if(matches)return true;
     }catch(error){}
   }
@@ -630,9 +639,10 @@ async function verifySheetDate(dateKey,values,cats){
 
 async function syncToSheets(dateKey) {
   const all = load();
-  const values = all[dateKey] || {};
   const cats = getCats();
-  const catsMeta = cats.map(c => ({ key: c.key, label: c.label }));
+  const storedValues = all[dateKey] || {};
+  const values = Object.fromEntries(cats.map(cat=>[cat.key,Number(storedValues[cat.key]||0)]));
+  const catsMeta = cats.map(c => ({ key: c.key, label: c.syncLabel }));
 
   setSyncStatus('syncing', 'Синхронизация...');
 
@@ -663,18 +673,17 @@ async function syncFromSheets(quiet=false) {
     if(!response.ok)throw new Error('HTTP '+response.status);
     const payload=await response.json();
     if(payload.status!=='ok'||!Array.isArray(payload.days))throw new Error('Некорректный ответ таблицы');
-    let cats=getCats();
-    const palette=['#00B4A0','#6C47FF','#FF8C00','#1A5CFF','#8DC900','#E0366A','#A855F7','#F59E0B','#10B981','#EF4444'];
-    (payload.categories||[]).forEach((label,index)=>{
-      if(!cats.some(cat=>cat.label===label))cats.push({key:slugify(label),label,icon:'◉',color:palette[index%palette.length],work:true});
-    });
-    saveCats(cats);
-    const byLabel=new Map(cats.map(cat=>[cat.label,cat.key])),all=load();
+    const cats=getCats(),sheetCategories=new Set(payload.categories||[]),all=load();
     payload.days.forEach(serverDay=>{
       if(!/^\d{4}-\d{2}-\d{2}$/.test(serverDay.date||''))return;
       if(isDirty(serverDay.date))return;
       const next={...(all[serverDay.date]||{})};
-      (payload.categories||[]).forEach(label=>{const key=byLabel.get(label),mins=Number(serverDay[label])||0;if(!key)return;if(mins>0)next[key]=mins;else delete next[key];});
+      cats.forEach(cat=>{
+        const labels=[cat.syncLabel,...cat.aliases].filter(label=>sheetCategories.has(label));
+        let mins=0;
+        for(const label of labels){const candidate=Number(serverDay[label])||0;if(candidate>0){mins=candidate;break;}}
+        if(mins>0)next[cat.key]=mins;else delete next[cat.key];
+      });
       if(Object.keys(next).length)all[serverDay.date]=next;else delete all[serverDay.date];
     });
     save(all);renderAll();
@@ -764,11 +773,6 @@ function renderGrid() {
     grid.appendChild(card);
   });
 
-  const addTile = document.createElement('div');
-  addTile.className = 'add-card';
-  addTile.onclick = openManageModal;
-  addTile.innerHTML = `<span class="plus">+</span><span>Добавить</span>`;
-  grid.appendChild(addTile);
 }
 
 function toggleCard(key, curVal) {

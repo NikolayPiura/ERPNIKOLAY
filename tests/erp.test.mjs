@@ -107,7 +107,7 @@ test('обзор содержит климат и единое управлен�
   assert.match(bridge, /"\/lights"/);
 });
 
-test('учёт времени переключает дни без календаря, а удаление категории оставляет в настройках', () => {
+test('учёт времени переключает дни и показывает только семь закреплённых категорий', () => {
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
   assert.match(time, /<div class="hero-topbar" id="dateNavigation">[\s\S]*?<div class="hero">/);
   assert.match(time, /body>\.hero-topbar\{display:grid!important/);
@@ -115,9 +115,16 @@ test('учёт времени переключает дни без календ�
   assert.match(time, /id="nextDay"/);
   assert.match(time, /id="todayDay"/);
   assert.doesNotMatch(time, /id="dateJump" type="date"/);
-  assert.match(time, /function deleteCategory\(key\)/);
-  assert.doesNotMatch(time, /class="card-delete"/);
-  assert.match(time, /class="mr-del"/);
+  const fixed = time.match(/const FIXED_CATS = \[([\s\S]*?)\n\];/)?.[1] || '';
+  const labels = [...fixed.matchAll(/label:'([^']+)'/g)].map(match=>match[1]);
+  assert.deepEqual(labels,['Основное','Обучение','Наставник','Климат','Инвестиции','Управление деньгами','Фонды']);
+  for (const removed of ['Обучение (Доп)','Админ Шкала','Общественные задачи','Отдых','Фильмы, Ютуб','Сон','Утро и Вечер','Хобби','Фонд Друг']) {
+    assert.equal(labels.includes(removed),false);
+  }
+  assert.doesNotMatch(time, /id="timeEditButton"/);
+  assert.doesNotMatch(time, /addTile/);
+  assert.match(time, /function migrateLegacyTimeData\(\)/);
+  assert.match(time, /day\.fondy=legacyFunds/);
 });
 
 test('ПС №1 сохраняет старые данные при миграции, но не показывает старую шкалу', () => {
@@ -252,8 +259,7 @@ test('утро и учёт времени сохраняются без отде
   assert.match(time, /SELECTED_DATE_KEY = 'tt_selected_date_v1'/);
   assert.match(time, /function persistSelectedDate\(\)/);
   assert.match(time, /DIRTY_KEY/);
-  assert.match(time, /id="timeEditButton"/);
-  assert.match(time, /body>\.hero-topbar \.time-edit-button/);
+  assert.doesNotMatch(time, /id="timeEditButton"/);
   const syncStatusBlock = time.match(/<div class="sync-status"[\s\S]*?<\/div>/)?.[0] || '';
   assert.doesNotMatch(syncStatusBlock, /timeEditButton/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);
@@ -448,6 +454,10 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /if\(synced&&/);
   assert.match(time, /async function verifySheetDate/);
   assert.match(time, /Google Sheets не подтвердил запись/);
+  assert.match(time, /const values = Object\.fromEntries\(cats\.map/);
+  assert.match(time, /label: c\.syncLabel/);
+  assert.match(time, /sheetCategories=new Set\(payload\.categories\|\|\[\]\)/);
+  assert.doesNotMatch(time, /\(payload\.categories\|\|\[\]\)\.forEach\(\(label,index\)/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
