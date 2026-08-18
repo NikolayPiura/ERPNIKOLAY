@@ -411,6 +411,19 @@ test('админ-шкала использует отдельный Docs-мос�
   assert.doesNotMatch(admin, /id="syncUrl"|id="syncToken"/);
   assert.match(admin, /Отдельный адрес, ключ или повторная авторизация не нужны/);
   assert.match(admin, /piura:firebase-token/);
+  assert.match(admin, /piura:request-firebase-token/);
+  assert.match(admin, /u\.searchParams\.set\('t',String\(Date\.now\(\)\)\)/);
+  assert.match(admin, /setInterval\(\(\)=>\{if\(document\.visibilityState==='visible'\)refreshDocs\(\);\},15000\)/);
+  assert.match(admin, /window\.addEventListener\('focus',refreshDocs\)/);
+  assert.match(admin, /Не смотреть порно пол года/);
+  for (const item of [
+    'Выстроить официальную оплату всем подрядчикам в РФ',
+    'Выстроить новую систему по выплате дивидендов и ЗП в компании',
+    'Оформить людей в компанию официально',
+    'Рассчитать и оплатить налоги по всем инвест. фондам',
+    'Заплатить абсолютно все личные налоги',
+    'Сделать проверку на безопасности по технологии в компании',
+  ]) assert.match(admin, new RegExp(item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(admin, /<div class="topbar-inner">\s*<nav class="workspace-nav"[\s\S]*?<div class="browse-mode"[\s\S]*?<div class="dyn-tabs" id="dynTabs">/);
   assert.match(admin, /document\.body\.dataset\.adminWorkspace=view/);
   assert.match(bridge, /identitytoolkit\.googleapis\.com\/v1\/accounts:lookup/);
@@ -466,6 +479,8 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /keepalive: true/);
   assert.match(time, /window\.addEventListener\('pagehide',sendPendingOnPageHide\)/);
   assert.match(time, /function scheduleSummaryRender\(\)/);
+  assert.match(time, /\.entry-grid\{gap:36px!important;padding:40px!important;border-radius:30px!important\}/);
+  assert.match(time, /\.entry-card,\.add-card\{min-height:204px!important;border-radius:22px!important\}/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
