@@ -446,6 +446,7 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
         Скачать Excel
       </button>
     </div>
+    <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Добавить, переименовать или удалить категорию" aria-label="Редактировать категории">✎</button>
 </div>
 
 <!-- ═══ HERO ═══ -->
@@ -526,8 +527,7 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
 /* ── CONFIG ── */
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxnd2ZyN7B6YzVvIH6wp8Uer5tNqG7OFV20Av7xmCqUrEHH3rREj6AfjDwRBsW_hahAPg/exec';
 
-const FIXED_CATS = [
-  {key:'eff',   label:'Основное',             syncLabel:'Эффективность',       aliases:['Основное'], icon:'⚡', color:'#8DC900', work:true },
+const DEFAULT_CATS = [
   {key:'edu',   label:'Обучение',             syncLabel:'Обучение',            aliases:[],           icon:'📚', color:'#E0366A', work:false},
   {key:'nav',   label:'Наставник',            syncLabel:'Наставник',           aliases:['Наставничество'], icon:'🧭', color:'#1A5CFF', work:true },
   {key:'klim',  label:'Климат',               syncLabel:'Климат',              aliases:[],           icon:'🌍', color:'#00B4A0', work:false},
@@ -543,33 +543,63 @@ const SK = 'tt_v4';        // данные по дням — НЕ ТРОГАЕМ
 const CATS_KEY = 'tt_cats_v1'; // список категорий — отдельное хранилище
 const DIRTY_KEY = 'tt_local_dirty_v1';
 const PENDING_SYNC_KEY = 'tt_pending_sheet_sync_v1';
-const SHEET_SYNC_DELAY = 30000;
+const SHEET_SYNC_DELAY = 1500;
 const OPEN_KEY = 'tt_open_picker_v1';
 const SELECTED_DATE_KEY = 'tt_selected_date_v1';
 
 let curDate = (()=>{const saved=localStorage.getItem(SELECTED_DATE_KEY),parsed=/^\d{4}-\d{2}-\d{2}$/.test(saved||'')?new Date(saved+'T00:00:00'):new Date();return Number.isNaN(parsed.getTime())?new Date():parsed})(); curDate.setHours(0,0,0,0);
 let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
 let chartPie = null, chartBar = null;
+let catsCache = null, legacyMigrationDone = false, summaryFrame = 0;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
 const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
 
 /* ── CATEGORIES STORAGE ── */
+function cloneCats(cats){return cats.map(cat=>({...cat,aliases:[...(cat.aliases||[])]}))}
+function normalizeCats(cats){
+  const normalized=[],keys=new Set(),labels=new Set();
+  (Array.isArray(cats)?cats:[]).forEach((source,index)=>{
+    if(!source||typeof source!=='object')return;
+    const label=String(source.label||'').trim();
+    if(!label||['Основное','Эффективность'].includes(label)||source.key==='eff')return;
+    const key=String(source.key||('cat_'+index)).trim();
+    const folded=label.toLocaleLowerCase('ru-RU');
+    if(!key||keys.has(key)||labels.has(folded))return;
+    keys.add(key);labels.add(folded);
+    normalized.push({
+      key,label,
+      syncLabel:String(source.syncLabel||label).trim()||label,
+      aliases:[...new Set((Array.isArray(source.aliases)?source.aliases:[]).map(value=>String(value||'').trim()).filter(Boolean))],
+      icon:String(source.icon||'◉'),color:String(source.color||COLOR_CHOICES[index%COLOR_CHOICES.length]),work:source.work!==false
+    });
+  });
+  return normalized;
+}
 function loadCats() {
+  if(catsCache)return cloneCats(catsCache);
   let parsed = [];
   try {
     const raw = localStorage.getItem(CATS_KEY);
     parsed = raw ? JSON.parse(raw) : [];
     if (!Array.isArray(parsed)) parsed = [];
   } catch { parsed = []; }
-  const fixed = FIXED_CATS.map(def=>({...def,aliases:[...def.aliases]}));
-  if (JSON.stringify(parsed) !== JSON.stringify(fixed)) localStorage.setItem(CATS_KEY, JSON.stringify(fixed));
+  const source=parsed.length?parsed:DEFAULT_CATS;
+  const normalized=normalizeCats(source);
+  catsCache=normalized.length?normalized:normalizeCats(DEFAULT_CATS);
+  if (JSON.stringify(parsed) !== JSON.stringify(catsCache)) localStorage.setItem(CATS_KEY, JSON.stringify(catsCache));
   migrateLegacyTimeData();
-  return fixed;
+  return cloneCats(catsCache);
 }
-function saveCats() { localStorage.setItem(CATS_KEY, JSON.stringify(FIXED_CATS)); }
+function saveCats(cats) {
+  const normalized=normalizeCats(cats);
+  if(!normalized.length)return false;
+  catsCache=normalized;localStorage.setItem(CATS_KEY,JSON.stringify(catsCache));return true;
+}
 function getCats() { return loadCats(); }
 
-function migrateLegacyTimeData(){
+function migrateLegacyTimeData(force=false){
+  if(legacyMigrationDone&&!force)return;
+  legacyMigrationDone=true;
   const all=load();let changed=false;
   Object.values(all).forEach(day=>{
     if(!day||typeof day!=='object')return;
@@ -623,8 +653,9 @@ function setSyncStatus(state, text) {
 
 const syncPause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function verifySheetDate(dateKey,values,cats){
-  for(let attempt=0;attempt<3;attempt++){
-    await syncPause(700+attempt*650);
+  const delays=[600,900,1400,2200,3500];
+  for(const delay of delays){
+    await syncPause(delay);
     try{
       const response=await fetch(GAS_URL+'?verify='+encodeURIComponent(dateKey)+'&t='+Date.now(),{cache:'no-store'});
       if(!response.ok)continue;
@@ -651,8 +682,9 @@ async function syncToSheets(dateKey) {
     await fetch(GAS_URL, {
       method: 'POST',
       mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: payload
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: payload,
+      keepalive: true
     });
     if(!await verifySheetDate(dateKey,values,cats))throw new Error('Google Sheets не подтвердил запись');
     setSyncStatus('ok', '✓ Отправлено в Google Sheets');
@@ -668,18 +700,21 @@ async function syncToSheets(dateKey) {
 
 async function syncFromSheets(quiet=false) {
   if(!quiet)setSyncStatus('syncing','Загружаем записи...');
+  const protectedDates=new Set(pendingDates());
   try{
     const response=await fetch(GAS_URL+'?t='+Date.now(),{cache:'no-store'});
     if(!response.ok)throw new Error('HTTP '+response.status);
     const payload=await response.json();
     if(payload.status!=='ok'||!Array.isArray(payload.days))throw new Error('Некорректный ответ таблицы');
+    pendingDates().forEach(date=>protectedDates.add(date));
     const cats=getCats(),sheetCategories=new Set(payload.categories||[]),all=load();
     payload.days.forEach(serverDay=>{
       if(!/^\d{4}-\d{2}-\d{2}$/.test(serverDay.date||''))return;
-      if(isDirty(serverDay.date))return;
+      if(isDirty(serverDay.date)||protectedDates.has(serverDay.date))return;
       const next={...(all[serverDay.date]||{})};
       cats.forEach(cat=>{
         const labels=[cat.syncLabel,...cat.aliases].filter(label=>sheetCategories.has(label));
+        if(!labels.length)return;
         let mins=0;
         for(const label of labels){const candidate=Number(serverDay[label])||0;if(candidate>0){mins=candidate;break;}}
         if(mins>0)next[cat.key]=mins;else delete next[cat.key];
@@ -687,7 +722,7 @@ async function syncFromSheets(quiet=false) {
       if(Object.keys(next).length)all[serverDay.date]=next;else delete all[serverDay.date];
     });
     save(all);renderAll();
-    setSyncStatus('ok','✓ Google Sheets · '+(payload.updated||'обновлено'));
+    setSyncStatus('ok',pendingDates().length?'✓ Сохранено локально · отправляем…':'✓ Google Sheets · '+(payload.updated||'обновлено'));
     return true;
   }catch(error){
     setSyncStatus('error','✗ Не удалось загрузить Google Sheets');console.error('Load sync error:',error);return false;
@@ -773,6 +808,10 @@ function renderGrid() {
     grid.appendChild(card);
   });
 
+  const addTile=document.createElement('button');
+  addTile.type='button';addTile.className='add-card';addTile.onclick=openManageModal;
+  addTile.innerHTML='<span class="plus">+</span><span>Добавить категорию</span>';
+  grid.appendChild(addTile);
 }
 
 function toggleCard(key, curVal) {
@@ -833,12 +872,21 @@ async function flushSheetSync(){
 }
 function queueSheetSync(dateKey=dk(curDate)){
   savePendingDates([...pendingDates(),dateKey]);
-  setSyncStatus('ok','✓ Сохранено локально · облако через 30 сек');
+  setSyncStatus('ok','✓ Сохранено локально · отправляем…');
   clearTimeout(pickerSyncTimer);
   pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY);
   try{parent.postMessage({type:'piura:data-changed',source:'time'},location.origin)}catch(error){}
 }
-function commitPicker(key){setVal(key,pH*60+pM);const card=[...document.getElementById('entryGrid').children].find(node=>node.querySelector?.('#dh_'+key)),value=card?.querySelector('.card-val');if(value){value.textContent=fmt(pH*60+pM);value.classList.toggle('zero',pH*60+pM===0)}renderHero();renderPie();renderBar();queueSheetSync()}
+function sendPendingOnPageHide(){
+  const cats=getCats(),catsMeta=cats.map(cat=>({key:cat.key,label:cat.syncLabel})),all=load();
+  pendingDates().slice(0,8).forEach(dateKey=>{
+    const stored=all[dateKey]||{},values=Object.fromEntries(cats.map(cat=>[cat.key,Number(stored[cat.key]||0)]));
+    const body=JSON.stringify({date:dateKey,values,cats:catsMeta});
+    try{fetch(GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=UTF-8'},body,keepalive:true}).catch(()=>{})}catch(error){}
+  });
+}
+function scheduleSummaryRender(){if(summaryFrame)return;summaryFrame=requestAnimationFrame(()=>{summaryFrame=0;renderHero();renderPie();renderBar()})}
+function commitPicker(key){setVal(key,pH*60+pM);const card=[...document.getElementById('entryGrid').children].find(node=>node.querySelector?.('#dh_'+key)),value=card?.querySelector('.card-val');if(value){value.textContent=fmt(pH*60+pM);value.classList.toggle('zero',pH*60+pM===0)}scheduleSummaryRender();queueSheetSync()}
 
 /* ── PIE ── */
 function renderPie() {
@@ -932,7 +980,9 @@ function escapeAttribute(value){return String(value||'').replace(/&/g,'&amp;').r
 function renameCategory(key,value){
   const name=String(value||'').trim();if(!name){renderManageList();return;}
   const cats=getCats(),cat=cats.find(item=>item.key===key);if(!cat||cat.label===name)return;
-  cat.label=name;saveCats(cats);renderManageList();renderAll();queueSheetSync();
+  const previous=cat.syncLabel||cat.label;
+  cat.label=name;cat.syncLabel=name;cat.aliases=[...new Set([...(cat.aliases||[]),previous].filter(label=>label&&label!==name))];
+  saveCats(cats);renderManageList();renderAll();queueSheetSync();
 }
 
 function deleteCategory(key) {
@@ -945,6 +995,7 @@ function deleteCategory(key) {
   if (openKey === key) openKey = null;
   renderManageList();
   renderAll();
+  queueSheetSync();
 }
 
 function showNewCatForm() {
@@ -999,13 +1050,14 @@ function createNewCategory() {
 
   const cats = getCats();
   const key = slugify(name);
-  const newCat = { key, label: name, icon: newCatIcon, color: newCatColor, work: newCatWork };
+  const newCat = { key, label: name, syncLabel:name, aliases:[], icon: newCatIcon, color: newCatColor, work: newCatWork };
   cats.push(newCat);
   saveCats(cats);
 
   hideNewCatForm();
   renderManageList();
   renderAll();
+  queueSheetSync();
 }
 
 /* ── EXCEL ── */
@@ -1053,8 +1105,9 @@ renderAll();
 document.getElementById('syncStatus').addEventListener('click',()=>syncFromSheets());
 document.getElementById('syncStatus').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();syncFromSheets();}});
 syncFromSheets();
-if(pendingDates().length){setSyncStatus('ok','✓ Есть локальные изменения · облако через 30 сек');pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY)}
-window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied')renderAll()});
+if(pendingDates().length){setSyncStatus('ok','✓ Есть локальные изменения · отправляем…');pickerSyncTimer=setTimeout(flushSheetSync,SHEET_SYNC_DELAY)}
+window.addEventListener('pagehide',sendPendingOnPageHide);
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied'){catsCache=null;legacyMigrationDone=false;loadCats();renderAll()}});
 </script>
 </body>
 </html>

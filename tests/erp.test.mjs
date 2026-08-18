@@ -107,7 +107,7 @@ test('обзор содержит климат и единое управлен�
   assert.match(bridge, /"\/lights"/);
 });
 
-test('учёт времени переключает дни и показывает только семь закреплённых категорий', () => {
+test('учёт времени переключает дни и сохраняет шесть стартовых редактируемых категорий', () => {
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
   assert.match(time, /<div class="hero-topbar" id="dateNavigation">[\s\S]*?<div class="hero">/);
   assert.match(time, /body>\.hero-topbar\{display:grid!important/);
@@ -115,15 +115,16 @@ test('учёт времени переключает дни и показыва�
   assert.match(time, /id="nextDay"/);
   assert.match(time, /id="todayDay"/);
   assert.doesNotMatch(time, /id="dateJump" type="date"/);
-  const fixed = time.match(/const FIXED_CATS = \[([\s\S]*?)\n\];/)?.[1] || '';
-  const labels = [...fixed.matchAll(/label:'([^']+)'/g)].map(match=>match[1]);
-  assert.deepEqual(labels,['Основное','Обучение','Наставник','Климат','Инвестиции','Управление деньгами','Фонды']);
-  for (const removed of ['Обучение (Доп)','Админ Шкала','Общественные задачи','Отдых','Фильмы, Ютуб','Сон','Утро и Вечер','Хобби','Фонд Друг']) {
-    assert.equal(labels.includes(removed),false);
-  }
-  assert.doesNotMatch(time, /id="timeEditButton"/);
-  assert.doesNotMatch(time, /addTile/);
-  assert.match(time, /function migrateLegacyTimeData\(\)/);
+  const defaults = time.match(/const DEFAULT_CATS = \[([\s\S]*?)\n\];/)?.[1] || '';
+  const labels = [...defaults.matchAll(/label:'([^']+)'/g)].map(match=>match[1]);
+  assert.deepEqual(labels,['Обучение','Наставник','Климат','Инвестиции','Управление деньгами','Фонды']);
+  assert.equal(labels.includes('Основное'),false);
+  assert.equal(labels.includes('Эффективность'),false);
+  assert.match(time, /id="timeEditButton"/);
+  assert.match(time, /const addTile=document\.createElement\('button'\)/);
+  assert.match(time, /function saveCats\(cats\)/);
+  assert.match(time, /catsCache=normalized;localStorage\.setItem/);
+  assert.match(time, /function migrateLegacyTimeData\(force=false\)/);
   assert.match(time, /day\.fondy=legacyFunds/);
 });
 
@@ -259,7 +260,8 @@ test('утро и учёт времени сохраняются без отде
   assert.match(time, /SELECTED_DATE_KEY = 'tt_selected_date_v1'/);
   assert.match(time, /function persistSelectedDate\(\)/);
   assert.match(time, /DIRTY_KEY/);
-  assert.doesNotMatch(time, /id="timeEditButton"/);
+  assert.match(time, /id="timeEditButton"/);
+  assert.match(time, /body>\.hero-topbar \.time-edit-button/);
   const syncStatusBlock = time.match(/<div class="sync-status"[\s\S]*?<\/div>/)?.[0] || '';
   assert.doesNotMatch(syncStatusBlock, /timeEditButton/);
   assert.doesNotMatch(time, /setTimeout\(\(\)=>syncFromSheets\(true\),900\)/);
@@ -430,7 +432,7 @@ test('единый защищённый мост поддерживает Docs, 
   assert.equal(adminBridge, integrationBridge);
 });
 
-test('динамика эффективности хранит четыре расчётных направления, а время синхронизируется через 30 секунд', () => {
+test('динамика эффективности хранит четыре расчётных направления, а время быстро и безопасно синхронизируется', () => {
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
   for (const date of ['2026-08-01','2026-08-07','2026-08-15']) assert.match(effectiveness,new RegExp(date));
@@ -448,7 +450,7 @@ test('динамика эффективности хранит четыре ра
   assert.match(effectiveness, /ov-row cp-overview-row/);
   assert.match(effectiveness, /ov-summary cp-summary/);
   assert.doesNotMatch(effectiveness, /К ПРОШЛОЙ НЕДЕЛЕ|ТОЧКА ОТСЧЁТА|ЕЖЕНЕДЕЛЬНЫЙ КОНТРОЛЬ|Последняя точка/);
-  assert.match(time, /SHEET_SYNC_DELAY = 30000/);
+  assert.match(time, /SHEET_SYNC_DELAY = 1500/);
   assert.match(time, /PENDING_SYNC_KEY/);
   assert.match(time, /latestRevision<=syncRevision/);
   assert.match(time, /if\(synced&&/);
@@ -458,6 +460,12 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /label: c\.syncLabel/);
   assert.match(time, /sheetCategories=new Set\(payload\.categories\|\|\[\]\)/);
   assert.doesNotMatch(time, /\(payload\.categories\|\|\[\]\)\.forEach\(\(label,index\)/);
+  assert.match(time, /protectedDates\.has\(serverDay\.date\)/);
+  assert.match(time, /if\(!labels\.length\)return/);
+  assert.match(time, /'Content-Type': 'text\/plain;charset=UTF-8'/);
+  assert.match(time, /keepalive: true/);
+  assert.match(time, /window\.addEventListener\('pagehide',sendPendingOnPageHide\)/);
+  assert.match(time, /function scheduleSummaryRender\(\)/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
