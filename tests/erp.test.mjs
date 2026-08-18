@@ -446,6 +446,7 @@ test('единый защищённый мост поддерживает Docs, 
 });
 
 test('динамика эффективности хранит четыре расчётных направления, а время быстро и безопасно синхронизируется', () => {
+  const shell = read('index.html');
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
   for (const date of ['2026-08-01','2026-08-07','2026-08-15']) assert.match(effectiveness,new RegExp(date));
@@ -481,6 +482,8 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /function scheduleSummaryRender\(\)/);
   assert.match(time, /\.entry-grid\{gap:36px!important;padding:40px!important;border-radius:30px!important\}/);
   assert.match(time, /\.entry-card,\.add-card\{min-height:204px!important;border-radius:22px!important\}/);
+  assert.match(shell, /\.entry-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important;gap:30px!important\}/);
+  assert.match(shell, /\.entry-card\{min-height:190px!important/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
