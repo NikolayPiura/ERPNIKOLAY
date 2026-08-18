@@ -747,7 +747,8 @@ const DEFAULT_BLOCKS = [
       { id:'b1i3', words:[{t:'Сделал'},{t:'утреннюю',b:true},{t:'прогулку'}] },
       { id:'b1i9', words:[{t:'Выпил'},{t:'стакан'},{t:'воды'},{t:'и'},{t:'витамины',b:true}] },
       { id:'b1i4', words:[{t:'Сделал'},{t:'полностью'},{t:'программу'},{t:'для'},{t:'спины,',b:true},{t:'растяжку,',b:true},{t:'зарядку',b:true}] },
-      { id:'b1i7', words:[{t:'Заполнил'},{t:'затраченное',b:true},{t:'время'},{t:'за'},{t:'вчерашний',b:true},{t:'день',b:true}] }
+      { id:'b1i7', words:[{t:'Заполнил'},{t:'затраченное',b:true},{t:'время'},{t:'за'},{t:'вчерашний',b:true},{t:'день',b:true}] },
+      { id:'b1i10', words:[{t:'Заполнил'},{t:'ПС',b:true},{t:'№1',b:true},{t:'за'},{t:'вчерашний',b:true},{t:'день',b:true}] }
     ]
   },
   {
@@ -797,10 +798,11 @@ const BLOCKS_KEY = 'morn_v8_blocks';
 const STATE_KEY  = 'morn_v8_state';
 const PREFS_KEY  = 'morn_v8_prefs';
 const DATA_VERSION_KEY = 'morn_v8_data_version';
-const DATA_VERSION = 2;
+const DATA_VERSION = 3;
 const HIDDEN_RESTORE_KEY = 'morn_hidden_restore_v2';
 const HIDDEN_REVEAL_KEY = 'morn_hidden_reveal_v3';
 const HIDDEN_LAYOUT_KEY = 'morn_hidden_layout_v5';
+const VISIBILITY_KEY = 'morn_v8_visibility_v1';
 
 // Тексты из предыдущей версии нужны только для безопасной миграции: если
 // пользователь не менял пункт, заменяем его вариантом со скриншота. Любые
@@ -839,7 +841,8 @@ const DEFAULT_PREFS = {
   theme:'dark', accent:'cobalt', compact:1, scale:1, text:1, width:1640
 };
 
-let blocksData = restoreHiddenItems(loadBlocks());
+let stateDate = '';
+let blocksData = applyVisibilityPrefs(restoreHiddenItems(loadBlocks()));
 let state = loadState();
 let prefs = loadPrefs();
 if(!localStorage.getItem('morn_unified_theme_v1')){prefs.theme='dark';localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));localStorage.setItem('morn_unified_theme_v1','1')}
@@ -872,7 +875,7 @@ function restoreHiddenItems(blocks){
   if(localStorage.getItem(HIDDEN_LAYOUT_KEY)) return blocks;
   // Возвращаем исходную рабочую раскладку: основные вопросы видны, полный
   // набор остаётся в «Скрытых» и раскрывается из режима редактирования.
-  const visibleIds = new Set(['b1i2','b1i7','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']);
+  const visibleIds = new Set(['b1i2','b1i3','b1i9','b1i7','b1i10','b2i1','b2i5','b2i7','q1','q3','q6','b4r1','b4r2','b4r6']);
   const defaultIds = new Set(DEFAULT_BLOCKS.flatMap(block=>block.items.map(item=>item.id)));
   blocks.forEach(block=>(block.items||[]).forEach(item=>{
     if(defaultIds.has(item.id)) item.hidden=!visibleIds.has(item.id);
@@ -881,6 +884,26 @@ function restoreHiddenItems(blocks){
   localStorage.setItem(HIDDEN_RESTORE_KEY,'1');
   localStorage.setItem(HIDDEN_REVEAL_KEY,'1');
   localStorage.setItem(HIDDEN_LAYOUT_KEY,'1');
+  return blocks;
+}
+
+function readVisibilityPrefs(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(VISIBILITY_KEY)||'null');
+    return saved&&typeof saved==='object'?saved:null;
+  }catch(error){return null}
+}
+function writeVisibilityPrefs(blocks){
+  const visibility={};
+  blocks.forEach(block=>(block.items||[]).forEach(item=>{visibility[item.id]=item.hidden===true}));
+  localStorage.setItem(VISIBILITY_KEY,JSON.stringify(visibility));
+}
+function applyVisibilityPrefs(blocks){
+  const saved=readVisibilityPrefs();
+  if(saved)blocks.forEach(block=>(block.items||[]).forEach(item=>{
+    if(Object.prototype.hasOwnProperty.call(saved,item.id))item.hidden=saved[item.id]===true;
+  }));
+  else writeVisibilityPrefs(blocks);
   return blocks;
 }
 
@@ -950,23 +973,44 @@ function migrateBlocks(saved){
 
   return result;
 }
-function saveBlocks(){ localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocksData)); }
+function saveBlocks(){
+  localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocksData));
+  writeVisibilityPrefs(blocksData);
+  notifyDataChanged();
+}
+
+function todayKey(){
+  const now=new Date(),pad=value=>String(value).padStart(2,'0');
+  return `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+}
 
 function loadState(){
+  const currentDate=todayKey();
   try{
     const raw = localStorage.getItem(STATE_KEY);
     if(raw){
-      const s = JSON.parse(raw);
+      const envelope = JSON.parse(raw);
+      if(envelope?.date!==currentDate||!envelope?.blocks||typeof envelope.blocks!=='object'){
+        stateDate=currentDate;
+        const fresh=blankState();
+        localStorage.setItem(STATE_KEY,JSON.stringify({version:2,date:currentDate,blocks:fresh}));
+        return fresh;
+      }
+      const s = envelope.blocks;
       blocksData.forEach(b=>{
         if(!s[b.id]) s[b.id] = { confirmed:false, items:{} };
         b.items.forEach(it=>{
           if(s[b.id].items[it.id]===undefined) s[b.id].items[it.id]=false;
         });
       });
+      stateDate=currentDate;
       return s;
     }
   }catch(e){}
-  return blankState();
+  stateDate=currentDate;
+  const fresh=blankState();
+  localStorage.setItem(STATE_KEY,JSON.stringify({version:2,date:currentDate,blocks:fresh}));
+  return fresh;
 }
 function blankState(){
   const s = {};
@@ -977,7 +1021,20 @@ function blankState(){
   return s;
 }
 function notifyDataChanged(){try{parent.postMessage({type:'piura:data-changed',source:'morning'},location.origin)}catch(error){}}
-function saveState(){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); notifyDataChanged(); }
+function saveState(){
+  stateDate=todayKey();
+  localStorage.setItem(STATE_KEY,JSON.stringify({version:2,date:stateDate,blocks:state}));
+  notifyDataChanged();
+}
+function ensureTodayState(){
+  const currentDate=todayKey();
+  if(stateDate===currentDate)return false;
+  stateDate=currentDate;
+  state=blankState();
+  saveState();
+  renderBlocks();
+  return true;
+}
 function ensureStateFor(bid, iid){
   if(!state[bid]) state[bid] = { confirmed:false, items:{} };
   if(iid && state[bid].items[iid]===undefined) state[bid].items[iid] = false;
@@ -1015,6 +1072,7 @@ function tickClock(){
     pad(n.getHours())+':'+pad(n.getMinutes())+'<span class="sec">:'+pad(n.getSeconds())+'</span>';
 }
 function renderDate(){
+  ensureTodayState();
   const n = new Date();
   const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
   const weekdays = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
@@ -1477,11 +1535,12 @@ function resetAll(){
   closeModal('modalReset');
   localStorage.removeItem(STATE_KEY);
   localStorage.removeItem(BLOCKS_KEY);
+  localStorage.removeItem(VISIBILITY_KEY);
   localStorage.setItem(DATA_VERSION_KEY, String(DATA_VERSION));
   localStorage.removeItem(HIDDEN_RESTORE_KEY);
   localStorage.removeItem(HIDDEN_REVEAL_KEY);
   localStorage.removeItem(HIDDEN_LAYOUT_KEY);
-  blocksData = restoreHiddenItems(JSON.parse(JSON.stringify(DEFAULT_BLOCKS)));
+  blocksData = applyVisibilityPrefs(restoreHiddenItems(JSON.parse(JSON.stringify(DEFAULT_BLOCKS))));
   state = blankState();
   renderBlocks();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1498,7 +1557,7 @@ function init(){
 }
 window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.data?.type!=='piura:cloud-data-applied')return;
-  blocksData=restoreHiddenItems(loadBlocks());state=loadState();prefs=loadPrefs();applyPrefs();renderDate();renderBlocks();
+  blocksData=applyVisibilityPrefs(restoreHiddenItems(loadBlocks()));state=loadState();prefs=loadPrefs();applyPrefs();renderDate();renderBlocks();
 });
 init();
 </script>
