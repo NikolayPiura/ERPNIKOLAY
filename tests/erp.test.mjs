@@ -436,8 +436,8 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /class="fund-years"/);
   assert.match(foundation, /class="fund-goal"/);
   assert.match(foundation, /class="fund-result"/);
-  assert.match(foundation, /class="fund-label">Цель/);
-  assert.match(foundation, /class="product-label">Продукт/);
+  assert.doesNotMatch(foundation, /class="fund-label">Цель/);
+  assert.doesNotMatch(foundation, /class="product-label">Продукт/);
   assert.match(foundation, /<span>\$\{activeYear\}<\/span>/);
   assert.match(foundation, /<small>Сделано<\/small>/);
   assert.match(foundation, /<small>План<\/small>/);
@@ -496,7 +496,7 @@ test('динамика эффективности хранит четыре ра
   const shell = read('index.html');
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
-  for (const date of ['2026-08-01','2026-08-07','2026-08-15']) assert.match(effectiveness,new RegExp(date));
+  for (const date of ['2026-08-01','2026-08-15','2026-08-30']) assert.match(effectiveness,new RegExp(date));
   assert.doesNotMatch(effectiveness, /2026-07-01|2026-07-15/);
   for (const label of ['Инвестиции','Наставничество','Климат','Управление деньгами']) assert.match(effectiveness,new RegExp(label));
   assert.doesNotMatch(effectiveness, /<span>Статус<\/span>|<span>Долларов в час<\/span>/);
@@ -506,7 +506,7 @@ test('динамика эффективности хранит четыре ра
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
   assert.match(effectiveness, /function scheduledCheckpointDates/);
-  assert.match(effectiveness, /function scheduledCheckpointDates\(\)\{return\['2026-08-01','2026-08-07','2026-08-15'\]\}/);
+  assert.match(effectiveness, /function scheduledCheckpointDates\(\)\{return\['2026-08-01','2026-08-15','2026-08-30'\]\}/);
   assert.doesNotMatch(effectiveness, /new Date\(2026,7,22,12\)|cursor\.setDate/);
   assert.match(effectiveness, /ov-row cp-overview-row/);
   assert.match(effectiveness, /ov-summary cp-summary/);
@@ -610,6 +610,24 @@ test('админ-шкала полностью исключает боевой �
   assert.doesNotMatch(bridge, /боевой/);
   assert.doesNotMatch(admin, /block-open|function isBlockOpen/);
   assert.match(admin, /\.level-block:not\(\.block-expanded\) \.item-row\.item-overflow\{display:none\}/);
+});
+
+test('августовские правки интерфейса сохраняют плотность и скрывают завершённое', () => {
+  const overview = read('piura-erp-restored 3/modules/Overview.html');
+  const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
+  const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
+  const admin = read('piura-erp-restored 3/modules/AdminScale.html');
+  const foundation = read('piura-erp-restored 3/modules/Foundation.html');
+
+  assert.match(overview, /\.page\{width:100%;max-width:none;margin:0\}/);
+  assert.match(effectiveness, /return\['2026-08-01','2026-08-15','2026-08-30'\]/);
+  assert.match(effectiveness, /--checkpoint-color:\$\{color\}/);
+  assert.match(weekly, /compact PS №1/);
+  assert.match(weekly, /\.score\{min-height:142px;padding:22px 24px\}/);
+  assert.match(admin, /\.item-row\.item-done\{display:none\}/);
+  assert.match(admin, /filter\(item=>!item\.hidden&&!item\.done\)/);
+  assert.match(foundation, /\.fund\{--c:var\(--blue\);position:relative;min-height:245px/);
+  assert.doesNotMatch(foundation, /class="(?:fund|product)-label">(?:Цель|Продукт)<\/span>/);
 });
 
 test('дорожная карта показывает только 2022–2026 и восстанавливает старые кеши', () => {

@@ -325,6 +325,8 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .edit-mode .hide-btn{display:flex}
 .item-row.item-hidden{display:none}
 .edit-mode .item-row.item-hidden{display:flex;opacity:.38;border-style:dashed}
+.item-row.item-done{display:none}
+.edit-mode .item-row.item-done{display:flex;opacity:.48;border-style:dashed}
 .level-block:not(.block-expanded) .item-row.item-overflow{display:none}
 .edit-mode.level-block .item-row.item-overflow{display:flex}
 .block-more{
@@ -1506,7 +1508,7 @@ function makeBlock(dynId, lv){
 
     const items=getItems(dynId,lv.key),limit=getViewSettings().limit;
     items.forEach((item,i)=>renderItem(block,dynId,lv.key,list,item,i,limit));
-    const visibleCount=items.filter(item=>!item.hidden).length;
+    const visibleCount=items.filter(item=>!item.hidden&&!item.done).length;
     if(visibleCount>limit){
       const more=document.createElement('button');
       more.className='block-more';
@@ -1538,17 +1540,17 @@ function makeBlock(dynId, lv){
 
 function renderItem(block,dynId,lvKey,list,item,idx,limit=getViewSettings().limit){
   const row=document.createElement('div');
-  const visibleIndex=getItems(dynId,lvKey).slice(0,idx+1).filter(x=>!x.hidden).length-1;
+  const visibleIndex=getItems(dynId,lvKey).slice(0,idx+1).filter(x=>!x.hidden&&!x.done).length-1;
   row.className='item-row'+(item.done?' item-done':'')+(item.hidden?' item-hidden':'')+(visibleIndex>=limit?' item-overflow':'');
   row.dataset.index=idx;
   row.innerHTML=`
     <span class="item-num">${idx+1}.</span>
     <div class="item-text" contenteditable="${editMode?'true':'false'}" data-ph="Пункт ${idx+1}...">${item.t||''}</div>
-    <button class="check-btn" title="Выполнено">✓</button>
+    <button class="check-btn" title="${item.done?'Вернуть в активные':'Выполнить и скрыть'}">✓</button>
     <button class="hide-btn" title="${item.hidden?'Показать':'Скрыть'}">${item.hidden?'◉':'◌'}</button>
     <button class="del-btn" title="Удалить">✕</button>`;
   row.querySelector('.check-btn').addEventListener('click',()=>{
-    item.done=!item.done;row.classList.toggle('item-done',item.done);
+    item.done=!item.done;row.classList.toggle('item-done',item.done);row.querySelector('.check-btn').title=item.done?'Вернуть в активные':'Выполнить и скрыть';
     autoSaveItems(block,dynId,lvKey);
     queueDocAction({action:'setDone',section:lvKey,dyn:dynId,text:item.t,done:item.done});
   });
