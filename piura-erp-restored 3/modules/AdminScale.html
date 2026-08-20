@@ -325,8 +325,6 @@ body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--tex
 .edit-mode .hide-btn{display:flex}
 .item-row.item-hidden{display:none}
 .edit-mode .item-row.item-hidden{display:flex;opacity:.38;border-style:dashed}
-.item-row.item-done{display:none}
-.edit-mode .item-row.item-done{display:flex;opacity:.48;border-style:dashed}
 .level-block:not(.block-expanded) .item-row.item-overflow{display:none}
 .edit-mode.level-block .item-row.item-overflow{display:flex}
 .block-more{
@@ -1506,13 +1504,14 @@ function makeBlock(dynId, lv){
     addBtn.addEventListener('click',()=>addItem(block,dynId,lv.key,list));
     block.appendChild(addBtn);
 
-    const items=getItems(dynId,lv.key),limit=getViewSettings().limit;
-    items.forEach((item,i)=>renderItem(block,dynId,lv.key,list,item,i,limit));
-    const visibleCount=items.filter(item=>!item.hidden&&!item.done).length;
-    if(visibleCount>limit){
+    const sourceItems=getItems(dynId,lv.key),limit=getViewSettings().limit;
+    const activeItems=sourceItems.filter(item=>!item.hidden&&!item.done),doneItems=sourceItems.filter(item=>!item.hidden&&item.done),hiddenItems=sourceItems.filter(item=>item.hidden),items=[...activeItems,...doneItems,...hiddenItems];
+    items.forEach((item,i)=>renderItem(block,dynId,lv.key,list,item,i,limit,item.done?limit+i:i));
+    const overflowCount=Math.max(0,activeItems.length-limit)+doneItems.length;
+    if(overflowCount>0){
       const more=document.createElement('button');
       more.className='block-more';
-      const expanded=isBlockExpanded(dynId,lv.key),moreLabel=expanded?'Показать меньше':`Показать ещё ${visibleCount-limit}`;more.textContent=expanded?'−':`＋ ${visibleCount-limit}`;more.title=moreLabel;more.setAttribute('aria-label',moreLabel);
+      const expanded=isBlockExpanded(dynId,lv.key),moreLabel=expanded?'Показать меньше':`Показать ещё ${overflowCount}`;more.textContent=expanded?'−':`＋ ${overflowCount}`;more.title=moreLabel;more.setAttribute('aria-label',moreLabel);
       more.addEventListener('click',()=>{setBlockExpanded(dynId,lv.key,!block.classList.contains('block-expanded'));buildPanels();});
       block.appendChild(more);
     }
@@ -1538,21 +1537,21 @@ function makeBlock(dynId, lv){
   return block;
 }
 
-function renderItem(block,dynId,lvKey,list,item,idx,limit=getViewSettings().limit){
+function renderItem(block,dynId,lvKey,list,item,idx,limit=getViewSettings().limit,visibleIndex=idx){
   const row=document.createElement('div');
-  const visibleIndex=getItems(dynId,lvKey).slice(0,idx+1).filter(x=>!x.hidden&&!x.done).length-1;
-  row.className='item-row'+(item.done?' item-done':'')+(item.hidden?' item-hidden':'')+(visibleIndex>=limit?' item-overflow':'');
+  row.className='item-row'+(item.done?' item-done':'')+(item.hidden?' item-hidden':'')+((item.done||visibleIndex>=limit)?' item-overflow':'');
   row.dataset.index=idx;
   row.innerHTML=`
     <span class="item-num">${idx+1}.</span>
     <div class="item-text" contenteditable="${editMode?'true':'false'}" data-ph="Пункт ${idx+1}...">${item.t||''}</div>
-    <button class="check-btn" title="${item.done?'Вернуть в активные':'Выполнить и скрыть'}">✓</button>
+    <button class="check-btn" title="${item.done?'Вернуть в активные':'Отметить выполненным'}">✓</button>
     <button class="hide-btn" title="${item.hidden?'Показать':'Скрыть'}">${item.hidden?'◉':'◌'}</button>
     <button class="del-btn" title="Удалить">✕</button>`;
   row.querySelector('.check-btn').addEventListener('click',()=>{
-    item.done=!item.done;row.classList.toggle('item-done',item.done);row.querySelector('.check-btn').title=item.done?'Вернуть в активные':'Выполнить и скрыть';
+    item.done=!item.done;row.classList.toggle('item-done',item.done);row.querySelector('.check-btn').title=item.done?'Вернуть в активные':'Отметить выполненным';
     autoSaveItems(block,dynId,lvKey);
     queueDocAction({action:'setDone',section:lvKey,dyn:dynId,text:item.t,done:item.done});
+    buildPanels();
   });
   row.querySelector('.hide-btn').addEventListener('click',()=>{
     item.hidden=!item.hidden;const arr=collectItems(block);arr[idx].hidden=item.hidden;saveItems(dynId,lvKey,arr);buildPanels();
@@ -1576,8 +1575,7 @@ function addItem(block,dynId,lvKey,list){
 }
 
 function rebuildList(block,dynId,lvKey,list){
-  list.innerHTML='';
-  getItems(dynId,lvKey).forEach((item,i)=>renderItem(block,dynId,lvKey,list,item,i));
+  buildPanels();
 }
 
 function collectItems(block){

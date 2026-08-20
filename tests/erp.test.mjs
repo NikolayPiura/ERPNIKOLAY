@@ -415,8 +415,16 @@ test('управление фондами сохраняет только Упр
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
   assert.match(funds, /id="filterPanel" style="display:none/);
-  assert.match(funds, /ALL_FUNDS_DEFAULTS_KEY = 'piura_funds_all_included_v1'/);
+  assert.match(funds, /ALL_FUNDS_DEFAULTS_KEY = 'piura_funds_all_included_v3'/);
   assert.match(funds, /allF\(merged\)\.forEach\(f=>\{f\.included=true\}\)/);
+  assert.match(funds, /#view-manage \.conn-row\{display:block!important/);
+  assert.match(funds, /#inclRow \.pill\.on\{/);
+  assert.match(funds, /<polygon points=/);
+  assert.match(funds, /class="endowment-card-metrics"/);
+  assert.match(funds, /Доход \/ месяц/);
+  assert.match(funds, /Доходность/);
+  assert.match(funds, /% капитала/);
+  assert.doesNotMatch(funds, /id="endTotalGoal"|id="endYieldGoal"|id="endAnnual"|Цель дохода \/ месяц/);
 });
 
 test('Фонды показывают понятный результат и план, а сервис Друг удалён', () => {
@@ -612,21 +620,28 @@ test('админ-шкала полностью исключает боевой �
   assert.match(admin, /\.level-block:not\(\.block-expanded\) \.item-row\.item-overflow\{display:none\}/);
 });
 
-test('августовские правки интерфейса сохраняют плотность и скрывают завершённое', () => {
+test('августовские правки интерфейса сохраняют прогресс, цвета и порядок завершённых', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
   const admin = read('piura-erp-restored 3/modules/AdminScale.html');
   const foundation = read('piura-erp-restored 3/modules/Foundation.html');
 
-  assert.match(overview, /\.page\{width:100%;max-width:none;margin:0\}/);
+  assert.match(overview, /\.page\{width:100%;max-width:none;min-height:100vh;margin:0;padding:0\}/);
+  assert.match(overview, /class="admin-total-panel"/);
+  assert.match(overview, /id="adminPercent"/);
+  assert.match(overview, /const totalProgress=/);
+  assert.match(overview, /data-piura-keep-full/);
   assert.match(effectiveness, /return\['2026-08-01','2026-08-15','2026-08-30'\]/);
+  assert.match(effectiveness, /const CHECKPOINT_COLORS=\{inv:'#4faeff',nav:'#b47cff',klim:'#42d9a4',money:'#f2c75c'\}/);
   assert.match(effectiveness, /--checkpoint-color:\$\{color\}/);
   assert.match(weekly, /compact PS №1/);
   assert.match(weekly, /\.score\{min-height:142px;padding:22px 24px\}/);
-  assert.match(admin, /\.item-row\.item-done\{display:none\}/);
-  assert.match(admin, /filter\(item=>!item\.hidden&&!item\.done\)/);
-  assert.match(foundation, /\.fund\{--c:var\(--blue\);position:relative;min-height:245px/);
+  assert.doesNotMatch(admin, /\.item-row\.item-done\{display:none\}/);
+  assert.match(admin, /items=\[\.\.\.activeItems,\.\.\.doneItems,\.\.\.hiddenItems\]/);
+  assert.match(admin, /overflowCount=Math\.max\(0,activeItems\.length-limit\)\+doneItems\.length/);
+  assert.match(admin, /\(item\.done\|\|visibleIndex>=limit\)\?' item-overflow'/);
+  assert.match(foundation, /\.fund\{min-height:300px/);
   assert.doesNotMatch(foundation, /class="(?:fund|product)-label">(?:Цель|Продукт)<\/span>/);
 });
 
