@@ -430,11 +430,16 @@ test('управление фондами сохраняет только Упр
 test('Фонды показывают понятный результат и план, а сервис Друг удалён', () => {
   const foundation = read('piura-erp-restored 3/modules/Foundation.html');
   const shell = read('index.html');
-  for (const label of ['Котики','Наркотики','Саентология','Уборки','Растения','Ассоциация добрых дел']) assert.match(foundation,new RegExp(label));
+  for (const label of ['Котики','Наркотики','Саентология','Экология','Ассоциация добрых дел']) assert.match(foundation,new RegExp(label));
+  assert.doesNotMatch(foundation, /name:'Уборки'|name:'Растения'/);
+  assert.match(foundation, /Планета, избавленная от лишнего мусора, в которой численность растений поддерживается в норме/);
+  assert.match(foundation, /goals:\[\{key:'planet',product:'Проведённые уборки'/);
+  assert.match(foundation, /\{key:'plants',product:'Посаженные деревья'/);
+  assert.match(foundation, /fund-results\$\{goals\.length>1\?' is-multiple':''\}/);
   assert.doesNotMatch(foundation, /name:'Дети'/);
   assert.match(foundation, /data-year="2026"/);
   assert.match(foundation, /data-year="2027"/);
-  assert.match(foundation, /activeYear===2026\?fund\.y26:fund\.y27/);
+  assert.match(foundation, /activeYear===2026\?goal\.y26:goal\.y27/);
   assert.doesNotMatch(foundation, /фактический продукт/i);
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
@@ -451,6 +456,8 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /<small>План<\/small>/);
   assert.doesNotMatch(foundation, /<h1>Фонды<\/h1>/);
   assert.match(shell, /\["foundation","Фонды"/);
+  assert.match(shell, /Результаты и цели пяти направлений/);
+  assert.match(read('piura-erp-restored 3/modules/Overview.html'), /name:'Экология',metrics:\[\{detail:'Уборки'/);
   assert.doesNotMatch(shell, /\["friend","Друг"/);
   assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Friend.html',root)),false);
 });
