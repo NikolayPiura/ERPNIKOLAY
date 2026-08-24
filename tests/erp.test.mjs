@@ -636,8 +636,11 @@ test('августовские правки интерфейса сохраня�
 
   assert.match(overview, /\.page\{width:100%;max-width:none;min-height:100vh;margin:0;padding:0\}/);
   assert.match(overview, /class="admin-total-panel"/);
-  assert.match(overview, /id="adminPercent"/);
+  assert.match(overview, /class="admin-total-head"><span>Общий прогресс<\/span><strong id="adminValue">/);
+  assert.doesNotMatch(overview, /id="admin(?:Percent|Complete|Remaining|Directions)"/);
   assert.match(overview, /const totalProgress=/);
+  assert.match(overview, /class="fund-goal fund-goal-ecology"/);
+  assert.match(overview, /goal\.metrics\.reduce\(\(sum,metric\)=>sum\+Math\.min\(100/);
   assert.match(overview, /data-piura-keep-full/);
   assert.match(effectiveness, /return\['2026-08-01','2026-08-15','2026-08-30'\]/);
   assert.match(effectiveness, /const CHECKPOINT_COLORS=\{inv:'#4faeff',nav:'#b47cff',klim:'#42d9a4',money:'#f2c75c'\}/);
