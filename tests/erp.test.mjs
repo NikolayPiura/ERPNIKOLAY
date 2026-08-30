@@ -639,7 +639,9 @@ test('Главное тест остаётся отдельным экспери
   assert.match(testOverview, /function weeklyStats\(weekly=\{\}\)/);
   assert.match(testOverview, /'287 \/ 400'/);
   assert.match(testOverview, /'0 \/ 60'/);
-  assert.match(testOverview, /grid-template-rows:470px 154px 186px!important/);
+  assert.match(testOverview, /full-height studio composition for the vertical wall display/);
+  assert.match(testOverview, /grid-template-rows:clamp\(760px,32vh,980px\)/);
+  assert.match(testOverview, /grid-template-rows:clamp\(620px,25vh,760px\)/);
   assert.equal((testOverview.match(/data-scene=/g)||[]).length,8);
   assert.match(testOverview, /-webkit-text-fill-color:var\(--erp-text/);
   assert.match(testOverview, /post\(SMART,'\/api\/map\/color'/);
