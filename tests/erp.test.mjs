@@ -622,35 +622,10 @@ test('динамика эффективности хранит четыре ра
   assert.match(shell, /\.entry-card\{min-height:190px!important/);
 });
 
-test('Главное тест остаётся отдельным экспериментом с кабинетом и дашбордом', () => {
+test('Главная остаётся единственной основной панелью', () => {
   const shell = read('index.html');
-  const testOverview = read('piura-erp-restored 3/modules/Overview-Test.html');
-  assert.match(shell, /\["overviewtest","Главное тест"/);
-  assert.match(testOverview, /id="roomMode"/);
-  assert.match(testOverview, /id="dashboardMode"/);
-  assert.match(testOverview, /id="colorWheel"/);
-  assert.match(testOverview, /id="fanPower"/);
-  for (const id of ['1','2','3','5']) assert.match(testOverview,new RegExp(`data-zone="${id}"`));
-  assert.match(testOverview, /id="allZones"/);
-  assert.match(testOverview, /id="climateDeck"/);
-  assert.match(testOverview, /id="psPanel"/);
-  assert.match(testOverview, /id="adminMiniGrid"/);
-  assert.match(testOverview, /id="psKpis"/);
-  assert.match(testOverview, /id="officeTelemetry"/);
-  assert.match(testOverview, /id="telemetryColor"/);
-  assert.match(testOverview, /metric-meta/);
-  assert.match(testOverview, /command center: technical, data-dense, restrained/);
-  assert.match(testOverview, /function weeklyStats\(weekly=\{\}\)/);
-  assert.match(testOverview, /'287 \/ 400'/);
-  assert.match(testOverview, /'0 \/ 60'/);
-  assert.match(testOverview, /full-height studio composition for the vertical wall display/);
-  assert.match(testOverview, /grid-template-rows:clamp\(760px,32vh,980px\)/);
-  assert.match(testOverview, /grid-template-rows:clamp\(620px,25vh,760px\)/);
-  assert.equal((testOverview.match(/data-scene=/g)||[]).length,8);
-  assert.match(testOverview, /-webkit-text-fill-color:var\(--erp-text/);
-  assert.match(testOverview, /post\(SMART,'\/api\/map\/color'/);
-  assert.match(testOverview, /\/smart-home\/status\?devices=1,2,3,5/);
-  assert.doesNotMatch(testOverview, /TY-02|192\.168\.4\.23|Розетка ·|Все четыре включены|из 4 включено/);
+  assert.match(shell, /\["overview","Главная"/);
+  assert.doesNotMatch(shell, /overviewtest|Главное тест|Overview-Test/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {
