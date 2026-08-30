@@ -95,6 +95,9 @@ test('обзор управляет точным вентилятором, че�
   for (const color of ['Красный','Оранжевый','Жёлтый','Зелёный','Бирюзовый','Синий','Фиолетовый','Белый']) assert.match(overview,new RegExp(`aria-label="${color}"`));
   assert.equal((overview.match(/data-lamp-color=/g)||[]).length,8);
   assert.match(overview, /name:'Ассоциация'/);
+  assert.match(overview, /name:'Котики'.*?target:400/);
+  assert.match(overview, /name:'Ассоциация'.*?target:60/);
+  assert.match(overview, /fan-card>\.device-section-head,.control-grid \.minimal-lamp>\.device-section-head\{display:none!important\}/);
   assert.match(overview, /minimal-lamp \.master-toggle\{display:none!important\}/);
   assert.match(overview, /goveeControl/);
   assert.match(overview, /ELGATO_BRIDGE='http:\/\/127\.0\.0\.1:45831'/);
@@ -631,6 +634,12 @@ test('Главное тест остаётся отдельным экспери
   assert.match(testOverview, /id="allZones"/);
   assert.match(testOverview, /id="climateDeck"/);
   assert.match(testOverview, /id="psPanel"/);
+  assert.match(testOverview, /id="adminMiniGrid"/);
+  assert.match(testOverview, /id="psKpis"/);
+  assert.match(testOverview, /function weeklyStats\(weekly=\{\}\)/);
+  assert.match(testOverview, /'287 \/ 400'/);
+  assert.match(testOverview, /'0 \/ 60'/);
+  assert.match(testOverview, /grid-template-rows:470px 154px 186px!important/);
   assert.equal((testOverview.match(/data-scene=/g)||[]).length,8);
   assert.match(testOverview, /-webkit-text-fill-color:var\(--erp-text/);
   assert.match(testOverview, /post\(SMART,'\/api\/map\/color'/);

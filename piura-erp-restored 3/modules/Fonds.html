@@ -264,6 +264,11 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   html[data-erp-theme="light"] #view-manage .fc{border-color:color-mix(in srgb,var(--accent,#5b9dff) 34%,#dbe3ef)!important;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--accent,#5b9dff) 13%,transparent),transparent 42%),linear-gradient(150deg,#ffffff,#f7f9fc 74%)!important;box-shadow:0 16px 38px rgba(39,64,102,.1)!important}
   html[data-erp-theme="light"] #view-manage .fc-name,html[data-erp-theme="light"] #view-manage .fc-usd,html[data-erp-theme="light"] #view-manage .fdr-v{color:#172033!important}html[data-erp-theme="light"] #view-manage .fc-data{border-color:#dbe3ef!important}html[data-erp-theme="light"] #view-manage .fdr-l{color:#66758a!important}
   html[data-erp-theme="light"] .fc.excl{opacity:.58!important}
+  /* 30.08.2026 — clearer capital flow with compact cards and luminous routes. */
+  #view-manage{gap:54px!important}#view-manage .root-card{padding:48px 52px!important;overflow:visible!important}#view-manage .root-name{max-width:1380px;font-size:clamp(62px,6.5vw,108px)!important}#view-manage .root-metrics{gap:20px!important;margin-top:32px!important}#view-manage .root-metrics .rm{min-height:132px!important;padding:25px 28px!important;border-radius:22px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)}#view-manage .rm-val{font-size:clamp(38px,3.3vw,56px)!important}#view-manage .management-tools{gap:20px!important;margin-top:24px!important}#view-manage .management-tool{padding:13px 17px!important}
+  #view-manage .tree-wrap{gap:0!important;padding:0 4px 38px!important}#view-manage .conn-row{height:94px!important}#view-manage .conn-row svg{height:82px!important;filter:drop-shadow(0 0 10px rgba(91,157,255,.32)) drop-shadow(0 10px 20px rgba(17,26,43,.18))!important}#view-manage .conn-row path{stroke-linecap:round}#view-manage .fund-row{gap:30px!important}#view-manage .fc{min-height:338px!important;padding:34px 36px!important;border-left-width:3px!important;border-radius:26px!important;box-shadow:0 22px 54px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.04)!important}#view-manage .fc-name{display:flex!important;align-items:center;justify-content:space-between;gap:16px;font-size:24px!important}#view-manage .fc-name::after{width:34px;height:34px;margin:0!important;display:inline-grid;flex:0 0 auto;place-items:center;border:1px solid color-mix(in srgb,var(--accent,#5b9dff) 34%,var(--border));border-radius:50%;background:color-mix(in srgb,var(--accent,#5b9dff) 9%,transparent);font-size:16px!important;box-shadow:0 0 24px color-mix(in srgb,var(--accent,#5b9dff) 13%,transparent)}#view-manage .fc-usd{margin-top:18px;font-size:50px!important}#view-manage .fc-data{padding-top:18px!important}
+  html[data-erp-theme="light"] #view-manage .root-metrics .rm{background:linear-gradient(145deg,#fbfdff,#f2f6fb)!important;box-shadow:0 10px 28px rgba(39,64,102,.06)!important}html[data-erp-theme="light"] #view-manage .fc{box-shadow:0 18px 42px rgba(39,64,102,.09)!important}html[data-erp-theme="light"] #view-manage .fc-name::after{background:color-mix(in srgb,var(--accent,#5b9dff) 8%,#fff)!important}
+  @media(max-width:1100px){#view-manage{gap:36px!important}#view-manage .root-card{padding:38px 34px!important}#view-manage .conn-row{height:70px!important}#view-manage .fc{min-height:300px!important}}@media(max-width:700px){#view-manage .root-name{font-size:48px!important}#view-manage .fund-row{gap:18px!important}#view-manage .conn-row{height:46px!important}}
 </style>
 </head>
 <body>
@@ -947,13 +952,13 @@ function renderTree(){
         const cr = cel.getBoundingClientRect();
         const cx = cr.left + cr.width/2 - sr.left;
         const cc = colorMap[i] || '#4f8ef7';
-        p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
-        p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+        p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
+        p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
       });
       if(childEls.length) p += `<circle cx="${px}" cy="0" r="5" fill="#4f8ef7" opacity="0.9"/>`;
       svg.setAttribute('width','100%');
-      svg.setAttribute('height','60');
-      svg.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+      svg.setAttribute('height','72');
+      svg.setAttribute('viewBox',`0 0 ${sr.width} 72`);
       svg.innerHTML = p;
     });
     return row;
@@ -986,12 +991,12 @@ function renderTree(){
       const cr = cel.getBoundingClientRect();
       const cx = cr.left + cr.width/2 - sr.left;
       const cc = FCOLORS[f.id]||'#4f8ef7';
-      p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
-      p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+      p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
+      p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
     });
     svgMain.setAttribute('width','100%');
-    svgMain.setAttribute('height','60');
-    svgMain.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+    svgMain.setAttribute('height','72');
+    svgMain.setAttribute('viewBox',`0 0 ${sr.width} 72`);
     svgMain.innerHTML = p;
   });
 
@@ -1027,12 +1032,12 @@ function renderTree(){
         const cr = cel.getBoundingClientRect();
         const cx = cr.left + cr.width/2 - sr.left;
         const cc = FCOLORS[child.id]||pcol;
-        p += `<path d="M${px},0 C${px},42 ${cx},18 ${cx},60" fill="none" stroke="${cc}" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/>`;
-        p += `<polygon points="${cx-6},51 ${cx+6},51 ${cx},60" fill="${cc}" opacity="0.9"/>`;
+        p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
+        p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
       });
       svg2.setAttribute('width','100%');
-      svg2.setAttribute('height','60');
-      svg2.setAttribute('viewBox',`0 0 ${sr.width} 60`);
+      svg2.setAttribute('height','72');
+      svg2.setAttribute('viewBox',`0 0 ${sr.width} 72`);
       svg2.innerHTML = p;
     });
   });
