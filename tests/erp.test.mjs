@@ -86,21 +86,29 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор содержит климат, сценарии света и локальный умный дом', () => {
+test('обзор содержит климат, минимальный свет и четыре крупные розетки', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
   assert.match(overview, /data-lamp-color/);
-  for (const color of ['Красный','Зелёный','Синий','Жёлтый','Белый']) assert.match(overview,new RegExp(`>${color}<`));
+  for (const color of ['Красный','Зелёный','Синий','Жёлтый','Белый']) assert.match(overview,new RegExp(`aria-label="${color}"`));
   assert.match(overview, /goveeControl/);
   assert.match(overview, /ELGATO_BRIDGE='http:\/\/127\.0\.0\.1:45831'/);
   assert.match(overview, /function controlAllLights\(command,value\)/);
   assert.match(overview, /elgatoLightCount/);
   assert.match(overview, /id="lampBrightness"/);
-  assert.match(overview, /data-lamp-scene/);
+  assert.doesNotMatch(overview, /data-lamp-scene/);
   assert.match(overview, /id="smartHomeDevices"/);
-  assert.match(overview, /192\.168\.4\.23/);
-  assert.match(overview, /Smart Switch 9/);
+  assert.match(overview, /class="minimal-home"/);
+  const catalog=overview.match(/const SMART_HOME_CATALOG=\[([\s\S]*?)\n\];/)?.[1]||'';
+  const order=["id:'1'","id:'3'","id:'2'","id:'5'"].map(token=>catalog.indexOf(token));
+  assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
+  assert.match(catalog, /id:'1',name:'База'/);
+  assert.match(catalog, /id:'2',name:'Шкаф'/);
+  assert.match(catalog, /id:'3',name:'Карта'/);
+  assert.match(catalog, /id:'5',name:'Шкаф'/);
+  assert.doesNotMatch(catalog, /id:'4'|purifier|garage|fan|192\.168/);
+  assert.doesNotMatch(overview, /id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
@@ -155,10 +163,10 @@ test('глобальные размеры применяются и к цент�
 
 test('главная возвращает полезные сводные цифры без маршрутов финансовых сервисов', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
-  assert.match(overview, /id="overviewPs"/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['admin-progress','tile ps','fund-goals','tile smart-home','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','fund-goals','minimal-home','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
+  assert.doesNotMatch(dashboard, /tile ps|week-kpis|overviewWeekChart/);
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
   assert.match(overview, /function refreshFinancialSummary\(\)/);
   assert.doesNotMatch(dashboard, /data-go="finance"|data-go="pff"/);
@@ -166,8 +174,7 @@ test('главная возвращает полезные сводные циф
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
   assert.doesNotMatch(overview, /class="ps-badge">ПС №1/);
   assert.doesNotMatch(overview, /Сегодня можно начать в любой момент/);
-  assert.doesNotMatch(overview, /id="lampLabel"/);
-  assert.match(overview, /id="lampStatus"/);
+  assert.doesNotMatch(overview, /id="lampLabel"|id="lampStatus"/);
 });
 
 test('управление фондами содержит актуальные продукты и годовые цели Endowment', () => {
@@ -182,16 +189,16 @@ test('управление фондами содержит актуальные 
   assert.doesNotMatch(funds, /<label>Позиций<\/label>|Средний доход \/ позицию|id="endPositions"/);
 });
 
-test('главная показывает суммарные программы и текущую неделю без блока утра', () => {
+test('главная показывает крупные программы без утра и недельного графика', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
+  const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
   assert.doesNotMatch(overview, /refreshMorningFromCloud|Магия утра|tile morning/);
   assert.match(overview, /donePrograms/);
   assert.match(overview, /fallbackCounts=\[24,20,24,11,6,11,1,1\]/);
   assert.match(overview, /id="adminDynamics"/);
-  assert.match(overview, /id="overviewWeekChart"/);
-  assert.match(overview, /id="overviewPsToday"/);
-  assert.match(overview, /id="overviewPsDayRecord"/);
-  assert.match(overview, /id="overviewPsWeekRecord"/);
+  assert.doesNotMatch(dashboard, /overviewWeekChart|overviewPsToday|overviewPsDayRecord|overviewPsWeekRecord/);
+  assert.match(overview, /\.admin-progress\{min-height:560px!important/);
+  assert.match(overview, /\.fund-goals\{min-height:610px!important/);
   assert.match(read('piura-erp-restored 3/modules/AdminScale.html'), /return\{done,total,dynamics,updatedAt/);
   assert.match(overview, /overview_finance_snapshot_v1/);
   assert.doesNotMatch(overview, /год прошёл/);
