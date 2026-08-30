@@ -101,7 +101,8 @@ test('обзор управляет точным вентилятором, че�
   assert.doesNotMatch(overview, /data-lamp-scene/);
   assert.match(overview, /id="fanToggle"/);
   assert.match(overview, /id="fanRotor"/);
-  assert.match(overview, /Розетка · 192\.168\.4\.23/);
+  assert.doesNotMatch(overview, /<span class="device-kicker">Розетка/);
+  assert.doesNotMatch(overview, /id="fanStatus"|id="fanHint"|id="zoneSummary"|id="mapSyncStatus"|TY-02-3CH\.V5\.1<\/span>/);
   assert.match(overview, /SMART_LIFE_BRIDGE='http:\/\/127\.0\.0\.1:8765'/);
   assert.match(overview, /requestSmartLife\('\/api\/status'\)/);
   assert.match(overview, /requestSmartLife\('\/api\/power'/);
@@ -568,6 +569,11 @@ test('динамика эффективности хранит четыре ра
   assert.doesNotMatch(effectiveness, /selectComparison|cp-point-meta|cp-change/);
   assert.match(effectiveness, /CHECKPOINT_KEY/);
   assert.match(effectiveness, /function restoreHistoricalCheckpoints/);
+  assert.match(effectiveness, /function normalizedEffectiveness\(incomeTotal,observedHours,observedDays,periodDays\)/);
+  assert.match(effectiveness, /observedHours\/observedDays\*periodDays/);
+  assert.match(effectiveness, /version===3/);
+  assert.match(effectiveness, /formula:'normalized-periods'/);
+  assert.doesNotMatch(effectiveness, /function calcDph|last3avg|weighted|Лучший мес|Медиана/);
   assert.match(effectiveness, /function scheduledCheckpointDates/);
   assert.match(effectiveness, /function scheduledCheckpointDates\(\)\{return\['2026-08-01','2026-08-15','2026-08-30'\]\}/);
   assert.doesNotMatch(effectiveness, /new Date\(2026,7,22,12\)|cursor\.setDate/);
@@ -590,10 +596,31 @@ test('динамика эффективности хранит четыре ра
   assert.match(time, /keepalive: true/);
   assert.match(time, /window\.addEventListener\('pagehide',sendPendingOnPageHide\)/);
   assert.match(time, /function scheduleSummaryRender\(\)/);
+  assert.match(time, /id="statsViewTab"/);
+  assert.match(time, /function statisticsSnapshot\(\)/);
+  assert.match(time, /Последние 30 дней/);
+  assert.match(time, /За всё время/);
   assert.match(time, /\.entry-grid\{gap:36px!important;padding:40px!important;border-radius:30px!important\}/);
   assert.match(time, /\.entry-card,\.add-card\{min-height:204px!important;border-radius:22px!important\}/);
   assert.match(shell, /\.entry-grid\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)!important;gap:30px!important\}/);
   assert.match(shell, /\.entry-card\{min-height:190px!important/);
+});
+
+test('Главное тест остаётся отдельным экспериментом с кабинетом и дашбордом', () => {
+  const shell = read('index.html');
+  const testOverview = read('piura-erp-restored 3/modules/Overview-Test.html');
+  assert.match(shell, /\["overviewtest","Главное тест"/);
+  assert.match(testOverview, /id="roomMode"/);
+  assert.match(testOverview, /id="dashboardMode"/);
+  assert.match(testOverview, /id="colorWheel"/);
+  assert.match(testOverview, /id="fanPower"/);
+  for (const id of ['1','2','3','5']) assert.match(testOverview,new RegExp(`data-zone="${id}"`));
+  assert.match(testOverview, /id="allZones"/);
+  assert.match(testOverview, /id="climateDeck"/);
+  assert.match(testOverview, /id="psPanel"/);
+  assert.match(testOverview, /post\(SMART,'\/api\/map\/color'/);
+  assert.match(testOverview, /\/smart-home\/status\?devices=1,2,3,5/);
+  assert.doesNotMatch(testOverview, /TY-02|192\.168\.4\.23|Розетка ·|Все четыре включены|из 4 включено/);
 });
 
 test('оболочка сама подхватывает новую опубликованную версию без очистки истории', () => {

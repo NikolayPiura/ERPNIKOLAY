@@ -190,15 +190,16 @@
   </main>
   <div class="tip" id="tip"></div>
   <script>
-    const BUILD_ID='20260830c';
-    const ICONS={overview:'<path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',foundation:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/><path d="M9 11h6M12 8v6"/>'};
+    const BUILD_ID='20260830d';
+    const ICONS={overview:'<path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',overviewtest:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>',effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',foundation:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/><path d="M9 11h6M12 8v6"/>'};
     const DEFAULT_GROUPS=[
       {id:'core',title:"Главное",accent:"#6ea8fe",items:[
-        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260830c"]]},
+        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260830d"],
+        ["overviewtest","Главное тест","Экспериментальный кабинет и дашборд","piura-erp-restored%203/modules/Overview-Test.html?v=20260830d"]]},
       {id:'eff',title:"Эффективность",accent:"#43d39e",items:[
-        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260820b&tab=overview"],
+        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260830d&tab=overview"],
         ["morning","Утро","Редактируемый утренний чек-лист","piura-erp-restored%203/modules/Morning.html?v=20260818d"],
-        ["time","Учёт времени","Часы и редактируемые категории","piura-erp-restored%203/modules/Time-tracker.html?v=20260818c"],
+        ["time","Учёт времени","Часы и редактируемые категории","piura-erp-restored%203/modules/Time-tracker.html?v=20260830d"],
         ["weekly","ПС №1","Баллы по восьми динамикам","piura-erp-restored%203/modules/Dynamics-2.html?v=20260820a"],
         ["dynamics","Админ-шкала","Шкала, дорожная карта и динамики","piura-erp-restored%203/modules/AdminScale.html?v=20260820b"]]},
       {id:'money',title:"Управление",accent:"#a78bfa",items:[
@@ -258,7 +259,7 @@
     const EMBED_HIDE={effectiveness:'#settbtn',morning:'#btnSettings,#btnTheme',time:'',weekly:'#settingsBtn',dynamics:'#settingsBtn,#themePill',mydynamics:'button[onclick="openSettings()"],button[onclick="openManage()"]',funds:'button[onclick="openSettings()"],button[onclick="openAdd(0)"]'};
     const SERVICE_FIELDS={
       overview:[['Govee · подключение сохраняется автоматически','goveeUrl','password'],['Обновление климата, мин','refresh','select',['1','5','15','30','60']]],
-      effectiveness:[['Главная вкладка','overview','select',['Обзор','Динамика','Инвестиции','Климат','Управление деньгами','Наставничество']],['Сортировка обзора','sort','select',['Доход в час — по убыванию','Вручную']],['Целевой доход, $/час','target','number'],['Период дохода','incomePreset','select',['3 мес','6 мес','12 мес','С января 2026','С июля 2025','Свой период']],['Формула ставки','formula','select',['Среднее','Последние 3 месяца','Взвешенная','Лучший месяц','Медиана']]],
+      effectiveness:[['Главная вкладка','overview','select',['Обзор','Динамика','Инвестиции','Климат','Управление деньгами','Наставничество']],['Сортировка обзора','sort','select',['Доход в час — по убыванию','Вручную']],['Целевой доход, $/час','target','number'],['Период дохода','incomePreset','select',['3 мес','6 мес','12 мес','С января 2026','С июля 2025','Свой период']],['Формула ставки','formula','select',['Сопоставимые периоды']]],
       morning:[['Показывать скрытые пункты','hidden','select',['Нет','Да']]],
       time:[],
       weekly:[['Название раздела','title','text'],['Недель на графике','weeks','select',['8','12','16','Все']],['Показывать значения','chartValues','select',['Да','Нет']],['Предыдущая неделя','prevCard','select',['Показывать','Скрыть']],['Среднее','avgCard','select',['Показывать','Скрыть']]],
@@ -283,7 +284,7 @@
     function renderData(){const c=readCloud();controlMain.innerHTML=`<div class="control-hero"><small>Сохранность данных</small><h3>Данные и резервные копии</h3><p>Firebase и Google Drive уже настроены в системе. Повторная авторизация и ручной ввод адресов не требуются.</p></div><div class="setting-section"><h4>Автоматическая защита</h4><div class="service-setting-grid"><div class="service-setting-card"><label>Firebase</label><strong>Подключается автоматически</strong></div><div class="service-setting-card"><label>Google Drive</label><strong>${c.auto!==false?'Автоматические резервные копии включены':'Резервные копии приостановлены'}</strong></div></div><label class="field check" style="margin-top:14px"><input type="checkbox" id="uiCloudAuto" ${c.auto!==false?'checked':''}> Автоматическая резервная копия в Google Drive</label><div class="cloud-status" id="uiCloudStatus">${esc(document.getElementById('cloudStatus').textContent||'Локальное сохранение включено')}</div><div class="actions"><button class="action" data-data-action="sync">Создать резервную копию</button><button class="action" data-data-action="export">Скачать все данные</button><button class="action" data-data-action="restore">Последний локальный снимок</button></div></div><div class="settings-note">Настройки подключения зашиты в систему. Изменение дизайна не удаляет записи; перед восстановлением автоматически создаётся локальный снимок.</div>`}
     function serviceDefault(id,key){
       if(id==='weekly'&&key==='title') return all().find(i=>i[0]==='weekly')?.[1]||'ПС №1';
-      const defaults={currency:'USD',weeks:'12',dateSize:44,font:17,noteHeight:220,tableScale:100,chartSize:340,annualTarget:360000,textScale:100,elementScale:100,maxWidth:1680,metricSize:54,timeSize:84,density:'Свободно',cards:'Просторные',hidden:'Нет',period:'12 мес',incomePreset:'12 мес',formula:'Среднее',refresh:id==='overview'?'1':'15',tab:'Управление',view:'По динамикам',section:'Цели',sort:'Доход в час — по убыванию',overview:'Обзор',chartValues:'Да',prevCard:'Показывать',avgCard:'Показывать'};
+      const defaults={currency:'USD',weeks:'12',dateSize:44,font:17,noteHeight:220,tableScale:100,chartSize:340,annualTarget:360000,textScale:100,elementScale:100,maxWidth:1680,metricSize:54,timeSize:84,density:'Свободно',cards:'Просторные',hidden:'Нет',period:'12 мес',incomePreset:'12 мес',formula:'Сопоставимые периоды',refresh:id==='overview'?'1':'15',tab:'Управление',view:'По динамикам',section:'Цели',sort:'Доход в час — по убыванию',overview:'Обзор',chartValues:'Да',prevCard:'Показывать',avgCard:'Показывать'};
       if(key==='chartHeight') return id==='time'?360:380;
       return defaults[key]??'';
     }

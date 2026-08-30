@@ -276,11 +276,7 @@ const INCOME_PRESETS=[
   {id:'jan26',label:'с Янв 2026'},{id:'jul25',label:'с Июл 2025'},{id:'custom',label:'Своя дата ↑'},
 ];
 const FORMULAS=[
-  {id:'avg',label:'Среднее',desc:'Среднее дохода за период ÷ (ср.часов/день × 30)'},
-  {id:'last3avg',label:'Посл. 3 мес',desc:'Среднее только последних 3 месяцев — актуальный темп'},
-  {id:'weighted',label:'Взвешенное',desc:'Последние месяцы весят больше (×1, ×0.9, ×0.8...)'},
-  {id:'best',label:'Лучший мес',desc:'Лучший месяц за период — показывает потенциал'},
-  {id:'median',label:'Медиана',desc:'Медиана дохода — без влияния выбросов'},
+  {id:'normalized',label:'Сопоставимые периоды',desc:'Доход за выбранный период ÷ (все часы ÷ дни наблюдения × дни выбранного периода)'},
 ];
 
 const requestedTab=new URLSearchParams(location.search).get('tab');
@@ -295,7 +291,7 @@ function setViewPeriod(tid,p){viewPeriod[tid]=p;renderPage();}
 function defaultSettings(){
   return{targetDph:500,logoText:'ПЮ',accent:'#3ddba0',fontSizeVal:22,compactVal:50,
     fontFamily:'inter',tabOrder:ALL_TABS.map(t=>t.id),
-    incomePreset:'12m',customStart:{month:0,year:2026},formula:'avg'};
+    incomePreset:'12m',customStart:{month:0,year:2026},formula:'normalized'};
 }
 function loadSettings(){
   try{const s=JSON.parse(localStorage.getItem('pu_settings'));return s?Object.assign(defaultSettings(),s):defaultSettings();}
@@ -303,6 +299,7 @@ function loadSettings(){
 }
 function saveSettings(s){localStorage.setItem('pu_settings',JSON.stringify(s));}
 let SETTINGS=loadSettings();
+if(SETTINGS.formula!=='normalized'){SETTINGS.formula='normalized';saveSettings(SETTINGS)}
 if(!localStorage.getItem('pu_font_default_v2')){
   if(Number(SETTINGS.fontSizeVal)===50)SETTINGS.fontSizeVal=22;
   localStorage.setItem('pu_font_default_v2','1');saveSettings(SETTINGS);
@@ -521,61 +518,74 @@ function getIncomeMonths(sliding){
   return sliding;
 }
 
-function calcDph(vals, hoursPerMonth){
-  if(!vals.length||hoursPerMonth<=0) return 0;
-  const f=SETTINGS.formula||'avg';
-  let ref=0;
-  if(f==='avg'){
-    ref=vals.reduce((a,b)=>a+(b||0),0)/vals.length;
-  } else if(f==='last3avg'){
-    const l=vals.slice(-3);ref=l.reduce((a,b)=>a+(b||0),0)/l.length;
-  } else if(f==='weighted'){
-    let ws=0,wt=0;vals.forEach((v,i)=>{const w=Math.pow(0.9,vals.length-1-i);ws+=(v||0)*w;wt+=w;});ref=wt>0?ws/wt:0;
-  } else if(f==='best'){
-    ref=Math.max(...vals.map(v=>v||0));
-  } else if(f==='median'){
-    const s=[...vals].map(v=>v||0).sort((a,b)=>a-b);
-    const m=Math.floor(s.length/2);ref=s.length%2?s[m]:(s[m-1]+s[m])/2;
+function calendarDaysInclusive(startKey,endKey){
+  if(!startKey||!endKey)return 0;
+  return Math.max(1,Math.round((new Date(endKey+'T12:00:00')-new Date(startKey+'T12:00:00'))/86400000)+1);
+}
+function incomeSnapshotDate(){
+  const match=String(incomeData?.meta?.updated||'').match(/(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if(!match)return isoToday();
+  return `${match[3]}-${String(match[2]).padStart(2,'0')}-${String(match[1]).padStart(2,'0')}`;
+}
+function calculationDate(referenceDate=''){
+  const snapshot=incomeSnapshotDate(),requested=/^\d{4}-\d{2}-\d{2}$/.test(referenceDate)?referenceDate:snapshot;
+  return requested>snapshot?snapshot:requested;
+}
+function monthValueAtDate(tab,item,remote,manual,referenceDate){
+  const value=getMonthVal(tab,item.key,item.year,remote,manual),snapshot=incomeSnapshotDate();
+  const monthIndex=MO.indexOf(item.key),snapshotDate=new Date(snapshot+'T12:00:00'),refDate=new Date(referenceDate+'T12:00:00');
+  if(item.year===snapshotDate.getFullYear()&&monthIndex===snapshotDate.getMonth()&&refDate<snapshotDate&&refDate.getFullYear()===item.year&&refDate.getMonth()===monthIndex){
+    return value*Math.max(0,refDate.getDate())/Math.max(1,snapshotDate.getDate());
   }
-  return Math.round(ref/hoursPerMonth);
+  return value;
+}
+function incomePeriodDays(referenceDate,incomeMonths){
+  const preset=SETTINGS.incomePreset||'12m';
+  if(preset==='3m')return 91;
+  if(preset==='6m')return 183;
+  if(preset==='12m')return 365;
+  let start='';
+  if(preset==='jan26')start='2026-01-01';
+  else if(preset==='jul25')start='2025-07-01';
+  else if(preset==='custom'){
+    const custom=SETTINGS.customStart||{month:0,year:2026};
+    start=`${custom.year}-${String(Number(custom.month)+1).padStart(2,'0')}-01`;
+  }
+  if(!start&&incomeMonths.length){const first=incomeMonths[0];start=`${first.year}-${String(MO.indexOf(first.key)+1).padStart(2,'0')}-01`}
+  return calendarDaysInclusive(start,referenceDate)||365;
+}
+function normalizedEffectiveness(incomeTotal,observedHours,observedDays,periodDays){
+  const normalizedHours=observedHours>0&&observedDays>0?observedHours/observedDays*periodDays:0;
+  return{normalizedHours,dph:normalizedHours>0?Math.round(incomeTotal/normalizedHours):0};
 }
 
 function getTabData(tab,referenceDate=''){
-  const sliding=getSliding12(referenceDate);
+  const effectiveDate=calculationDate(referenceDate),sliding=getSliding12(effectiveDate);
   const cat=getCat(tab.cat);
   const remote=cat?cat.months:{};
   const total=cat?(cat.total||0):0;
   const manual=getManual(tab.id);
-  const vals=sliding.map(s=>getMonthVal(tab,s.key,s.year,remote,manual));
+  const vals=sliding.map(s=>monthValueAtDate(tab,s,remote,manual,effectiveDate));
   const incomeMonths=getIncomeMonths(sliding);
-  const incomeVals=incomeMonths.map(s=>getMonthVal(tab,s.key,s.year,remote,manual));
-  const ts=timeStatsFor(tab.tk,referenceDate);
-  const hoursPerMonth=ts.avgHDay*30;
-  const avgMonthlyIncome=incomeVals.reduce((a,b)=>a+(b||0),0)/Math.max(1,incomeVals.length);
-  const dph=calcDph(incomeVals,hoursPerMonth);
+  const incomeVals=incomeMonths.map(s=>monthValueAtDate(tab,s,remote,manual,effectiveDate));
+  const incomeTotal=incomeVals.reduce((a,b)=>a+(b||0),0),periodDays=incomePeriodDays(effectiveDate,incomeMonths);
+  const ts=timeStatsFor(tab.tk,effectiveDate),normalized=normalizedEffectiveness(incomeTotal,ts.totalH,ts.days,periodDays);
+  const normalizedHours=normalized.normalizedHours,dph=normalized.dph;
   const period=getViewPeriod(tab.id);
   const mult=VIEW_PERIODS[period].mult;
   const periodHours=ts.avgHDay*mult;
-  const periodIncome=(avgMonthlyIncome/30)*mult;
+  const periodIncome=(incomeTotal/Math.max(1,periodDays))*mult;
   const presetLabel=(INCOME_PRESETS.find(p=>p.id===SETTINGS.incomePreset)||INCOME_PRESETS[2]).label;
   const formulaLabel=(FORMULAS.find(f=>f.id===SETTINGS.formula)||FORMULAS[0]).label;
-  return{sliding,vals,total,ts,avgMonthlyIncome,hoursPerMonth,dph,manual,remote,period,periodHours,periodIncome,presetLabel,formulaLabel};
+  return{sliding,vals,total,ts,incomeTotal,normalizedHours,incomePeriodDays:periodDays,avgMonthlyIncome:incomeTotal,hoursPerMonth:normalizedHours,dph,manual,remote,period,periodHours,periodIncome,presetLabel,formulaLabel,effectiveDate};
 }
 
 function getDphHistory(tab){
-  const sliding=getSliding12();
-  const cat=getCat(tab.cat);
-  const remote=cat?cat.months:{};
-  const manual=getManual(tab.id);
-  const ts=timeStatsFor(tab.tk);
-  const hoursPerMonth=ts.avgHDay*30;
-  const monthVals=sliding.map(s=>getMonthVal(tab,s.key,s.year,remote,manual));
-  let runSum=0;
-  return sliding.map((s,i)=>{
-    runSum+=monthVals[i];
-    const avg=runSum/(i+1);
-    const dph=hoursPerMonth>0?Math.round(avg/hoursPerMonth):0;
-    return{label:s.label,dph,hasData:runSum>0};
+  const cutoff=calculationDate(),sliding=getSliding12(cutoff);
+  return sliding.map(s=>{
+    const month=MO.indexOf(s.key),monthEnd=[s.year,String(month+1).padStart(2,'0'),String(new Date(s.year,month+1,0).getDate()).padStart(2,'0')].join('-'),reference=monthEnd>cutoff?cutoff:monthEnd;
+    const data=getTabData(tab,reference);
+    return{label:s.label,dph:data.dph,hasData:data.incomeTotal>0&&data.ts.totalH>0};
   });
 }
 
@@ -614,7 +624,7 @@ function renderPage(){
   if(curTab==='progress'){renderProgress();return;}
   const tab=TABS.find(t=>t.id===curTab)||ALL_TABS.find(t=>t.id===curTab);
   const pg=document.getElementById('pg');pg.innerHTML='';
-  const{sliding,vals,total,ts,dph,manual,remote,period,periodHours,periodIncome,presetLabel,formulaLabel}=getTabData(tab);
+  const{sliding,vals,total,ts,dph,manual,remote,period,periodHours,periodIncome,presetLabel,formulaLabel,normalizedHours,incomePeriodDays}=getTabData(tab);
   const target=SETTINGS.targetDph;
   const ec=dph>=target?'var(--accent)':dph>=target*0.6?tab.color:'#ff6b85';
   const periodLabel=VIEW_PERIODS[period].label;
@@ -650,7 +660,7 @@ function renderPage(){
       <div class="card dph-block">
         <div class="dph-val" style="color:${ec}" onclick="openHist('${curTab}')">${fmt(dph)}</div>
         <div class="dph-goal">Цель · ${fmt(target)} $/час</div>
-        <div class="dph-hint">${presetLabel} · ${formulaLabel} · нажми для истории</div>
+        <div class="dph-hint">${ts.totalH.toFixed(1)}ч за ${ts.days} дн. → ${normalizedHours.toFixed(1)}ч за ${incomePeriodDays} дн. · ${presetLabel}</div>
       </div>
     </div>
   `;
@@ -809,12 +819,12 @@ function renderOverview(){
   },50);
 }
 
-function readCheckpoints(){try{const value=JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'[]');return Array.isArray(value)?value.filter(item=>item?.version===2&&item?.directions):[]}catch{return[]}}
+function readCheckpoints(){try{const value=JSON.parse(localStorage.getItem(CHECKPOINT_KEY)||'[]');return Array.isArray(value)?value.filter(item=>item?.version===3&&item?.directions):[]}catch{return[]}}
 function writeCheckpoints(value){localStorage.setItem(CHECKPOINT_KEY,JSON.stringify(value.sort((a,b)=>a.date.localeCompare(b.date))));try{parent.postMessage({type:'piura:data-changed',source:'effectiveness-checkpoints'},location.origin)}catch(error){}}
 function isoToday(){const d=new Date();return[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function currentCheckpoint(date=isoToday(),reconstructed=false){
-  const directions=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);return[tab.id,{dph:Math.round(value.dph||0),income:Number(value.avgMonthlyIncome)||0,hours:Number(value.hoursPerMonth)||0}]}));
-  return{version:2,date,directions,createdAt:new Date(date+'T12:00:00').getTime(),reconstructed};
+  const directions=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);return[tab.id,{dph:Math.round(value.dph||0),income:Number(value.incomeTotal)||0,hours:Number(value.normalizedHours)||0,observedHours:Number(value.ts.totalH)||0,observedDays:Number(value.ts.days)||0,periodDays:Number(value.incomePeriodDays)||0}]}));
+  return{version:3,date,directions,createdAt:Date.now(),reconstructed,formula:'normalized-periods',incomeSnapshot:incomeSnapshotDate()};
 }
 function saveCheckpoint(force=false){
   if(!incomeData&&!timeData)return;
@@ -825,11 +835,13 @@ function saveCheckpoint(force=false){
 function ensureScheduledCheckpoint(){
   if(!incomeData&&!timeData)return;
   restoreHistoricalCheckpoints();
+  saveCheckpoint();
 }
 function restoreHistoricalCheckpoints(){
   if(!incomeData&&!timeData)return;
-  const existing=readCheckpoints(),manual=existing.filter(item=>!item.reconstructed&&item.date>='2026-08-01'),automatic=scheduledCheckpointDates().map(date=>currentCheckpoint(date,true));
-  const byDate=new Map(automatic.map(item=>[item.date,item]));manual.forEach(item=>byDate.set(item.date,item));writeCheckpoints([...byDate.values()]);
+  const existing=readCheckpoints(),byDate=new Map(existing.map(item=>[item.date,item]));let changed=false;
+  scheduledCheckpointDates().filter(date=>date<=calculationDate()).forEach(date=>{if(!byDate.has(date)){byDate.set(date,currentCheckpoint(date,true));changed=true}});
+  if(changed)writeCheckpoints([...byDate.values()]);
 }
 function scheduledCheckpointDates(){return['2026-08-01','2026-08-15','2026-08-30']}
 function checkpointDate(value){return new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}

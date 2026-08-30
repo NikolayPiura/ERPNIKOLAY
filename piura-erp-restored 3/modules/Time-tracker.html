@@ -423,6 +423,13 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
 /* 18.08.2026 — a little more breathing room without changing the working layout. */
 .content{padding-top:66px!important;padding-bottom:148px!important}.entry-grid{gap:36px!important;padding:40px!important;border-radius:30px!important}.entry-card,.add-card{min-height:204px!important;border-radius:22px!important}.card-head{min-height:202px!important;padding:34px 38px!important;gap:22px!important}.card-picker{padding:24px 30px 30px!important}.manage-list{gap:.75rem!important}.manage-row{padding:.8rem 1rem!important}
 @media(max-width:1100px){.entry-grid{gap:26px!important;padding:30px!important}.card-head{padding:30px 32px!important}}@media(max-width:850px){.content{padding-top:34px!important}.entry-grid{gap:18px!important;padding:18px!important}.entry-card,.add-card{min-height:178px!important}.card-head{min-height:176px!important;padding:26px!important}}
+/* Daily/statistics switch and long-form vertical statistics. */
+.time-view-tabs{position:sticky;top:142px;z-index:900;display:flex;justify-content:center;gap:5px;width:max-content;margin:22px auto 0;padding:5px;border:1px solid var(--bord);border-radius:15px;background:color-mix(in srgb,var(--bg2) 94%,transparent);box-shadow:0 14px 34px rgba(0,0,0,.18);backdrop-filter:blur(18px)}.time-view-tab{min-height:42px;padding:0 20px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:850 11px 'JetBrains Mono',monospace;letter-spacing:.05em;cursor:pointer;transition:.2s}.time-view-tab:hover{color:var(--ink)}.time-view-tab[aria-selected="true"]{background:linear-gradient(135deg,var(--blue),color-mix(in srgb,var(--blue) 68%,var(--lime)));color:#06101d;box-shadow:0 8px 24px color-mix(in srgb,var(--blue) 26%,transparent)}
+.stats-view[hidden],.daily-view[hidden]{display:none!important}.stats-view{display:grid;gap:24px}.stats-hero{position:relative;overflow:hidden;min-height:270px;padding:42px;border:1px solid color-mix(in srgb,var(--blue) 30%,var(--bord));border-radius:30px;background:radial-gradient(circle at 8% 5%,color-mix(in srgb,var(--blue) 20%,transparent),transparent 40%),radial-gradient(circle at 90% 90%,color-mix(in srgb,var(--lime) 13%,transparent),transparent 34%),var(--bg2);box-shadow:0 28px 80px rgba(0,0,0,.2)}.stats-hero-kicker{color:var(--blue);font:850 11px 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase}.stats-hero h1{max-width:850px;margin:14px 0 9px;color:var(--ink);font-size:clamp(42px,5vw,72px);line-height:.98;letter-spacing:-.065em}.stats-hero p{max-width:660px;color:var(--muted);font-size:14px;line-height:1.6}.stats-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:32px}.stats-summary-card{min-height:132px;padding:22px 24px;border:1px solid var(--bord);border-radius:20px;background:color-mix(in srgb,var(--s2) 88%,transparent)}.stats-summary-card span{display:block;color:var(--muted);font:800 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase}.stats-summary-card strong{display:block;margin-top:13px;color:var(--ink);font-size:clamp(28px,3vw,44px);line-height:1;letter-spacing:-.045em}.stats-summary-card:first-child strong{color:var(--blue)}.stats-summary-card:nth-child(2) strong{color:var(--lime)}
+.stats-section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;padding:8px 4px}.stats-section-head h2{margin:0;color:var(--ink);font-size:clamp(28px,3vw,42px);letter-spacing:-.04em}.stats-section-head p{margin:0;color:var(--muted);font-size:12px}.stats-category-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.stats-category{--stat-color:var(--blue);position:relative;overflow:hidden;min-height:220px;padding:26px;border:1px solid color-mix(in srgb,var(--stat-color) 32%,var(--bord));border-radius:24px;background:radial-gradient(circle at 0 0,color-mix(in srgb,var(--stat-color) 15%,transparent),transparent 45%),var(--bg2);box-shadow:0 18px 48px color-mix(in srgb,var(--stat-color) 6%,transparent)}.stats-category:after{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,var(--stat-color),transparent)}.stats-category-head{display:flex;align-items:center;gap:14px}.stats-category-icon{width:52px;height:52px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--stat-color) 38%,var(--bord));border-radius:16px;background:color-mix(in srgb,var(--stat-color) 12%,var(--s2));font-size:25px}.stats-category-title{min-width:0}.stats-category-title strong{display:block;overflow:hidden;color:var(--ink);font-size:19px;text-overflow:ellipsis;white-space:nowrap}.stats-category-title span{display:block;margin-top:5px;color:var(--muted);font:750 10px 'JetBrains Mono',monospace}.stats-category-times{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:27px}.stats-time{padding:16px;border:1px solid var(--bord);border-radius:16px;background:color-mix(in srgb,var(--s2) 78%,transparent)}.stats-time span{display:block;color:var(--muted);font:800 9px 'JetBrains Mono',monospace;letter-spacing:.09em;text-transform:uppercase}.stats-time strong{display:block;margin-top:9px;color:var(--ink);font-size:26px;line-height:1;letter-spacing:-.045em}.stats-time:first-child strong{color:var(--stat-color)}.stats-share{display:flex;align-items:center;gap:13px;margin-top:18px}.stats-share-track{height:8px;flex:1;overflow:hidden;border-radius:99px;background:rgba(255,255,255,.07)}.stats-share-track i{display:block;width:var(--share);height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--stat-color),color-mix(in srgb,var(--stat-color) 55%,white));box-shadow:0 0 18px color-mix(in srgb,var(--stat-color) 30%,transparent)}.stats-share b{min-width:42px;color:var(--muted);font:850 11px 'JetBrains Mono',monospace;text-align:right}
+body.time-stats-active .hero{display:none!important}body.time-stats-active .content{padding-top:34px!important}
+@media(max-width:1050px){.stats-category-grid{grid-template-columns:1fr}.stats-summary{grid-template-columns:1fr 1fr}.stats-summary-card:last-child{grid-column:1/-1}.time-view-tabs{top:104px}}
+@media(max-width:650px){.time-view-tabs{position:relative;top:auto;margin-top:14px}.stats-hero{padding:26px 20px;border-radius:22px}.stats-summary{grid-template-columns:1fr}.stats-summary-card:last-child{grid-column:auto}.stats-category{padding:21px}.stats-category-times{grid-template-columns:1fr}.stats-section-head{align-items:flex-start;flex-direction:column}.time-view-tab{padding-inline:15px}}
 </style>
 </head>
 <body>
@@ -452,6 +459,11 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
     <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Добавить, переименовать или удалить категорию" aria-label="Редактировать категории">✎</button>
 </div>
 
+<nav class="time-view-tabs" aria-label="Режим учёта времени">
+  <button class="time-view-tab" id="dailyViewTab" type="button" aria-selected="true" onclick="setTimeView('daily')">День</button>
+  <button class="time-view-tab" id="statsViewTab" type="button" aria-selected="false" onclick="setTimeView('stats')">Статистика</button>
+</nav>
+
 <!-- ═══ HERO ═══ -->
 <div class="hero">
 
@@ -476,8 +488,19 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
 
 <!-- ═══ CONTENT ═══ -->
 <div class="content">
-  <div class="entry-grid" id="entryGrid"></div>
-
+  <section class="daily-view" id="dailyView">
+    <div class="entry-grid" id="entryGrid"></div>
+  </section>
+  <section class="stats-view" id="statsView" hidden>
+    <div class="stats-hero">
+      <span class="stats-hero-kicker">Личный ритм</span>
+      <h1>Время в цифрах</h1>
+      <p>Последние 30 дней рядом со всей историей — по каждой категории отдельно.</p>
+      <div class="stats-summary" id="statsSummary"></div>
+    </div>
+    <div class="stats-section-head"><h2>По направлениям</h2><p id="statsPeriodLabel"></p></div>
+    <div class="stats-category-grid" id="statsCategoryGrid"></div>
+  </section>
 </div>
 
 <!-- ═══ MANAGE CATEGORIES MODAL ═══ -->
@@ -549,9 +572,11 @@ const PENDING_SYNC_KEY = 'tt_pending_sheet_sync_v1';
 const SHEET_SYNC_DELAY = 1500;
 const OPEN_KEY = 'tt_open_picker_v1';
 const SELECTED_DATE_KEY = 'tt_selected_date_v1';
+const TIME_VIEW_KEY = 'tt_active_view_v1';
 
 let curDate = (()=>{const saved=localStorage.getItem(SELECTED_DATE_KEY),parsed=/^\d{4}-\d{2}-\d{2}$/.test(saved||'')?new Date(saved+'T00:00:00'):new Date();return Number.isNaN(parsed.getTime())?new Date():parsed})(); curDate.setHours(0,0,0,0);
 let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
+let activeTimeView = localStorage.getItem(TIME_VIEW_KEY)==='stats'?'stats':'daily';
 let chartPie = null, chartBar = null;
 let catsCache = null, legacyMigrationDone = false, summaryFrame = 0;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
@@ -951,7 +976,46 @@ function renderBar() {
   });
 }
 
-function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); }
+function inclusiveCalendarDays(firstKey,lastKey){
+  if(!firstKey||!lastKey)return 0;
+  return Math.max(1,Math.round((new Date(lastKey+'T00:00:00')-new Date(firstKey+'T00:00:00'))/86400000)+1);
+}
+function longDuration(minutes){
+  const value=Math.max(0,Math.round(Number(minutes)||0)),hours=Math.floor(value/60),mins=value%60;
+  if(!hours)return `${mins} мин`;
+  return mins?`${hours} ч ${mins} мин`:`${hours} ч`;
+}
+function statisticsSnapshot(){
+  const all=load(),cats=getCats(),today=dk(new Date()),cutoffDate=new Date();
+  cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-29);
+  const cutoff=dk(cutoffDate),keys=Object.keys(all).filter(key=>/^\d{4}-\d{2}-\d{2}$/.test(key)&&key<=today).sort();
+  const recentKeys=keys.filter(key=>key>=cutoff),first=keys[0]||'',last=keys.at(-1)||'',spanDays=inclusiveCalendarDays(first,last);
+  let allTotal=0,recentTotal=0;
+  const categories=cats.map(cat=>{
+    const allMinutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);
+    const recentMinutes=recentKeys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);
+    allTotal+=allMinutes;recentTotal+=recentMinutes;
+    return{...cat,allMinutes,recentMinutes};
+  });
+  categories.forEach(cat=>cat.share=allTotal?cat.allMinutes/allTotal*100:0);
+  categories.sort((a,b)=>b.allMinutes-a.allMinutes||b.recentMinutes-a.recentMinutes||a.label.localeCompare(b.label,'ru'));
+  return{categories,allTotal,recentTotal,first,last,spanDays,recordedDays:keys.length};
+}
+function renderTimeStatistics(){
+  const summary=document.getElementById('statsSummary'),grid=document.getElementById('statsCategoryGrid');if(!summary||!grid)return;
+  const data=statisticsSnapshot(),dateLabel=key=>key?new Date(key+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'}):'нет данных';
+  summary.innerHTML=`<article class="stats-summary-card"><span>Последние 30 дней</span><strong>${longDuration(data.recentTotal)}</strong></article><article class="stats-summary-card"><span>За всё время</span><strong>${longDuration(data.allTotal)}</strong></article><article class="stats-summary-card"><span>Период наблюдения</span><strong>${data.spanDays} дн.</strong></article>`;
+  document.getElementById('statsPeriodLabel').textContent=data.first?`${dateLabel(data.first)} — ${dateLabel(data.last)} · ${data.recordedDays} дней с записями`:'Записи ещё не добавлены';
+  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}% всего времени</span></div></div><div class="stats-category-times"><div class="stats-time"><span>Последние 30 дней</span><strong>${longDuration(cat.recentMinutes)}</strong></div><div class="stats-time"><span>За всё время</span><strong>${longDuration(cat.allMinutes)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span><b>${Math.round(cat.share)}%</b></div></article>`).join('');
+}
+function setTimeView(view,persist=true){
+  activeTimeView=view==='stats'?'stats':'daily';if(persist)localStorage.setItem(TIME_VIEW_KEY,activeTimeView);
+  const stats=activeTimeView==='stats';document.body.classList.toggle('time-stats-active',stats);
+  document.getElementById('dailyView').hidden=stats;document.getElementById('statsView').hidden=!stats;
+  document.getElementById('dailyViewTab').setAttribute('aria-selected',String(!stats));document.getElementById('statsViewTab').setAttribute('aria-selected',String(stats));
+  if(stats)renderTimeStatistics();
+}
+function renderAll() { renderHero(); renderGrid(); renderPie(); renderBar(); if(activeTimeView==='stats')renderTimeStatistics(); }
 
 /* ── MANAGE CATEGORIES MODAL ── */
 function openManageModal() {
@@ -1100,6 +1164,7 @@ function doExport() {
 
 /* ── INIT ── */
 updateDateLabels();
+setTimeView(activeTimeView,false);
 document.getElementById('prevDay').addEventListener('click',event=>{event.preventDefault();chDate(-1)});
 document.getElementById('nextDay').addEventListener('click',event=>{event.preventDefault();chDate(1)});
 document.getElementById('todayDay').addEventListener('click',event=>{event.preventDefault();goToday()});
