@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор содержит климат и единое управление Govee и двумя Elgato', () => {
+test('обзор содержит климат, сценарии света и локальный умный дом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
@@ -96,15 +96,23 @@ test('обзор содержит климат и единое управлен�
   assert.match(overview, /ELGATO_BRIDGE='http:\/\/127\.0\.0\.1:45831'/);
   assert.match(overview, /function controlAllLights\(command,value\)/);
   assert.match(overview, /elgatoLightCount/);
+  assert.match(overview, /id="lampBrightness"/);
+  assert.match(overview, /data-lamp-scene/);
+  assert.match(overview, /id="smartHomeDevices"/);
+  assert.match(overview, /192\.168\.4\.23/);
+  assert.match(overview, /Smart Switch 9/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
-  assert.doesNotMatch(overview, /id="lampBrightness"|id="lampColor"|id="lampWheel"|id="lampKelvin"/);
+  assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
 
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(bridge, /elgato-light-strip-pro-d026\.local/);
   assert.match(bridge, /elgato-light-strip-pro-8c54\.local/);
   assert.match(bridge, /Access-Control-Allow-Private-Network/);
   assert.match(bridge, /"\/lights"/);
+  assert.match(bridge, /"\/smart-home"/);
+  assert.match(bridge, /def smart_home_status\(\)/);
+  assert.match(bridge, /192\.168\.4\.33/);
 });
 
 test('учёт времени переключает дни и сохраняет шесть стартовых редактируемых категорий', () => {
@@ -149,7 +157,7 @@ test('главная возвращает полезные сводные циф
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="overviewPs"/);
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['admin-progress','tile ps','fund-goals','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','tile ps','fund-goals','tile smart-home','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
   assert.match(overview, /function refreshFinancialSummary\(\)/);
@@ -158,7 +166,8 @@ test('главная возвращает полезные сводные циф
   assert.doesNotMatch(overview, /Годовая цель|Цель \$500 в час|Близость к идеалу/);
   assert.doesNotMatch(overview, /class="ps-badge">ПС №1/);
   assert.doesNotMatch(overview, /Сегодня можно начать в любой момент/);
-  assert.doesNotMatch(overview, /id="lampLabel"|id="lampStatus"/);
+  assert.doesNotMatch(overview, /id="lampLabel"/);
+  assert.match(overview, /id="lampStatus"/);
 });
 
 test('управление фондами содержит актуальные продукты и годовые цели Endowment', () => {
