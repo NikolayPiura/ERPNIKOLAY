@@ -794,6 +794,9 @@
     .control-grid .minimal-lamp .lamp-brightness input{height:20px!important;margin-top:8px!important;}
     /* Vertical monitor: distribute the accepted sections through the full canvas. */
     .dashboard{row-gap:clamp(72px,5vh,150px)!important;}
+    /* Device discovery may be stale, but zone controls must remain actionable. */
+    .zone-switch.is-offline{opacity:1!important;filter:none!important;cursor:pointer!important;}
+    .zone-switch:disabled{cursor:wait!important;opacity:.72!important;}
     @media(max-height:1200px){.dashboard{row-gap:clamp(46px,5vh,72px)!important;}}
     @media(max-width:700px){
       .control-grid .minimal-lamp .lamp-console{min-height:0!important;display:grid!important;grid-template-columns:1fr!important;gap:12px!important;}
@@ -820,11 +823,11 @@
       <article class="tile zone-card" aria-label="Управление четырьмя зонами">
         <div class="device-section-head"><h2>Зоны</h2></div>
         <div class="zone-switch-grid">
-          <button class="zone-switch" type="button" data-zone-device="1" aria-label="Включить основное" aria-pressed="false" disabled><strong>Основное</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch" type="button" data-zone-device="3" aria-label="Включить карту" aria-pressed="false" disabled><strong>Карта</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch" type="button" data-zone-device="2" aria-label="Включить шкаф" aria-pressed="false" disabled><strong>Шкаф</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch" type="button" data-zone-device="5" aria-label="Включить голову" aria-pressed="false" disabled><strong>Голова</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-switch-all" id="zoneAllToggle" type="button" aria-label="Включить все зоны" aria-pressed="false" disabled><strong>Все зоны</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
+          <button class="zone-switch" type="button" data-zone-device="1" aria-label="Включить основное" aria-pressed="false"><strong>Основное</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
+          <button class="zone-switch" type="button" data-zone-device="3" aria-label="Включить карту" aria-pressed="false"><strong>Карта</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
+          <button class="zone-switch" type="button" data-zone-device="2" aria-label="Включить шкаф" aria-pressed="false"><strong>Шкаф</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
+          <button class="zone-switch" type="button" data-zone-device="5" aria-label="Включить голову" aria-pressed="false"><strong>Голова</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
+          <button class="zone-switch zone-switch-all" id="zoneAllToggle" type="button" aria-label="Включить все зоны" aria-pressed="false"><strong>Все зоны</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
         </div>
       </article>
       <article class="tile fan-card is-offline" id="fanCard" aria-label="Вентилятор">
@@ -887,11 +890,15 @@ const capabilityValue=(caps,names)=>{for(const name of names){const item=(caps||
 const ELGATO_BRIDGE='http://127.0.0.1:45831';
 const SMART_LIFE_BRIDGE='http://127.0.0.1:8765';
 const ZONE_DEVICE_CATALOG=[{id:'1',name:'Основное'},{id:'3',name:'Карта'},{id:'2',name:'Шкаф'},{id:'5',name:'Голова'}];
+const ZONE_STATE_KEY='overview_zone_state_v1';
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 let lampOn=false,goveeLightAvailable=false,goveeLampOn=false,elgatoLightCount=0,elgatoLampOn=false,mapLightAvailable=false,mapLightOn=false;
 let fanOnline=false,fanPower=false,fanBusy=false,lampBusy=false,everythingBusy=false,zoneAllBusy=false,currentLampColor='#ffffff',currentBrightness=70;
 let brightnessTimer=0,brightnessQueued=null,brightnessSyncing=false;
-const zoneDeviceState=new Map(ZONE_DEVICE_CATALOG.map(device=>[device.id,{...device,online:false,power:false,busy:false}]));
+function savedZonePower(){try{return JSON.parse(localStorage.getItem(ZONE_STATE_KEY)||'{}')}catch{return{}}}
+function rememberZonePower(){try{localStorage.setItem(ZONE_STATE_KEY,JSON.stringify(Object.fromEntries(zoneDevices().map(device=>[device.id,Boolean(device.power)]))))}catch{}}
+const savedZoneState=savedZonePower();
+const zoneDeviceState=new Map(ZONE_DEVICE_CATALOG.map(device=>[device.id,{...device,online:false,power:Boolean(savedZoneState[device.id]),busy:false}]));
 
 function rgbHex(value){const n=Number(value);return Number.isFinite(n)?'#'+clamp(n,0,16777215).toString(16).padStart(6,'0'):null}
 function selectLampColor(hex){if(/^#[0-9a-f]{6}$/i.test(String(hex||'')))currentLampColor=String(hex).toLowerCase();document.querySelector('.lamp-palette')?.style.setProperty('--current-color',currentLampColor);document.getElementById('mapSwatch')?.style.setProperty('--map-color',currentLampColor);placeLampWheelKnob(currentLampColor)}
@@ -902,8 +909,9 @@ function pickLampWheel(event,commit=false){const canvas=document.getElementById(
 async function commitLampWheelColor(hex){setLampBusy(true);try{await controlAllLights('color',hex)}catch(error){console.warn('Цвет',error)}finally{setLampBusy(false);updateLampPanel()}}
 function setLampBrightness(value){currentBrightness=Math.round(clamp(Number(value)||1,1,100));document.getElementById('lampBrightness').value=currentBrightness;document.getElementById('lampBrightnessValue').textContent=currentBrightness+'%'}
 function lightControlAvailable(){return goveeLightAvailable||elgatoLightCount>0||mapLightAvailable}
-function onlineZoneDevices(){return [...zoneDeviceState.values()].filter(device=>device.online)}
-function anythingIsOn(){return fanPower||lampOn||onlineZoneDevices().some(device=>device.power)}
+function zoneDevices(){return [...zoneDeviceState.values()]}
+function onlineZoneDevices(){return zoneDevices().filter(device=>device.online)}
+function anythingIsOn(){return fanPower||lampOn||zoneDevices().some(device=>device.power)}
 function setLampBusy(busy){lampBusy=Boolean(busy);const disabled=lampBusy||everythingBusy||!lightControlAvailable();document.getElementById('lampPower').disabled=disabled;document.getElementById('lampBrightness').disabled=disabled;document.querySelectorAll('[data-lamp-color]').forEach(button=>button.disabled=disabled)}
 function updateMasterPower(){const button=document.getElementById('masterPower'),available=fanOnline||lightControlAvailable()||onlineZoneDevices().length>0,power=anythingIsOn();button.disabled=everythingBusy||!available;button.classList.toggle('is-on',power);button.classList.toggle('is-busy',everythingBusy);button.setAttribute('aria-pressed',String(power));button.setAttribute('aria-label',power?'Выключить всё':'Включить всё')}
 function updateMapBadge(){const label=document.getElementById('mapSyncStatus');if(label)label.textContent=mapLightAvailable?(mapLightOn?'Карта · включена':'Карта · выключена'):'Карта · нет связи';document.getElementById('mapSwatch')?.style.setProperty('--map-color',currentLampColor)}
@@ -921,11 +929,41 @@ async function refreshMap(){try{renderMap(await requestSmartLife('/api/map/statu
 async function controlMap(command,value){let data;if(command==='power')data=await requestSmartLife('/api/map/power',{method:'POST',body:JSON.stringify({power:/^(on|1|true)$/i.test(String(value))})});else data=await requestSmartLife('/api/map/color',{method:'POST',body:JSON.stringify({color:command==='color'?String(value):currentLampColor,brightness:command==='brightness'?Math.round(Number(value)):currentBrightness})});renderMap(command==='power'?{...data,color:currentLampColor,brightness:currentBrightness}:data);return data}
 async function controlAllLights(command,value){const jobs=[];if(goveeConfig())jobs.push({source:'govee',promise:command==='color'?(async()=>{await controlLamp('color',value);return controlLamp('power','on')})():controlLamp(command,value)});jobs.push({source:'elgato',promise:requestElgato('/lights',{method:'POST',body:JSON.stringify({command,value})})});jobs.push({source:'map',promise:controlMap(command,value)});const settled=await Promise.allSettled(jobs.map(job=>job.promise));let successes=0;settled.forEach((result,index)=>{if(result.status!=='fulfilled')return;successes++;const source=jobs[index].source,on=command==='power'?/^(on|1|true)$/i.test(String(value)):true;if(source==='govee'){goveeLightAvailable=true;goveeLampOn=on}if(source==='elgato'){elgatoLightCount=Math.max(1,elgatoLightCount);elgatoLampOn=on}});updateLampPanel();if(!successes)throw new Error(settled.find(result=>result.status==='rejected')?.reason?.message||'Освещение недоступно');return settled}
 
-function renderZoneDevices(data={}){const incoming=Array.isArray(data.devices)?data.devices:data.device?[data.device]:[],replace=Array.isArray(data.devices),received=new Map(incoming.map(device=>[String(device.id),device]));ZONE_DEVICE_CATALOG.forEach(catalog=>{const previous=zoneDeviceState.get(catalog.id)||{...catalog,busy:false},raw=received.get(catalog.id),next=raw?{...previous,...catalog,online:Boolean(raw.online),power:Boolean(raw.online&&raw.power)}:replace?{...previous,...catalog,online:false,power:false}:{...previous};zoneDeviceState.set(catalog.id,next);const button=document.querySelector(`[data-zone-device="${catalog.id}"]`);if(!button)return;button.classList.toggle('is-on',next.power);button.classList.toggle('is-offline',!next.online);button.classList.toggle('is-busy',Boolean(next.busy));button.disabled=everythingBusy||zoneAllBusy||Boolean(next.busy)||!next.online;button.setAttribute('aria-pressed',String(next.power));button.setAttribute('aria-label',next.power?`Выключить ${catalog.name.toLowerCase()}`:`Включить ${catalog.name.toLowerCase()}`)});const online=onlineZoneDevices(),allAvailable=online.length===ZONE_DEVICE_CATALOG.length,allOn=allAvailable&&online.every(device=>device.power),allButton=document.getElementById('zoneAllToggle');allButton.disabled=everythingBusy||zoneAllBusy||!allAvailable;allButton.classList.toggle('is-on',allOn);allButton.classList.toggle('is-busy',zoneAllBusy);allButton.setAttribute('aria-pressed',String(allOn));allButton.setAttribute('aria-label',allOn?'Выключить все зоны':'Включить все зоны');updateMasterPower()}
-async function refreshZoneDevices(){try{renderZoneDevices(await requestElgato('/smart-home/status?devices=1,2,3,5'))}catch(error){renderZoneDevices({devices:[]});console.warn('Четыре зоны',error)}}
+function renderZoneDevices(data={}){
+  const incoming=Array.isArray(data.devices)?data.devices:data.device?[data.device]:[];
+  const received=new Map(incoming.map(device=>[String(device.id),device]));
+  ZONE_DEVICE_CATALOG.forEach(catalog=>{
+    const previous=zoneDeviceState.get(catalog.id)||{...catalog,online:false,power:false,busy:false};
+    const raw=received.get(catalog.id);
+    const next=raw?{
+      ...previous,
+      ...catalog,
+      online:raw.online==null?previous.online:Boolean(raw.online),
+      power:raw.power==null?previous.power:Boolean(raw.power)
+    }:{...previous};
+    zoneDeviceState.set(catalog.id,next);
+    const button=document.querySelector(`[data-zone-device="${catalog.id}"]`);
+    if(!button)return;
+    button.classList.toggle('is-on',next.power);
+    button.classList.toggle('is-offline',!next.online);
+    button.classList.toggle('is-busy',Boolean(next.busy));
+    button.disabled=everythingBusy||zoneAllBusy||Boolean(next.busy);
+    button.setAttribute('aria-pressed',String(next.power));
+    button.setAttribute('aria-label',next.power?`Выключить ${catalog.name.toLowerCase()}`:`Включить ${catalog.name.toLowerCase()}`)
+  });
+  const zones=zoneDevices(),allOn=zones.length>0&&zones.every(device=>device.power),allButton=document.getElementById('zoneAllToggle');
+  if(incoming.length)rememberZonePower();
+  allButton.disabled=everythingBusy||zoneAllBusy;
+  allButton.classList.toggle('is-on',allOn);
+  allButton.classList.toggle('is-busy',zoneAllBusy);
+  allButton.setAttribute('aria-pressed',String(allOn));
+  allButton.setAttribute('aria-label',allOn?'Выключить все зоны':'Включить все зоны');
+  updateMasterPower()
+}
+async function refreshZoneDevices(){try{renderZoneDevices(await requestElgato('/smart-home/status?devices=1,2,3,5'))}catch(error){renderZoneDevices();console.warn('Четыре зоны',error)}}
 async function setZonePower(deviceId,power){const data=await requestElgato('/smart-home',{method:'POST',body:JSON.stringify({device:String(deviceId),power:Boolean(power)})});renderZoneDevices(data);return data}
-async function toggleZoneDevice(deviceId){const device=zoneDeviceState.get(String(deviceId));if(!device?.online||device.busy||zoneAllBusy)return;device.busy=true;renderZoneDevices();try{await setZonePower(device.id,!device.power)}catch(error){console.warn(device.name,error);await refreshZoneDevices()}finally{const current=zoneDeviceState.get(device.id);if(current)current.busy=false;renderZoneDevices()}}
-async function toggleAllZones(){const zones=onlineZoneDevices();if(zones.length!==ZONE_DEVICE_CATALOG.length||zoneAllBusy)return;const target=!zones.every(device=>device.power);zoneAllBusy=true;renderZoneDevices();try{await Promise.allSettled(zones.map(device=>setZonePower(device.id,target)));await refreshZoneDevices()}finally{zoneAllBusy=false;renderZoneDevices()}}
+async function toggleZoneDevice(deviceId){const device=zoneDeviceState.get(String(deviceId));if(!device||device.busy||zoneAllBusy)return;const previous=device.power,target=!previous;device.busy=true;device.power=target;renderZoneDevices();try{await setZonePower(device.id,target)}catch(error){device.power=previous;console.warn(device.name,error);await refreshZoneDevices()}finally{const current=zoneDeviceState.get(device.id);if(current)current.busy=false;renderZoneDevices()}}
+async function toggleAllZones(){const zones=zoneDevices();if(zoneAllBusy)return;const previous=new Map(zones.map(device=>[device.id,device.power])),target=!zones.every(device=>device.power);zoneAllBusy=true;zones.forEach(device=>device.power=target);renderZoneDevices();try{const settled=await Promise.allSettled(zones.map(device=>setZonePower(device.id,target)));settled.forEach((result,index)=>{if(result.status==='rejected')zones[index].power=previous.get(zones[index].id)});await refreshZoneDevices()}finally{zoneAllBusy=false;renderZoneDevices()}}
 
 function renderFan(data){fanOnline=Boolean(data?.online);fanPower=fanOnline&&Boolean(data?.power);const card=document.getElementById('fanCard'),button=document.getElementById('fanToggle'),action=document.getElementById('fanAction');card.classList.toggle('is-on',fanPower);card.classList.toggle('is-offline',!fanOnline);button.disabled=fanBusy||everythingBusy||!fanOnline;button.classList.toggle('is-busy',fanBusy);button.setAttribute('aria-pressed',String(fanPower));button.setAttribute('aria-label',fanPower?'Выключить вентилятор':'Включить вентилятор');action.textContent=fanPower?'Выключить':'Включить';updateMasterPower()}
 async function refreshFan(){try{renderFan(await requestSmartLife('/api/status'))}catch(error){renderFan({online:false,power:false});console.warn('Вентилятор 192.168.4.23',error)}}

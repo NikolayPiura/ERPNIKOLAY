@@ -118,6 +118,13 @@ test('обзор управляет точным вентилятором, че�
   assert.match(overview, /const ZONE_DEVICE_CATALOG=\[\{id:'1',name:'Основное'\},\{id:'3',name:'Карта'\},\{id:'2',name:'Шкаф'\},\{id:'5',name:'Голова'\}\]/);
   for (const id of ['1','2','3','5']) assert.match(overview, new RegExp(`data-zone-device="${id}"`));
   assert.match(overview, /id="zoneAllToggle"/);
+  assert.doesNotMatch(overview, /data-zone-device="[1235]"[^>]*disabled/);
+  assert.doesNotMatch(overview, /id="zoneAllToggle"[^>]*disabled/);
+  assert.match(overview, /button\.disabled=everythingBusy\|\|zoneAllBusy\|\|Boolean\(next\.busy\)/);
+  assert.doesNotMatch(overview, /if\(!device\?\.online/);
+  assert.match(overview, /catch\(error\)\{renderZoneDevices\(\);console\.warn\('Четыре зоны'/);
+  assert.match(overview, /ZONE_STATE_KEY='overview_zone_state_v1'/);
+  assert.match(overview, /if\(incoming\.length\)rememberZonePower\(\)/);
   assert.match(overview, /function toggleAllZones\(\)/);
   assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=1,2,3,5'\)/);
   assert.match(overview, /requestElgato\('\/smart-home',\{method:'POST'/);
