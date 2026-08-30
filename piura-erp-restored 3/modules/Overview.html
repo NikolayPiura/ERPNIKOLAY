@@ -792,6 +792,9 @@
     .control-grid .minimal-lamp .lamp-brightness span{font-size:10px!important;}
     .control-grid .minimal-lamp .lamp-brightness b{font-size:24px!important;}
     .control-grid .minimal-lamp .lamp-brightness input{height:20px!important;margin-top:8px!important;}
+    /* Vertical monitor: distribute the accepted sections through the full canvas. */
+    .dashboard{row-gap:clamp(72px,5vh,150px)!important;}
+    @media(max-height:1200px){.dashboard{row-gap:clamp(46px,5vh,72px)!important;}}
     @media(max-width:700px){
       .control-grid .minimal-lamp .lamp-console{min-height:0!important;display:grid!important;grid-template-columns:1fr!important;gap:12px!important;}
       .control-grid .minimal-lamp .lamp-power-row{position:static!important;width:100%!important;height:auto!important;min-height:0!important;}
