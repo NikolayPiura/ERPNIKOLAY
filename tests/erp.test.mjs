@@ -163,6 +163,10 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /function shiftHvacRange\(direction\)/);
   assert.match(overview, /commitHvac\(\{mode:'auto',heatC,coolC\}\)/);
   assert.match(overview, /hvac-card\.is-running \.hvac-flow path/);
+  assert.match(overview, /class="tile zone-card home-controls-card"/);
+  assert.match(overview, /class="home-controls-layout"/);
+  assert.match(overview, /home-controls-card \.zone-switch-grid\{grid-template-columns:repeat\(2/);
+  assert.doesNotMatch(overview, /<div class="hvac-head">|<h2>Кондиционер<\/h2>/);
   assert.match(overview, /ECOBEE_BRIDGE='http:\/\/127\.0\.0\.1:4179'/);
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/status'\)/);
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/control'/);
@@ -229,7 +233,7 @@ test('глобальные размеры применяются и к цент�
 test('главная возвращает полезные сводные цифры без маршрутов финансовых сервисов', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['admin-progress','fund-goals','control-grid','tile lamp','zone-card','fan-card','purifier-card','hvac-card','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','fund-goals','control-grid','home-controls-card','fan-card','purifier-card','hvac-card','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   assert.doesNotMatch(dashboard, /tile ps|week-kpis|overviewWeekChart/);
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
