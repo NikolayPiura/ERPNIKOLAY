@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор содержит климат, минимальный свет и четыре крупные розетки', () => {
+test('обзор содержит климат, общий свет и четыре именные розетки', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
@@ -103,11 +103,18 @@ test('обзор содержит климат, минимальный свет 
   const catalog=overview.match(/const SMART_HOME_CATALOG=\[([\s\S]*?)\n\];/)?.[1]||'';
   const order=["id:'1'","id:'3'","id:'2'","id:'5'"].map(token=>catalog.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
-  assert.match(catalog, /id:'1',name:'База'/);
+  assert.match(catalog, /id:'1',name:'Основное'/);
   assert.match(catalog, /id:'2',name:'Шкаф'/);
   assert.match(catalog, /id:'3',name:'Карта'/);
-  assert.match(catalog, /id:'5',name:'Шкаф'/);
+  assert.match(catalog, /id:'5',name:'Голова'/);
   assert.doesNotMatch(catalog, /id:'4'|purifier|garage|fan|192\.168/);
+  assert.match(overview, /id="masterPower"/);
+  assert.match(overview, /function toggleEverything\(\)/);
+  assert.match(overview, /<strong>Всё<\/strong>/);
+  assert.doesNotMatch(overview, /<span class="minimal-plug-number">/);
+  assert.match(overview, /\.minimal-home\{grid-column:span 12!important;width:100%/);
+  assert.match(overview, /\.minimal-plug-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(overview, /lampOn=goveeLampOn\|\|elgatoLampOn/);
   assert.doesNotMatch(overview, /id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
@@ -190,6 +197,7 @@ test('управление фондами содержит актуальные 
 });
 
 test('главная показывает крупные программы без утра и недельного графика', () => {
+  const shell = read('index.html');
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
   assert.doesNotMatch(overview, /refreshMorningFromCloud|Магия утра|tile morning/);
@@ -199,6 +207,8 @@ test('главная показывает крупные программы бе
   assert.doesNotMatch(dashboard, /overviewWeekChart|overviewPsToday|overviewPsDayRecord|overviewPsWeekRecord/);
   assert.match(overview, /\.admin-progress\{min-height:560px!important/);
   assert.match(overview, /\.fund-goals\{min-height:610px!important/);
+  assert.match(shell, /\.admin-progress\{min-height:620px!important\}/);
+  assert.match(shell, /\.fund-goals\{min-height:680px!important\}/);
   assert.match(read('piura-erp-restored 3/modules/AdminScale.html'), /return\{done,total,dynamics,updatedAt/);
   assert.match(overview, /overview_finance_snapshot_v1/);
   assert.doesNotMatch(overview, /год прошёл/);
