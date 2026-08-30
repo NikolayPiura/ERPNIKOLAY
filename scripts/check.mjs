@@ -24,6 +24,8 @@ for (const name of expected) if (!serviceViews.some(file => basename(file) === `
 if (/modules\/(?:PFF|MSK|Safe|Solid|Finance|Personal-Income|Personal-Mentor|Personal-FP|Personal-PFP)\.html/i.test(source)) errors.push('В основной ERP остались маршруты финансовых сервисов');
 if (!source.includes('Тёмная · Premium') || !source.includes('Светлая · Air')) errors.push('Нет обеих премиальных тем');
 if (!source.includes("goveeControl") || !source.includes('lampPower') || !source.includes('lamp-palette') || !source.includes('data-lamp-color') || !source.includes('controlAllLights') || !source.includes('ELGATO_BRIDGE')) errors.push('Нет единого управления лампами Govee и Elgato');
+if (!source.includes("SMART_LIFE_BRIDGE='http://127.0.0.1:8765'") || !source.includes("requestSmartLife('/api/status')") || !source.includes("requestSmartLife('/api/map/color'")) errors.push('Нет точного управления вентилятором и подсветкой карты Smart Life');
+if (source.includes("requestElgato('/smart-home/status')") || source.includes('SMART_HOME_CATALOG')) errors.push('Главная всё ещё опрашивает посторонние умные розетки');
 if (source.includes('body{filter:grayscale')) errors.push('Глобальный монохромный фильтр всё ещё включён');
 
 for (const file of [...indexes, ...serviceViews]) {
@@ -39,4 +41,4 @@ if (errors.length) {
   console.error(errors.map(error => `✗ ${error}`).join('\n'));
   process.exit(1);
 }
-console.log(`✓ Основная ERP: 1 index, ${expected.length} рабочих экранов, финансовые сервисы вынесены, темы, цели, Govee и Elgato подключены`);
+console.log(`✓ Основная ERP: 1 index, ${expected.length} рабочих экранов, темы, цели, Govee/Elgato и точные Smart Life устройства подключены`);

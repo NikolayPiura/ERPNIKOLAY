@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор содержит климат, общий свет и четыре именные розетки', () => {
+test('обзор управляет точным вентилятором и синхронизирует карту с общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
@@ -98,32 +98,27 @@ test('обзор содержит климат, общий свет и четы�
   assert.match(overview, /elgatoLightCount/);
   assert.match(overview, /id="lampBrightness"/);
   assert.doesNotMatch(overview, /data-lamp-scene/);
-  assert.match(overview, /id="smartHomeDevices"/);
-  assert.match(overview, /class="minimal-home"/);
-  const catalog=overview.match(/const SMART_HOME_CATALOG=\[([\s\S]*?)\n\];/)?.[1]||'';
-  const order=["id:'1'","id:'3'","id:'2'","id:'5'"].map(token=>catalog.indexOf(token));
-  assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
-  assert.match(catalog, /id:'1',name:'Основное'/);
-  assert.match(catalog, /id:'2',name:'Шкаф'/);
-  assert.match(catalog, /id:'3',name:'Карта'/);
-  assert.match(catalog, /id:'5',name:'Голова'/);
-  assert.doesNotMatch(catalog, /id:'4'|purifier|garage|fan|192\.168/);
+  assert.match(overview, /id="fanToggle"/);
+  assert.match(overview, /id="fanRotor"/);
+  assert.match(overview, /Розетка · 192\.168\.4\.23/);
+  assert.match(overview, /SMART_LIFE_BRIDGE='http:\/\/127\.0\.0\.1:8765'/);
+  assert.match(overview, /requestSmartLife\('\/api\/status'\)/);
+  assert.match(overview, /requestSmartLife\('\/api\/power'/);
+  assert.match(overview, /requestSmartLife\('\/api\/map\/status'\)/);
+  assert.match(overview, /requestSmartLife\('\/api\/map\/power'/);
+  assert.match(overview, /requestSmartLife\('\/api\/map\/color'/);
+  assert.doesNotMatch(overview, /SMART_HOME_CATALOG|\/smart-home\/status|\/smart-home['"]/);
+  assert.match(overview, /fan-card\.is-on \.fan-blades\{animation:fanSpin/);
   assert.match(overview, /id="masterPower"/);
   assert.match(overview, /function toggleEverything\(\)/);
   assert.match(overview, /function anythingIsOn\(\)/);
   assert.match(overview, /const target=!anythingIsOn\(\)/);
-  assert.match(overview, /const attempts=String\(options\.method\|\|'GET'\).*POST'\?3:1/);
-  assert.match(overview, /for\(const device of plugs\)/);
-  assert.match(overview, /if\(target\)\{await changePlugs\(\);await changeLights\(\)\}else\{await changeLights\(\);await changePlugs\(\)\}/);
-  assert.match(overview, /if\(!target\)\{goveeLampOn=false;elgatoLampOn=false;lampOn=false\}/);
-  assert.match(overview, /\{\.\.\.received\.get\(base\.id\),\.\.\.base\}/);
-  assert.doesNotMatch(overview, /function everythingIsOn\(\)/);
-  assert.match(overview, /<strong>Всё<\/strong>/);
-  assert.doesNotMatch(overview, /<span class="minimal-plug-number">/);
-  assert.match(overview, /\.minimal-home\{grid-column:span 12!important;width:100%/);
-  assert.match(overview, /\.minimal-plug-grid\{grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
-  assert.match(overview, /lampOn=goveeLampOn\|\|elgatoLampOn/);
-  assert.doesNotMatch(overview, /id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
+  assert.match(overview, /jobs\.push\(\{source:'map',promise:controlMap\(command,value\)\}\)/);
+  assert.match(overview, /lampOn=goveeLampOn\|\|elgatoLampOn\|\|mapLightOn/);
+  assert.match(overview, /function queueBrightness\(value,immediate=false\)/);
+  assert.match(overview, /setTimeout\(flushBrightness,immediate\?0:100\)/);
+  assert.match(overview, /<span aria-hidden="true">⏻<\/span> Всё/);
+  assert.doesNotMatch(overview, /id="smartHomeDevices"|id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
@@ -180,7 +175,7 @@ test('глобальные размеры применяются и к цент�
 test('главная возвращает полезные сводные цифры без маршрутов финансовых сервисов', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['admin-progress','fund-goals','minimal-home','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','fund-goals','control-grid','fan-card','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   assert.doesNotMatch(dashboard, /tile ps|week-kpis|overviewWeekChart/);
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
@@ -640,16 +635,16 @@ test('утро редактируется локально и восстанав
   assert.doesNotMatch(morning, /setTimeout\([^)]*HIDDEN_RESTORE_KEY/);
 });
 
-test('климат показывает персональные идеалы 70°F и 45%, считая 73°F жарой', () => {
+test('климат сохраняет персональные пороги, но не дублирует подписи «Идеал»', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   assert.match(overview, /const target=70,tolerance=\.5/);
   assert.match(overview, /v>target\?'Жарко':'Прохладно'/);
   assert.match(overview, /v>50\?'Очень влажно'/);
-  assert.match(overview, /Идеал 70°F/);
-  assert.match(overview, /Идеал 45%/);
-  assert.match(overview, /Идеал до 500 ppm/);
-  const card = overview.match(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/s)?.[0] || '';
+  assert.doesNotMatch(overview, /Идеал 70°F|Идеал 45%|Идеал до 500 ppm/);
+  const cards = [...overview.matchAll(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/gs)];
+  const card = cards.at(-1)?.[0] || '';
   assert.doesNotMatch(card, /air-range|air-delta|marker/);
+  assert.doesNotMatch(card, /air-ideal|profile\.ideal/);
   assert.match(card, /air-status/);
 });
 
