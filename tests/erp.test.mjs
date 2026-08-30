@@ -91,9 +91,9 @@ test('обзор управляет точным вентилятором, че�
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
-  assert.match(overview, /data-lamp-color/);
-  for (const color of ['Красный','Оранжевый','Жёлтый','Зелёный','Бирюзовый','Синий','Фиолетовый','Белый']) assert.match(overview,new RegExp(`aria-label="${color}"`));
-  assert.equal((overview.match(/data-lamp-color=/g)||[]).length,8);
+  assert.match(overview, /id="lampColorWheel"/);
+  assert.match(overview, /function pickLampWheel/);
+  assert.match(overview, /setPointerCapture/);
   assert.match(overview, /name:'Ассоциация'/);
   assert.match(overview, /name:'Котики'.*?target:400/);
   assert.match(overview, /name:'Ассоциация'.*?target:60/);
