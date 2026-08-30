@@ -110,6 +110,14 @@ test('обзор содержит климат, общий свет и четы�
   assert.doesNotMatch(catalog, /id:'4'|purifier|garage|fan|192\.168/);
   assert.match(overview, /id="masterPower"/);
   assert.match(overview, /function toggleEverything\(\)/);
+  assert.match(overview, /function anythingIsOn\(\)/);
+  assert.match(overview, /const target=!anythingIsOn\(\)/);
+  assert.match(overview, /const attempts=String\(options\.method\|\|'GET'\).*POST'\?3:1/);
+  assert.match(overview, /for\(const device of plugs\)/);
+  assert.match(overview, /if\(target\)\{await changePlugs\(\);await changeLights\(\)\}else\{await changeLights\(\);await changePlugs\(\)\}/);
+  assert.match(overview, /if\(!target\)\{goveeLampOn=false;elgatoLampOn=false;lampOn=false\}/);
+  assert.match(overview, /\{\.\.\.received\.get\(base\.id\),\.\.\.base\}/);
+  assert.doesNotMatch(overview, /function everythingIsOn\(\)/);
   assert.match(overview, /<strong>Всё<\/strong>/);
   assert.doesNotMatch(overview, /<span class="minimal-plug-number">/);
   assert.match(overview, /\.minimal-home\{grid-column:span 12!important;width:100%/);
@@ -128,6 +136,7 @@ test('обзор содержит климат, общий свет и четы�
   assert.match(bridge, /"\/smart-home"/);
   assert.match(bridge, /def smart_home_status\(\)/);
   assert.match(bridge, /192\.168\.4\.33/);
+  assert.match(bridge, /any\(device\["on"\] for device in devices\)/);
 });
 
 test('учёт времени переключает дни и сохраняет шесть стартовых редактируемых категорий', () => {
@@ -208,7 +217,10 @@ test('главная показывает крупные программы бе
   assert.match(overview, /\.admin-progress\{min-height:560px!important/);
   assert.match(overview, /\.fund-goals\{min-height:610px!important/);
   assert.match(shell, /\.admin-progress\{min-height:620px!important\}/);
-  assert.match(shell, /\.fund-goals\{min-height:680px!important\}/);
+  assert.match(shell, /\.fund-goals\{min-height:560px!important\}/);
+  assert.match(overview, /calm, equal control surfaces/);
+  assert.match(overview, /\.fund-goal-list\{flex:1;grid-template-columns:repeat\(5,minmax\(0,1fr\)\)!important/);
+  assert.match(overview, /background:var\(--erp-raised,var\(--raised\)\)!important/);
   assert.match(read('piura-erp-restored 3/modules/AdminScale.html'), /return\{done,total,dynamics,updatedAt/);
   assert.match(overview, /overview_finance_snapshot_v1/);
   assert.doesNotMatch(overview, /год прошёл/);

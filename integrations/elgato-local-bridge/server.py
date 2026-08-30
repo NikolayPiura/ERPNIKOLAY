@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 import socket
 import struct
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import URLError
 from urllib.request import Request, urlopen
@@ -83,6 +84,18 @@ def request_device(hostname: str, payload: dict | None = None) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+def request_device_with_retry(hostname: str, payload: dict | None = None) -> dict:
+    error: Exception | None = None
+    for attempt in range(3):
+        try:
+            return request_device(hostname, payload)
+        except (OSError, URLError, ValueError, json.JSONDecodeError) as caught:
+            error = caught
+            if attempt < 2:
+                time.sleep(0.25)
+    raise error or RuntimeError("Elgato light is unavailable")
+
+
 def first_light(data: dict) -> dict:
     lights = data.get("lights") if isinstance(data, dict) else None
     return dict(lights[0]) if isinstance(lights, list) and lights else {}
@@ -144,6 +157,18 @@ def kasa_request(ip: str, payload: dict) -> dict:
     return kasa_decrypt(bytes(response))
 
 
+def kasa_request_with_retry(ip: str, payload: dict) -> dict:
+    error: Exception | None = None
+    for attempt in range(3):
+        try:
+            return kasa_request(ip, payload)
+        except (OSError, ValueError, json.JSONDecodeError) as caught:
+            error = caught
+            if attempt < 2:
+                time.sleep(0.25)
+    raise error or RuntimeError("Smart plug is unavailable")
+
+
 def smart_plug_status(device: tuple[str, str, str]) -> dict:
     device_id, ip, model = device
     result = {
@@ -202,7 +227,7 @@ def control_smart_plug(device_id: str, power: object) -> dict:
     if not device:
         raise ValueError("Устройство пока недоступно для управления")
     desired = power is True or str(power).lower() in {"on", "1", "true"}
-    response = kasa_request(
+    response = kasa_request_with_retry(
         device[1],
         {"system": {"set_relay_state": {"state": int(desired)}}},
     )
@@ -217,7 +242,7 @@ def status() -> dict:
     errors = []
     for name, hostname in DEVICES:
         try:
-            light = first_light(request_device(hostname))
+            light = first_light(request_device_with_retry(hostname))
             devices.append(
                 {
                     "name": name,
@@ -236,7 +261,7 @@ def status() -> dict:
         "count": len(devices),
         "devices": devices,
         "errors": errors,
-        "power": bool(sample and sample["on"]),
+        "power": any(device["on"] for device in devices),
         "colorHex": rgb_hex(sample["hue"], sample["saturation"]) if sample else None,
         "brightness": sample["brightness"] if sample else None,
     }
@@ -252,7 +277,7 @@ def control(command: str, value: object) -> dict:
     errors = []
     for name, hostname in DEVICES:
         try:
-            current = first_light(request_device(hostname))
+            current = first_light(request_device_with_retry(hostname))
             light = {
                 "on": int(bool(current.get("on"))),
                 "hue": float(current.get("hue", 0)),
@@ -265,7 +290,7 @@ def control(command: str, value: object) -> dict:
                 light.update({"on": 1, "hue": hue, "saturation": saturation})
             else:
                 light.update({"on": 1, "brightness": max(1, min(100, int(value)))})
-            request_device(hostname, {"numberOfLights": 1, "lights": [light]})
+            request_device_with_retry(hostname, {"numberOfLights": 1, "lights": [light]})
             updated.append(name)
         except (OSError, URLError, ValueError, json.JSONDecodeError) as error:
             errors.append({"name": name, "error": str(error)})
