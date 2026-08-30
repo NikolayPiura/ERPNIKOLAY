@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор управляет вентилятором, очистителем, четырьмя зонами и синхронизирует карту с общим светом', () => {
+test('обзор управляет вентилятором, очистителем, десятью зонами и синхронизирует карту с общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
@@ -107,9 +107,10 @@ test('обзор управляет вентилятором, очистител
   assert.doesNotMatch(overview, /data-lamp-scene/);
   assert.match(overview, /id="fanToggle"/);
   assert.match(overview, /id="fanRotor"/);
+  assert.doesNotMatch(overview, /id="fanAction"|>Включить<|>Выключить</);
   assert.match(overview, /id="purifierCard"/);
   assert.match(overview, /id="purifierPower"/);
-  assert.match(overview, /id="purifierFilter">—%/);
+  assert.doesNotMatch(overview, /id="purifierFilter"|id="purifierFilterRing"/);
   for (const mode of ['1','2','3']) assert.match(overview, new RegExp(`data-purifier-mode="${mode}"`));
   assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=purifier'\)/);
   assert.match(overview, /const speed=\{1:33,2:66,3:100\}\[mode\]/);
@@ -124,16 +125,20 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /requestSmartLife\('\/api\/map\/color'/);
   assert.match(overview, /const ZONE_DEVICE_CATALOG=\[\{id:'1',name:'Основное'\},\{id:'3',name:'Карта'\},\{id:'2',name:'Шкаф'\},\{id:'5',name:'Голова'\}\]/);
   for (const id of ['1','2','3','5']) assert.match(overview, new RegExp(`data-zone-device="${id}"`));
+  for (const index of ['0','1','2','3','4','5']) assert.match(overview, new RegExp(`data-strip-index="${index}"`));
   assert.match(overview, /id="zoneAllToggle"/);
   assert.doesNotMatch(overview, /data-zone-device="[1235]"[^>]*disabled/);
   assert.doesNotMatch(overview, /id="zoneAllToggle"[^>]*disabled/);
   assert.match(overview, /button\.disabled=everythingBusy\|\|zoneAllBusy\|\|Boolean\(next\.busy\)/);
   assert.doesNotMatch(overview, /if\(!device\?\.online/);
-  assert.match(overview, /catch\(error\)\{renderZoneDevices\(\);console\.warn\('Четыре зоны'/);
+  assert.match(overview, /catch\(error\)\{renderZoneDevices\(\);console\.warn\('Десять зон'/);
   assert.match(overview, /ZONE_STATE_KEY='overview_zone_state_v1'/);
   assert.match(overview, /if\(incoming\.length\)rememberZonePower\(\)/);
+  assert.match(overview, /const rawStrip=received\.get\('4'\)/);
+  assert.match(overview, /function controllableZoneDevices\(\)/);
+  assert.match(overview, /function setAllZonePower\(power\)/);
   assert.match(overview, /function toggleAllZones\(\)/);
-  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=1,2,3,5'\)/);
+  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=1,2,3,5,4'\)/);
   assert.match(overview, /requestElgato\('\/smart-home',\{method:'POST'/);
   assert.doesNotMatch(overview, /requestElgato\('\/smart-home\/status'\)/);
   assert.doesNotMatch(overview, /SMART_HOME_CATALOG|AUX_DEVICE_CATALOG|data-aux-device/);
