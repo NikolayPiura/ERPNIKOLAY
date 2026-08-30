@@ -156,15 +156,17 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /function queueBrightness\(value,immediate=false\)/);
   assert.match(overview, /setTimeout\(flushBrightness,immediate\?0:100\)/);
   assert.match(overview, /id="hvacCard"/);
-  assert.match(overview, /id="hvacCurrent"/);
-  assert.match(overview, /data-hvac-mode="heat"/);
-  assert.match(overview, /data-hvac-mode="cool"/);
-  assert.match(overview, /data-hvac-setpoint="heat"/);
-  assert.match(overview, /data-hvac-setpoint="cool"/);
+  assert.match(overview, /class="hvac-art"/);
+  assert.match(overview, /id="hvacRangeMinus"/);
+  assert.match(overview, /id="hvacRange"/);
+  assert.match(overview, /id="hvacRangePlus"/);
+  assert.match(overview, /function shiftHvacRange\(direction\)/);
+  assert.match(overview, /commitHvac\(\{mode:'auto',heatC,coolC\}\)/);
+  assert.match(overview, /hvac-card\.is-running \.hvac-flow path/);
   assert.match(overview, /ECOBEE_BRIDGE='http:\/\/127\.0\.0\.1:4179'/);
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/status'\)/);
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/control'/);
-  assert.doesNotMatch(overview, /data-hvac-mode="auto"|data-hvac-mode="off"/);
+  assert.doesNotMatch(overview, /id="hvacCurrent"|id="hvacHeat"|id="hvacCool"|id="hvacSensors"|<[^>]+data-hvac-mode|<[^>]+data-hvac-setpoint/);
   assert.match(overview, /<span aria-hidden="true">⏻<\/span> Всё/);
   assert.doesNotMatch(overview, /id="smartHomeDevices"|id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
@@ -227,7 +229,7 @@ test('глобальные размеры применяются и к цент�
 test('главная возвращает полезные сводные цифры без маршрутов финансовых сервисов', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const dashboard=overview.slice(overview.indexOf('<section class="dashboard">'),overview.indexOf('<div class="legacy">'));
-  const order=['admin-progress','fund-goals','control-grid','fan-card','tile lamp','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
+  const order=['admin-progress','fund-goals','control-grid','tile lamp','zone-card','fan-card','purifier-card','hvac-card','tile air','overview-number-grid'].map(token=>dashboard.indexOf(token));
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   assert.doesNotMatch(dashboard, /tile ps|week-kpis|overviewWeekChart/);
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
