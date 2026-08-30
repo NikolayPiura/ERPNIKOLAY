@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор управляет точным вентилятором, четырьмя зонами и синхронизирует карту с общим светом', () => {
+test('обзор управляет вентилятором, очистителем, четырьмя зонами и синхронизирует карту с общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
@@ -107,6 +107,13 @@ test('обзор управляет точным вентилятором, че�
   assert.doesNotMatch(overview, /data-lamp-scene/);
   assert.match(overview, /id="fanToggle"/);
   assert.match(overview, /id="fanRotor"/);
+  assert.match(overview, /id="purifierCard"/);
+  assert.match(overview, /id="purifierPower"/);
+  assert.match(overview, /id="purifierFilter">—%/);
+  for (const mode of ['1','2','3']) assert.match(overview, new RegExp(`data-purifier-mode="${mode}"`));
+  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=purifier'\)/);
+  assert.match(overview, /const speed=\{1:33,2:66,3:100\}\[mode\]/);
+  assert.doesNotMatch(overview, /192\.168\.4\.39|Levoit/);
   assert.doesNotMatch(overview, /<span class="device-kicker">Розетка/);
   assert.doesNotMatch(overview, /id="fanStatus"|id="fanHint"|id="zoneSummary"|id="mapSyncStatus"|TY-02-3CH\.V5\.1<\/span>/);
   assert.match(overview, /SMART_LIFE_BRIDGE='http:\/\/127\.0\.0\.1:8765'/);
@@ -133,6 +140,8 @@ test('обзор управляет точным вентилятором, че�
   assert.match(bridge, /def smart_home_status\(device_ids: set\[str\] \| None = None\)/);
   assert.match(bridge, /parse_qs\(request\.query\)\.get\("devices", \[\]\)/);
   assert.match(bridge, /pending = \[\] if device_ids is not None else/);
+  assert.match(bridge, /PURIFIER = \("purifier", "Очиститель", "192\.168\.4\.39", "Levoit"\)/);
+  assert.match(bridge, /if percentage not in \{33, 66, 100\}/);
   assert.match(overview, /fan-card\.is-on \.fan-blades\{animation:fanSpin/);
   assert.match(overview, /id="masterPower"/);
   assert.match(overview, /function toggleEverything\(\)/);

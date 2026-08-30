@@ -7,11 +7,11 @@ Configured devices:
 - Elgato Light Strip Pro D026
 - 341
 - TP-Link HS103 plugs 1, 2, 3 and 5
+- Levoit purifier through the local Home Assistant session (power, three speeds and filter life)
 
 Prepared but not yet controllable:
 
-- TP-Link HS300 strip 4 (requires TP-Link account authentication)
-- Levoit purifier (requires VeSync account authentication)
+- TP-Link HS300 strip discovery (local account pairing is still pending)
 - Garage at `192.168.4.45` (device type still unknown)
 - Smart Life fan at `192.168.4.23` (requires its Tuya local key)
 

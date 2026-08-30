@@ -3,16 +3,32 @@
 
 from __future__ import annotations
 
+import asyncio
 import colorsys
 from concurrent.futures import ThreadPoolExecutor
 import json
+from pathlib import Path
 import socket
 import struct
+import subprocess
+import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import URLError
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import parse_qs, urlencode, urlsplit
 from urllib.request import Request, urlopen
+
+
+VENDOR_DIR = Path(__file__).resolve().parent / "vendor"
+if VENDOR_DIR.is_dir():
+    sys.path.insert(0, str(VENDOR_DIR))
+
+try:
+    from kasa import Credentials as KasaCredentials
+    from kasa import Discover as KasaDiscover
+except ImportError:  # The rest of the bridge still works without python-kasa.
+    KasaCredentials = None
+    KasaDiscover = None
 
 
 HOST = "127.0.0.1"
@@ -22,28 +38,21 @@ DEVICES = (
     ("341", "elgato-light-strip-pro-8c54.local"),
 )
 SMART_PLUGS = (
-    ("1", "192.168.4.36", "HS103"),
-    ("2", "192.168.4.33", "HS103"),
-    ("3", "192.168.4.34", "HS103"),
-    ("5", "192.168.4.35", "HS103"),
+    ("1", "Основное", "192.168.4.36", "HS103"),
+    ("2", "Шкаф", "192.168.4.33", "HS103"),
+    ("3", "Карта", "192.168.4.34", "HS103"),
+    ("5", "Голова", "192.168.4.35", "HS103"),
 )
+SMART_STRIP = ("4", "Удлинитель", "192.168.4.67", "HS300")
+PURIFIER = ("purifier", "Очиститель", "192.168.4.39", "Levoit")
+TPLINK_KEYCHAIN_SERVICE = "com.piura.tp-link-local"
+# Docker Desktop publishes Home Assistant on localhost's IPv6 listener here;
+# forcing 127.0.0.1 makes the configuration flow fail with connection refused.
+HA_URL = "http://localhost:8123"
+HA_AUTH_PATH = Path("/Users/Nikolay/homeassistant/.storage/auth")
+HA_CONFIG_ENTRIES_PATH = Path("/Users/Nikolay/homeassistant/.storage/core.config_entries")
+HA_ENTITY_REGISTRY_PATH = Path("/Users/Nikolay/homeassistant/.storage/core.entity_registry")
 PENDING_DEVICES = (
-    {
-        "id": "4",
-        "name": "4",
-        "ip": "192.168.4.59",
-        "model": "HS300",
-        "kind": "strip",
-        "status": "Нужен вход TP-Link",
-    },
-    {
-        "id": "purifier",
-        "name": "Очиститель",
-        "ip": "192.168.4.39",
-        "model": "Levoit",
-        "kind": "purifier",
-        "status": "Нужен вход VeSync",
-    },
     {
         "id": "garage",
         "name": "Гараж",
@@ -170,11 +179,11 @@ def kasa_request_with_retry(ip: str, payload: dict) -> dict:
     raise error or RuntimeError("Smart plug is unavailable")
 
 
-def smart_plug_status(device: tuple[str, str, str]) -> dict:
-    device_id, ip, model = device
+def smart_plug_status(device: tuple[str, str, str, str]) -> dict:
+    device_id, name, ip, model = device
     result = {
         "id": device_id,
-        "name": device_id,
+        "name": name,
         "ip": ip,
         "model": model,
         "kind": "plug",
@@ -200,6 +209,397 @@ def smart_plug_status(device: tuple[str, str, str]) -> dict:
     return result
 
 
+def ping_host(ip: str) -> bool:
+    """Return whether a local host answers one short ICMP probe."""
+    try:
+        completed = subprocess.run(
+            ["/sbin/ping", "-c", "1", "-W", "750", ip],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return completed.returncode == 0
+
+
+def tplink_credentials() -> tuple[str, str] | None:
+    try:
+        completed = subprocess.run(
+            ["/usr/bin/security", "find-generic-password", "-s", TPLINK_KEYCHAIN_SERVICE, "-w"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+            check=False,
+        )
+        if completed.returncode != 0:
+            return None
+        payload = json.loads(completed.stdout)
+        username = str(payload.get("username") or "").strip()
+        password = str(payload.get("password") or "")
+        return (username, password) if username and password else None
+    except (OSError, subprocess.TimeoutExpired, ValueError, json.JSONDecodeError):
+        return None
+
+
+def save_tplink_credentials(username: str, password: str) -> None:
+    payload = json.dumps({"username": username, "password": password}, separators=(",", ":"))
+    completed = subprocess.run(
+        [
+            "/usr/bin/security",
+            "add-generic-password",
+            "-U",
+            "-s",
+            TPLINK_KEYCHAIN_SERVICE,
+            "-a",
+            username,
+            "-w",
+            payload,
+        ],
+        capture_output=True,
+        text=True,
+        timeout=5,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError("Не удалось сохранить локальный вход в Связке ключей macOS")
+
+
+def ha_access_token() -> str:
+    """Exchange Home Assistant's newest local refresh token for a short-lived token."""
+    auth = json.loads(HA_AUTH_PATH.read_text(encoding="utf-8"))
+    owner_ids = {
+        str(user["id"])
+        for user in auth.get("data", {}).get("users", [])
+        if user.get("is_owner") and user.get("is_active")
+    }
+    tokens = [
+        token
+        for token in auth.get("data", {}).get("refresh_tokens", [])
+        if token.get("token_type") == "normal"
+        and token.get("user_id") in owner_ids
+        and token.get("client_id")
+        and token.get("token")
+    ]
+    if not tokens:
+        raise RuntimeError("Home Assistant: локальная сессия не найдена")
+    refresh = max(tokens, key=lambda item: str(item.get("created_at") or ""))
+    body = urlencode(
+        {
+            "grant_type": "refresh_token",
+            "client_id": refresh["client_id"],
+            "refresh_token": refresh["token"],
+        }
+    ).encode("utf-8")
+    request = Request(
+        f"{HA_URL}/auth/token",
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    with urlopen(request, timeout=8) as response:
+        result = json.loads(response.read().decode("utf-8"))
+    token = str(result.get("access_token") or "")
+    if not token:
+        raise RuntimeError("Home Assistant: не удалось открыть локальную сессию")
+    return token
+
+
+def ha_api_request(path: str, payload: dict | None = None) -> dict | list:
+    body = None if payload is None else json.dumps(payload).encode("utf-8")
+    request = Request(
+        f"{HA_URL}/api/{path.lstrip('/')}",
+        data=body,
+        method="GET" if payload is None else "POST",
+        headers={
+            "Authorization": f"Bearer {ha_access_token()}",
+            "Content-Type": "application/json",
+            "HA-Frontend-Base": HA_URL,
+        },
+    )
+    with urlopen(request, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def ha_delete_config_flow(flow_id: str) -> None:
+    request = Request(
+        f"{HA_URL}/api/config/config_entries/flow/{flow_id}",
+        method="DELETE",
+        headers={
+            "Authorization": f"Bearer {ha_access_token()}",
+            "HA-Frontend-Base": HA_URL,
+        },
+    )
+    with urlopen(request, timeout=8):
+        return
+
+
+def vesync_purifier_entities() -> dict[str, str]:
+    """Return the useful entities owned by the VeSync config entry."""
+    if not HA_CONFIG_ENTRIES_PATH.exists() or not HA_ENTITY_REGISTRY_PATH.exists():
+        return {}
+    entries = json.loads(HA_CONFIG_ENTRIES_PATH.read_text(encoding="utf-8"))
+    vesync_ids = {
+        str(entry["entry_id"])
+        for entry in entries.get("data", {}).get("entries", [])
+        if entry.get("domain") == "vesync"
+    }
+    if not vesync_ids:
+        return {}
+    registry = json.loads(HA_ENTITY_REGISTRY_PATH.read_text(encoding="utf-8"))
+    candidates = [
+        str(entity["entity_id"])
+        for entity in registry.get("data", {}).get("entities", [])
+        if entity.get("config_entry_id") in vesync_ids
+        and not entity.get("disabled_by")
+    ]
+    result: dict[str, str] = {}
+    for entity_id in candidates:
+        lowered = entity_id.lower()
+        if entity_id.startswith("fan.") and "fan" not in result:
+            result["fan"] = entity_id
+        elif entity_id.startswith("select.") and "night_light" in lowered:
+            result["night_light"] = entity_id
+        elif entity_id.startswith("switch.") and "child_lock" in lowered:
+            result["child_lock"] = entity_id
+        elif entity_id.startswith("switch.") and "display" in lowered:
+            result["display"] = entity_id
+        elif entity_id.startswith("sensor.") and "filter_lifetime" in lowered:
+            result["filter_lifetime"] = entity_id
+    return result
+
+
+def vesync_purifier_entity() -> str | None:
+    return vesync_purifier_entities().get("fan")
+
+
+def configure_vesync(username: object, password: object) -> dict:
+    username = str(username or "").strip()
+    password = str(password or "")
+    if not username or not password:
+        raise ValueError("Введите почту и пароль VeSync")
+    flow = ha_api_request("config/config_entries/flow", {"handler": "vesync"})
+    if not isinstance(flow, dict) or not flow.get("flow_id"):
+        if isinstance(flow, dict) and flow.get("reason") in {"already_configured", "single_instance_allowed"}:
+            return {"ok": True, "device": purifier_status()}
+        raise RuntimeError("Home Assistant не открыл настройку VeSync")
+    result = ha_api_request(
+        f"config/config_entries/flow/{flow['flow_id']}",
+        {"username": username, "password": password},
+    )
+    if not isinstance(result, dict) or result.get("type") != "create_entry":
+        errors = result.get("errors", {}) if isinstance(result, dict) else {}
+        try:
+            ha_delete_config_flow(str(flow["flow_id"]))
+        except OSError:
+            pass
+        if errors:
+            raise ValueError("VeSync не принял почту или пароль")
+        raise RuntimeError("Home Assistant не завершил подключение VeSync")
+    time.sleep(2)
+    return {"ok": True, "device": purifier_status()}
+
+
+async def async_strip_snapshot(username: str, password: str) -> dict:
+    if KasaCredentials is None or KasaDiscover is None:
+        raise RuntimeError("Локальный модуль TP-Link не установлен")
+    device = await KasaDiscover.discover_single(
+        SMART_STRIP[2],
+        credentials=KasaCredentials(username, password),
+        discovery_timeout=3,
+        timeout=4,
+    )
+    try:
+        await device.update()
+        outlets = [
+            {
+                "id": f"{SMART_STRIP[0]}:{child.device_id}",
+                "name": str(child.alias or f"Розетка {index}"),
+                "power": bool(child.is_on),
+                "online": True,
+            }
+            for index, child in enumerate(device.children, 1)
+        ]
+        return {
+            "model": str(device.model or SMART_STRIP[3]),
+            "power": any(outlet["power"] for outlet in outlets),
+            "outlets": outlets,
+        }
+    finally:
+        await device.protocol.close()
+
+
+def smart_strip_status(credentials: tuple[str, str] | None = None) -> dict:
+    device_id, name, ip, model = SMART_STRIP
+    credentials = credentials or tplink_credentials()
+    online = ping_host(ip)
+    result = {
+        "id": device_id,
+        "name": name,
+        "ip": ip,
+        "model": model,
+        "kind": "strip",
+        "controllable": False,
+        "online": online,
+        "power": False,
+        "outlets": [],
+        "auth_required": False,
+        "status": "Подключаем локально" if online else "Не найден в сети",
+    }
+    if not online:
+        return result
+    try:
+        snapshot = asyncio.run(async_strip_snapshot(*(credentials or ("", ""))))
+        result.update(
+            {
+                "online": True,
+                "controllable": bool(snapshot["outlets"]),
+                "power": snapshot["power"],
+                "model": snapshot["model"],
+                "outlets": snapshot["outlets"],
+                "auth_required": False,
+                "status": "Подключён локально",
+            }
+        )
+    except Exception as error:  # python-kasa exposes several protocol-specific errors.
+        result["auth_required"] = True
+        result["status"] = "Проверьте локальный вход TP-Link"
+        result["error"] = str(error)
+    return result
+
+
+def configure_smart_strip(username: object, password: object) -> dict:
+    username = str(username or "").strip()
+    password = str(password or "")
+    if not username or not password:
+        raise ValueError("Введите почту и пароль TP-Link")
+    result = smart_strip_status((username, password))
+    if not result["controllable"]:
+        raise ValueError("TP-Link не принял данные для локального управления")
+    save_tplink_credentials(username, password)
+    return {"ok": True, "device": result}
+
+
+def purifier_status() -> dict:
+    device_id, name, ip, model = PURIFIER
+    online = ping_host(ip)
+    result = {
+        "id": device_id,
+        "name": name,
+        "ip": ip,
+        "model": model,
+        "kind": "purifier",
+        "controllable": False,
+        "online": online,
+        "power": False,
+        "auth_required": True,
+        "status": "Подключите VeSync к Home Assistant" if online else "Не найден в сети",
+    }
+    entities = vesync_purifier_entities()
+    entity_id = entities.get("fan")
+    if not entity_id:
+        return result
+    try:
+        states = ha_api_request("states")
+        if not isinstance(states, list):
+            raise RuntimeError("Некорректный ответ Home Assistant")
+        state_by_id = {
+            str(item.get("entity_id")): item
+            for item in states
+            if isinstance(item, dict) and item.get("entity_id")
+        }
+        state = state_by_id.get(entity_id, {})
+        available = state.get("state") not in {"unavailable", "unknown", None}
+        attributes = state.get("attributes", {}) if isinstance(state, dict) else {}
+        night_state = state_by_id.get(entities.get("night_light", ""), {})
+        display_state = state_by_id.get(entities.get("display", ""), {})
+        lock_state = state_by_id.get(entities.get("child_lock", ""), {})
+        filter_state = state_by_id.get(entities.get("filter_lifetime", ""), {})
+        result.update(
+            {
+                "online": available,
+                "controllable": available,
+                "power": state.get("state") == "on",
+                "auth_required": False,
+                "entity_id": entity_id,
+                "status": "Подключён через Home Assistant" if available else "VeSync временно недоступен",
+                "settings": {
+                    "percentage": attributes.get("percentage"),
+                    "percentage_step": attributes.get("percentage_step"),
+                    "preset_mode": attributes.get("preset_mode"),
+                    "night_light": night_state.get("state", "off"),
+                    "night_light_options": night_state.get("attributes", {}).get(
+                        "options", ["off", "dim", "on"]
+                    ),
+                    "display": display_state.get("state") == "on",
+                    "child_lock": lock_state.get("state") == "on",
+                    "filter_lifetime": filter_state.get("state"),
+                },
+            }
+        )
+    except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
+        result["error"] = str(error)
+        result["status"] = "Home Assistant не получил состояние VeSync"
+    return result
+
+
+def control_purifier(power: object) -> dict:
+    entity_id = vesync_purifier_entity()
+    if not entity_id:
+        raise ValueError("Сначала подключите VeSync к Home Assistant")
+    desired = power is True or str(power).lower() in {"on", "1", "true"}
+    ha_api_request(
+        f"services/fan/{'turn_on' if desired else 'turn_off'}",
+        {"entity_id": entity_id},
+    )
+    time.sleep(0.6)
+    return {"ok": True, "device": purifier_status()}
+
+
+def control_purifier_setting(setting: object, value: object) -> dict:
+    entities = vesync_purifier_entities()
+    fan_id = entities.get("fan")
+    setting = str(setting or "")
+    if not fan_id:
+        raise ValueError("Очиститель не подключён к Home Assistant")
+    if setting == "speed":
+        if str(value) == "sleep":
+            ha_api_request(
+                "services/fan/set_preset_mode",
+                {"entity_id": fan_id, "preset_mode": "sleep"},
+            )
+        else:
+            percentage = int(value)
+            if percentage not in {33, 66, 100}:
+                raise ValueError("Недоступная скорость")
+            ha_api_request(
+                "services/fan/set_percentage",
+                {"entity_id": fan_id, "percentage": percentage},
+            )
+    elif setting == "night_light":
+        option = str(value)
+        if option not in {"off", "dim", "on"} or not entities.get("night_light"):
+            raise ValueError("Недоступный режим ночного света")
+        ha_api_request(
+            "services/select/select_option",
+            {"entity_id": entities["night_light"], "option": option},
+        )
+    elif setting in {"display", "child_lock"}:
+        entity_id = entities.get(setting)
+        if not entity_id:
+            raise ValueError("Настройка недоступна")
+        desired = value is True or str(value).lower() in {"on", "1", "true"}
+        ha_api_request(
+            f"services/switch/{'turn_on' if desired else 'turn_off'}",
+            {"entity_id": entity_id},
+        )
+    else:
+        raise ValueError("Неизвестная настройка очистителя")
+    time.sleep(0.8)
+    return {"ok": True, "device": purifier_status()}
+
+
 def smart_home_status(device_ids: set[str] | None = None) -> dict:
     selected = [
         device for device in SMART_PLUGS
@@ -207,6 +607,12 @@ def smart_home_status(device_ids: set[str] | None = None) -> dict:
     ]
     with ThreadPoolExecutor(max_workers=max(1, len(selected))) as executor:
         plugs = list(executor.map(smart_plug_status, selected))
+    include_all = device_ids is None
+    extra_devices = []
+    if include_all or SMART_STRIP[0] in device_ids:
+        extra_devices.append(smart_strip_status())
+    if include_all or PURIFIER[0] in device_ids:
+        extra_devices.append(purifier_status())
     pending = [] if device_ids is not None else [
         {
             **device,
@@ -216,24 +622,55 @@ def smart_home_status(device_ids: set[str] | None = None) -> dict:
         }
         for device in PENDING_DEVICES
     ]
-    online = sum(1 for device in plugs if device["online"])
-    powered = sum(1 for device in plugs if device["online"] and device["power"])
+    devices = plugs + extra_devices + pending
+    online = sum(1 for device in devices if device["online"])
+    powered = sum(1 for device in devices if device["online"] and device["power"])
     return {
         "ok": True,
         "online": online,
         "powered": powered,
-        "controllable": len(plugs),
-        "devices": plugs + pending,
+        "controllable": sum(1 for device in devices if device["controllable"]),
+        "devices": devices,
     }
+
+
+async def async_control_smart_strip(device_id: str, desired: bool, username: str, password: str) -> None:
+    if KasaCredentials is None or KasaDiscover is None:
+        raise RuntimeError("Локальный модуль TP-Link не установлен")
+    device = await KasaDiscover.discover_single(
+        SMART_STRIP[2],
+        credentials=KasaCredentials(username, password),
+        discovery_timeout=3,
+        timeout=4,
+    )
+    try:
+        await device.update()
+        child_id = device_id.split(":", 1)[1] if ":" in device_id else None
+        children = [
+            child for child in device.children if child_id is None or child.device_id == child_id
+        ]
+        if not children:
+            raise ValueError("Розетка удлинителя не найдена")
+        for child in children:
+            if desired:
+                await child.turn_on()
+            else:
+                await child.turn_off()
+    finally:
+        await device.protocol.close()
 
 
 def control_smart_plug(device_id: str, power: object) -> dict:
     device = next((item for item in SMART_PLUGS if item[0] == device_id), None)
-    if not device:
-        raise ValueError("Устройство пока недоступно для управления")
     desired = power is True or str(power).lower() in {"on", "1", "true"}
+    if device_id == SMART_STRIP[0] or device_id.startswith(f"{SMART_STRIP[0]}:"):
+        credentials = tplink_credentials() or ("", "")
+        asyncio.run(async_control_smart_strip(device_id, desired, *credentials))
+        return {"ok": True, "device": smart_strip_status()}
+    if not device:
+        raise ValueError("Устройство недоступно для локального управления")
     response = kasa_request_with_retry(
-        device[1],
+        device[2],
         {"system": {"set_relay_state": {"state": int(desired)}}},
     )
     result = response.get("system", {}).get("set_relay_state", {})
@@ -351,14 +788,31 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         path = self.path.rstrip("/")
-        if path not in {"/lights", "/smart-home"}:
+        if path not in {
+            "/lights",
+            "/smart-home",
+            "/smart-home/credentials",
+            "/smart-home/vesync",
+            "/smart-home/purifier",
+        }:
             self.json_response({"ok": False, "error": "Not found"}, 404)
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             payload = json.loads(self.rfile.read(length) or b"{}")
-            if path == "/smart-home":
-                result = control_smart_plug(str(payload.get("device", "")), payload.get("power"))
+            if path == "/smart-home/credentials":
+                result = configure_smart_strip(payload.get("username"), payload.get("password"))
+            elif path == "/smart-home/vesync":
+                result = configure_vesync(payload.get("username"), payload.get("password"))
+            elif path == "/smart-home/purifier":
+                result = control_purifier_setting(payload.get("setting"), payload.get("value"))
+            elif path == "/smart-home":
+                device_id = str(payload.get("device", ""))
+                result = (
+                    control_purifier(payload.get("power"))
+                    if device_id == PURIFIER[0]
+                    else control_smart_plug(device_id, payload.get("power"))
+                )
             else:
                 result = control(str(payload.get("command", "")), payload.get("value"))
             self.json_response(result)
