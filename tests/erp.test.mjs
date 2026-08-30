@@ -86,8 +86,9 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор управляет точным вентилятором и синхронизирует карту с общим светом', () => {
+test('обзор управляет точным вентилятором, двумя заданными розетками и синхронизирует карту с общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
+  const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
   assert.match(overview, /class="lamp-palette"/);
   assert.match(overview, /data-lamp-color/);
@@ -107,7 +108,16 @@ test('обзор управляет точным вентилятором и с�
   assert.match(overview, /requestSmartLife\('\/api\/map\/status'\)/);
   assert.match(overview, /requestSmartLife\('\/api\/map\/power'/);
   assert.match(overview, /requestSmartLife\('\/api\/map\/color'/);
-  assert.doesNotMatch(overview, /SMART_HOME_CATALOG|\/smart-home\/status|\/smart-home['"]/);
+  assert.match(overview, /const AUX_DEVICE_CATALOG=\[\{id:'2',name:'Шкаф'\},\{id:'5',name:'Голова'\}\]/);
+  assert.match(overview, /data-aux-device="2"/);
+  assert.match(overview, /data-aux-device="5"/);
+  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=2,5'\)/);
+  assert.match(overview, /requestElgato\('\/smart-home',\{method:'POST'/);
+  assert.doesNotMatch(overview, /requestElgato\('\/smart-home\/status'\)/);
+  assert.doesNotMatch(overview, /SMART_HOME_CATALOG/);
+  assert.match(bridge, /def smart_home_status\(device_ids: set\[str\] \| None = None\)/);
+  assert.match(bridge, /parse_qs\(request\.query\)\.get\("devices", \[\]\)/);
+  assert.match(bridge, /pending = \[\] if device_ids is not None else/);
   assert.match(overview, /fan-card\.is-on \.fan-blades\{animation:fanSpin/);
   assert.match(overview, /id="masterPower"/);
   assert.match(overview, /function toggleEverything\(\)/);
@@ -122,14 +132,15 @@ test('обзор управляет точным вентилятором и с�
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
+  assert.match(overview, /class="fund-goal-ratio"/);
+  assert.doesNotMatch(overview, /class="fund-goal-index"/);
 
-  const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(bridge, /elgato-light-strip-pro-d026\.local/);
   assert.match(bridge, /elgato-light-strip-pro-8c54\.local/);
   assert.match(bridge, /Access-Control-Allow-Private-Network/);
   assert.match(bridge, /"\/lights"/);
   assert.match(bridge, /"\/smart-home"/);
-  assert.match(bridge, /def smart_home_status\(\)/);
+  assert.match(bridge, /def smart_home_status\(device_ids:/);
   assert.match(bridge, /192\.168\.4\.33/);
   assert.match(bridge, /any\(device\["on"\] for device in devices\)/);
 });

@@ -11,6 +11,7 @@ import struct
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import URLError
+from urllib.parse import parse_qs, urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -199,10 +200,14 @@ def smart_plug_status(device: tuple[str, str, str]) -> dict:
     return result
 
 
-def smart_home_status() -> dict:
-    with ThreadPoolExecutor(max_workers=len(SMART_PLUGS)) as executor:
-        plugs = list(executor.map(smart_plug_status, SMART_PLUGS))
-    pending = [
+def smart_home_status(device_ids: set[str] | None = None) -> dict:
+    selected = [
+        device for device in SMART_PLUGS
+        if device_ids is None or device[0] in device_ids
+    ]
+    with ThreadPoolExecutor(max_workers=max(1, len(selected))) as executor:
+        plugs = list(executor.map(smart_plug_status, selected))
+    pending = [] if device_ids is not None else [
         {
             **device,
             "controllable": False,
@@ -327,10 +332,19 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
-        if self.path.rstrip("/") == "/smart-home/status":
-            self.json_response(smart_home_status())
+        request = urlsplit(self.path)
+        path = request.path.rstrip("/")
+        if path == "/smart-home/status":
+            raw_devices = parse_qs(request.query).get("devices", [])
+            device_ids = {
+                device_id
+                for value in raw_devices
+                for device_id in value.split(",")
+                if device_id
+            }
+            self.json_response(smart_home_status(device_ids or None))
             return
-        if self.path.rstrip("/") not in {"", "/health", "/status"}:
+        if path not in {"", "/health", "/status"}:
             self.json_response({"ok": False, "error": "Not found"}, 404)
             return
         self.json_response(status())
