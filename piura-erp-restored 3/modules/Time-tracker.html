@@ -430,6 +430,9 @@ body>.hero-topbar .time-edit-button{position:absolute!important;top:50%!importan
 body.time-stats-active .hero{display:none!important}body.time-stats-active .content{padding-top:34px!important}
 @media(max-width:1050px){.stats-category-grid{grid-template-columns:1fr}.stats-summary{grid-template-columns:1fr 1fr}.stats-summary-card:last-child{grid-column:1/-1}.time-view-tabs{top:104px}}
 @media(max-width:650px){.time-view-tabs{position:relative;top:auto;margin-top:14px}.stats-hero{padding:26px 20px;border-radius:22px}.stats-summary{grid-template-columns:1fr}.stats-summary-card:last-child{grid-column:auto}.stats-category{padding:21px}.stats-category-times{grid-template-columns:1fr}.stats-section-head{align-items:flex-start;flex-direction:column}.time-view-tab{padding-inline:15px}}
+/* 30.08.2026 — compact toggles, one selected period, two clear answers. */
+.hero-right{display:flex!important;align-items:center!important;gap:10px!important;margin-right:0!important}.time-view-tabs{position:static!important;top:auto!important;z-index:auto!important;margin:0!important;padding:4px!important;border-radius:13px!important;box-shadow:none!important}.time-view-tab{min-height:36px!important;padding:0 14px!important;border-radius:9px!important;font-size:9px!important}body>.hero-topbar .hero-right .time-edit-button{position:static!important;inset:auto!important;margin:0!important;transform:none!important;flex:0 0 40px!important}.stats-view{gap:30px!important}.stats-hero{min-height:0!important;padding:30px 34px!important;border-radius:26px!important}.stats-hero-kicker,.stats-hero h1,.stats-hero p{display:none!important}.stats-period-toggle{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:min(420px,100%);margin:0 auto 24px;padding:5px;border:1px solid var(--bord);border-radius:15px;background:var(--s2)}.stats-period-button{min-height:42px;border:0;border-radius:11px;background:transparent;color:var(--muted);font:850 10px 'JetBrains Mono',monospace;cursor:pointer}.stats-period-button[aria-pressed="true"]{background:linear-gradient(135deg,var(--blue),color-mix(in srgb,var(--blue) 65%,var(--lime)));color:#06101d;box-shadow:0 8px 24px color-mix(in srgb,var(--blue) 22%,transparent)}.stats-summary{grid-template-columns:1fr 1fr!important;gap:18px!important;margin-top:0!important}.stats-summary-card{min-height:150px!important;padding:27px 30px!important;text-align:center}.stats-summary-card strong{margin-top:16px!important;font-size:clamp(40px,4vw,58px)!important}.stats-summary-card:nth-child(2) strong{color:var(--lime)!important}.stats-section-head{padding:0 5px!important}.stats-section-head h2{font-size:clamp(32px,3vw,46px)!important}.stats-section-head p{display:none!important}.stats-category-grid{gap:22px!important}.stats-category{min-height:285px!important;padding:31px!important;border-radius:27px!important;display:grid;grid-template-rows:auto 1fr auto;align-content:stretch}.stats-category-head{align-items:center!important}.stats-category-icon{width:58px!important;height:58px!important;font-size:28px!important}.stats-category-title{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;flex:1!important}.stats-category-title strong{font-size:23px!important}.stats-category-title span{margin:0!important;color:var(--stat-color)!important;font-size:15px!important;font-weight:900!important}.stats-category-times{display:block!important;margin-top:30px!important}.stats-time{height:100%;min-height:112px!important;padding:20px 0!important;display:grid;place-items:center;border:0!important;background:transparent!important;text-align:center}.stats-time span{display:none!important}.stats-time strong{margin:0!important;color:var(--ink)!important;font-size:clamp(40px,4vw,60px)!important}.stats-share{margin-top:20px!important}.stats-share-track{height:11px!important}.stats-share>b{display:none!important}body.time-stats-active .content{padding-top:28px!important}
+@media(max-width:760px){.hero-topbar{align-items:flex-start!important}.hero-right{flex-wrap:wrap!important}.stats-summary{grid-template-columns:1fr!important}.stats-category-grid{grid-template-columns:1fr!important}.stats-category{min-height:245px!important}.stats-category-title strong{font-size:19px!important}.stats-category-title span{font-size:13px!important}}
 </style>
 </head>
 <body>
@@ -455,14 +458,13 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
         </svg>
         Скачать Excel
       </button>
+      <nav class="time-view-tabs" aria-label="Режим учёта времени">
+        <button class="time-view-tab" id="dailyViewTab" type="button" aria-selected="true" onclick="setTimeView('daily')">День</button>
+        <button class="time-view-tab" id="statsViewTab" type="button" aria-selected="false" onclick="setTimeView('stats')">Статистика</button>
+      </nav>
+      <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Добавить, переименовать или удалить категорию" aria-label="Редактировать категории">✎</button>
     </div>
-    <button class="btn-icon-sq time-edit-button" id="timeEditButton" type="button" onclick="openManageModal()" title="Добавить, переименовать или удалить категорию" aria-label="Редактировать категории">✎</button>
 </div>
-
-<nav class="time-view-tabs" aria-label="Режим учёта времени">
-  <button class="time-view-tab" id="dailyViewTab" type="button" aria-selected="true" onclick="setTimeView('daily')">День</button>
-  <button class="time-view-tab" id="statsViewTab" type="button" aria-selected="false" onclick="setTimeView('stats')">Статистика</button>
-</nav>
 
 <!-- ═══ HERO ═══ -->
 <div class="hero">
@@ -493,12 +495,10 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
   </section>
   <section class="stats-view" id="statsView" hidden>
     <div class="stats-hero">
-      <span class="stats-hero-kicker">Личный ритм</span>
-      <h1>Время в цифрах</h1>
-      <p>Последние 30 дней рядом со всей историей — по каждой категории отдельно.</p>
+      <div class="stats-period-toggle" role="group" aria-label="Период статистики"><button class="stats-period-button" type="button" data-stats-period="7" aria-pressed="false" onclick="setStatsPeriod('7')">7 дней</button><button class="stats-period-button" type="button" data-stats-period="30" aria-pressed="true" onclick="setStatsPeriod('30')">30 дней</button><button class="stats-period-button" type="button" data-stats-period="all" aria-pressed="false" onclick="setStatsPeriod('all')">Всё время</button></div>
       <div class="stats-summary" id="statsSummary"></div>
     </div>
-    <div class="stats-section-head"><h2>По направлениям</h2><p id="statsPeriodLabel"></p></div>
+    <div class="stats-section-head"><h2>По направлениям</h2></div>
     <div class="stats-category-grid" id="statsCategoryGrid"></div>
   </section>
 </div>
@@ -576,7 +576,7 @@ const TIME_VIEW_KEY = 'tt_active_view_v1';
 
 let curDate = (()=>{const saved=localStorage.getItem(SELECTED_DATE_KEY),parsed=/^\d{4}-\d{2}-\d{2}$/.test(saved||'')?new Date(saved+'T00:00:00'):new Date();return Number.isNaN(parsed.getTime())?new Date():parsed})(); curDate.setHours(0,0,0,0);
 let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
-let activeTimeView = localStorage.getItem(TIME_VIEW_KEY)==='stats'?'stats':'daily';
+let activeTimeView = 'daily', statsPeriod = '30';
 let chartPie = null, chartBar = null;
 let catsCache = null, legacyMigrationDone = false, summaryFrame = 0;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
@@ -985,31 +985,25 @@ function longDuration(minutes){
   if(!hours)return `${mins} мин`;
   return mins?`${hours} ч ${mins} мин`:`${hours} ч`;
 }
-function statisticsSnapshot(){
-  const all=load(),cats=getCats(),today=dk(new Date()),cutoffDate=new Date();
-  cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-29);
-  const cutoff=dk(cutoffDate),keys=Object.keys(all).filter(key=>/^\d{4}-\d{2}-\d{2}$/.test(key)&&key<=today).sort();
-  const recentKeys=keys.filter(key=>key>=cutoff),first=keys[0]||'',last=keys.at(-1)||'',spanDays=inclusiveCalendarDays(first,last);
-  let allTotal=0,recentTotal=0;
-  const categories=cats.map(cat=>{
-    const allMinutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);
-    const recentMinutes=recentKeys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);
-    allTotal+=allMinutes;recentTotal+=recentMinutes;
-    return{...cat,allMinutes,recentMinutes};
-  });
-  categories.forEach(cat=>cat.share=allTotal?cat.allMinutes/allTotal*100:0);
-  categories.sort((a,b)=>b.allMinutes-a.allMinutes||b.recentMinutes-a.recentMinutes||a.label.localeCompare(b.label,'ru'));
-  return{categories,allTotal,recentTotal,first,last,spanDays,recordedDays:keys.length};
+function statisticsSnapshot(period=statsPeriod){
+  const all=load(),cats=getCats(),today=dk(new Date()),allKeys=Object.keys(all).filter(key=>/^\d{4}-\d{2}-\d{2}$/.test(key)&&key<=today).sort(),first=allKeys[0]||'',last=allKeys.at(-1)||'';
+  let keys=allKeys,periodDays=inclusiveCalendarDays(first,last)||1,label='Всё время';
+  if(period==='7'||period==='30'){
+    periodDays=Number(period);const cutoffDate=new Date();cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-(periodDays-1));const cutoff=dk(cutoffDate);keys=allKeys.filter(key=>key>=cutoff);label=periodDays+' дней';
+  }
+  let total=0;const categories=cats.map(cat=>{const minutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);total+=minutes;return{...cat,minutes}});
+  categories.forEach(cat=>cat.share=total?cat.minutes/total*100:0);categories.sort((a,b)=>b.minutes-a.minutes||a.label.localeCompare(b.label,'ru'));
+  return{categories,total,perDay:total/Math.max(1,periodDays),periodDays,label};
 }
 function renderTimeStatistics(){
   const summary=document.getElementById('statsSummary'),grid=document.getElementById('statsCategoryGrid');if(!summary||!grid)return;
-  const data=statisticsSnapshot(),dateLabel=key=>key?new Date(key+'T00:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'}):'нет данных';
-  summary.innerHTML=`<article class="stats-summary-card"><span>Последние 30 дней</span><strong>${longDuration(data.recentTotal)}</strong></article><article class="stats-summary-card"><span>За всё время</span><strong>${longDuration(data.allTotal)}</strong></article><article class="stats-summary-card"><span>Период наблюдения</span><strong>${data.spanDays} дн.</strong></article>`;
-  document.getElementById('statsPeriodLabel').textContent=data.first?`${dateLabel(data.first)} — ${dateLabel(data.last)} · ${data.recordedDays} дней с записями`:'Записи ещё не добавлены';
-  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}% всего времени</span></div></div><div class="stats-category-times"><div class="stats-time"><span>Последние 30 дней</span><strong>${longDuration(cat.recentMinutes)}</strong></div><div class="stats-time"><span>За всё время</span><strong>${longDuration(cat.allMinutes)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span><b>${Math.round(cat.share)}%</b></div></article>`).join('');
+  const data=statisticsSnapshot();document.querySelectorAll('[data-stats-period]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.statsPeriod===statsPeriod)));
+  summary.innerHTML=`<article class="stats-summary-card"><span>Итого · ${data.label}</span><strong>${longDuration(data.total)}</strong></article><article class="stats-summary-card"><span>В день</span><strong>${longDuration(data.perDay)}</strong></article>`;
+  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}%</span></div></div><div class="stats-category-times"><div class="stats-time"><strong>${longDuration(cat.minutes)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span></div></article>`).join('');
 }
-function setTimeView(view,persist=true){
-  activeTimeView=view==='stats'?'stats':'daily';if(persist)localStorage.setItem(TIME_VIEW_KEY,activeTimeView);
+function setStatsPeriod(period){statsPeriod=['7','30','all'].includes(period)?period:'30';renderTimeStatistics()}
+function setTimeView(view){
+  activeTimeView=view==='stats'?'stats':'daily';
   const stats=activeTimeView==='stats';document.body.classList.toggle('time-stats-active',stats);
   document.getElementById('dailyView').hidden=stats;document.getElementById('statsView').hidden=!stats;
   document.getElementById('dailyViewTab').setAttribute('aria-selected',String(!stats));document.getElementById('statsViewTab').setAttribute('aria-selected',String(stats));
@@ -1164,7 +1158,7 @@ function doExport() {
 
 /* ── INIT ── */
 updateDateLabels();
-setTimeView(activeTimeView,false);
+setTimeView('daily');
 document.getElementById('prevDay').addEventListener('click',event=>{event.preventDefault();chDate(-1)});
 document.getElementById('nextDay').addEventListener('click',event=>{event.preventDefault();chDate(1)});
 document.getElementById('todayDay').addEventListener('click',event=>{event.preventDefault();goToday()});
