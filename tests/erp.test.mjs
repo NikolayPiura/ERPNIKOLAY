@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор управляет вентилятором, очистителем, четырьмя зонами и синхронизирует карту с общим светом', () => {
+test('обзор управляет вентилятором, очистителем, кондиционером, четырьмя зонами и общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
@@ -155,6 +155,16 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /lampOn=goveeLampOn\|\|elgatoLampOn\|\|mapLightOn/);
   assert.match(overview, /function queueBrightness\(value,immediate=false\)/);
   assert.match(overview, /setTimeout\(flushBrightness,immediate\?0:100\)/);
+  assert.match(overview, /id="hvacCard"/);
+  assert.match(overview, /id="hvacCurrent"/);
+  assert.match(overview, /data-hvac-mode="heat"/);
+  assert.match(overview, /data-hvac-mode="cool"/);
+  assert.match(overview, /data-hvac-setpoint="heat"/);
+  assert.match(overview, /data-hvac-setpoint="cool"/);
+  assert.match(overview, /ECOBEE_BRIDGE='http:\/\/127\.0\.0\.1:4179'/);
+  assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/status'\)/);
+  assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/control'/);
+  assert.doesNotMatch(overview, /data-hvac-mode="auto"|data-hvac-mode="off"/);
   assert.match(overview, /<span aria-hidden="true">⏻<\/span> Всё/);
   assert.doesNotMatch(overview, /id="smartHomeDevices"|id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
@@ -221,6 +231,9 @@ test('главная возвращает полезные сводные циф
   assert.ok(order.every((value,index)=>value>=0&&(index===0||value>order[index-1])));
   assert.doesNotMatch(dashboard, /tile ps|week-kpis|overviewWeekChart/);
   for(const label of ['Доход за год','Доллар в час','Капитал фондов','Piura Family Fund','Endowment','Подписчики'])assert.match(dashboard,new RegExp(label));
+  assert.match(dashboard, /id="numbersToggle"/);
+  assert.match(dashboard, /id="overviewNumbers"[^>]*hidden/);
+  assert.match(overview, /setNumbersVisible\(false\)/);
   assert.match(overview, /function refreshFinancialSummary\(\)/);
   assert.doesNotMatch(dashboard, /data-go="finance"|data-go="pff"/);
   assert.doesNotMatch(dashboard, /class="progress-caption"/);
