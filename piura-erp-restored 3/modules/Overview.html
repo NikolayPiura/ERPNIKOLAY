@@ -864,14 +864,15 @@
     .control-grid>.fan-card .fan-switch{min-height:394px!important;align-content:center!important;gap:0!important}
     .control-grid>.purifier-card{position:relative;display:block!important}
     .control-grid>.purifier-card .purifier-power{width:100%;min-height:394px!important;display:grid;place-items:center;padding:12px 12px 46px!important}
-    .control-grid>.purifier-card .purifier-art{width:min(100%,254px)!important;transform:translateY(-5px);filter:drop-shadow(0 24px 38px color-mix(in srgb,var(--tone) 16%,transparent))}
-    .control-grid>.purifier-card .purifier-controls{position:absolute;z-index:6;left:50%;bottom:38px;width:216px;transform:translateX(-50%)}
-    .control-grid>.purifier-card .purifier-modes{height:62px;padding:5px;border-radius:20px;backdrop-filter:blur(16px);box-shadow:0 16px 34px rgba(3,12,24,.26),inset 0 1px 0 color-mix(in srgb,var(--erp-text,var(--text)) 7%,transparent)}
-    .control-grid>.purifier-card .purifier-mode{min-height:50px!important}
+    .control-grid>.purifier-card .purifier-art{width:min(100%,286px)!important;transform:translate(-12px,-5px);filter:drop-shadow(0 24px 38px color-mix(in srgb,var(--tone) 18%,transparent))}
+    .control-grid>.purifier-card .purifier-controls{position:absolute;z-index:6;right:20px;top:50%;width:64px;transform:translateY(-50%)}
+    .control-grid>.purifier-card .purifier-modes{height:220px;padding:6px;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(3,1fr)!important;gap:7px!important;border-radius:22px;backdrop-filter:blur(16px);box-shadow:0 16px 34px rgba(3,12,24,.26),inset 0 1px 0 color-mix(in srgb,var(--erp-text,var(--text)) 7%,transparent)}
+    .control-grid>.purifier-card .purifier-mode{min-height:0!important;border-radius:16px!important;font-size:16px!important}
+    .control-grid>.purifier-card .purifier-mode:after{display:none!important}
     @media(max-width:1050px){.control-grid>.fan-card,.control-grid>.purifier-card{min-height:430px!important}.control-grid>.purifier-card .purifier-power{min-height:378px!important}.control-grid>.purifier-card .purifier-art{width:min(100%,246px)!important}}
-    @media(max-width:700px){.control-grid>.fan-card,.control-grid>.purifier-card{padding:18px!important;min-height:350px!important}.control-grid>.fan-card .fan-switch,.control-grid>.purifier-card .purifier-power{min-height:314px!important}.control-grid>.fan-card .fan-stage{width:220px!important;height:220px!important}.control-grid>.fan-card .fan-rotor{width:158px!important;height:158px!important}.control-grid>.purifier-card .purifier-art{width:min(100%,218px)!important}.control-grid>.purifier-card .purifier-controls{bottom:28px;width:min(210px,calc(100% - 44px))}}
+    @media(max-width:700px){.control-grid>.fan-card,.control-grid>.purifier-card{padding:18px!important;min-height:350px!important}.control-grid>.fan-card .fan-switch,.control-grid>.purifier-card .purifier-power{min-height:314px!important}.control-grid>.fan-card .fan-stage{width:220px!important;height:220px!important}.control-grid>.fan-card .fan-rotor{width:158px!important;height:158px!important}.control-grid>.purifier-card .purifier-art{width:min(100%,248px)!important}.control-grid>.purifier-card .purifier-controls{right:14px;width:56px}.control-grid>.purifier-card .purifier-modes{height:190px}.control-grid>.purifier-card .purifier-mode{font-size:14px!important}}
 
-    /* Four room zones + six Kasa outlets, with one master control. */
+    /* Four room zones with one separate master control. */
     .control-grid>.zone-card .device-section-head{justify-content:space-between!important;gap:18px;margin-bottom:20px}
     .zone-master{min-height:52px;padding:6px 8px 6px 18px;display:inline-flex;align-items:center;gap:13px;border:1px solid color-mix(in srgb,var(--erp-success,#43d39e) 26%,var(--erp-line,var(--line)));border-radius:18px;background:color-mix(in srgb,var(--erp-success,#43d39e) 6%,var(--erp-raised,var(--raised)));color:var(--erp-text,var(--text));cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s,transform .2s}
     .zone-master strong{font-size:14px;font-weight:850;letter-spacing:-.02em}.zone-master .zone-power{width:38px;height:38px;border-radius:13px}
@@ -879,12 +880,17 @@
     .zone-master.is-on{border-color:color-mix(in srgb,var(--erp-success,#43d39e) 62%,var(--erp-line,var(--line)));background:color-mix(in srgb,var(--erp-success,#43d39e) 12%,var(--erp-raised,var(--raised)))}
     .zone-master.is-on .zone-power{border-color:transparent;background:var(--erp-success,#43d39e);color:#07130f;box-shadow:0 0 24px color-mix(in srgb,var(--erp-success,#43d39e) 28%,transparent)}
     .zone-master.is-busy .zone-power{animation:masterPulse .7s ease-in-out infinite alternate}.zone-master:disabled{opacity:.52;cursor:wait}
-    .control-grid>.zone-card .zone-switch-grid{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:12px!important}
-    .control-grid>.zone-card .zone-switch{grid-column:span 3;min-height:104px}
-    .control-grid>.zone-card .zone-strip{--zone-tone:#4fc9dd;grid-column:span 2;min-height:104px;background:linear-gradient(150deg,color-mix(in srgb,var(--zone-tone) 7%,var(--erp-raised,var(--raised))),var(--erp-raised,var(--raised)))}
-    .control-grid>.zone-card .zone-strip:nth-child(even){--zone-tone:#5ed9b7}.control-grid>.zone-card .zone-strip strong{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
-    @media(max-width:900px){.control-grid>.zone-card .zone-switch-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.control-grid>.zone-card .zone-switch,.control-grid>.zone-card .zone-strip{grid-column:auto;min-height:100px}}
-    @media(max-width:460px){.control-grid>.zone-card .device-section-head{align-items:center}.zone-master{min-height:46px;padding-left:13px;gap:9px}.zone-master strong{font-size:12px}.zone-master .zone-power{width:34px;height:34px}.control-grid>.zone-card .zone-switch-grid{gap:9px!important}.control-grid>.zone-card .zone-switch,.control-grid>.zone-card .zone-strip{min-height:92px;padding:11px}}
+    .control-grid>.zone-card .zone-switch-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+    .control-grid>.zone-card .zone-switch{grid-column:auto;min-height:104px}
+    @media(max-width:900px){.control-grid>.zone-card .zone-switch-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.control-grid>.zone-card .zone-switch{min-height:100px}}
+    @media(max-width:460px){.control-grid>.zone-card .device-section-head{align-items:center}.zone-master{min-height:46px;padding-left:13px;gap:9px}.zone-master strong{font-size:12px}.zone-master .zone-power{width:34px;height:34px}.control-grid>.zone-card .zone-switch-grid{gap:9px!important}.control-grid>.zone-card .zone-switch{min-height:92px;padding:11px}}
+
+    /* Brightness lives on the side of the colour instrument instead of below it. */
+    .control-grid .minimal-lamp .lamp-power-row{left:26px!important;top:50%!important;bottom:auto!important;width:66px!important;max-width:66px!important;height:226px!important;min-height:226px!important;transform:translateY(-50%)}
+    .control-grid .minimal-lamp .lamp-brightness{width:66px!important;height:226px!important;min-height:226px!important;padding:50px 0 18px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+    .control-grid .minimal-lamp .lamp-brightness b{left:50%!important;top:9px!important;width:50px!important;height:36px!important;transform:translateX(-50%)!important;border-radius:13px!important;font-size:12px!important}
+    .control-grid .minimal-lamp .lamp-brightness input{width:24px!important;height:148px!important;margin:0!important;writing-mode:vertical-lr;direction:rtl}
+    @media(max-width:700px){.control-grid .minimal-lamp .lamp-power-row{position:absolute!important;left:14px!important;top:50%!important;bottom:auto!important;width:58px!important;height:190px!important;min-height:190px!important;transform:translateY(-50%)}.control-grid .minimal-lamp .lamp-brightness{width:58px!important;height:190px!important;min-height:190px!important;padding:45px 0 14px!important}.control-grid .minimal-lamp .lamp-brightness b{width:44px!important;height:32px!important;font-size:11px!important}.control-grid .minimal-lamp .lamp-brightness input{height:122px!important}}
   </style>
 </head>
 <body>
@@ -893,19 +899,13 @@
     <article class="tile admin-progress" data-go="dynamics"><div class="admin-overview"><div class="tile-head"><h2>Админ-шкала</h2></div><section class="admin-total-panel" aria-label="Общий прогресс админ-шкалы"><div class="admin-total-head"><span>Общий прогресс</span><strong id="adminValue">4 / 98</strong></div><div class="admin-total-track"><i id="adminTotalBar"></i></div></section></div><div class="admin-dynamic-list" id="adminDynamics"></div></article>
     <article class="tile fund-goals" data-go="funds"><div class="tile-head"><h2>Цели фондов</h2></div><div class="fund-goal-list" id="fundGoals"></div></article>
     <section class="control-grid" aria-label="Управление комнатой">
-      <article class="tile zone-card" aria-label="Управление десятью зонами">
+      <article class="tile zone-card" aria-label="Управление четырьмя зонами">
         <div class="device-section-head"><h2>Зоны</h2><button class="zone-master" id="zoneAllToggle" type="button" aria-label="Включить все зоны" aria-pressed="false"><strong>Все зоны</strong><span class="zone-power" aria-hidden="true">⏻</span></button></div>
         <div class="zone-switch-grid">
           <button class="zone-switch" type="button" data-zone-device="1" aria-label="Включить основное" aria-pressed="false"><strong>Основное</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
           <button class="zone-switch" type="button" data-zone-device="3" aria-label="Включить карту" aria-pressed="false"><strong>Карта</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
           <button class="zone-switch" type="button" data-zone-device="2" aria-label="Включить шкаф" aria-pressed="false"><strong>Шкаф</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
           <button class="zone-switch" type="button" data-zone-device="5" aria-label="Включить голову" aria-pressed="false"><strong>Голова</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="0" aria-label="Розетка 1" aria-pressed="false" disabled><strong>Розетка 1</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="1" aria-label="Розетка 2" aria-pressed="false" disabled><strong>Розетка 2</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="2" aria-label="Розетка 3" aria-pressed="false" disabled><strong>Розетка 3</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="3" aria-label="Розетка 4" aria-pressed="false" disabled><strong>Розетка 4</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="4" aria-label="Розетка 5" aria-pressed="false" disabled><strong>Розетка 5</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
-          <button class="zone-switch zone-strip" type="button" data-strip-index="5" aria-label="Розетка 6" aria-pressed="false" disabled><strong>Розетка 6</strong><span class="zone-power" aria-hidden="true">⏻</span></button>
         </div>
       </article>
       <article class="tile fan-card is-offline" id="fanCard" aria-label="Вентилятор">
@@ -917,12 +917,12 @@
       <article class="tile purifier purifier-card is-offline" id="purifierCard" aria-label="Очиститель воздуха">
         <button class="purifier-power" id="purifierPower" type="button" aria-label="Включить очиститель" aria-pressed="false" disabled>
           <svg class="purifier-art" viewBox="0 0 240 300" aria-hidden="true">
-            <ellipse class="purifier-cap" cx="120" cy="47" rx="75" ry="28"/>
-            <path class="purifier-shell" d="M45 47c0-24 150-24 150 0v183c0 38-24 58-75 58s-75-20-75-58z"/>
-            <ellipse class="purifier-cap" cx="120" cy="47" rx="75" ry="28"/>
-            <path class="purifier-vent" d="M78 44c22-12 62-12 84 0M88 51c18-8 46-8 64 0M102 58c10-4 26-4 36 0"/>
-            <circle class="purifier-core" cx="120" cy="168" r="48"/>
-            <circle class="purifier-core-line" cx="120" cy="168" r="35"/>
+            <ellipse class="purifier-cap" cx="120" cy="47" rx="98" ry="31"/>
+            <path class="purifier-shell" d="M22 47c0-28 196-28 196 0v179c0 42-31 62-98 62s-98-20-98-62z"/>
+            <ellipse class="purifier-cap" cx="120" cy="47" rx="98" ry="31"/>
+            <path class="purifier-vent" d="M62 42c31-14 85-14 116 0M73 51c26-10 68-10 94 0M89 60c18-6 44-6 62 0"/>
+            <circle class="purifier-core" cx="120" cy="168" r="55"/>
+            <circle class="purifier-core-line" cx="120" cy="168" r="41"/>
             <path class="purifier-power-mark" d="M120 145v25m-18-15a25 25 0 1 0 36 0"/>
           </svg>
         </button>
@@ -991,7 +991,6 @@ const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
 let lampOn=false,goveeLightAvailable=false,goveeLampOn=false,elgatoLightCount=0,elgatoLampOn=false,mapLightAvailable=false,mapLightOn=false;
 let fanOnline=false,fanPower=false,fanBusy=false,lampBusy=false,everythingBusy=false,zoneAllBusy=false,currentLampColor='#ffffff',currentBrightness=70;
 let purifierState={online:false,controllable:false,power:false,settings:{}},purifierBusy=false;
-let stripDeviceState={online:false,controllable:false,outlets:[]};
 let brightnessTimer=0,brightnessQueued=null,brightnessSyncing=false;
 function savedZonePower(){try{return JSON.parse(localStorage.getItem(ZONE_STATE_KEY)||'{}')}catch{return{}}}
 function rememberZonePower(){try{localStorage.setItem(ZONE_STATE_KEY,JSON.stringify(Object.fromEntries(zoneDevices().map(device=>[device.id,Boolean(device.power)]))))}catch{}}
@@ -1052,30 +1051,6 @@ function renderZoneDevices(data={}){
     button.setAttribute('aria-label',next.power?`Выключить ${catalog.name.toLowerCase()}`:`Включить ${catalog.name.toLowerCase()}`)
   });
 
-  const rawStrip=received.get('4');
-  if(rawStrip)stripDeviceState={
-    online:Boolean(rawStrip.online),
-    controllable:Boolean(rawStrip.controllable),
-    outlets:Array.isArray(rawStrip.outlets)?rawStrip.outlets:[]
-  };
-  const previousStrip=new Map(zoneDevices().filter(device=>device.kind==='strip').map(device=>[device.slot,device]));
-  zoneDevices().filter(device=>device.kind==='strip').forEach(device=>zoneDeviceState.delete(device.id));
-  document.querySelectorAll('[data-strip-index]').forEach(button=>{
-    const slot=Number(button.dataset.stripIndex),raw=stripDeviceState.outlets[slot],previous=previousStrip.get(slot);
-    const id=String(raw?.id||`4:slot-${slot+1}`),name=String(raw?.name||`Розетка ${slot+1}`),controllable=Boolean(raw?.id)&&stripDeviceState.controllable;
-    const next={id,name,kind:'strip',slot,controllable,online:controllable&&raw?.online!==false,power:raw?.power==null?Boolean(previous?.power):Boolean(raw.power),busy:Boolean(previous?.busy)};
-    zoneDeviceState.set(id,next);
-    button.dataset.zoneDevice=id;
-    button.querySelector('strong').textContent=name;
-    button.onclick=()=>toggleZoneDevice(id);
-    button.classList.toggle('is-on',next.power);
-    button.classList.toggle('is-offline',!next.online);
-    button.classList.toggle('is-busy',next.busy);
-    button.disabled=everythingBusy||zoneAllBusy||next.busy||!next.controllable;
-    button.setAttribute('aria-pressed',String(next.power));
-    button.setAttribute('aria-label',next.controllable?(next.power?`Выключить ${name.toLowerCase()}`:`Включить ${name.toLowerCase()}`):`${name} недоступна`)
-  });
-
   const zones=controllableZoneDevices(),allOn=zones.length>0&&zones.every(device=>device.power),allButton=document.getElementById('zoneAllToggle');
   if(incoming.length)rememberZonePower();
   allButton.disabled=everythingBusy||zoneAllBusy||!zones.length;
@@ -1085,10 +1060,10 @@ function renderZoneDevices(data={}){
   allButton.setAttribute('aria-label',allOn?'Выключить все зоны':'Включить все зоны');
   updateMasterPower()
 }
-async function refreshZoneDevices(){try{renderZoneDevices(await requestElgato('/smart-home/status?devices=1,2,3,5,4'))}catch(error){renderZoneDevices();console.warn('Десять зон',error)}}
+async function refreshZoneDevices(){try{renderZoneDevices(await requestElgato('/smart-home/status?devices=1,2,3,5'))}catch(error){renderZoneDevices();console.warn('Четыре зоны',error)}}
 async function setZonePower(deviceId,power){const data=await requestElgato('/smart-home',{method:'POST',body:JSON.stringify({device:String(deviceId),power:Boolean(power)})});renderZoneDevices(data);return data}
 async function toggleZoneDevice(deviceId){const device=zoneDeviceState.get(String(deviceId));if(!device||device.controllable===false||device.busy||zoneAllBusy)return;const previous=device.power,target=!previous;device.busy=true;device.power=target;renderZoneDevices();try{await setZonePower(device.id,target)}catch(error){device.power=previous;console.warn(device.name,error);await refreshZoneDevices()}finally{const current=zoneDeviceState.get(device.id);if(current)current.busy=false;renderZoneDevices()}}
-async function setAllZonePower(power){const zones=controllableZoneDevices(),roomZones=zones.filter(device=>device.kind!=='strip'),hasStrip=zones.some(device=>device.kind==='strip'),jobs=roomZones.map(device=>setZonePower(device.id,power));if(hasStrip)jobs.push(setZonePower('4',power));return Promise.allSettled(jobs)}
+async function setAllZonePower(power){return Promise.allSettled(controllableZoneDevices().map(device=>setZonePower(device.id,power)))}
 async function toggleAllZones(){const zones=controllableZoneDevices();if(zoneAllBusy||!zones.length)return;const target=!zones.every(device=>device.power);zoneAllBusy=true;zones.forEach(device=>device.power=target);renderZoneDevices();try{await setAllZonePower(target);await refreshZoneDevices()}finally{zoneAllBusy=false;renderZoneDevices()}}
 
 function renderFan(data){fanOnline=Boolean(data?.online);fanPower=fanOnline&&Boolean(data?.power);const card=document.getElementById('fanCard'),button=document.getElementById('fanToggle');card.classList.toggle('is-on',fanPower);card.classList.toggle('is-offline',!fanOnline);button.disabled=fanBusy||everythingBusy||!fanOnline;button.classList.toggle('is-busy',fanBusy);button.setAttribute('aria-pressed',String(fanPower));button.setAttribute('aria-label',fanPower?'Выключить вентилятор':'Включить вентилятор');updateMasterPower()}
