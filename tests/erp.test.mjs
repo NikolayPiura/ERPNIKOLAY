@@ -636,6 +636,10 @@ test('Главное тест остаётся отдельным экспери
   assert.match(testOverview, /id="psPanel"/);
   assert.match(testOverview, /id="adminMiniGrid"/);
   assert.match(testOverview, /id="psKpis"/);
+  assert.match(testOverview, /id="officeTelemetry"/);
+  assert.match(testOverview, /id="telemetryColor"/);
+  assert.match(testOverview, /metric-meta/);
+  assert.match(testOverview, /command center: technical, data-dense, restrained/);
   assert.match(testOverview, /function weeklyStats\(weekly=\{\}\)/);
   assert.match(testOverview, /'287 \/ 400'/);
   assert.match(testOverview, /'0 \/ 60'/);
