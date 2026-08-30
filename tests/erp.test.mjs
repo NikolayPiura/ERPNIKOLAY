@@ -86,7 +86,7 @@ test('premium/light темы и сдержанные палитры доступ
   assert.doesNotMatch(shell, /body\{filter:grayscale/);
 });
 
-test('обзор управляет точным вентилятором, двумя заданными розетками и синхронизирует карту с общим светом', () => {
+test('обзор управляет точным вентилятором, четырьмя зонами и синхронизирует карту с общим светом', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
   const bridge = read('integrations/elgato-local-bridge/server.py');
   assert.match(overview, /id="lampPower"/);
@@ -108,13 +108,14 @@ test('обзор управляет точным вентилятором, дв�
   assert.match(overview, /requestSmartLife\('\/api\/map\/status'\)/);
   assert.match(overview, /requestSmartLife\('\/api\/map\/power'/);
   assert.match(overview, /requestSmartLife\('\/api\/map\/color'/);
-  assert.match(overview, /const AUX_DEVICE_CATALOG=\[\{id:'2',name:'Шкаф'\},\{id:'5',name:'Голова'\}\]/);
-  assert.match(overview, /data-aux-device="2"/);
-  assert.match(overview, /data-aux-device="5"/);
-  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=2,5'\)/);
+  assert.match(overview, /const ZONE_DEVICE_CATALOG=\[\{id:'1',name:'Основное'\},\{id:'3',name:'Карта'\},\{id:'2',name:'Шкаф'\},\{id:'5',name:'Голова'\}\]/);
+  for (const id of ['1','2','3','5']) assert.match(overview, new RegExp(`data-zone-device="${id}"`));
+  assert.match(overview, /id="zoneAllToggle"/);
+  assert.match(overview, /function toggleAllZones\(\)/);
+  assert.match(overview, /requestElgato\('\/smart-home\/status\?devices=1,2,3,5'\)/);
   assert.match(overview, /requestElgato\('\/smart-home',\{method:'POST'/);
   assert.doesNotMatch(overview, /requestElgato\('\/smart-home\/status'\)/);
-  assert.doesNotMatch(overview, /SMART_HOME_CATALOG/);
+  assert.doesNotMatch(overview, /SMART_HOME_CATALOG|AUX_DEVICE_CATALOG|data-aux-device/);
   assert.match(bridge, /def smart_home_status\(device_ids: set\[str\] \| None = None\)/);
   assert.match(bridge, /parse_qs\(request\.query\)\.get\("devices", \[\]\)/);
   assert.match(bridge, /pending = \[\] if device_ids is not None else/);
@@ -134,6 +135,9 @@ test('обзор управляет точным вентилятором, дв�
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
   assert.doesNotMatch(overview, /class="fund-goal-index"/);
+  assert.doesNotMatch(overview, /выполнено/);
+  assert.match(overview, /\.dashboard>\.fund-goals\{min-height:0!important;height:auto!important/);
+  assert.match(overview, /\.dashboard>\.air \.air-reading\{display:grid!important;place-items:center!important/);
 
   assert.match(bridge, /elgato-light-strip-pro-d026\.local/);
   assert.match(bridge, /elgato-light-strip-pro-8c54\.local/);
