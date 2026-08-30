@@ -392,6 +392,313 @@
       .control-grid .minimal-lamp .lamp-console{grid-template-columns:1fr!important;grid-template-rows:auto auto!important;}
       .control-grid .minimal-lamp .lamp-palette{grid-template-columns:repeat(8,minmax(52px,1fr))!important;grid-template-rows:88px!important;}
     }
+
+    /* 30.08.2026 — PIURA 10/10 finish: compact hierarchy, kinetic controls, instrument-grade polish. */
+    :root{
+      --ease-premium:cubic-bezier(.2,.75,.22,1);
+      --hover-lift:-5px;
+      --hover-shadow:0 34px 78px rgba(5,15,32,.18),0 8px 24px rgba(5,15,32,.08);
+    }
+    .tile,.overview-number,.admin-dynamic,.fund-goal,.zone-switch,.fan-switch,
+    .lamp-toggle,.lamp-brightness,.lamp-color,.air-stat{
+      transition:transform .42s var(--ease-premium),border-color .34s ease,
+        box-shadow .42s var(--ease-premium),background .34s ease,filter .34s ease!important;
+    }
+    .tile{isolation:isolate;}
+    .tile::after{
+      content:"";position:absolute;z-index:-1;inset:-55% auto -55% -42%;width:28%;
+      background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--tone,var(--erp-primary,var(--blue))) 7%,transparent),transparent);
+      transform:skewX(-17deg) translateX(-180%);opacity:0;pointer-events:none;
+    }
+    .tile:hover::after{animation:piuraSurfaceSweep 1.05s var(--ease-premium) both;}
+    .tile:hover{transform:translateY(-3px)!important;box-shadow:var(--hover-shadow)!important;}
+    @keyframes piuraSurfaceSweep{18%{opacity:1}100%{opacity:0;transform:skewX(-17deg) translateX(720%)}}
+
+    /* Remove the excess vertical void while retaining a dominant executive answer. */
+    .dashboard>.admin-progress{
+      min-height:454px!important;padding:36px 40px!important;
+      grid-template-rows:auto auto!important;align-content:start!important;
+    }
+    .admin-progress .tile-head h2{font-size:clamp(42px,3.6vw,60px)!important;}
+    .admin-total-panel{
+      margin-top:22px!important;padding:20px 26px 24px!important;border-radius:24px!important;
+      background:
+        linear-gradient(115deg,color-mix(in srgb,var(--tone) 9%,var(--premium-raised)),var(--premium-raised) 62%),
+        repeating-linear-gradient(90deg,transparent 0 48px,color-mix(in srgb,var(--tone) 4%,transparent) 48px 49px)!important;
+    }
+    .admin-total-head strong{font-size:clamp(52px,4.7vw,72px)!important;}
+    .admin-total-track{height:10px!important;margin-top:15px!important;}
+    .admin-dynamic-list{gap:12px!important;margin-top:20px!important;}
+    .admin-dynamic{min-height:88px!important;padding:16px 18px!important;}
+    .admin-dynamic i{height:6px!important;margin-top:13px!important;}
+    .admin-dynamic:hover{
+      transform:translateY(-5px) rotate(var(--card-tilt,-.25deg));
+      border-color:color-mix(in srgb,var(--dynamic-color,var(--tone)) 34%,var(--premium-stroke))!important;
+      box-shadow:0 17px 34px color-mix(in srgb,var(--dynamic-color,var(--tone)) 9%,transparent)!important;
+    }
+    .admin-dynamic:nth-child(even){--card-tilt:.25deg;}
+    .admin-dynamic:hover i:after{filter:brightness(1.12);animation:piuraBarBreath 1.15s ease-in-out infinite alternate;}
+    @keyframes piuraBarBreath{to{filter:brightness(1.22);box-shadow:0 0 17px currentColor}}
+
+    /* Goal cards now share one visual density; Ecology keeps both lines without becoming cramped. */
+    .fund-goals{min-height:365px!important;padding:32px 36px 36px!important;}
+    .fund-goals .tile-head h2{font-size:clamp(38px,3.15vw,50px)!important;}
+    .dashboard>.fund-goals .fund-goal-list{gap:14px!important;margin-top:22px!important;}
+    .dashboard>.fund-goals .fund-goal-list>.fund-goal{
+      min-height:226px!important;padding:20px!important;grid-template-rows:54px 72px 1fr!important;
+    }
+    .dashboard>.fund-goals .fund-goal-top{min-height:54px!important;align-content:center!important;}
+    .dashboard>.fund-goals .fund-goal-percent{font-size:clamp(52px,4.15vw,68px)!important;}
+    .dashboard>.fund-goals .fund-goal-ratio{margin:12px 0 13px!important;}
+    .dashboard>.fund-goals .fund-goal-dual{gap:11px!important;margin-top:4px!important;align-content:end!important;}
+    .dashboard>.fund-goals .fund-goal-dual em{min-height:24px!important;}
+    .dashboard>.fund-goals .fund-goal-dual em strong{font-size:14px!important;}
+    .dashboard>.fund-goals .fund-goal-dual em strong b{font-size:11px!important;}
+    .fund-goal:hover{
+      transform:translateY(-7px) rotate(var(--goal-tilt,-.35deg));
+      border-color:color-mix(in srgb,var(--goal-color) 54%,var(--premium-stroke))!important;
+      box-shadow:0 24px 46px color-mix(in srgb,var(--goal-color) 13%,transparent)!important;
+    }
+    .fund-goal:nth-child(even){--goal-tilt:.35deg;}
+    .fund-goal:hover .fund-goal-percent{transform:translateY(-2px) scale(1.035);}
+    .fund-goal-percent{transition:transform .42s var(--ease-premium),filter .32s ease;}
+    .fund-goal:hover i:after{animation:piuraGoalGlow 1.05s ease-in-out infinite alternate;}
+    @keyframes piuraGoalGlow{to{filter:brightness(1.18);box-shadow:0 0 18px var(--goal-color)}}
+
+    /* Zone buttons behave like tactile hardware keys. */
+    .control-grid>.zone-card{padding:24px 28px!important;}
+    .zone-switch{min-height:106px!important;position:relative;overflow:hidden;}
+    .zone-switch::before{
+      content:"";position:absolute;inset:auto 16% 0;height:2px;border-radius:999px;
+      background:linear-gradient(90deg,transparent,var(--zone-tone,var(--tone)),transparent);opacity:.32;
+    }
+    .zone-switch:hover:not(.is-busy){
+      transform:translateY(-6px) scale(1.012)!important;
+      border-color:color-mix(in srgb,var(--zone-tone,var(--tone)) 48%,var(--premium-stroke))!important;
+      box-shadow:0 18px 34px color-mix(in srgb,var(--zone-tone,var(--tone)) 11%,transparent)!important;
+    }
+    .zone-switch:hover .zone-power{transform:translateY(-2px) rotate(7deg) scale(1.08);}
+    .zone-power{transition:transform .42s var(--ease-premium),box-shadow .34s ease,background .34s ease!important;}
+    .zone-switch:active:not(:disabled){transform:translateY(-1px) scale(.985)!important;}
+
+    /* Rebalance the room console: the fan becomes a hero instrument, light stays precise. */
+    .control-grid>.fan-card{grid-column:span 5!important;min-height:442px!important;padding:24px!important;}
+    .control-grid .minimal-lamp{grid-column:span 7!important;min-height:442px!important;padding:24px!important;}
+    .fan-card{
+      background:
+        radial-gradient(circle at 50% 47%,color-mix(in srgb,var(--tone) 12%,transparent),transparent 33%),
+        radial-gradient(circle at 88% 8%,color-mix(in srgb,var(--tone) 10%,transparent),transparent 35%),
+        var(--premium-panel)!important;
+    }
+    .fan-switch{
+      min-height:394px!important;gap:22px!important;border-radius:27px!important;overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 43%,color-mix(in srgb,var(--tone) 13%,transparent),transparent 36%),
+        repeating-radial-gradient(circle at 50% 43%,transparent 0 31px,color-mix(in srgb,var(--tone) 5%,transparent) 32px 33px),
+        linear-gradient(160deg,color-mix(in srgb,var(--tone) 6%,var(--premium-raised)),var(--premium-raised) 72%)!important;
+    }
+    .fan-switch:hover{
+      transform:translateY(-6px)!important;border-color:color-mix(in srgb,var(--tone) 48%,var(--premium-stroke))!important;
+      box-shadow:0 24px 54px color-mix(in srgb,var(--tone) 14%,transparent),inset 0 1px 0 color-mix(in srgb,var(--erp-text,var(--text)) 7%,transparent)!important;
+    }
+    .fan-stage{
+      width:250px!important;height:250px!important;border-color:color-mix(in srgb,var(--tone) 36%,var(--premium-stroke))!important;
+      background:
+        repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--tone) 24%,transparent) 0 1deg,transparent 1deg 12deg),
+        radial-gradient(circle,color-mix(in srgb,var(--tone) 13%,transparent),transparent 66%)!important;
+      box-shadow:
+        inset 0 0 0 18px color-mix(in srgb,var(--tone) 4%,transparent),
+        inset 0 0 0 41px color-mix(in srgb,var(--tone) 2.5%,transparent),
+        inset 0 0 68px rgba(0,0,0,.13),0 0 64px color-mix(in srgb,var(--tone) 12%,transparent)!important;
+      transition:transform .62s var(--ease-premium),box-shadow .46s ease!important;
+    }
+    .fan-stage:before{inset:-12px!important;border-style:dashed!important;border-color:color-mix(in srgb,var(--tone) 32%,transparent)!important;}
+    .fan-stage:after{inset:30px!important;border-width:2px!important;border-color:color-mix(in srgb,var(--tone) 34%,transparent)!important;}
+    .fan-rotor{width:186px!important;height:186px!important;filter:drop-shadow(0 16px 22px color-mix(in srgb,var(--tone) 20%,transparent));}
+    .fan-blade{opacity:.94!important;}.fan-hub{stroke-width:4!important;}
+    .fan-switch:hover .fan-stage{transform:scale(1.035) rotate(-2deg);box-shadow:inset 0 0 0 18px color-mix(in srgb,var(--tone) 5%,transparent),inset 0 0 70px rgba(0,0,0,.12),0 0 84px color-mix(in srgb,var(--tone) 20%,transparent)!important;}
+    .fan-switch:hover .fan-stage:before{animation:piuraOrbit 5s linear infinite;}
+    .fan-switch:hover .fan-blades{animation:piuraFanPreview 1.8s var(--ease-premium) both;}
+    .fan-card.is-on .fan-switch:hover .fan-blades{animation:fanSpin .66s linear infinite!important;}
+    .fan-copy{position:relative;}.fan-copy:before{content:"";width:8px;height:8px;margin:0 auto 2px;border-radius:50%;background:var(--tone);box-shadow:0 0 0 6px color-mix(in srgb,var(--tone) 9%,transparent),0 0 22px color-mix(in srgb,var(--tone) 38%,transparent);}
+    .fan-copy strong{font-size:30px!important;}
+    @keyframes piuraOrbit{to{transform:rotate(360deg)}}
+    @keyframes piuraFanPreview{0%{transform:rotate(0)}60%{transform:rotate(34deg)}100%{transform:rotate(24deg)}}
+
+    /* Brightness is now a distinct instrument instead of a large undivided field. */
+    .control-grid .minimal-lamp .lamp-console{
+      min-height:394px!important;grid-template-columns:minmax(0,1.12fr) minmax(280px,.88fr)!important;gap:16px!important;
+    }
+    .control-grid .minimal-lamp .lamp-power-row{
+      height:auto!important;padding:0!important;gap:12px!important;border:0!important;background:transparent!important;box-shadow:none!important;
+      grid-template-columns:118px minmax(0,1fr)!important;
+    }
+    .control-grid .minimal-lamp .lamp-toggle{
+      width:118px!important;height:100%!important;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--premium-stroke))!important;
+      background:linear-gradient(160deg,color-mix(in srgb,var(--tone) 7%,var(--premium-raised)),var(--premium-raised))!important;
+    }
+    .control-grid .minimal-lamp .lamp-brightness{
+      height:100%!important;padding:28px!important;border:1px solid color-mix(in srgb,var(--tone) 20%,var(--premium-stroke))!important;
+      background:
+        radial-gradient(circle at 87% 16%,color-mix(in srgb,var(--tone) 10%,transparent),transparent 34%),
+        var(--premium-raised)!important;
+      box-shadow:inset 0 1px 0 color-mix(in srgb,var(--erp-text,var(--text)) 5%,transparent)!important;
+    }
+    .control-grid .minimal-lamp .lamp-brightness b{font-size:48px!important;}
+    .control-grid .minimal-lamp .lamp-brightness input{margin-top:34px!important;}
+    .lamp-toggle:hover:not(:disabled){transform:translateY(-5px) rotate(-2deg);box-shadow:0 20px 38px color-mix(in srgb,var(--tone) 15%,transparent)!important;}
+    .lamp-toggle:hover span{display:inline-block;animation:piuraPowerDance .62s var(--ease-premium);}
+    .lamp-brightness:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--tone) 42%,var(--premium-stroke))!important;box-shadow:0 20px 38px color-mix(in srgb,var(--tone) 10%,transparent)!important;}
+    .lamp-brightness:hover b{transform:scale(1.035);}
+    .lamp-brightness b{transition:transform .4s var(--ease-premium);}
+    @keyframes piuraPowerDance{35%{transform:rotate(12deg) scale(1.12)}70%{transform:rotate(-7deg) scale(1.06)}}
+    .control-grid .minimal-lamp .lamp-palette{
+      height:auto!important;padding:12px!important;gap:8px!important;border-radius:24px!important;
+      grid-template-columns:repeat(4,minmax(58px,1fr))!important;grid-template-rows:repeat(2,1fr)!important;
+    }
+    .control-grid .minimal-lamp .lamp-color{height:auto!important;min-height:0!important;border:1px solid transparent!important;}
+    .control-grid .minimal-lamp .lamp-color:hover:not(:disabled){
+      transform:translateY(-7px) rotate(var(--swatch-tilt,-2deg)) scale(1.035)!important;
+      border-color:color-mix(in srgb,var(--swatch) 48%,var(--premium-stroke))!important;
+      background:color-mix(in srgb,var(--swatch) 8%,var(--premium-panel))!important;
+      box-shadow:0 16px 28px color-mix(in srgb,var(--swatch) 15%,transparent)!important;
+    }
+    .lamp-color:nth-child(even){--swatch-tilt:2deg;}
+    .lamp-color:hover i{transform:scale(1.13);box-shadow:0 0 0 4px color-mix(in srgb,var(--erp-surface,var(--surface)) 78%,transparent),0 0 34px color-mix(in srgb,var(--swatch) 42%,transparent)!important;}
+    .lamp-color i{transition:transform .42s var(--ease-premium),box-shadow .34s ease!important;}
+    .lamp-color:active:not(:disabled){transform:scale(.94)!important;}
+
+    /* Climate and financial cards feel instrumented rather than generic. */
+    .dashboard>.air .air-stat:hover{
+      transform:translateY(-7px) rotate(var(--air-tilt,-.25deg));
+      border-color:color-mix(in srgb,var(--air-tone) 48%,var(--premium-stroke))!important;
+      box-shadow:0 22px 44px color-mix(in srgb,var(--air-tone) 11%,transparent)!important;
+    }
+    .dashboard>.air .air-stat:nth-child(even){--air-tilt:.25deg;}
+    .dashboard>.air .air-stat:hover:before{animation:piuraGaugeDance .9s var(--ease-premium) both;opacity:.78;}
+    .dashboard>.air .air-stat:hover .air-value{transform:translateY(-2px) scale(1.018);}
+    .air-value{transition:transform .42s var(--ease-premium);}
+    @keyframes piuraGaugeDance{40%{transform:rotate(72deg) scale(1.08)}100%{transform:rotate(45deg) scale(1.03)}}
+    .overview-number-grid{gap:14px!important;padding:20px!important;}
+    .overview-number{position:relative;overflow:hidden;min-height:174px!important;padding:25px 27px!important;}
+    .overview-number-main{margin-top:21px!important;}.overview-number-main strong{font-size:clamp(45px,3.65vw,62px)!important;}
+    .overview-number-track{height:7px!important;margin-top:20px!important;}
+    .overview-number:hover{
+      transform:translateY(-7px) rotate(var(--number-tilt,-.2deg))!important;
+      border-color:color-mix(in srgb,var(--number-color) 43%,var(--premium-stroke))!important;
+      box-shadow:0 22px 44px color-mix(in srgb,var(--number-color) 10%,transparent)!important;
+    }
+    .overview-number:nth-child(even){--number-tilt:.2deg;}
+    .overview-number:hover strong{transform:translateY(-2px) scale(1.025);}
+    .overview-number-main strong{transition:transform .42s var(--ease-premium);}
+    .overview-number:hover .overview-number-track i{filter:brightness(1.18);box-shadow:0 0 18px color-mix(in srgb,var(--number-color) 35%,transparent);}
+
+    html[data-erp-theme="light"] .fan-switch,
+    html[data-erp-theme="light"] .lamp-toggle,
+    html[data-erp-theme="light"] .lamp-brightness,
+    html[data-erp-theme="light"] .lamp-palette{
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 10px 28px rgba(37,58,89,.045)!important;
+    }
+    html[data-erp-theme="light"] .fan-stage{filter:saturate(1.08);}
+
+    /* Color is the primary room-light instrument: large orbital selector, compact utility controls. */
+    .control-grid .minimal-lamp .lamp-console{
+      grid-template-columns:174px minmax(390px,1fr)!important;
+      gap:18px!important;
+    }
+    .control-grid .minimal-lamp .lamp-power-row{
+      display:grid!important;grid-template-columns:1fr!important;grid-template-rows:92px minmax(0,1fr)!important;
+      gap:12px!important;min-width:0;
+    }
+    .control-grid .minimal-lamp .lamp-toggle{
+      width:92px!important;height:92px!important;justify-self:center!important;border-radius:28px!important;font-size:36px!important;
+    }
+    .control-grid .minimal-lamp .lamp-brightness{
+      min-height:0!important;height:auto!important;padding:20px 17px!important;
+      grid-template-columns:1fr!important;grid-template-rows:auto auto 1fr!important;align-content:start!important;text-align:center!important;
+    }
+    .control-grid .minimal-lamp .lamp-brightness span{grid-column:1!important;}
+    .control-grid .minimal-lamp .lamp-brightness b{grid-column:1!important;margin-top:13px;font-size:38px!important;}
+    .control-grid .minimal-lamp .lamp-brightness input{grid-column:1!important;width:100%!important;margin-top:26px!important;}
+    .control-grid .minimal-lamp .lamp-palette{
+      --current-color:#ffffff;position:relative!important;isolation:isolate;display:block!important;
+      min-height:394px!important;padding:0!important;overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--current-color) 13%,transparent) 0 11%,transparent 32%),
+        repeating-radial-gradient(circle at 50% 50%,transparent 0 52px,color-mix(in srgb,var(--tone) 5%,transparent) 53px 54px),
+        var(--premium-raised)!important;
+    }
+    .control-grid .minimal-lamp .lamp-palette:before{
+      content:"";position:absolute;left:50%;top:50%;z-index:-1;width:246px;height:246px;transform:translate(-50%,-50%);
+      border:1px solid color-mix(in srgb,var(--tone) 26%,var(--premium-stroke));border-radius:50%;
+      background:
+        radial-gradient(circle at 50% 50%,var(--premium-raised) 0 38%,transparent 39%),
+        conic-gradient(from -22.5deg,#ff3b30,#ff8a34,#ffd60a,#34c759,#31d7d0,#0a84ff,#9b5cff,#fff,#ff3b30);
+      box-shadow:inset 0 0 0 16px var(--premium-raised),0 0 52px color-mix(in srgb,var(--current-color) 15%,transparent);
+      opacity:.88;transition:transform .65s var(--ease-premium),box-shadow .4s ease;
+    }
+    .control-grid .minimal-lamp .lamp-palette:after{
+      content:"";position:absolute;left:50%;top:50%;z-index:0;width:82px;height:82px;transform:translate(-50%,-50%);
+      border:12px solid color-mix(in srgb,var(--erp-surface,var(--surface)) 76%,transparent);border-radius:50%;
+      background:var(--current-color);box-shadow:0 0 0 1px color-mix(in srgb,var(--current-color) 55%,var(--premium-stroke)),0 0 42px color-mix(in srgb,var(--current-color) 34%,transparent);
+      transition:background .35s ease,box-shadow .35s ease,transform .5s var(--ease-premium);
+    }
+    .control-grid .minimal-lamp .lamp-palette:hover:before{transform:translate(-50%,-50%) rotate(7deg) scale(1.025);}
+    .control-grid .minimal-lamp .lamp-palette:hover:after{transform:translate(-50%,-50%) scale(1.08);}
+    .control-grid .minimal-lamp .lamp-color{
+      --orbit-x:0px;--orbit-y:-148px;position:absolute!important;left:50%;top:50%;z-index:2;
+      width:68px!important;height:68px!important;min-height:68px!important;padding:0!important;border-radius:22px!important;
+      transform:translate(calc(-50% + var(--orbit-x)),calc(-50% + var(--orbit-y)))!important;
+      background:color-mix(in srgb,var(--swatch) 7%,var(--premium-panel))!important;
+    }
+    .control-grid .minimal-lamp .lamp-color:nth-child(2){--orbit-x:105px;--orbit-y:-105px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(3){--orbit-x:148px;--orbit-y:0px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(4){--orbit-x:105px;--orbit-y:105px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(5){--orbit-x:0px;--orbit-y:148px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(6){--orbit-x:-105px;--orbit-y:105px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(7){--orbit-x:-148px;--orbit-y:0px;}
+    .control-grid .minimal-lamp .lamp-color:nth-child(8){--orbit-x:-105px;--orbit-y:-105px;}
+    .control-grid .minimal-lamp .lamp-color i{width:34px!important;height:34px!important;}
+    .control-grid .minimal-lamp .lamp-color span{display:none!important;}
+    .control-grid .minimal-lamp .lamp-color:hover:not(:disabled){
+      transform:translate(calc(-50% + var(--orbit-x)),calc(-50% + var(--orbit-y))) scale(1.13) rotate(var(--swatch-tilt,-3deg))!important;
+    }
+    .control-grid .minimal-lamp .lamp-color.selected{
+      border-color:color-mix(in srgb,var(--swatch) 64%,var(--premium-stroke))!important;
+      box-shadow:0 12px 34px color-mix(in srgb,var(--swatch) 22%,transparent),inset 0 0 0 1px color-mix(in srgb,var(--swatch) 44%,transparent)!important;
+    }
+    .control-grid .minimal-lamp .lamp-color.selected:after{right:-3px!important;top:-3px!important;}
+
+    @media(max-width:1250px){
+      .dashboard>.fund-goals .fund-goal-list{grid-template-columns:repeat(6,minmax(0,1fr))!important;}
+      .dashboard>.fund-goals .fund-goal-list>.fund-goal{grid-column:span 2!important;}
+      .dashboard>.fund-goals .fund-goal-list>.fund-goal:nth-child(4),
+      .dashboard>.fund-goals .fund-goal-list>.fund-goal:nth-child(5){grid-column:span 3!important;}
+      .control-grid>.fan-card,.control-grid .minimal-lamp{grid-column:1/-1!important;}
+      .control-grid .minimal-lamp .lamp-console{grid-template-columns:180px minmax(390px,1fr)!important;}
+      .fan-stage{width:228px!important;height:228px!important}.fan-rotor{width:168px!important;height:168px!important;}
+    }
+    @media(max-width:700px){
+      .admin-progress{padding:24px!important}.admin-dynamic{min-height:80px!important;}
+      .dashboard>.fund-goals .fund-goal-list{grid-template-columns:1fr!important;}
+      .dashboard>.fund-goals .fund-goal-list>.fund-goal{grid-column:auto!important;}
+      .dashboard>.fund-goals .fund-goal-list>.fund-goal{grid-template-rows:auto auto 1fr!important;}
+      .control-grid .minimal-lamp .lamp-console{grid-template-columns:1fr!important;grid-template-rows:auto auto!important;}
+      .control-grid .minimal-lamp .lamp-power-row{grid-template-columns:92px minmax(0,1fr)!important;grid-template-rows:1fr!important;min-height:130px;}
+      .control-grid .minimal-lamp .lamp-toggle{width:92px!important;height:100%!important;}
+      .control-grid .minimal-lamp .lamp-brightness{height:100%!important;}
+      .control-grid .minimal-lamp .lamp-palette{display:grid!important;grid-template-columns:repeat(4,minmax(54px,1fr))!important;grid-template-rows:repeat(2,80px)!important;gap:8px!important;padding:10px!important;min-height:0!important;overflow:visible;}
+      .control-grid .minimal-lamp .lamp-palette:before,.control-grid .minimal-lamp .lamp-palette:after{display:none;}
+      .control-grid .minimal-lamp .lamp-color{position:relative!important;left:auto;top:auto;width:auto!important;height:auto!important;min-height:0!important;transform:none!important;}
+      .control-grid .minimal-lamp .lamp-color:hover:not(:disabled){transform:translateY(-5px) scale(1.04)!important;}
+      .fan-stage{width:190px!important;height:190px!important}.fan-rotor{width:138px!important;height:138px!important;}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .tile,.overview-number,.admin-dynamic,.fund-goal,.zone-switch,.fan-switch,.fan-stage,.fan-blades,
+      .lamp-toggle,.lamp-brightness,.lamp-color,.lamp-color i,.air-stat,.air-stat:before{animation:none!important;transition-duration:.01ms!important;}
+      .tile:hover,.overview-number:hover,.admin-dynamic:hover,.fund-goal:hover,.zone-switch:hover,
+      .fan-switch:hover,.lamp-toggle:hover,.lamp-brightness:hover,.lamp-color:hover,.air-stat:hover{transform:none!important;}
+    }
   </style>
 </head>
 <body>
@@ -477,7 +784,7 @@ let brightnessTimer=0,brightnessQueued=null,brightnessSyncing=false;
 const zoneDeviceState=new Map(ZONE_DEVICE_CATALOG.map(device=>[device.id,{...device,online:false,power:false,busy:false}]));
 
 function rgbHex(value){const n=Number(value);return Number.isFinite(n)?'#'+clamp(n,0,16777215).toString(16).padStart(6,'0'):null}
-function selectLampColor(hex){if(/^#[0-9a-f]{6}$/i.test(String(hex||'')))currentLampColor=String(hex).toLowerCase();document.querySelectorAll('[data-lamp-color]').forEach(button=>{const selected=button.dataset.lampColor.toLowerCase()===currentLampColor;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected))});document.getElementById('mapSwatch')?.style.setProperty('--map-color',currentLampColor)}
+function selectLampColor(hex){if(/^#[0-9a-f]{6}$/i.test(String(hex||'')))currentLampColor=String(hex).toLowerCase();document.querySelectorAll('[data-lamp-color]').forEach(button=>{const selected=button.dataset.lampColor.toLowerCase()===currentLampColor;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected))});document.querySelector('.lamp-palette')?.style.setProperty('--current-color',currentLampColor);document.getElementById('mapSwatch')?.style.setProperty('--map-color',currentLampColor)}
 function setLampBrightness(value){currentBrightness=Math.round(clamp(Number(value)||1,1,100));document.getElementById('lampBrightness').value=currentBrightness;document.getElementById('lampBrightnessValue').textContent=currentBrightness+'%'}
 function lightControlAvailable(){return goveeLightAvailable||elgatoLightCount>0||mapLightAvailable}
 function onlineZoneDevices(){return [...zoneDeviceState.values()].filter(device=>device.online)}
