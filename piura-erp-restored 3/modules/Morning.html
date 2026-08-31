@@ -172,6 +172,8 @@ html,body{
 }
 .block.locked{opacity:.4;filter:saturate(.3)}
 .block.locked .block-items, .block.locked .additem{pointer-events:none}
+body.editing .block.locked{opacity:1;filter:none}
+body.editing .block.locked .block-items,body.editing .block.locked .additem{pointer-events:auto}
 .block.active{
   border-color:var(--ink);
   box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 20px 50px -20px rgba(14,15,18,.3);
@@ -1194,15 +1196,23 @@ function initSortables(){
     const bid = list.dataset.blockItems;
     const s = Sortable.create(list, {
       animation:200,
+      group:'morning-items',
       handle:'.item-drag',
       ghostClass:'sortable-ghost',
       chosenClass:'sortable-chosen',
       dragClass:'sortable-drag',
       onEnd:(evt)=>{
-        const b = blocksData.find(x=>x.id===bid);
-        const moved = b.items.splice(evt.oldIndex, 1)[0];
-        b.items.splice(evt.newIndex, 0, moved);
-        saveBlocks();
+        const fromId=evt.from.dataset.blockItems,toId=evt.to.dataset.blockItems;
+        const from=blocksData.find(x=>x.id===fromId),to=blocksData.find(x=>x.id===toId);
+        const moved=from?.items.filter(item=>!item.hidden)[evt.oldIndex];
+        if(!from||!to||!moved){renderBlocks();return}
+        const wasChecked=Boolean(state[fromId]?.items?.[moved.id]);
+        from.items=from.items.filter(item=>item.id!==moved.id);
+        const targetVisible=to.items.filter(item=>!item.hidden),before=targetVisible[evt.newIndex];
+        const insertAt=before?to.items.indexOf(before):to.items.length;
+        to.items.splice(insertAt,0,moved);
+        if(fromId!==toId){delete state[fromId].items[moved.id];state[toId].items[moved.id]=wasChecked}
+        saveBlocks();saveState();
         renderBlocks();
       }
     });

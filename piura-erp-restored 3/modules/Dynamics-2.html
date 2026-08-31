@@ -94,21 +94,17 @@ const DEFAULT_TASKS=[
   [302,3,'Все задачи предыдущего дня',70],
   [303,3,'Все встречи проведены в тайминге',50],
   [304,3,'Выполнен план работы по направлению дня',30],
-  [401,4,'Выполнена задача по 4-й динамике',150],
-  [404,4,'Сделано действие по 4-й динамике',50],
-  [501,5,'Сделана стерилизация или закуплен корм',30],
-  [502,5,'Посажено дерево или установлена кормушка / домик',100],
-  [602,6,'Сделана уборка своими силами',100],
-  [603,6,'Организована уборка',50],
-  [604,6,'Поддержан идеальный порядок личного места',10],
+  [401,4,'Сделано действие по четвертой динамике',200],
+  [501,5,'Сделано действие по пятой динамике',200],
+  [602,6,'Сделано действие по шестой динамике',200],
   [701,7,'Выполнен пункт этического плана',100],
   [702,7,'День без расстройств',100],
   [703,7,'Описаны мои динамики',100],
   [801,8,'Описана тэта',500]
 ].map(([id,dynamicId,name,w],order)=>({id,dynamicId,name,w,order,active:true}));
-const REMOVED_TASK_IDS=[402,403,601];
+const REMOVED_TASK_IDS=[402,403,404,502,601,603,604];
 const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,snapshotTotal}));
-const STORE='wt5',SCHEMA_VERSION=14,DYNAMICS_VERSION=1,TASKS_VERSION=4,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
+const STORE='wt5',SCHEMA_VERSION=15,DYNAMICS_VERSION=1,TASKS_VERSION=5,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const num=value=>Number(value)||0;
@@ -137,7 +133,8 @@ function weekHasRawData(week){return Object.values(week?.daily||{}).some(scores=
 function freezeWeek(anchor){const week=ensureWeek(anchor);week.weights=week.weights&&typeof week.weights==='object'?week.weights:{};week.taskDynamics=week.taskDynamics&&typeof week.taskDynamics==='object'?week.taskDynamics:{};S.tasks.forEach(task=>{if(!Number.isFinite(Number(week.weights[task.id])))week.weights[task.id]=num(task.w);if(!Number.isFinite(Number(week.taskDynamics[task.id])))week.taskDynamics[task.id]=num(task.dynamicId)});return week}
 function weeksNeedRealignment(){return Object.entries(S.weeks||{}).some(([anchor,week])=>Object.keys(week?.daily||{}).some(date=>thursdayFor(date)!==anchor))}
 function realignWeeksToThursday(){const rebuilt={};Object.values(S.weeks||{}).forEach(source=>{Object.entries(source?.daily||{}).forEach(([date,scores])=>{const anchor=thursdayFor(date),target=rebuilt[anchor]||(rebuilt[anchor]={daily:{},weights:{},taskDynamics:{}});target.daily[date]={...(target.daily[date]||{}),...(scores||{})};Object.entries(source.weights||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.weights[id])))target.weights[id]=num(value)});Object.entries(source.taskDynamics||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.taskDynamics[id])))target.taskDynamics[id]=num(value)})})});S.weeks=rebuilt}
-function migrateTaskCatalog(){DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task)Object.assign(task,{dynamicId:fresh.dynamicId,name:fresh.name,w:fresh.w,order:fresh.order,active:true});else S.tasks.push(clone(fresh))});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week&&weekHasRawData(week)){freezeWeek(current);DEFAULT_TASKS.forEach(task=>{week.weights[task.id]=task.w;week.taskDynamics[task.id]=task.dynamicId})}}
+function mergeCurrentTask(canonicalId,legacyIds){const week=S.weeks[thursdayFor(today())];if(!week)return;for(const bucket of [week.daily,week.planned])Object.values(bucket||{}).forEach(scores=>{if(legacyIds.some(id=>num(scores?.[id])>0))scores[canonicalId]=1;legacyIds.forEach(id=>delete scores[id])});legacyIds.forEach(id=>{delete week.weights?.[id];delete week.taskDynamics?.[id]})}
+function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task)Object.assign(task,{dynamicId:fresh.dynamicId,name:fresh.name,w:fresh.w,order:fresh.order,active:true});else S.tasks.push(clone(fresh))});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);DEFAULT_TASKS.forEach(task=>{week.weights[task.id]=task.w;week.taskDynamics[task.id]=task.dynamicId})}}
 function taskWeekWeight(task,anchor){const stored=S.weeks[anchor]?.weights?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.w)}
 function taskWeekDynamic(task,anchor){const stored=S.weeks[anchor]?.taskDynamics?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.dynamicId)}
 function scoredTasks(anchor,dynamicId=null){return S.tasks.filter(task=>dynamicId==null||taskWeekDynamic(task,anchor)===num(dynamicId))}

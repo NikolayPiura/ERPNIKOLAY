@@ -231,6 +231,43 @@ test('ПС №1 сохраняет старые данные при миграц
   assert.equal((weekly.match(/\['2026-\d{2}-\d{2}',\d+\]/g)||[]).length,12);
 });
 
+test('ПС №1 оставляет по одному действию в динамиках 4–6 и сохраняет старые отметки', () => {
+  const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
+  for (const [id, word] of [[401,'четвертой'],[501,'пятой'],[602,'шестой']]) {
+    assert.match(weekly, new RegExp(`\\[${id},[456],'Сделано действие по ${word} динамике',200\\]`));
+  }
+  assert.match(weekly, /TASKS_VERSION=5/);
+  assert.match(weekly, /mergeCurrentTask\(401,\[404\]\)/);
+  assert.match(weekly, /mergeCurrentTask\(501,\[502\]\)/);
+  assert.match(weekly, /mergeCurrentTask\(602,\[603,604\]\)/);
+  assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,404,502,601,603,604\]/);
+});
+
+test('эффективность показывает доказательство времени в день и в неделю', () => {
+  const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
+  assert.match(effectiveness, /dailyHours=observedHours\/observedDays,weeklyHours=dailyHours\*7/);
+  assert.match(effectiveness, /<span>В день<\/span>/);
+  assert.match(effectiveness, /<span>В неделю<\/span>/);
+  assert.match(effectiveness, /hours\(dailyHours\).*?× 7/);
+});
+
+test('утренний редактор открывает все блоки и переносит пункты между ними', () => {
+  const morning = read('piura-erp-restored 3/modules/Morning.html');
+  assert.match(morning, /body\.editing \.block\.locked\{opacity:1;filter:none\}/);
+  assert.match(morning, /body\.editing \.block\.locked \.block-items,body\.editing \.block\.locked \.additem\{pointer-events:auto\}/);
+  assert.match(morning, /group:'morning-items'/);
+  assert.match(morning, /const fromId=evt\.from\.dataset\.blockItems,toId=evt\.to\.dataset\.blockItems/);
+  assert.match(morning, /delete state\[fromId\]\.items\[moved\.id\];state\[toId\]\.items\[moved\.id\]=wasChecked/);
+});
+
+test('статистика времени использует увеличенные карточки и отступы', () => {
+  const time = read('piura-erp-restored 3/modules/Time-tracker.html');
+  assert.match(time, /\.stats-view\{gap:44px!important\}/);
+  assert.match(time, /\.stats-summary-card\{min-height:174px!important/);
+  assert.match(time, /\.stats-category-grid\{gap:32px!important\}/);
+  assert.match(time, /\.stats-category\{min-height:320px!important/);
+});
+
 test('глобальные размеры применяются и к центру настроек', () => {
   const shell = read('index.html');
   assert.match(shell, /--settings-scale/);
@@ -380,24 +417,23 @@ test('ПС №1 использует один дневной или недель
   const tasks = [...tasksSource.matchAll(/\[(\d+),(\d+),'([^']+)',(\d+)\]/g)].map(match=>({id:Number(match[1]),dynamic:Number(match[2]),name:match[3],weight:Number(match[4])}));
   assert.equal(dynamics.length,8);
   assert.deepEqual(dynamics.map(match=>match[2]),['Я','Семья','Группа','Человечество','Жизнь','Вселенная','Духовное','Бесконечность']);
-  assert.equal(tasks.length,24);
-  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),1825);
+  assert.equal(tasks.length,20);
+  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),1935);
   assert.equal(tasks.find(task=>task.name==='Сессия')?.weight,75);
   assert.equal(tasks.find(task=>task.name==='День без расстройств')?.weight,100);
   assert.equal(tasks.find(task=>task.name==='Описана тэта')?.weight,500);
   assert.equal(tasks.find(task=>task.name==='Хорошо сделан кайдзен-час')?.weight,20);
   assert.equal(tasks.find(task=>task.name==='Все задачи предыдущего дня')?.weight,70);
-  assert.equal(tasks.find(task=>task.name==='Выполнена задача по 4-й динамике')?.weight,150);
+  assert.equal(tasks.find(task=>task.name==='Сделано действие по четвертой динамике')?.weight,200);
+  assert.equal(tasks.find(task=>task.name==='Сделано действие по пятой динамике')?.weight,200);
+  assert.equal(tasks.find(task=>task.name==='Сделано действие по шестой динамике')?.weight,200);
   assert.equal(tasks.find(task=>task.name==='Выполнен пункт этического плана')?.weight,100);
-  assert.equal(tasks.find(task=>task.name==='Сделана уборка своими силами')?.weight,100);
-  assert.equal(tasks.find(task=>task.name==='Организована уборка')?.weight,50);
   assert.ok(tasks.some(task=>task.name==='Личная гигиена, душ, зубы, витамины'));
   assert.ok(tasks.some(task=>task.name==='Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов'));
   assert.ok(tasks.some(task=>task.name==='Обучение (пара, инвестиции, наставничество, заочное или очное)'));
   assert.ok(tasks.some(task=>task.name==='Занятие хобби (шахматы, рисование, чтение)'));
   assert.ok(tasks.some(task=>task.name==='Хорошо выполнены совместные ритуалы'));
   assert.ok(tasks.some(task=>task.name==='Выполнен план работы по направлению дня'));
-  assert.ok(tasks.some(task=>task.name==='Поддержан идеальный порядок личного места'));
   assert.ok(tasks.some(task=>task.name==='Описаны мои динамики'));
   assert.doesNotMatch(tasksSource, /Привлечены средства в Endowment|Наведён порядок дома|Написана глава книги/);
   assert.equal((weekly.match(/id="scoreChart"/g)||[]).length,1);
@@ -468,20 +504,20 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="scoreLine"/);
   assert.match(weekly, /'#35d8f5'/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=14,DYNAMICS_VERSION=1,TASKS_VERSION=4,WEEK_CYCLE_VERSION=3/);
-  assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,601\]/);
+  assert.match(weekly, /SCHEMA_VERSION=15,DYNAMICS_VERSION=1,TASKS_VERSION=5,WEEK_CYCLE_VERSION=3/);
+  assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,404,502,601,603,604\]/);
   assert.match(weekly, /if\(needsTaskMigration\)migrateTaskCatalog\(\)/);
-  assert.doesNotMatch(weekly.match(/function migrateTaskCatalog\(\).*?(?=\nfunction taskWeekWeight)/s)?.[0]||'', /week\.daily\s*=|delete week\.daily/);
+  assert.match(weekly, /function mergeCurrentTask\(canonicalId,legacyIds\)/);
 });
 
 test('миграция ПС №1 сохраняет отметки и старые недельные веса', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
   const rows = [...(weekly.match(/const DEFAULT_TASKS=\[(.*?)\n\]\.map/s)?.[1]||'').matchAll(/\[(\d+),(\d+),'([^']+)',(\d+)\]/g)];
   const defaults = rows.map((match,order)=>({id:Number(match[1]),dynamicId:Number(match[2]),name:match[3],w:Number(match[4]),order,active:true}));
-  const migrationSource = weekly.match(/function migrateTaskCatalog\(\).*?(?=\nfunction taskWeekWeight)/s)?.[0]||'';
+  const migrationSource = weekly.match(/function mergeCurrentTask\(canonicalId,legacyIds\).*?(?=\nfunction taskWeekWeight)/s)?.[0]||'';
   const beforeDaily = {'2026-08-18':{'101':1,'102':1,'403':1}};
   const migrated = Function('DEFAULT_TASKS','beforeDaily',`
-    const REMOVED_TASK_IDS=[402,403,601],clone=value=>JSON.parse(JSON.stringify(value)),num=value=>Number(value)||0;
+    const REMOVED_TASK_IDS=[402,403,404,502,601,603,604],clone=value=>JSON.parse(JSON.stringify(value)),num=value=>Number(value)||0;
     const current='2026-08-13',previous='2026-08-06';
     let S={tasks:[
       {id:101,dynamicId:1,name:'Личная гигиена, душ, зубы, витамины',w:10,order:0,active:true},

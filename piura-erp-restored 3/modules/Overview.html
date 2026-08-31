@@ -993,6 +993,31 @@
     @media(max-width:1000px){.admin-progress{padding:30px!important}.admin-dynamic-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}.fund-goal-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}.dashboard>.air .air-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
     @media(max-width:620px){.admin-dynamic-list,.fund-goal-list,.dashboard>.air .air-grid{grid-template-columns:1fr!important}.admin-progress,.fund-goals{padding:22px!important}.control-grid>.home-controls-card .zone-switch .zone-power{width:56px!important;height:56px!important}.dashboard>.air .air-stat{min-height:160px!important}}
     @media(prefers-reduced-motion:reduce){.purifier.is-on .purifier-art,.purifier.is-on .purifier-cap,.purifier.is-on .purifier-vent,.purifier.is-on .purifier-power-mark,.hvac-card.is-running .hvac-shadow{animation:none!important}}
+
+    /* 31.08.2026 — final optical alignment: labels recede, controls share one rhythm. */
+    .admin-total-head{justify-content:center!important;text-align:center!important}
+    .admin-total-panel{padding-inline:clamp(24px,4vw,64px)!important}
+    .fund-goals>.tile-head{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+    .fund-goals{min-height:520px!important;padding-top:40px!important}
+    .fund-goal-list{margin-top:0!important;align-items:stretch!important}
+    .fund-goal-list>.fund-goal,.fund-goal-list>.fund-goal-ecology,.fund-goal-list>.fund-goal:nth-child(5){min-height:340px!important}
+    .control-grid>.home-controls-card .lamp-power-row{left:22px!important;bottom:22px!important;width:132px!important;max-width:132px!important;height:44px!important;min-height:44px!important}
+    .control-grid>.home-controls-card .lamp-brightness{width:132px!important;height:44px!important;min-height:44px!important;padding:0 14px!important;border-radius:14px!important}
+    .control-grid>.home-controls-card .lamp-brightness b{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+    .control-grid>.home-controls-card .lamp-brightness input{height:14px!important}
+    .hvac-range-control{min-width:150px!important;height:42px!important;padding:4px!important;grid-template-columns:32px 1fr 32px!important;gap:4px!important;border-radius:14px!important}
+    .hvac-range-control strong{font-size:17px!important;letter-spacing:-.035em!important}
+    .hvac-range-control button{width:32px!important;height:32px!important;border-radius:10px!important;font-size:17px!important}
+    .dashboard>.air{padding:24px!important}
+    .dashboard>.air .air-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:20px!important}
+    .dashboard>.air .air-stat{min-height:220px!important;padding:26px 22px!important;display:grid!important;grid-template-rows:auto 1fr!important;align-items:center!important;justify-items:stretch!important;text-align:center!important}
+    .dashboard>.air .air-stat:before{left:50%!important;right:auto!important;top:58%!important;bottom:auto!important;width:104px!important;height:104px!important;transform:translate(-50%,-50%) rotate(30deg)!important;opacity:.16!important}
+    .dashboard>.air .air-stat-head{display:grid!important;justify-items:center!important;justify-content:center!important;gap:10px!important;text-align:center!important}
+    .dashboard>.air .air-label,.dashboard>.air .air-status{max-width:100%!important;text-align:center!important}
+    .dashboard>.air .air-reading{min-height:112px!important;display:grid!important;place-items:center!important;text-align:center!important}
+    .dashboard>.air .air-value{font-size:clamp(48px,3.8vw,66px)!important;text-align:center!important}
+    @media(max-width:1000px){.dashboard>.air .air-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fund-goals{min-height:auto!important}}
+    @media(max-width:760px){.dashboard>.air .air-grid{grid-template-columns:1fr!important}.control-grid>.home-controls-card .lamp-power-row{left:16px!important;bottom:16px!important}}
   </style>
 </head>
 <body>
