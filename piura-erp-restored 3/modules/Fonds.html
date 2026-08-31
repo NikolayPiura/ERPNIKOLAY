@@ -269,6 +269,42 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   #view-manage .tree-wrap{gap:0!important;padding:0 4px 38px!important}#view-manage .conn-row{height:94px!important}#view-manage .conn-row svg{height:82px!important;filter:drop-shadow(0 0 10px rgba(91,157,255,.32)) drop-shadow(0 10px 20px rgba(17,26,43,.18))!important}#view-manage .conn-row path{stroke-linecap:round}#view-manage .fund-row{gap:30px!important}#view-manage .fc{min-height:338px!important;padding:34px 36px!important;border-left-width:3px!important;border-radius:26px!important;box-shadow:0 22px 54px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.04)!important}#view-manage .fc-name{display:flex!important;align-items:center;justify-content:space-between;gap:16px;font-size:24px!important}#view-manage .fc-name::after{width:34px;height:34px;margin:0!important;display:inline-grid;flex:0 0 auto;place-items:center;border:1px solid color-mix(in srgb,var(--accent,#5b9dff) 34%,var(--border));border-radius:50%;background:color-mix(in srgb,var(--accent,#5b9dff) 9%,transparent);font-size:16px!important;box-shadow:0 0 24px color-mix(in srgb,var(--accent,#5b9dff) 13%,transparent)}#view-manage .fc-usd{margin-top:18px;font-size:50px!important}#view-manage .fc-data{padding-top:18px!important}
   html[data-erp-theme="light"] #view-manage .root-metrics .rm{background:linear-gradient(145deg,#fbfdff,#f2f6fb)!important;box-shadow:0 10px 28px rgba(39,64,102,.06)!important}html[data-erp-theme="light"] #view-manage .fc{box-shadow:0 18px 42px rgba(39,64,102,.09)!important}html[data-erp-theme="light"] #view-manage .fc-name::after{background:color-mix(in srgb,var(--accent,#5b9dff) 8%,#fff)!important}
   @media(max-width:1100px){#view-manage{gap:36px!important}#view-manage .root-card{padding:38px 34px!important}#view-manage .conn-row{height:70px!important}#view-manage .fc{min-height:300px!important}}@media(max-width:700px){#view-manage .root-name{font-size:48px!important}#view-manage .fund-row{gap:18px!important}#view-manage .conn-row{height:46px!important}}
+  /* 31.08.2026 — a readable capital map with a central hub and directional routes. */
+  #view-manage{max-width:1920px!important;padding:42px clamp(28px,4vw,72px) 110px!important;gap:0!important}
+  #view-manage .root-card{padding:42px 48px!important;overflow:visible!important;border-radius:30px!important}
+  #view-manage .root-name{max-width:none!important;font-size:clamp(58px,5.25vw,88px)!important;line-height:.94!important;letter-spacing:-.055em!important}
+  #view-manage .root-sub{margin-top:13px!important;font-size:11px!important;letter-spacing:.23em!important}
+  #view-manage .root-metrics{gap:16px!important;margin-top:30px!important}
+  #view-manage .root-metrics .rm{min-height:118px!important;padding:22px 25px!important;border-radius:19px!important;background:linear-gradient(145deg,rgba(255,255,255,.038),rgba(255,255,255,.012))!important}
+  #view-manage .rm-val{font-size:clamp(36px,3vw,50px)!important}
+  #view-manage .management-tools{gap:16px!important;margin-top:18px!important}
+  #view-manage .management-tool{padding:11px 15px!important;border-radius:14px!important}
+  #view-manage .data-status{margin-top:14px!important}
+  #view-manage .sec-hdr{display:flex!important;min-height:112px;position:relative;align-items:center;justify-content:center;overflow:visible}
+  #view-manage .sec-hdr::before,#view-manage .sec-hdr::after{content:'';position:absolute;left:50%;width:2px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(91,157,255,.18),#5b9dff 52%,#42d9a4);box-shadow:0 0 16px rgba(91,157,255,.42)}
+  #view-manage .sec-hdr::before{top:0;height:34px}#view-manage .sec-hdr::after{bottom:0;height:34px;background:linear-gradient(180deg,#42d9a4,rgba(66,217,164,.2))}
+  #view-manage .sec-lbl{position:relative;z-index:1;padding:12px 42px 12px 18px;border:1px solid rgba(91,157,255,.42);border-radius:999px;background:linear-gradient(135deg,rgba(91,157,255,.16),rgba(66,217,164,.1)),#101622;color:#dceaff;font-size:11px;letter-spacing:.16em;box-shadow:0 12px 34px rgba(0,0,0,.3),0 0 26px rgba(91,157,255,.12)}
+  #view-manage .sec-lbl::after{content:'↓';position:absolute;right:7px;top:50%;width:28px;height:28px;transform:translateY(-50%);display:grid;place-items:center;border-radius:50%;background:#5b9dff;color:#07101d;font-size:16px;font-weight:900;box-shadow:0 0 18px rgba(91,157,255,.5)}
+  #view-manage .tree-wrap{gap:0!important;padding:0 0 34px!important}
+  #view-manage .conn-row{height:116px!important;margin:0!important}
+  #view-manage .conn-row svg{height:112px!important;filter:drop-shadow(0 0 7px rgba(91,157,255,.24))!important}
+  #view-manage .conn-row .flow-route{stroke-dasharray:11 9;animation:capital-flow 2.5s linear infinite}
+  #view-manage .conn-row .flow-trunk{filter:drop-shadow(0 0 8px rgba(91,157,255,.42))}
+  @keyframes capital-flow{to{stroke-dashoffset:-40}}
+  @media(prefers-reduced-motion:reduce){#view-manage .conn-row .flow-route{animation:none}}
+  #view-manage .fund-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:24px!important}
+  #view-manage .fc{min-height:304px!important;padding:28px 30px!important;border-radius:24px!important;border-left-width:2px!important}
+  #view-manage .fc-route{display:flex;align-items:center;gap:9px;margin-bottom:18px;color:color-mix(in srgb,var(--accent,#5b9dff) 78%,white);font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+  #view-manage .fc-route span{width:27px;height:27px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent,#5b9dff) 45%,var(--border));border-radius:50%;background:color-mix(in srgb,var(--accent,#5b9dff) 10%,transparent);font-size:9px;letter-spacing:0;box-shadow:0 0 18px color-mix(in srgb,var(--accent,#5b9dff) 13%,transparent)}
+  #view-manage .fc-route i{height:1px;flex:1;background:linear-gradient(90deg,var(--accent,#5b9dff),transparent);opacity:.66}
+  #view-manage .fc-route b{color:var(--text3);font-size:9px;letter-spacing:.12em}
+  #view-manage .fc-name{font-size:22px!important;margin-bottom:8px!important}#view-manage .fc-name::after{width:30px!important;height:30px!important;font-size:14px!important}
+  #view-manage .fc-usd{margin-top:13px!important;font-size:44px!important}
+  #view-manage .fc-data{padding-top:15px!important;margin-top:auto!important}.fdr-l{font-size:13px}.fdr-v{font-size:17px}
+  html[data-erp-theme="light"] #view-manage .sec-lbl{border-color:#c7d7ee;background:linear-gradient(135deg,#edf5ff,#eefaf6);color:#24334a;box-shadow:0 12px 30px rgba(39,64,102,.1)}
+  html[data-erp-theme="light"] #view-manage .root-metrics .rm{background:linear-gradient(145deg,#fbfdff,#f1f5fa)!important}
+  @media(max-width:1050px){#view-manage .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+  @media(max-width:700px){#view-manage{padding:24px 16px 70px!important}#view-manage .root-card{padding:30px 24px!important}#view-manage .root-name{font-size:46px!important}#view-manage .root-metrics{grid-template-columns:1fr!important}#view-manage .sec-hdr{min-height:86px}#view-manage .sec-hdr::before,#view-manage .sec-hdr::after{height:24px}#view-manage .conn-row{height:70px!important}#view-manage .conn-row svg{height:68px!important}#view-manage .fund-row{grid-template-columns:1fr!important}#view-manage .fc{min-height:270px!important}}
 </style>
 </head>
 <body>
@@ -331,7 +367,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   </div>
 
   <div class="sec-hdr">
-    <div class="sec-lbl">Структура управления</div>
+    <div class="sec-lbl">Карта капитала</div>
   </div>
   <div class="tree-wrap" id="treeWrap"></div>
 </div>
@@ -832,6 +868,9 @@ function makeCard(f){
   bD.addEventListener('click',e=>{e.stopPropagation();deleteFund(f.id);});
   hov.append(bE,bA,bD);div.appendChild(hov);
 
+  const route=document.createElement('div');route.className='fc-route';
+  route.innerHTML=`<span>${String(f.id).padStart(2,'0')}</span><i></i><b>PIURA</b>`;
+  div.appendChild(route);
   const nm=document.createElement('div');nm.className='fc-name';nm.textContent=f.name;div.appendChild(nm);
   /* Classification stays in the detailed portfolio, not in the overview card. */
 
@@ -934,6 +973,18 @@ function renderTree(){
     return;
   }
 
+  let connectorSerial=0;
+  function connectorMarkup(px,targets){
+    if(!targets.length)return'';
+    const prefix=`capital-flow-${++connectorSerial}`;
+    const xs=targets.map(target=>target.x),railY=39,endY=104;
+    const minX=Math.min(...xs),maxX=Math.max(...xs);
+    const defs=`<defs>${targets.map((target,index)=>`<marker id="${prefix}-${index}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><polygon points="0,0 10,5 0,10" fill="${target.color}"/></marker>`).join('')}</defs>`;
+    const trunk=`<path class="flow-trunk" d="M${px},2 V${railY}" fill="none" stroke="#5b9dff" stroke-width="4"/><circle cx="${px}" cy="${railY}" r="7" fill="#0c1320" stroke="#5b9dff" stroke-width="3"/><path d="M${minX},${railY} H${maxX}" fill="none" stroke="rgba(91,157,255,.34)" stroke-width="2"/>`;
+    const routes=targets.map((target,index)=>`<circle cx="${target.x}" cy="${railY}" r="4" fill="${target.color}"/><path class="flow-route" d="M${target.x},${railY+5} V${endY-5}" fill="none" stroke="${target.color}" stroke-width="3" marker-end="url(#${prefix}-${index})"/>`).join('');
+    return defs+trunk+routes;
+  }
+
   // Рисует SVG-коннектор между родителем и детьми
   function makeConnRow(parentEl, childEls, colorMap){
     const row = document.createElement('div');
@@ -946,20 +997,18 @@ function renderTree(){
       if(!sr.width) return;
       const pr = parentEl.getBoundingClientRect();
       const px = pr.left + pr.width/2 - sr.left;
-      let p = '';
+      const targets=[];
       childEls.forEach((cel, i)=>{
         if(!cel) return;
         const cr = cel.getBoundingClientRect();
         const cx = cr.left + cr.width/2 - sr.left;
         const cc = colorMap[i] || '#4f8ef7';
-        p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
-        p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
+        targets.push({x:cx,color:cc});
       });
-      if(childEls.length) p += `<circle cx="${px}" cy="0" r="5" fill="#4f8ef7" opacity="0.9"/>`;
       svg.setAttribute('width','100%');
-      svg.setAttribute('height','72');
-      svg.setAttribute('viewBox',`0 0 ${sr.width} 72`);
-      svg.innerHTML = p;
+      svg.setAttribute('height','112');
+      svg.setAttribute('viewBox',`0 0 ${sr.width} 112`);
+      svg.innerHTML = connectorMarkup(px,targets);
     });
     return row;
   }
@@ -984,20 +1033,19 @@ function renderTree(){
     if(!rootEl) return;
     const rr = rootEl.getBoundingClientRect();
     const px = rr.left + rr.width/2 - sr.left;
-    let p = `<circle cx="${px}" cy="0" r="6" fill="#4f8ef7" opacity="0.9"/>`;
+    const targets=[];
     funds.forEach(f=>{
       const cel = mainRow.querySelector(`[data-fid="${f.id}"]`);
       if(!cel) return;
       const cr = cel.getBoundingClientRect();
       const cx = cr.left + cr.width/2 - sr.left;
       const cc = FCOLORS[f.id]||'#4f8ef7';
-      p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
-      p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
+      targets.push({x:cx,color:cc});
     });
     svgMain.setAttribute('width','100%');
-    svgMain.setAttribute('height','72');
-    svgMain.setAttribute('viewBox',`0 0 ${sr.width} 72`);
-    svgMain.innerHTML = p;
+    svgMain.setAttribute('height','112');
+    svgMain.setAttribute('viewBox',`0 0 ${sr.width} 112`);
+    svgMain.innerHTML = connectorMarkup(px,targets);
   });
 
   // === Подфонды: каждый родитель рисует своих детей прямо под основным рядом ===
@@ -1025,20 +1073,19 @@ function renderTree(){
       const pr = parEl.getBoundingClientRect();
       const px = pr.left + pr.width/2 - sr.left;
       const pcol = FCOLORS[parent.id]||'#4f8ef7';
-      let p = `<circle cx="${px}" cy="0" r="5" fill="${pcol}" opacity="0.9"/>`;
+      const targets=[];
       parent.children.forEach(child=>{
         const cel = subRow.querySelector(`[data-fid="${child.id}"]`);
         if(!cel) return;
         const cr = cel.getBoundingClientRect();
         const cx = cr.left + cr.width/2 - sr.left;
         const cc = FCOLORS[child.id]||pcol;
-        p += `<path d="M${px},2 C${px},28 ${cx},22 ${cx},68" fill="none" stroke="${cc}" stroke-width="3" stroke-dasharray="2 8" opacity="0.82"/>`;
-        p += `<polygon points="${cx-7},58 ${cx+7},58 ${cx},70" fill="${cc}" opacity="0.96"/>`;
+        targets.push({x:cx,color:cc});
       });
       svg2.setAttribute('width','100%');
-      svg2.setAttribute('height','72');
-      svg2.setAttribute('viewBox',`0 0 ${sr.width} 72`);
-      svg2.innerHTML = p;
+      svg2.setAttribute('height','112');
+      svg2.setAttribute('viewBox',`0 0 ${sr.width} 112`);
+      svg2.innerHTML = connectorMarkup(px,targets);
     });
   });
 }
