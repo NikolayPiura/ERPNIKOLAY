@@ -166,6 +166,10 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /function shiftHvacRange\(direction\)/);
   assert.match(overview, /commitHvac\(\{mode:'auto',heatC,coolC\}\)/);
   assert.match(overview, /hvac-card\.is-running \.hvac-flow path/);
+  assert.match(overview, /purifier\.is-on \.purifier-art\{animation:purifierBodyBreathe/);
+  assert.match(overview, /card\.classList\.toggle\('is-heating',mode==='heat'\)/);
+  assert.match(overview, /card\.classList\.toggle\('is-cooling',mode==='cool'\)/);
+  assert.match(overview, /home-controls-card \.zone-switch strong,\.dashboard>\.air>\.tile-head\{display:none!important\}/);
   assert.match(overview, /class="tile zone-card home-controls-card"/);
   assert.match(overview, /class="home-controls-layout"/);
   assert.match(overview, /home-controls-card \.zone-switch-grid\{grid-template-columns:repeat\(2/);
