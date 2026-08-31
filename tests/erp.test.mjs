@@ -148,6 +148,9 @@ test('обзор управляет вентилятором, очистител
   assert.match(bridge, /if percentage not in \{33, 66, 100\}/);
   assert.match(overview, /fan-card\.is-on \.fan-blades\{animation:fanSpin/);
   assert.match(overview, /id="masterPower"/);
+  assert.match(overview, /master-toggle\[hidden\]\{display:none!important\}/);
+  assert.match(overview, /\.control-grid>\.fan-card,\.control-grid>\.purifier-card,\.control-grid>\.hvac-card\{grid-column:span 4!important/);
+  assert.doesNotMatch(overview, /class="hvac-(?:display|led|sensor-dot)"/);
   assert.match(overview, /function toggleEverything\(\)/);
   assert.match(overview, /function anythingIsOn\(\)/);
   assert.match(overview, /const target=!anythingIsOn\(\)/);
@@ -171,7 +174,8 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/status'\)/);
   assert.match(overview, /requestLocal\(ECOBEE_BRIDGE,'\/api\/control'/);
   assert.doesNotMatch(overview, /id="hvacCurrent"|id="hvacHeat"|id="hvacCool"|id="hvacSensors"|<[^>]+data-hvac-mode|<[^>]+data-hvac-setpoint/);
-  assert.match(overview, /<span aria-hidden="true">⏻<\/span> Всё/);
+  assert.doesNotMatch(overview, /<span aria-hidden="true">⏻<\/span> Всё/);
+  assert.match(overview, /id="masterPower"[^>]*hidden/);
   assert.doesNotMatch(overview, /id="smartHomeDevices"|id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
