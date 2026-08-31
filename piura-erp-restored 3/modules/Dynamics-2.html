@@ -27,6 +27,30 @@
     /* 20.08.2026 — compact PS №1 so the week and more actions fit above the fold. */
     .app{padding:18px clamp(14px,2.2vw,38px) 54px;gap:14px}.top{min-height:54px;padding:5px 8px}.week-nav{padding:4px}.nav,.date-open{height:34px}.date-open{width:170px}.scores{gap:12px;margin:0}.score{min-height:142px;padding:22px 24px}.score strong{font-size:clamp(54px,4.7vw,78px)}.score small{font-size:10px}.score-label{font-size:9px}.chart-wrap{padding:18px 22px 8px}.score-chart{height:300px}.panel-head{min-height:58px;padding:12px 18px}.panel-head h2{font-size:18px}.list-toolbar{min-height:32px}.dynamic-lists{gap:8px}.dynamic-head{min-height:48px;padding:7px 13px}.dynamic-index{width:30px;height:30px}.dynamic-title h3{font-size:17px}.task-head,.task-row{grid-template-columns:minmax(245px,1fr) 58px repeat(7,40px) 0;gap:5px;padding:4px 13px}.app.editing .task-head,.app.editing .task-row{grid-template-columns:minmax(225px,1fr) 58px repeat(7,40px) 34px}.task-head{min-height:32px}.task-row{min-height:46px}.task-name{font-size:12px}.weight{min-width:44px;padding:5px}.day-check{width:34px;height:34px;border-radius:10px;font-size:15px}
     @media(max-width:760px){.app{padding:12px 10px 50px;gap:12px}.top{align-items:flex-start;min-height:auto;padding:12px;flex-direction:column}.scores{grid-template-columns:1fr 1fr;gap:8px}.score{min-height:118px;padding:16px}.score strong{font-size:42px}.score-chart{height:250px}.task-head,.task-row{grid-template-columns:minmax(245px,1fr) 58px repeat(7,40px) 0}}
+    /* 31.08.2026 — PS №1 uses the viewport instead of a fixed canvas. */
+    .app{width:100%;max-width:none;margin:0;padding:20px clamp(18px,3.2vw,58px) 76px;gap:18px}
+    .dynamic-lists{gap:14px}
+    .dynamic-panel{width:100%}
+    .dynamic-head{min-height:66px;padding:12px clamp(18px,2vw,34px)}
+    .dynamic-title h3{font-size:clamp(18px,1.25vw,23px)}
+    .dynamic-total b{font-size:clamp(25px,1.8vw,32px)}
+    .task-grid{width:100%;min-width:1040px}
+    .task-head,.task-row{grid-template-columns:minmax(340px,1.7fr) 72px repeat(7,minmax(46px,.34fr)) 0;gap:clamp(7px,.8vw,15px);padding:9px clamp(18px,2vw,34px)}
+    .app.editing .task-head,.app.editing .task-row{grid-template-columns:minmax(320px,1.7fr) 72px repeat(7,minmax(46px,.34fr)) 42px}
+    .task-head{min-height:42px;font-size:10px}
+    .task-row{min-height:68px}
+    .task-name{font-size:clamp(14px,1vw,17px);line-height:1.3}
+    .weight{min-width:54px;padding:7px 6px;font-size:13px}
+    .day-check{width:44px;height:44px;border-radius:13px;font-size:18px;justify-self:center}
+    @media(min-width:1900px){
+      .app{padding-inline:70px}
+      .dynamic-head{min-height:74px}
+      .task-head,.task-row{grid-template-columns:minmax(420px,2fr) 86px repeat(7,minmax(54px,.38fr)) 0;gap:18px;padding-inline:40px}
+      .app.editing .task-head,.app.editing .task-row{grid-template-columns:minmax(400px,2fr) 86px repeat(7,minmax(54px,.38fr)) 46px}
+      .task-row{min-height:78px}
+      .day-check{width:50px;height:50px}
+    }
+    @media(max-width:760px){.app{padding:12px 10px 52px}.task-grid{min-width:920px}}
   </style>
 </head>
 <body>

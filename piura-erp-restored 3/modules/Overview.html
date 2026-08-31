@@ -1016,8 +1016,46 @@
     .dashboard>.air .air-label,.dashboard>.air .air-status{max-width:100%!important;text-align:center!important}
     .dashboard>.air .air-reading{min-height:112px!important;display:grid!important;place-items:center!important;text-align:center!important}
     .dashboard>.air .air-value{font-size:clamp(48px,3.8vw,66px)!important;text-align:center!important}
+
+    /* 31.08.2026 — climate cards: one optical center, no decorative collision. */
+    .dashboard>.air{min-height:256px!important;padding:22px!important}
+    .dashboard>.air .air-stat{
+      min-height:204px!important;
+      padding:24px 20px 26px!important;
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:center!important;
+      justify-content:center!important;
+      gap:22px!important;
+      overflow:hidden!important;
+    }
+    .dashboard>.air .air-stat:before{display:none!important;content:none!important}
+    .dashboard>.air .air-stat:after{
+      content:""!important;
+      position:absolute!important;
+      left:20%!important;
+      right:20%!important;
+      bottom:-1px!important;
+      height:2px!important;
+      border-radius:999px!important;
+      background:linear-gradient(90deg,transparent,var(--accent),transparent)!important;
+      opacity:.72!important;
+      box-shadow:0 0 20px color-mix(in srgb,var(--accent) 34%,transparent)!important;
+    }
+    .dashboard>.air .air-stat-head{
+      min-height:34px!important;
+      display:flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      flex-wrap:wrap!important;
+      gap:9px!important;
+    }
+    .dashboard>.air .air-label{letter-spacing:.16em!important;line-height:1!important}
+    .dashboard>.air .air-status{margin:0!important;line-height:1!important}
+    .dashboard>.air .air-reading{min-height:auto!important;display:block!important;margin:0!important}
+    .dashboard>.air .air-value{font-size:clamp(46px,3.6vw,62px)!important;line-height:.96!important;letter-spacing:-.055em!important}
     @media(max-width:1000px){.dashboard>.air .air-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fund-goals{min-height:auto!important}}
-    @media(max-width:760px){.dashboard>.air .air-grid{grid-template-columns:1fr!important}.control-grid>.home-controls-card .lamp-power-row{left:16px!important;bottom:16px!important}}
+    @media(max-width:760px){.dashboard>.air .air-grid{grid-template-columns:1fr!important}.dashboard>.air .air-stat{min-height:170px!important}.control-grid>.home-controls-card .lamp-power-row{left:16px!important;bottom:16px!important}}
   </style>
 </head>
 <body>
