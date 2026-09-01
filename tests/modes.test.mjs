@@ -71,8 +71,14 @@ test('Climate reuses the working spreadsheet and pairs both Telegram apps',()=>{
   assert.doesNotMatch(app,/docs\.google\.com\/spreadsheets\/d\//);
   assert.match(app,/set current tab of w to t/);
   assert.match(app,/telegramIDs = \["ru\.keepcoder\.Telegram", "org\.telegram\.desktop"\]/);
-  assert.match(app,/r\.width \* 0\.41/);
-  assert.match(app,/NSWorkspace\.didActivateApplicationNotification/);
+  assert.match(app,/arrangeTelegramSplitView\(on: center\)/);
+  assert.match(app,/applicationShouldTerminateAfterLastWindowClosed[\s\S]*!isModeRunning/);
+  assert.match(app,/selectLeftFullScreenTile\(of: telegram\)/);
+  assert.match(app,/kAXSelectedChildrenAttribute/);
+  assert.match(app,/title: "Left of Screen"/);
+  assert.match(app,/pressElementAt\(x: target\.rect\.minX \+ target\.rect\.width \* 0\.75/);
+  assert.match(app,/bothFullScreen = aFull as\? Bool == true && bFull as\? Bool == true/);
+  assert.match(app,/abs\(left\.width - right\.width\) < 4/);
   assert.match(app,/keep\.formUnion\(telegramIDs/);
   assert.match(app,/configuration\.activates = telegramIDs\.contains\(id\)/);
   assert.match(app,/\[kAXMainWindowAttribute, kAXFocusedWindowAttribute\]/);

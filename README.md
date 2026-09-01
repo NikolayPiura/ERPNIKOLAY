@@ -53,10 +53,10 @@ npm run check
 | Display | Morning | Climate |
 | --- | --- | --- |
 | LG UltraFine — left | Yandex Music | ChatGPT foreground, Yandex Music in the background |
-| Studio Display — center | Safari: Admin Scale Drive folder | Safari: existing Working Table 2026 tab; paired Telegram windows above Safari |
+| Studio Display — center | Safari: Admin Scale Drive folder | Safari: existing Working Table 2026 tab; native full-screen Telegram Split View above Safari |
 | H27P27 — right | ERP Morning, light theme | ERP Overview / Главная, dark theme |
 
-The Telegram pair uses the normal Telegram on the left and Telegram Lite on the right, at a 41/59 width ratio. These remain two independent app windows, not a merged window or native full-screen Split View. The launcher stays in the background after Climate and raises both when either Telegram is activated. Reopen PIURA Modes to change modes. The central display for the pair is the current default.
+The Telegram pair is a native macOS full-screen Split View in one Space: normal Telegram on the left and Telegram Lite on the right, equal halves, no desktop gaps. The launcher verifies both windows are full screen, touch at the centre divider, cover the Studio Display, and have equal widths. Safari remains on the underlying centre-display desktop.
 
 Build with `npm run build:modes`. Open the installed **PIURA Modes.app** for the same HTML panel without Safari's external-app confirmation. The hosted/standalone HTML still uses `piura-modes://morning` or `piura-modes://climate`; Safari controls its own permission prompt. Local builds keep a consistent designated signing identity, but the first launch after replacing an older build can still require macOS permissions.
 
