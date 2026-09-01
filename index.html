@@ -211,6 +211,8 @@
     const clone=v=>JSON.parse(JSON.stringify(v));
     function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
     let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));if(Number(prefs.behaviorVersion||0)<10){prefs.hoverExpand=false;prefs.showArrows=false;prefs.theme=prefs.theme||'dark';prefs.palette=['balanced','ocean','sage','mono'].includes(prefs.palette)?prefs.palette:'balanced';prefs.neon=0}if(Number(prefs.behaviorVersion||0)<11){prefs.gap=Math.max(8,Number(prefs.gap)||0);prefs.behaviorVersion=11}if(Number(prefs.behaviorVersion||0)<12){prefs.gap=Math.max(12,Number(prefs.gap)||0);prefs.behaviorVersion=12}if(Number(prefs.behaviorVersion||0)<13){prefs.gap=Math.max(18,Number(prefs.gap)||0);prefs.behaviorVersion=13}
+    const launchParams=new URLSearchParams(location.search),launchTheme=launchParams.get('theme'),launchModule=launchParams.get('module')||launchParams.get('service');
+    if(['light','dark'].includes(launchTheme))prefs.theme=launchTheme;
     const savedGroups=read(ORDER,DEFAULT_GROUPS),savedItems=new Map((Array.isArray(savedGroups)?savedGroups:[]).flatMap(group=>Array.isArray(group.items)?group.items:[]).map(item=>[item[0],item]));
     let groups=clone(DEFAULT_GROUPS);groups.forEach(group=>group.items=group.items.map(item=>{const old=savedItems.get(item[0]);return old?[item[0],old[1]||item[1],item[2],item[3]]:item}));
     // Миграция только старого стандартного имени; пользовательские названия не трогаем.
@@ -224,7 +226,7 @@
     const menu=document.getElementById("menu");
     const tip=document.getElementById('tip');let dragId=null,settingsOpen=false;
     const all=()=>groups.flatMap(group=>group.items);
-    let current=all().find(item=>item[0]===localStorage.getItem("piura-erp-shell-module"))||all()[0];
+    let current=all().find(item=>item[0]===launchModule)||all().find(item=>item[0]===localStorage.getItem("piura-erp-shell-module"))||all()[0];
     if(localStorage.getItem("piura-erp-shell-compact")==="1")prefs.collapsed=true;
     function save(){localStorage.setItem(KEY,JSON.stringify(prefs));localStorage.setItem(ORDER,JSON.stringify(groups))}
     const PALETTES={balanced:['#6ea8fe','#43d39e','#a78bfa'],ocean:['#55b8ff','#43d3c1','#7f9cff'],sage:['#63c99c','#9ecb6b','#6fa8d8'],mono:['#d4d4d4','#a3a3a3','#737373']};
@@ -269,6 +271,8 @@
     };
     const SERVICE_ACTIONS={funds:[['funds-add','Добавить фонд']],mydynamics:[['mydynamics-manage','Добавить или удалить пункт']]};
     let servicePrefs=read(SERVICE_PREFS_KEY,{}),controlPage='general';
+    const launchTab=launchParams.get('tab'),launchTabLabels={overview:'Обзор',invest:'Инвестиции',climate:'Климат',money:'Управление деньгами',mentor:'Наставничество'};
+    if(launchModule==='effectiveness'&&launchTabLabels[launchTab])servicePrefs.effectiveness={...(servicePrefs.effectiveness||{}),overview:launchTabLabels[launchTab]};
     let firebaseState={phase:'loading',message:'Firebase · подключение…',configured:false,signedIn:false,email:'',lastSyncAt:0};
     function saveServicePrefs(){
       localStorage.setItem(SERVICE_PREFS_KEY,JSON.stringify(servicePrefs));

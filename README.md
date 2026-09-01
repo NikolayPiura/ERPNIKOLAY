@@ -45,3 +45,13 @@ npm run dev
 npm test
 npm run check
 ```
+
+## PIURA Modes for macOS
+
+`modes.html` contains six personal workspace modes: Morning, Climate, Learning, Investments, Funds, and Mentorship. Morning is connected to the native `PIURA Modes` macOS launcher. It arranges the current three-display setup by display name:
+
+- **LG UltraFine (left):** Yandex Browser with Yandex Music;
+- **Studio Display (center):** Safari with the Admin Scale folder in Google Drive;
+- **H27P27 (right):** PIURA ERP opened directly in Morning with the light theme.
+
+Build the launcher with `npm run build:modes`. The full Morning action also switches macOS to the light appearance, applies the Sonoma wallpaper, gracefully asks other regular apps to quit, enables Do Not Disturb when Accessibility access is available, and starts Yandex Music when browser automation is allowed. The preview button only arranges the three windows.

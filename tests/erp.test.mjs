@@ -12,6 +12,37 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
+test('панель режимов содержит шесть уникальных режимов и готовое Утро', () => {
+  const modes = read('modes.html');
+  for (const mode of ['morning','climate','learning','investments','funds','mentorship']) {
+    assert.match(modes, new RegExp(`data-mode="${mode}"`));
+  }
+  assert.equal((modes.match(/class="mode" data-mode=/g)||[]).length,6);
+  assert.match(modes, /Админ Шкала · ERP Утро · Яндекс Музыка/);
+  assert.match(modes, /messageHandlers\?\.piura/);
+  assert.match(modes, /piura-modes:\/\/morning/);
+  assert.doesNotMatch(modes, /window\.open\(ERP_MORNING/);
+});
+
+test('ERP принимает прямой запуск раздела и темы из режима macOS', () => {
+  const shell = read('index.html');
+  assert.match(shell, /launchParams=new URLSearchParams\(location\.search\)/);
+  assert.match(shell, /launchParams\.get\('module'\)\|\|launchParams\.get\('service'\)/);
+  assert.match(shell, /\['light','dark'\]\.includes\(launchTheme\)/);
+});
+
+test('macOS-режим закрепляет три сервиса за именованными мониторами', () => {
+  const app = read('mac/PIURAModes.swift');
+  assert.match(app, /display\(named: "LG UltraFine"\)/);
+  assert.match(app, /display\(named: "Studio Display"\)/);
+  assert.match(app, /display\(named: "H27P27"\)/);
+  assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
+  assert.match(app, /module=morning&theme=light/);
+  assert.match(app, /https:\/\/music\.yandex\.ru\//);
+  assert.match(app, /\$0\.scheme == "piura-modes" && \$0\.host == "morning"/);
+  assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
+});
+
 test('единая оболочка содержит все согласованные сервисы', () => {
   const shell = read('index.html');
   for (const label of ['Главная','Эффективность','Утро','Учёт времени','ПС №1','Админ-шкала','Управление','Фонды']) {
