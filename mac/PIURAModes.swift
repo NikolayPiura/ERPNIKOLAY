@@ -355,10 +355,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         app.activate(options: [.activateAllWindows])
     }
     private func runningApplication(_ id: String, launch: Bool) throws -> NSRunningApplication? {
-        if let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == id && !$0.isTerminated }) { return app }
-        guard launch, let url = workspace.urlForApplication(withBundleIdentifier: id) else { return nil }
+        let existing = workspace.runningApplications.first(where: { $0.bundleIdentifier == id && !$0.isTerminated })
+        guard launch, let url = workspace.urlForApplication(withBundleIdentifier: id) else { return existing }
         let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = false
+        // Reopen even an already-running app: Telegram can be running without
+        // an exposed main window after its last window was closed or hidden.
+        configuration.activates = telegramIDs.contains(id)
         var completed = false
         var openedApp: NSRunningApplication?
         var launchError: Error?
@@ -372,14 +374,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     private func firstWindow(of app: NSRunningApplication) throws -> AXUIElement {
         let element = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(element, 1)
         let deadline = Date().addingTimeInterval(8)
+        var lastError = AXError.noValue
         repeat {
             var value: CFTypeRef?
-            if AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &value) == .success,
+            lastError = AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &value)
+            if lastError == .success,
                let windows = value as? [AXUIElement], let window = windows.first { return window }
+            // Some native apps expose AXMainWindow/AXFocusedWindow while their
+            // AXWindows collection is temporarily empty or unsupported.
+            for attribute in [kAXMainWindowAttribute, kAXFocusedWindowAttribute] {
+                value = nil
+                if AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
+                   let value, CFGetTypeID(value) == AXUIElementGetTypeID() { return (value as! AXUIElement) }
+            }
+            value = nil
+            if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
+               let children = value as? [AXUIElement] {
+                for child in children {
+                    var role: CFTypeRef?
+                    if AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &role) == .success,
+                       role as? String == kAXWindowRole { return child }
+                }
+            }
             pumpRunLoop(0.15)
         } while Date() < deadline
-        throw modeError("Нет доступного окна \(app.localizedName ?? "приложения").")
+        throw modeError("Нет доступного окна \(app.localizedName ?? "приложения") (AX \(lastError.rawValue)).")
     }
     private func placeWindow(of app: NSRunningApplication, in rect: CGRect, raise: Bool) throws {
         let element = try firstWindow(of: app)

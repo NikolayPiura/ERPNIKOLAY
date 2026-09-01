@@ -74,5 +74,7 @@ test('Climate reuses the working spreadsheet and pairs both Telegram apps',()=>{
   assert.match(app,/r\.width \* 0\.41/);
   assert.match(app,/NSWorkspace\.didActivateApplicationNotification/);
   assert.match(app,/keep\.formUnion\(telegramIDs/);
+  assert.match(app,/configuration\.activates = telegramIDs\.contains\(id\)/);
+  assert.match(app,/\[kAXMainWindowAttribute, kAXFocusedWindowAttribute\]/);
   assert.match(app,/if !preview \{\s*if !setDoNotDisturb[\s\S]*?try arrangeChatGPT/);
 });
