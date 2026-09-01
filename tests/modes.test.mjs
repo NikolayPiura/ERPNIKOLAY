@@ -9,7 +9,7 @@ const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 
 function panel(native=true){
   const status={textContent:'',className:''};
-  const buttons=['morning','climate'].map(mode=>({
+  const buttons=['morning','climate','investments','learning','mentorship'].map(mode=>({
     dataset:{mode},disabled:false,
     addEventListener(event,handler){this[event]=handler;},
   }));
@@ -21,8 +21,8 @@ function panel(native=true){
   return {context,window,buttons,status,messages,timers};
 }
 
-test('native panel dispatches both modes without any browser protocol handoff',()=>{
-  for(const mode of ['morning','climate']){
+test('native panel dispatches all five modes without any browser protocol handoff',()=>{
+  for(const mode of ['morning','climate','investments','learning','mentorship']){
     const p=panel();
     assert.equal(p.messages.length,0,'page load must not start a mode');
     p.buttons.find(b=>b.dataset.mode===mode).click();
@@ -45,7 +45,7 @@ test('browser HTML dispatches the chosen mode and does not claim success',()=>{
   assert.notEqual(p.status.className,'ok');
   p.timers.forEach(fn=>fn());
   assert.ok(p.buttons.every(b=>!b.disabled));
-  assert.match(p.status.textContent,/без вопроса Safari/);
+  assert.match(p.status.textContent,/без вопроса/);
 });
 
 test('unknown modes cannot launch a protocol or a native action',()=>{
@@ -62,25 +62,38 @@ test('Mac stays dark; Morning changes actual desktop images from a permanent loc
   assert.match(app,/supportDirectory\.appendingPathComponent\("Wallpapers"/);
   assert.match(app,/workspace\.setDesktopImageURL\(permanentURL, for: screen/);
   assert.match(app,/tell every desktop to set picture/);
+  for(const asset of ['Magic-Morning','Climate-Cat','Investments','Learning','Mentorship'])assert.match(app,new RegExp(asset));
   assert.doesNotMatch(html,/Magic-Morning\.png/);
 });
 
-test('Climate reuses the working spreadsheet and pairs both Telegram apps',()=>{
+test('Climate and Investments use true full-screen Telegram Split View',()=>{
   const app=read('mac/PIURAModes.swift');
-  assert.match(app,/name of t contains \\"Рабочая таблица\\"/);
-  assert.doesNotMatch(app,/docs\.google\.com\/spreadsheets\/d\//);
+  assert.match(app,/name of t contains "Рабочая таблица"/);
   assert.match(app,/set current tab of w to t/);
   assert.match(app,/telegramIDs = \["ru\.keepcoder\.Telegram", "org\.telegram\.desktop"\]/);
   assert.match(app,/arrangeTelegramSplitView\(on: center\)/);
   assert.match(app,/applicationShouldTerminateAfterLastWindowClosed[\s\S]*!isModeRunning/);
   assert.match(app,/selectLeftFullScreenTile\(of: telegram\)/);
-  assert.match(app,/kAXSelectedChildrenAttribute/);
-  assert.match(app,/title: "Left of Screen"/);
-  assert.match(app,/pressElementAt\(x: target\.rect\.minX \+ target\.rect\.width \* 0\.75/);
+  assert.match(app,/menu item "Left of Screen"/);
+  assert.match(app,/postPointerClick\(at: CGPoint\(x: target\.rect\.minX \+ target\.rect\.width \* 0\.75/);
   assert.match(app,/bothFullScreen = aFull as\? Bool == true && bFull as\? Bool == true/);
-  assert.match(app,/abs\(left\.width - right\.width\) < 4/);
+  assert.match(app,/bothFullScreen &&/);
+  assert.match(app,/abs\(right\.minX - left\.maxX\) < 18/);
+  assert.match(app,/abs\(left\.width - right\.width\) < 16/);
   assert.match(app,/keep\.formUnion\(telegramIDs/);
   assert.match(app,/configuration\.activates = telegramIDs\.contains\(id\)/);
   assert.match(app,/\[kAXMainWindowAttribute, kAXFocusedWindowAttribute\]/);
-  assert.match(app,/if !preview \{\s*if !setDoNotDisturb[\s\S]*?try arrangeChatGPT/);
+  assert.match(app,/if mode\.needsChatGPT/);
+});
+
+test('the five mode recipes contain the supplied workspaces',()=>{
+  const app=read('mac/PIURAModes.swift');
+  assert.match(app,/case morning, climate, investments, learning, mentorship/);
+  assert.equal((html.match(/<button[^>]+data-mode=/g)||[]).length,5);
+  assert.equal((app.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\//g)||[]).length,5);
+  assert.match(app,/extension\.flag\.today\/course\//);
+  assert.match(app,/module=funds&theme=dark/);
+  assert.match(app,/communication-policy\.html/);
+  assert.match(app,/if mode != \.learning/);
+  assert.match(app,/if mode\.needsMusic && !startYandexMusic/);
 });

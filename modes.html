@@ -5,88 +5,48 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>PIURA · Режимы</title>
   <style>
-    :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f3f4f6;background:#101216}
-    *{box-sizing:border-box}
-    html,body{min-height:100%;margin:0}
-    body{display:grid;place-items:center;min-height:100vh;padding:48px 32px;background:radial-gradient(ellipse at 50% 0,rgba(80,90,112,.14),transparent 60%),#101216}
-    main{width:min(900px,100%)}
-    .eyebrow{display:flex;align-items:center;gap:10px;color:#a2aab9;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
-    .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:#89b39c}
-    h1{margin:22px 0 12px;font-size:clamp(36px,5vw,58px);line-height:1.08;letter-spacing:-.05em;font-weight:650}
-    .lead{margin:0;color:#9199a8;font-size:15px;line-height:1.6}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:34px}
-    .mode{--accent:#e6b56f;position:relative;min-height:225px;padding:28px;border:1px solid #31343b;border-radius:24px;background:#1b1e24;color:inherit;text-align:left;cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
-    .mode[data-mode="climate"]{--accent:#8bb9bb}
-    .mode:hover{transform:translateY(-3px);border-color:var(--accent);background:#21242c}
-    .mode:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
-    .mode:disabled{opacity:.55;cursor:wait;transform:none}
-    .icon{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;color:var(--accent);background:#282b31}
-    .icon svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
-    .arrow{position:absolute;right:28px;top:30px;color:#646d7d;font-size:22px}
-    .mode strong{display:block;margin-top:25px;font-size:29px;font-weight:600;letter-spacing:-.035em}
-    .mode small{display:block;margin-top:9px;color:#969eac;font-size:12px;line-height:1.65}
-    footer{margin:22px 2px 0;color:#858d9b;font-size:11px;line-height:1.6}
-    #status{min-height:20px;overflow-wrap:anywhere}
-    #status.busy{color:#e6b56f}
-    #status.ok{color:#91c0a7}
-    #status.error{color:#efa39b}
-    .hint{margin-top:8px;color:#5f6878}
-    @media(prefers-reduced-motion:reduce){.mode{transition:none}}
-    @media(max-width:560px){body{padding:42px 20px}.grid{grid-template-columns:1fr;gap:14px;margin-top:26px}.mode{min-height:190px;padding:24px}.mode strong{margin-top:20px}h1{font-size:38px}}
+    :root{color-scheme:dark;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f5f7f9;background:#090d10}
+    *{box-sizing:border-box}html,body{min-height:100%;margin:0}
+    body{display:grid;place-items:center;min-height:100vh;padding:38px;background:radial-gradient(circle at 50% -15%,rgba(122,160,180,.16),transparent 45%),linear-gradient(155deg,#0c1115,#080b0e)}
+    main{width:min(1230px,100%)}header{display:flex;align-items:end;justify-content:space-between;gap:28px;margin:0 4px 30px}
+    .eyebrow{display:flex;align-items:center;gap:10px;color:#818d96;font-size:10px;font-weight:750;letter-spacing:.2em;text-transform:uppercase}.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:#68d2a2;box-shadow:0 0 18px rgba(104,210,162,.7)}
+    h1{margin:13px 0 0;font-size:clamp(34px,5vw,56px);line-height:1;letter-spacing:-.055em;font-weight:610}.lead{max-width:330px;margin:0 0 3px;color:#737f89;font-size:12px;line-height:1.6;text-align:right}
+    .grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+    .mode{--accent:#f2bd6b;--glow:rgba(242,189,107,.24);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:300px;padding:24px 16px;border:1px solid #2a3137;border-radius:30px;background:linear-gradient(155deg,#1a2025,#11161a);color:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px rgba(255,255,255,.035),0 22px 60px rgba(0,0,0,.18);transition:transform .22s,border-color .22s,box-shadow .22s}
+    .mode[data-mode="climate"]{--accent:#6ed4ec;--glow:rgba(80,196,225,.22)}.mode[data-mode="investments"]{--accent:#62d998;--glow:rgba(63,210,135,.22)}.mode[data-mode="learning"]{--accent:#a891ff;--glow:rgba(146,119,245,.24)}.mode[data-mode="mentorship"]{--accent:#ef9f82;--glow:rgba(239,142,110,.23)}
+    .mode::before{content:"";position:absolute;inset:auto -35% -48% -35%;height:72%;background:radial-gradient(ellipse,var(--glow),transparent 68%);opacity:.55;transition:opacity .22s}.mode:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:inset 0 1px rgba(255,255,255,.05),0 28px 78px var(--glow)}.mode:hover::before{opacity:1}.mode:focus-visible{outline:2px solid var(--accent);outline-offset:5px}.mode:disabled{opacity:.52;cursor:wait;transform:none}
+    .unit{position:relative;width:150px;height:150px;border:1px solid #384149;border-radius:42px;background:linear-gradient(145deg,#242b31,#12171b);box-shadow:inset 9px 9px 24px rgba(0,0,0,.42),inset -5px -5px 18px rgba(255,255,255,.035),0 18px 34px rgba(0,0,0,.35)}
+    .unit::before{content:"";position:absolute;inset:17px;border:1px solid var(--accent);opacity:.55;border-radius:50%;background:radial-gradient(circle at center,#182025 0 13%,transparent 14%),repeating-radial-gradient(circle at center,transparent 0 17px,rgba(255,255,255,.025) 18px 19px,transparent 20px 25px);box-shadow:inset 0 0 30px rgba(0,0,0,.55),0 0 32px var(--glow)}
+    .fan{position:absolute;inset:25px;border-radius:50%;filter:drop-shadow(0 8px 7px rgba(0,0,0,.35));transition:transform .8s cubic-bezier(.2,.75,.2,1)}.mode:hover .fan{transform:rotate(68deg)}
+    .blade{position:absolute;left:50%;top:50%;width:42px;height:57px;margin:-49px 0 0 -8px;border-radius:58% 16% 64% 22%;transform-origin:8px 49px;background:linear-gradient(145deg,var(--accent),#2c3b3e);opacity:.9;box-shadow:inset 1px 1px rgba(255,255,255,.3)}
+    .blade:nth-child(2){transform:rotate(72deg)}.blade:nth-child(3){transform:rotate(144deg)}.blade:nth-child(4){transform:rotate(216deg)}.blade:nth-child(5){transform:rotate(288deg)}.hub{position:absolute;left:50%;top:50%;width:25px;height:25px;transform:translate(-50%,-50%);border:5px solid #151b1f;border-radius:50%;background:var(--accent);box-shadow:0 0 20px var(--glow),inset 0 0 0 2px rgba(255,255,255,.28)}
+    .mode strong{position:relative;margin-top:28px;font-size:18px;font-weight:630;letter-spacing:-.025em}.mode small{position:relative;margin-top:6px;color:#68747d;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+    footer{display:flex;justify-content:space-between;gap:20px;margin:18px 5px 0;color:#66717a;font-size:10px;line-height:1.5}#status.busy{color:#e4b568}#status.ok{color:#73d7a3}#status.error{color:#f09188}.hint{text-align:right}
+    @media(max-width:1050px){.grid{grid-template-columns:repeat(3,1fr)}.mode{min-height:260px}.unit{width:130px;height:130px}}@media(max-width:650px){body{padding:24px 18px}header{display:block}.lead{margin-top:12px;text-align:left}.grid{grid-template-columns:1fr 1fr}.mode{min-height:230px}.unit{width:112px;height:112px;border-radius:34px}.fan{inset:19px}.blade{transform:scale(.8)}.blade:nth-child(2){transform:rotate(72deg) scale(.8)}.blade:nth-child(3){transform:rotate(144deg) scale(.8)}.blade:nth-child(4){transform:rotate(216deg) scale(.8)}.blade:nth-child(5){transform:rotate(288deg) scale(.8)}}@media(prefers-reduced-motion:reduce){.mode,.fan{transition:none}}
   </style>
 </head>
 <body>
   <main>
-    <div class="eyebrow">PIURA · персональная среда</div>
-    <h1>В своём режиме.</h1>
-    <p class="lead">Два пространства. Три экрана. Один выбор.</p>
+    <header><div><div class="eyebrow">PIURA · персональная среда</div><h1>Выберите режим.</h1></div><p class="lead">Пять собранных пространств для трёх экранов. macOS всегда остаётся тёмной.</p></header>
     <section class="grid" aria-label="Режимы работы">
-      <button type="button" class="mode" data-mode="morning">
-        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17h18M6 17a6 6 0 0 1 12 0M12 3v3M4.2 8.2l2.1 2.1m11.4 0 2.1-2.1M7 21h10"/></svg></span>
-        <span class="arrow" aria-hidden="true">↗</span>
-        <strong>Утро</strong>
-        <small>Админ Шкала · светлая ERP «Утро»<br>Музыка · утренние обои · без уведомлений</small>
-      </button>
-      <button type="button" class="mode" data-mode="climate">
-        <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M12 17v4m-4 0h8M9 4v13"/></svg></span>
-        <span class="arrow" aria-hidden="true">↗</span>
-        <strong>Климат</strong>
-        <small>Рабочая таблица · тёмная ERP «Главная»<br>ChatGPT · два Telegram · музыка в фоне</small>
-      </button>
+      <button type="button" class="mode" data-mode="morning"><span class="unit"><span class="fan"><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="hub"></i></span></span><strong>Утро</strong><small>Начало дня</small></button>
+      <button type="button" class="mode" data-mode="climate"><span class="unit"><span class="fan"><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="hub"></i></span></span><strong>Климат</strong><small>Рабочий контур</small></button>
+      <button type="button" class="mode" data-mode="investments"><span class="unit"><span class="fan"><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="hub"></i></span></span><strong>Инвестиции</strong><small>Фонды</small></button>
+      <button type="button" class="mode" data-mode="learning"><span class="unit"><span class="fan"><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="hub"></i></span></span><strong>Обучение</strong><small>Фокус</small></button>
+      <button type="button" class="mode" data-mode="mentorship"><span class="unit"><span class="fan"><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="blade"></i><i class="hub"></i></span></span><strong>Наставничество</strong><small>Коммуникации</small></button>
     </section>
-    <footer>
-      <div id="status" role="status" aria-live="polite">Выберите режим</div>
-      <div class="hint" id="hint">macOS остаётся тёмной в обоих режимах.</div>
-    </footer>
+    <footer><div id="status" role="status" aria-live="polite">Выберите режим</div><div class="hint">Три экрана · один клик</div></footer>
   </main>
   <script>
     const status=document.getElementById('status');
     const buttons=[...document.querySelectorAll('[data-mode]')];
-    const labels={morning:'Утро',climate:'Климат'};
+    const labels={morning:'Утро',climate:'Климат',investments:'Инвестиции',learning:'Обучение',mentorship:'Наставничество'};
     const setStatus=(text,kind='')=>{status.textContent=text;status.className=kind};
     const setBusy=busy=>buttons.forEach(button=>{button.disabled=busy});
-    function sendMode(mode,preview=false){
-      if(!Object.hasOwn(labels,mode))return;
-      const bridge=window.webkit?.messageHandlers?.piura;
-      window.piuraModeStarted(mode,preview);
-      if(bridge){bridge.postMessage({mode,preview});return}
-      window.location.href=`piura-modes://${mode}${preview?'?preview=1':''}`;
-      setStatus('Команда передана PIURA Modes. Если браузер спросит — разрешите открытие приложения.','busy');
-      setTimeout(()=>{
-        setBusy(false);
-        setStatus('Для запуска без вопроса Safari открывайте панель в приложении PIURA Modes.');
-      },8000);
-    }
-    window.piuraModeStarted=(mode='morning',preview=false)=>{
-      setBusy(true);
-      setStatus(preview?`Проверяю расположение «${labels[mode]}»…`:`Запускаю режим «${labels[mode]}»…`,'busy');
-    };
-    window.piuraModeNeedsAccess=()=>setStatus('Разрешите PIURA Modes управление компьютером в настройках macOS и вернитесь сюда.','busy');
-    window.piuraModeFinished=(result={})=>{
-      setBusy(false);
-      setStatus(result.message||'Готово',result.ok===false?'error':'ok');
-    };
-    buttons.forEach(button=>button.addEventListener('click',()=>sendMode(button.dataset.mode)));
+    function sendMode(mode,preview=false){if(!Object.hasOwn(labels,mode))return;const bridge=window.webkit?.messageHandlers?.piura;window.piuraModeStarted(mode,preview);if(bridge){bridge.postMessage({mode,preview});return}window.location.href=`piura-modes://${mode}${preview?'?preview=1':''}`;setStatus('Команда передана PIURA Modes. Если браузер спросит — разрешите открытие приложения.','busy');setTimeout(()=>{setBusy(false);setStatus('Для запуска без вопроса откройте панель в приложении PIURA Modes.');},8000)}
+    window.piuraModeStarted=(mode='morning',preview=false)=>{setBusy(true);setStatus(preview?`Проверяю «${labels[mode]}»…`:`Запускаю «${labels[mode]}»…`,'busy')};
+    window.piuraModeNeedsAccess=()=>setStatus('Разрешите PIURA Modes управление компьютером в настройках macOS.','busy');
+    window.piuraModeFinished=(result={})=>{setBusy(false);setStatus(result.message||'Готово',result.ok===false?'error':'ok')};buttons.forEach(button=>button.addEventListener('click',()=>sendMode(button.dataset.mode)));
   </script>
 </body>
 </html>

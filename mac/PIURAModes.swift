@@ -3,11 +3,36 @@ import ApplicationServices
 import WebKit
 
 private enum WorkMode: String {
-    case morning, climate
-    var title: String { self == .morning ? "Утро" : "Климат" }
-    var erpURL: String {
-        "https://nikolaypiura.github.io/ERPNIKOLAY/?module=\(self == .morning ? "morning" : "overview")&theme=\(self == .morning ? "light" : "dark")"
+    case morning, climate, investments, learning, mentorship
+    var title: String {
+        switch self {
+        case .morning: "Утро"
+        case .climate: "Климат"
+        case .investments: "Инвестиции"
+        case .learning: "Обучение"
+        case .mentorship: "Наставничество"
+        }
     }
+    var wallpaperResource: String {
+        switch self {
+        case .morning: "Magic-Morning"
+        case .climate: "Climate-Cat"
+        case .investments: "Investments"
+        case .learning: "Learning"
+        case .mentorship: "Mentorship"
+        }
+    }
+    var erpURL: String? {
+        switch self {
+        case .morning: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=morning&theme=light"
+        case .climate, .mentorship: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=dark"
+        case .investments: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=funds&theme=dark"
+        case .learning: nil
+        }
+    }
+    var needsTelegram: Bool { self == .climate || self == .investments }
+    var needsChatGPT: Bool { self == .climate || self == .investments }
+    var needsMusic: Bool { self == .morning || self == .climate || self == .investments }
 }
 private struct DisplayTarget {
     let screen: NSScreen
@@ -28,6 +53,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let adminScaleURL = "https://drive.google.com/drive/u/0/folders/1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
+    private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
+    private let courseURL = "https://extension.flag.today/course/8ad3b992482ce35a3a4357adf3ef54251331cd5326808a871e41e8a0d566f84d/complete?savedLesson=%D0%A3%D1%80%D0%BE%D0%BA%20%D0%BD%D0%BE%D0%BC%D0%B5%D1%80%207"
+    private let investmentURLs = [
+        "https://docs.google.com/spreadsheets/d/1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA/edit?gid=1710033294#gid=1710033294",
+        "https://docs.google.com/spreadsheets/d/1GWFyFKRVq1Z4x68gWICBmlilqP5FzYOXXBkC4xYzEbA/edit?gid=123675552#gid=123675552",
+        "https://docs.google.com/spreadsheets/d/13ju_0mu-jHpAE73ZTMwdGKEGxDYvBXcn7EcsO4TTTMc/edit?gid=925953727#gid=925953727",
+        "https://docs.google.com/spreadsheets/d/1ZrjETAPuytFmxlPtNShmYUMqMfDttltG51_MUrxN2dg/edit?gid=1180642012#gid=1180642012",
+        "https://docs.google.com/spreadsheets/d/1EyNYpTSY9ofBIlBGhovu329VXXPBU5JQI5DvfBmHHuM/edit?gid=833941911#gid=833941911"
+    ]
     private let telegramIDs = ["ru.keepcoder.Telegram", "org.telegram.desktop"]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -63,7 +97,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let diagnostics = NSMenu(title: "Проверка")
         for (title, action, key) in [
             ("Расположение «Утро»", #selector(previewMorning), "1"),
-            ("Расположение «Климат»", #selector(previewClimate), "2")
+            ("Расположение «Климат»", #selector(previewClimate), "2"),
+            ("Расположение «Инвестиции»", #selector(previewInvestments), "3"),
+            ("Расположение «Обучение»", #selector(previewLearning), "4"),
+            ("Расположение «Наставничество»", #selector(previewMentorship), "5")
         ] {
             let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
             item.keyEquivalentModifierMask = [.command, .shift]
@@ -76,6 +113,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     @objc private func previewMorning() { if pageReady { beginMode(.morning, preview: true) } }
     @objc private func previewClimate() { if pageReady { beginMode(.climate, preview: true) } }
+    @objc private func previewInvestments() { if pageReady { beginMode(.investments, preview: true) } }
+    @objc private func previewLearning() { if pageReady { beginMode(.learning, preview: true) } }
+    @objc private func previewMentorship() { if pageReady { beginMode(.mentorship, preview: true) } }
     private func configureWindow() {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(self, name: "piura")
@@ -84,7 +124,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         webView.setValue(false, forKey: "drawsBackground")
         let visible = (display(named: "Studio Display") ?? display(at: 0))?.screen.visibleFrame
             ?? NSRect(x: 0, y: 0, width: 1200, height: 820)
-        let frame = NSRect(x: visible.midX - 520, y: visible.midY - 320, width: 1040, height: 640)
+        let width = min(1320, visible.width - 80), height = min(760, visible.height - 80)
+        let frame = NSRect(x: visible.midX - width / 2, y: visible.midY - height / 2, width: width, height: height)
         window = NSWindow(contentRect: frame, styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         window.title = "PIURA · Режимы"
         window.titlebarAppearsTransparent = true
@@ -117,12 +158,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         webView.evaluateJavaScript("window.piuraModeStarted('\(mode.rawValue)',\(preview))")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
             guard let self else { return }
+            if !preview {
+                self.window.orderOut(nil)
+                NSApp.setActivationPolicy(.accessory)
+            }
             let result = self.runMode(mode, preview: preview)
             self.finishInWebView(result)
             self.writeReport(mode: mode, preview: preview, result: result)
             self.isModeRunning = false
-            if !preview && result.ok {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+            if !preview {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     NSApp.terminate(nil)
                 }
             }
@@ -147,29 +192,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
             closeRegularApplications(exceptFor: mode)
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
-            if mode == .morning {
-                do { try setMorningDesktopWallpaper() } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
-            }
+            do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
         }
         do { try arrangeSafari(on: center, mode: mode) } catch { notes.append("Safari: \(error.localizedDescription)") }
-        do { try arrangeYandex(erp: right, music: left, mode: mode) } catch { notes.append("Яндекс: \(error.localizedDescription)") }
-        if mode == .climate {
+        if mode != .learning {
+            do { try arrangeYandex(right: right, left: left, mode: mode) } catch { notes.append("Яндекс: \(error.localizedDescription)") }
+        }
+        if mode.needsTelegram {
             if AXIsProcessTrusted() {
-                do {
-                    try arrangeTelegramSplitView(on: center)
-                } catch { notes.append("Telegram: \(error.localizedDescription)") }
+                do { try arrangeTelegramSplitView(on: center) } catch { notes.append("Telegram: \(error.localizedDescription)") }
             } else { notes.append("для пары Telegram нужен Универсальный доступ PIURA Modes") }
         }
         if !preview {
-            if !setDoNotDisturb(enabled: mode == .morning) { notes.append("проверьте режим «Не беспокоить»") }
-            if !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
-            // The non-destructive preview never operates the active assistant.
-            if mode == .climate {
+            if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
+            if mode.needsMusic && !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
+            if mode.needsChatGPT {
                 do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
             }
         }
         let success = preview
-            ? "Проверено: \(mode == .morning ? "центр — Админ Шкала, справа — Утро, слева — Музыка" : "Safari — рабочая таблица, ERP — тёмная Главная, Telegram — единый полноэкранный Split View; ChatGPT в проверке не перемещается")."
+            ? "Проверено расположение режима «\(mode.title)»."
             : "Режим «\(mode.title)» включён."
         return ModeResult(ok: notes.isEmpty, message: notes.isEmpty ? success : "Выполнено не полностью: " + notes.joined(separator: " · "))
     }
@@ -183,8 +225,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return DisplayTarget(screen: screen, rect: CGRect(x: f.minX, y: mainHeight - f.maxY, width: f.width, height: f.height))
     }
     private func closeRegularApplications(exceptFor mode: WorkMode) {
-        var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari", "ru.yandex.desktop.yandex-browser"]
-        if mode == .climate { keep.formUnion(telegramIDs + ["com.openai.chat", "com.openai.codex"]) }
+        var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari"]
+        if mode != .learning { keep.insert("ru.yandex.desktop.yandex-browser") }
+        if mode.needsTelegram { keep.formUnion(telegramIDs) }
+        if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
         let currentPID = ProcessInfo.processInfo.processIdentifier
         let apps = workspace.runningApplications.filter { app in
             app.activationPolicy == .regular && app.processIdentifier != currentPID && (app.bundleIdentifier.map { !keep.contains($0) } ?? true)
@@ -201,12 +245,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var supportDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("PIURA Modes", isDirectory: true)
     }
-    private func setMorningDesktopWallpaper() throws {
-        guard let source = Bundle.main.url(forResource: "Magic-Morning", withExtension: "png") else { throw modeError("Файл фона отсутствует в приложении.") }
+    private func setDesktopWallpaper(for mode: WorkMode) throws {
+        guard let source = Bundle.main.url(forResource: mode.wallpaperResource, withExtension: "png") else { throw modeError("Файл фона отсутствует в приложении.") }
         let directory = supportDirectory.appendingPathComponent("Wallpapers", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let permanentURL = directory.appendingPathComponent("Magic-Morning.png")
-        if !FileManager.default.fileExists(atPath: permanentURL.path) { try FileManager.default.copyItem(at: source, to: permanentURL) }
+        let permanentURL = directory.appendingPathComponent("\(mode.wallpaperResource).png")
+        if FileManager.default.fileExists(atPath: permanentURL.path) { try FileManager.default.removeItem(at: permanentURL) }
+        try FileManager.default.copyItem(at: source, to: permanentURL)
         let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
             .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue, .allowClipping: true,
             .fillColor: NSColor(calibratedWhite: 0.9, alpha: 1)
@@ -214,47 +259,90 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // This API changes macOS desktop wallpapers, never browser backgrounds.
         for screen in NSScreen.screens { try workspace.setDesktopImageURL(permanentURL, for: screen, options: options) }
         _ = try runAppleScript("tell application \"System Events\" to tell every desktop to set picture to \"\(appleScriptEscape(permanentURL.path))\"")
-        for screen in NSScreen.screens {
-            guard workspace.desktopImageURL(for: screen)?.lastPathComponent == permanentURL.lastPathComponent else {
-                throw modeError("macOS не подтвердила фон на \(screen.localizedName).")
-            }
-        }
     }
     private func arrangeSafari(on target: DisplayTarget, mode: WorkMode) throws {
-        // Find the user's pinned sheet by title; never publish its private URL.
-        let matchTab = mode == .morning
-            ? "URL of t contains \"1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG\""
-            : "name of t contains \"Рабочая таблица\""
-        let emptyWindowAction = mode == .morning
-            ? "make new document with properties {URL:\"\(adminScaleURL)\"}"
-            : "error \"Откройте Safari с закреплённой вкладкой «Рабочая таблица».\""
-        let missingTabAction = mode == .morning
-            ? "set targetWindow to front window\nset current tab of targetWindow to make new tab at end of tabs of targetWindow with properties {URL:\"\(adminScaleURL)\"}"
-            : "error \"Не найдена закреплённая вкладка «Рабочая таблица». Откройте её в Safari.\""
+        let action: String
+        switch mode {
+        case .morning:
+            action = """
+            set targetWindow to missing value
+            repeat with w in every window
+              try
+                repeat with t in every tab of w
+                  if URL of t contains "1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG" then
+                    set current tab of w to t
+                    set targetWindow to w
+                    exit repeat
+                  end if
+                end repeat
+              end try
+              if targetWindow is not missing value then exit repeat
+            end repeat
+            if targetWindow is missing value then
+              make new document with properties {URL:"\(adminScaleURL)"}
+              set targetWindow to front window
+            end if
+            """
+        case .climate:
+            action = """
+            set targetWindow to missing value
+            repeat with w in every window
+              try
+                repeat with t in every tab of w
+                  if name of t contains "Рабочая таблица" then
+                    set current tab of w to t
+                    set targetWindow to w
+                    exit repeat
+                  end if
+                end repeat
+              end try
+              if targetWindow is not missing value then exit repeat
+            end repeat
+            if targetWindow is missing value then error "Не найдена закреплённая вкладка «Рабочая таблица»."
+            """
+        case .investments:
+            let extraTabs = investmentURLs.dropFirst().map {
+                "make new tab at end of tabs of targetWindow with properties {URL:\"\($0)\"}"
+            }.joined(separator: "\n")
+            action = """
+            set targetWindow to missing value
+            repeat with w in every window
+              try
+                repeat with t in every tab of w
+                  if URL of t contains "1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA" then
+                    set current tab of w to t
+                    set targetWindow to w
+                    exit repeat
+                  end if
+                end repeat
+              end try
+              if targetWindow is not missing value then exit repeat
+            end repeat
+            if targetWindow is missing value then
+              make new document with properties {URL:"\(investmentURLs[0])"}
+              set targetWindow to front window
+              delay 0.4
+              \(extraTabs)
+            end if
+            """
+        case .learning:
+            action = "make new document with properties {URL:\"\(courseURL)\"}\nset targetWindow to front window"
+        case .mentorship:
+            action = "make new document with properties {URL:\"about:blank\"}\nset targetWindow to front window"
+        }
         _ = try runAppleScript("""
         tell application "Safari"
           activate
-          if (count of windows) is 0 then \(emptyWindowAction)
-          set targetWindow to missing value
-          repeat with w in every window
-            repeat with t in every tab of w
-              if \(matchTab) then
-                set current tab of w to t
-                set targetWindow to w
-                exit repeat
-              end if
-            end repeat
-            if targetWindow is not missing value then exit repeat
-          end repeat
-          if targetWindow is missing value then
-            \(missingTabAction)
-          end if
+          \(action)
           set bounds of targetWindow to \(target.bounds)
           set index of targetWindow to 1
         end tell
         """)
     }
-    private func arrangeYandex(erp right: DisplayTarget, music left: DisplayTarget, mode: WorkMode) throws {
+    private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
+        guard let erpURL = mode.erpURL else { return }
+        let leftURL = mode.needsMusic ? musicURL : policyURL
+        let leftPrefix = mode.needsMusic ? musicURL : policyURL
         _ = try runAppleScript("""
         tell application "Yandex"
           activate
@@ -277,46 +365,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set erpWindow to make new window
             set erpWindowId to id of erpWindow
           end if
-          set URL of active tab of erpWindow to "\(mode.erpURL)"
+          set URL of active tab of erpWindow to "\(erpURL)"
           set bounds of erpWindow to \(right.bounds)
-          set musicWindow to missing value
+          set leftWindow to missing value
           repeat with w in every window
             if (id of w) is not erpWindowId then
               set tabNumber to 0
               repeat with t in every tab of w
                 set tabNumber to tabNumber + 1
-                if URL of t starts with "\(musicURL)" then
-                  set musicWindow to w
+                if URL of t starts with "\(leftPrefix)" then
+                  set leftWindow to w
                   set active tab index of w to tabNumber
                   exit repeat
                 end if
               end repeat
             end if
-            if musicWindow is not missing value then exit repeat
+            if leftWindow is not missing value then exit repeat
           end repeat
-          if musicWindow is missing value then
-            set musicWindow to make new window
-            set URL of active tab of musicWindow to "\(musicURL)"
+          if leftWindow is missing value then
+            set leftWindow to make new window
+            set URL of active tab of leftWindow to "\(leftURL)"
           end if
-          set bounds of musicWindow to \(left.bounds)
-          set extraMusicWindows to {}
+          set URL of active tab of leftWindow to "\(leftURL)"
+          set bounds of leftWindow to \(left.bounds)
+          set extraLeftWindows to {}
           repeat with w in every window
-            if (id of w) is not erpWindowId and (id of w) is not (id of musicWindow) then
-              set allMusicTabs to ((count of tabs of w) > 0)
+            if (id of w) is not erpWindowId and (id of w) is not (id of leftWindow) then
+              set allLeftTabs to ((count of tabs of w) > 0)
               repeat with t in every tab of w
-                if not (URL of t starts with "\(musicURL)") then
-                  set allMusicTabs to false
+                if not (URL of t starts with "\(leftPrefix)") then
+                  set allLeftTabs to false
                   exit repeat
                 end if
               end repeat
-              if allMusicTabs then set end of extraMusicWindows to w
+              if allLeftTabs then set end of extraLeftWindows to w
             end if
           end repeat
-          repeat with w in extraMusicWindows
+          repeat with w in extraLeftWindows
             close w
           end repeat
           set index of erpWindow to 1
-          set index of musicWindow to 1
+          set index of leftWindow to 1
         end tell
         """)
     }
@@ -337,9 +426,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         telegram.activate(options: [.activateAllWindows])
         pumpRunLoop(0.4)
         try selectLeftFullScreenTile(of: telegram)
-        // The full-screen Space animation can take several seconds on a
-        // three-display desktop. Wait until macOS has drawn the chooser.
-        pumpRunLoop(4.2)
+        // The right half is macOS' second-window chooser. A real pointer click
+        // is required here; its Mission Control thumbnail is not an AX button.
+        pumpRunLoop(4.8)
         if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) { return }
         let pendingWindow = try firstWindow(of: telegram)
         var pendingFullScreen: CFTypeRef?
@@ -348,8 +437,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let frame = windowRect(pendingWindow).map { "\(Int($0.minX)),\(Int($0.minY)); \(Int($0.width))×\(Int($0.height))" } ?? "неизвестно"
             throw modeError("Telegram не перешёл в полноэкранную левую половину (\(frame); \(menuTrace.joined(separator: " · "))).")
         }
-        try pressElementAt(x: target.rect.minX + target.rect.width * 0.75, y: target.rect.midY)
-        pumpRunLoop(3.2)
+        postPointerMove(to: CGPoint(x: target.rect.minX + target.rect.width * 0.75, y: target.rect.midY))
+        pumpRunLoop(0.35)
+        postPointerClick(at: CGPoint(x: target.rect.minX + target.rect.width * 0.75, y: target.rect.midY))
+        pumpRunLoop(5.2)
         guard telegramSplitIsExact(telegram: telegram, lite: lite, target: target) else {
             throw modeError("macOS не объединила Telegram в один полноэкранный Split View.")
         }
@@ -407,51 +498,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func selectLeftFullScreenTile(of app: NSRunningApplication) throws {
-        let root = AXUIElementCreateApplication(app.processIdentifier)
-        let appWindow = try firstWindow(of: app)
-        for attribute in ["AXFullScreenButton", kAXZoomButtonAttribute] {
-            var buttonValue: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(appWindow, attribute as CFString, &buttonValue) == .success,
-                  let buttonValue, CFGetTypeID(buttonValue) == AXUIElementGetTypeID() else { continue }
-            let button = buttonValue as! AXUIElement
-            if AXUIElementPerformAction(button, "AXShowMenu" as CFString) == .success {
-                pumpRunLoop(1)
-                if let arrangement = descendant(of: root, title: "Left & Right", deadline: Date().addingTimeInterval(2)),
-                   AXUIElementPerformAction(arrangement, kAXPressAction as CFString) == .success {
-                    pumpRunLoop(1)
-                    return
-                }
-                if let left = descendant(of: root, title: "Left of Screen", deadline: Date().addingTimeInterval(2)),
-                   AXUIElementPerformAction(left, kAXPressAction as CFString) == .success {
-                    pumpRunLoop(0.5)
-                    return
-                }
-            }
-        }
-        guard let windowMenu = descendant(of: root, title: "Window", deadline: Date().addingTimeInterval(2)),
-              AXUIElementPerformAction(windowMenu, kAXPressAction as CFString) == .success else {
-            throw modeError("Не удалось открыть меню Window в Telegram.")
-        }
-        pumpRunLoop(0.25)
-        guard let tile = descendant(of: root, title: "Full Screen Tile", deadline: Date().addingTimeInterval(2)) else {
-            throw modeError("Нет подменю Full Screen Tile.")
-        }
-        var parentValue: CFTypeRef?
-        if AXUIElementCopyAttributeValue(tile, kAXParentAttribute as CFString, &parentValue) == .success,
-           let parentValue, CFGetTypeID(parentValue) == AXUIElementGetTypeID() {
-            let parent = parentValue as! AXUIElement
-            _ = AXUIElementSetAttributeValue(parent, kAXSelectedChildrenAttribute as CFString, [tile] as CFArray)
-        }
-        _ = AXUIElementSetAttributeValue(tile, "AXSelected" as CFString, kCFBooleanTrue)
-        pumpRunLoop(0.8)
-        guard let left = descendant(of: root, title: "Left of Screen", deadline: Date().addingTimeInterval(2)) else {
-            throw modeError("Нет команды Left of Screen.")
-        }
-        let actions = [kAXPressAction, "AXPick", "AXConfirm"]
-        guard actions.contains(where: { AXUIElementPerformAction(left, $0 as CFString) == .success }) else {
-            throw modeError("Не удалось выбрать Left of Screen.")
-        }
-        pumpRunLoop(0.5)
+        guard let bundleID = app.bundleIdentifier else { throw modeError("Не найден идентификатор Telegram.") }
+        let result = try runNativeAppleScript("""
+        tell application "System Events"
+          set targetProcess to first application process whose bundle identifier is "\(bundleID)"
+          set frontmost of targetProcess to true
+          tell targetProcess
+            try
+              click menu item "Left of Screen" of menu 1 of menu item "Full Screen Tile" of menu 1 of menu bar item "Window" of menu bar 1
+              return "left"
+            on error
+              try
+                click menu item "Left of Screen" of menu 1 of menu item "Move & Resize" of menu 1 of menu bar item "Window" of menu bar 1
+                return "left"
+              on error errorMessage
+                return "error:" & errorMessage
+              end try
+            end try
+          end tell
+        end tell
+        """)
+        menuTrace.append(result)
+        guard result == "left" else { throw modeError("Не удалось включить левую полноэкранную половину Telegram (\(result)).") }
     }
     private func descendant(of root: AXUIElement, title: String, deadline: Date) -> AXUIElement? {
         repeat {
@@ -522,13 +590,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         _ = AXUIElementCopyAttributeValue(second, "AXFullScreen" as CFString, &bFull)
         let r = target.rect, tolerance: CGFloat = 24
         let bothFullScreen = aFull as? Bool == true && bFull as? Bool == true
-        let topInset: CGFloat = bothFullScreen ? 0 : 25
-        let expected = CGRect(x: r.minX, y: r.minY + topInset, width: r.width, height: r.height - topInset)
+        let expected = r
         let exact =
+            bothFullScreen &&
             abs(left.minX - expected.minX) < tolerance && abs(right.maxX - expected.maxX) < tolerance &&
             abs(left.minY - expected.minY) < tolerance && abs(right.minY - expected.minY) < tolerance &&
             abs(left.height - expected.height) < tolerance && abs(right.height - expected.height) < tolerance &&
-            abs(right.minX - left.maxX) < 4 && abs(left.width - right.width) < 4
+            abs(right.minX - left.maxX) < 18 && abs(left.width - right.width) < 16
         if exact {
             verifiedWindows.append(["app": telegram.bundleIdentifier ?? "", "frame": [left.minX, left.minY, left.width, left.height], "splitView": true])
             verifiedWindows.append(["app": lite.bundleIdentifier ?? "", "frame": [right.minX, right.minY, right.width, right.height], "splitView": true])

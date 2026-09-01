@@ -12,14 +12,14 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов содержит только две активные кнопки: Утро и Климат', () => {
+test('панель режимов содержит пять активных рабочих пространств', () => {
   const modes = read('modes.html');
-  for (const mode of ['morning','climate']) {
+  for (const mode of ['morning','climate','investments','learning','mentorship']) {
     assert.match(modes, new RegExp(`data-mode="${mode}"`));
   }
-  assert.equal((modes.match(/<button\b/g)||[]).length,2);
+  assert.equal((modes.match(/<button\b/g)||[]).length,5);
   assert.doesNotMatch(modes, /<button[^>]+disabled/);
-  assert.match(modes, /Админ Шкала · светлая ERP «Утро»/);
+  assert.match(modes, /Выберите режим/);
   assert.match(modes, /messageHandlers\?\.piura/);
   assert.match(modes, /piura-modes:\/\/\$\{mode\}/);
   assert.doesNotMatch(modes, /window\.open\(ERP_MORNING/);
@@ -38,12 +38,14 @@ test('macOS-режим закрепляет три сервиса за имен�
   assert.match(app, /display\(named: "Studio Display"\)/);
   assert.match(app, /display\(named: "H27P27"\)/);
   assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
-  assert.match(app, /self == \.morning \? "morning" : "overview"/);
-  assert.match(app, /self == \.morning \? "light" : "dark"/);
+  assert.match(app, /module=morning&theme=light/);
+  assert.match(app, /module=overview&theme=dark/);
+  assert.match(app, /module=funds&theme=dark/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
-  assert.match(app, /url\(forResource: "Magic-Morning", withExtension: "png"\)/);
+  assert.match(app, /url\(forResource: mode\.wallpaperResource, withExtension: "png"\)/);
   assert.match(app, /forceTerminate\(\)/);
   assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
+  assert.ok(existsSync(new URL('mac/resources/Climate-Cat.png', root)));
   assert.match(app, /\$0\.scheme == "piura-modes"/);
   assert.match(app, /WorkMode\(rawValue: host\)/);
   assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
