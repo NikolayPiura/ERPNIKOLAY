@@ -18,5 +18,9 @@ cp "$SCRIPT_DIR/resources/Magic-Morning.png" "$APP_DIR/Contents/Resources/Magic-
   -o "$APP_DIR/Contents/MacOS/PIURA Modes"
 
 /usr/bin/xattr -cr "$APP_DIR"
-/usr/bin/codesign --force --deep --sign - "$APP_DIR"
+# Keep the same designated identity across local rebuilds. The default ad-hoc
+# requirement contains a changing cdhash, invalidating remembered permissions.
+/usr/bin/codesign --force --deep --sign - --identifier com.piura.modes \
+  --requirements '=designated => identifier "com.piura.modes"' "$APP_DIR"
+/usr/bin/codesign --verify --deep --strict "$APP_DIR"
 echo "$APP_DIR"

@@ -12,15 +12,16 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов содержит шесть уникальных режимов и готовое Утро', () => {
+test('панель режимов содержит только две активные кнопки: Утро и Климат', () => {
   const modes = read('modes.html');
-  for (const mode of ['morning','climate','learning','investments','funds','mentorship']) {
+  for (const mode of ['morning','climate']) {
     assert.match(modes, new RegExp(`data-mode="${mode}"`));
   }
-  assert.equal((modes.match(/class="mode" data-mode=/g)||[]).length,6);
-  assert.match(modes, /Админ Шкала · ERP Утро · Яндекс Музыка/);
+  assert.equal((modes.match(/<button\b/g)||[]).length,2);
+  assert.doesNotMatch(modes, /<button[^>]+disabled/);
+  assert.match(modes, /Админ Шкала · светлая ERP «Утро»/);
   assert.match(modes, /messageHandlers\?\.piura/);
-  assert.match(modes, /piura-modes:\/\/morning/);
+  assert.match(modes, /piura-modes:\/\/\$\{mode\}/);
   assert.doesNotMatch(modes, /window\.open\(ERP_MORNING/);
 });
 
@@ -37,12 +38,14 @@ test('macOS-режим закрепляет три сервиса за имен�
   assert.match(app, /display\(named: "Studio Display"\)/);
   assert.match(app, /display\(named: "H27P27"\)/);
   assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
-  assert.match(app, /module=morning&theme=light/);
+  assert.match(app, /self == \.morning \? "morning" : "overview"/);
+  assert.match(app, /self == \.morning \? "light" : "dark"/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
   assert.match(app, /url\(forResource: "Magic-Morning", withExtension: "png"\)/);
   assert.match(app, /forceTerminate\(\)/);
   assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
-  assert.match(app, /\$0\.scheme == "piura-modes" && \$0\.host == "morning"/);
+  assert.match(app, /\$0\.scheme == "piura-modes"/);
+  assert.match(app, /WorkMode\(rawValue: host\)/);
   assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
 });
 

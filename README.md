@@ -48,10 +48,18 @@ npm run check
 
 ## PIURA Modes for macOS
 
-`modes.html` contains six personal workspace modes: Morning, Climate, Learning, Investments, Funds, and Mentorship. Morning is connected to the native `PIURA Modes` macOS launcher. It arranges the current three-display setup by display name:
+`modes.html` contains exactly two buttons, Morning and Climate, connected to the native `PIURA Modes` launcher. macOS stays **dark in both modes**; only the ERP theme changes.
 
-- **LG UltraFine (left):** Yandex Browser with Yandex Music;
-- **Studio Display (center):** Safari with the Admin Scale folder in Google Drive;
-- **H27P27 (right):** PIURA ERP opened directly in Morning with the light theme.
+| Display | Morning | Climate |
+| --- | --- | --- |
+| LG UltraFine — left | Yandex Music | ChatGPT foreground, Yandex Music in the background |
+| Studio Display — center | Safari: Admin Scale Drive folder | Safari: existing Working Table 2026 tab; paired Telegram windows above Safari |
+| H27P27 — right | ERP Morning, light theme | ERP Overview / Главная, dark theme |
 
-Build the launcher with `npm run build:modes`. The full Morning action switches macOS to the light appearance, applies the bundled 4K `Magic-Morning.png` wallpaper to every display, closes every other regular app (with a forced fallback after a graceful quit attempt), enables Do Not Disturb when Accessibility access is available, and starts Yandex Music when browser automation is allowed. The preview button only arranges the three windows.
+The Telegram pair uses the normal Telegram on the left and Telegram Lite on the right, at a 41/59 width ratio. These remain two independent app windows, not a merged window or native full-screen Split View. The launcher stays in the background after Climate and raises both when either Telegram is activated. Reopen PIURA Modes to change modes. The central display for the pair is the current default.
+
+Build with `npm run build:modes`. Open the installed **PIURA Modes.app** for the same HTML panel without Safari's external-app confirmation. The hosted/standalone HTML still uses `piura-modes://morning` or `piura-modes://climate`; Safari controls its own permission prompt. Local builds keep a consistent designated signing identity, but the first launch after replacing an older build can still require macOS permissions.
+
+Morning copies the bundled 4K `Magic-Morning.png` to a permanent Application Support directory and sets the actual macOS desktop image on all displays, including System Events desktops. It does not set a browser background. The full action closes other regular apps (forced fallback after a graceful quit attempt; save work first), enables Do Not Disturb, and starts music. Climate keeps ChatGPT and both Telegram apps, disables Do Not Disturb, and starts music. Accessibility and browser Automation permissions are required. Partial failures remain visible instead of reporting success.
+
+Diagnostic URLs add `?preview=1`. Preview arranges browser windows and, for Climate when Accessibility is already allowed, the Telegram pair. It does not quit applications, change system appearance/wallpaper/Focus, play music, or operate ChatGPT. There is no third button. Last result: `~/Library/Application Support/PIURA Modes/last-run.json`.
