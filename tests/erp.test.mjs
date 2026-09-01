@@ -95,7 +95,9 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /function pickLampWheel/);
   assert.match(overview, /setPointerCapture/);
   assert.match(overview, /name:'Ассоциация'/);
-  assert.match(overview, /name:'Котики'.*?target:400/);
+  assert.match(overview, /name:'Котики'.*?current:309,target:400/);
+  assert.match(overview, /name:'Наркотики'.*?current:0,target:50/);
+  assert.match(overview, /detail:'Деревья',current:200,target:500/);
   assert.match(overview, /name:'Ассоциация'.*?target:60/);
   assert.match(overview, /fan-card>\.device-section-head,.control-grid \.minimal-lamp>\.device-section-head\{display:none!important\}/);
   assert.match(overview, /minimal-lamp \.master-toggle\{display:none!important\}/);
@@ -580,6 +582,10 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /activeYear===2026\?goal\.y26:goal\.y27/);
   assert.doesNotMatch(foundation, /фактический продукт/i);
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
+  assert.match(foundation, /key:'friend'.*?fact:309,y26:400/);
+  assert.match(foundation, /key:'drugs'.*?fact:0,y26:50/);
+  assert.match(foundation, /key:'plants'.*?fact:200,y26:500/);
+  assert.match(foundation, /piura_foundation_goals_data_revision/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
   assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);
   assert.doesNotMatch(foundation, /Шесть направлений|<h1>Результаты<\/h1>/);

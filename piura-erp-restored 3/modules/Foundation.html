@@ -36,15 +36,17 @@ html[data-erp-theme="light"] .fund{background:radial-gradient(circle at 4% 50%,c
 </main>
 <script>
 const STORE='piura_foundation_goals_v1';
+const DATA_REVISION_KEY='piura_foundation_goals_data_revision';
+const DATA_REVISION='20260831d';
 const FUNDS=[
- {key:'friend',name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',fact:287,y26:400,y27:1000,color:'#66a6ff'},
- {key:'drugs',name:'Наркотики',mission:'Планета, в которой нет наркотиков',product:'Отзывы детей после антинаркотического просвещения',fact:0,y26:100,y27:500,color:'#47dba3'},
+ {key:'friend',name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',fact:309,y26:400,y27:1000,color:'#66a6ff'},
+ {key:'drugs',name:'Наркотики',mission:'Планета, в которой нет наркотиков',product:'Отзывы детей после антинаркотического просвещения',fact:0,y26:50,y27:500,color:'#47dba3'},
  {key:'scientology',name:'Саентология',mission:'Планета, на которой всё больше людей достигают состояния Клир',product:'Разданные книги «Дорога к счастью»',fact:0,y26:100,y27:1000,color:'#a77aff'},
  {key:'ecology',name:'Экология',mission:'Планета, избавленная от лишнего мусора, в которой численность растений поддерживается в норме',goals:[{key:'planet',product:'Проведённые уборки',fact:0,y26:10,y27:50},{key:'plants',product:'Посаженные деревья',fact:200,y26:500,y27:5000}],color:'#58d4c5'},
  {key:'association',name:'Ассоциация добрых дел',mission:'Планета, в которой люди делают добрые дела',product:'Добрые дела участников ассоциации',fact:0,y26:20,y27:500,color:'#ff986f'}
 ];
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-function saved(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return{}}}let state=saved(),activeYear=2026;
+function saved(){try{const state=JSON.parse(localStorage.getItem(STORE)||'{}');if(localStorage.getItem(DATA_REVISION_KEY)!==DATA_REVISION){state.friend=state.friend||{};state.friend.current={...(state.friend.current||{}),product:309};state.friend.targets={...(state.friend.targets||{}),2026:{...(state.friend.targets?.[2026]||{}),product:400}};state.plants=state.plants||{};state.plants.targets={...(state.plants.targets||{}),2026:{...(state.plants.targets?.[2026]||{}),product:500}};state.drugs=state.drugs||{};state.drugs.targets={...(state.drugs.targets||{}),2026:{...(state.drugs.targets?.[2026]||{}),product:50}};localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(DATA_REVISION_KEY,DATA_REVISION)}return state}catch{return{}}}let state=saved(),activeYear=2026;
 function goalsFor(fund){return fund.goals||[fund]}
 function factFor(goal){return Number(state?.[goal.key]?.current?.product??goal.fact)||0}
 function result(goal){const fact=factFor(goal),target=activeYear===2026?goal.y26:goal.y27,percent=target?fact/target*100:0;return `<section class="fund-result"><div class="product-head"><div class="product-copy">${esc(goal.product)}</div><b class="result-percent">${percent.toFixed(0)}%</b></div><div class="goal-head"><span>${activeYear}</span></div><div class="goal-numbers"><div class="goal-number current"><small>Сделано</small><strong>${fact.toLocaleString('ru-RU')}</strong></div><span class="goal-divider">из</span><div class="goal-number"><small>План</small><strong>${target.toLocaleString('ru-RU')}</strong></div></div><div class="track"><i style="width:${Math.min(100,percent)}%"></i></div></section>`}
