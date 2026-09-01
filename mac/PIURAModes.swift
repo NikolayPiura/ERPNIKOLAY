@@ -23,7 +23,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let erpMorningURL = "https://nikolaypiura.github.io/ERPNIKOLAY/?module=morning&theme=light"
     private let musicURL = "https://music.yandex.ru/"
-    private let wallpaperPath = "/System/Library/Desktop Pictures/Sonoma.heic"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -195,11 +194,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             "com.apple.Safari",
             "ru.yandex.desktop.yandex-browser"
         ])
-        for app in workspace.runningApplications where app.activationPolicy == .regular {
-            guard let identifier = app.bundleIdentifier, !keep.contains(identifier) else { continue }
+        let currentPID = ProcessInfo.processInfo.processIdentifier
+        let appsToClose = workspace.runningApplications.filter { app in
+            guard app.activationPolicy == .regular, app.processIdentifier != currentPID else { return false }
+            return app.bundleIdentifier.map { !keep.contains($0) } ?? true
+        }
+        for app in appsToClose {
             _ = app.terminate()
         }
-        Thread.sleep(forTimeInterval: 0.8)
+        let deadline = Date().addingTimeInterval(2.5)
+        while Date() < deadline, appsToClose.contains(where: { !$0.isTerminated }) {
+            Thread.sleep(forTimeInterval: 0.15)
+        }
+        for app in appsToClose where !app.isTerminated {
+            _ = app.forceTerminate()
+        }
     }
 
     private func setLightAppearance() {
@@ -207,8 +216,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
 
     private func setMorningWallpaper() {
-        let url = URL(fileURLWithPath: wallpaperPath)
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        guard let url = Bundle.main.url(forResource: "Magic-Morning", withExtension: "png") else { return }
         let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
             .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue,
             .allowClipping: true,

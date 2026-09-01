@@ -39,6 +39,9 @@ test('macOS-режим закрепляет три сервиса за имен�
   assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
   assert.match(app, /module=morning&theme=light/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
+  assert.match(app, /url\(forResource: "Magic-Morning", withExtension: "png"\)/);
+  assert.match(app, /forceTerminate\(\)/);
+  assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
   assert.match(app, /\$0\.scheme == "piura-modes" && \$0\.host == "morning"/);
   assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
 });
