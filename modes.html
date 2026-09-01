@@ -131,6 +131,7 @@
     morning.addEventListener('click',()=>sendMorning(false));
     document.getElementById('preview').addEventListener('click',()=>sendMorning(true));
     window.piuraModeStarted=(preview=false)=>setStatus(preview?'Расставляю три окна для проверки…':'Запускаю режим «Утро»…','busy');
+    window.piuraModeNeedsAccess=()=>setStatus('Разрешите PIURA Modes управление компьютером в открывшихся настройках macOS…','busy');
     window.piuraModeFinished=(result={})=>setStatus(result.message||'Готово',result.ok===false?'error':'ok');
   </script>
 </body>

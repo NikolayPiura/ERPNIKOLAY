@@ -381,8 +381,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func hasAccessibilityAccess(promptIfNeeded: Bool) -> Bool {
         if AXIsProcessTrusted() { return true }
         guard promptIfNeeded else { return false }
+        webView.evaluateJavaScript("window.piuraModeNeedsAccess()")
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        return AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+        _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
+        let deadline = Date().addingTimeInterval(45)
+        while Date() < deadline {
+            if AXIsProcessTrusted() { return true }
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.1))
+        }
+        return false
     }
 
     private func canControlSystemEvents() -> Bool {
