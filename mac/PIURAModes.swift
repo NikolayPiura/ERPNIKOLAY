@@ -61,6 +61,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func markPhase(_ name: String) {
         timings[name] = (Date().timeIntervalSince(phaseAt) * 100).rounded() / 100
         phaseAt = Date()
+        if let data = try? JSONSerialization.data(withJSONObject: ["phase":name,"elapsed":Date().timeIntervalSince(startedAt),"request":requestID]) {
+            try? data.write(to: supportDirectory.appendingPathComponent("progress.json"), options:.atomic)
+        }
     }
     private var launchConfigured = false
     private var safariWindowID = 0
@@ -344,10 +347,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func setDesktopWallpaper(for mode: WorkMode) throws {
         let directory = supportDirectory.appendingPathComponent("Wallpapers", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
-            .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue, .allowClipping: true,
-            .fillColor: NSColor(calibratedWhite: 0.08, alpha: 1)
-        ]
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
             if mode == .learning && index == 0 { resource = "Learning-Left" }
@@ -361,9 +360,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let destination = directory.appendingPathComponent(resource + ".png")
             let data = try Data(contentsOf: source)
             if (try? Data(contentsOf: destination)) != data { try data.write(to: destination, options: .atomic) }
-            if workspace.desktopImageURL(for: screen) != destination {
-                try workspace.setDesktopImageURL(destination, for: screen, options: options)
-            }
+            // Address the actual desktop once. The redundant NSWorkspace setter
+            // synchronously decoded the same image again and cost 7–11 seconds.
             guard let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
                 throw modeError("Не найден идентификатор монитора \(screen.localizedName).")
             }
@@ -673,7 +671,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"window.piuraSetOfficeMode?.('\(mode.rawValue)') ? 'started' : 'missing'\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1')return 'missing';e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
@@ -1198,15 +1197,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             verifiedWindows.append(["centerForeground":"Safari"])
         }
         if mode.needsChatGPT,
-           let chat = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.openai.chat" }) {
+           let chat = workspace.runningApplications.first(where: { ["com.openai.chat", "com.openai.codex"].contains($0.bundleIdentifier ?? "") }) {
             chat.activate(options: []); try raiseWindow(of: chat)
         }
     }
     private func verifyOfficeLighting(for mode: WorkMode) throws {
         let deadline = Date().addingTimeInterval(12)
         var started = false
+        var lastState = ""
         repeat {
-            let json = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"JSON.stringify(window.piuraOfficeLighting || {})\"")
+            let json = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"document.documentElement.dataset.officeLighting || '{}'\"")
+            lastState = json
             if let data = json.data(using: .utf8), let state = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let status = state["status"] as? String ?? ""
                 if state["mode"] as? String == mode.rawValue {
@@ -1216,12 +1217,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else if !started {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"window.piuraSetOfficeMode?.('\(mode.rawValue)')\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1')return 'missing';e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                     started = true
                 }
             }
             pumpRunLoop(0.25)
         } while Date() < deadline
+        verifiedWindows.append(["officeLastState":lastState])
         throw modeError("Нет подтверждения цветового круга. Проверьте связь с освещением.")
     }
     private func setDoNotDisturb(enabled: Bool) -> Bool {
