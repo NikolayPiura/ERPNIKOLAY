@@ -47,7 +47,10 @@ private struct DisplayTarget {
     var usableBounds: String { let r = usableRect; return "{\(Int(r.minX)), \(Int(r.minY)), \(Int(r.maxX)), \(Int(r.maxY))}" }
 }
 private struct ModeResult { let ok: Bool; let message: String }
-
+private final class WallpaperJob {
+    var records: [[String: Any]] = []
+    var expected: [(UInt32, String)] = []
+}
 final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
     private var window: NSWindow!
     private var webView: WKWebView!
@@ -230,6 +233,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let left = displays[0], center = displays[1], right = displays[2]
         var notes: [String] = []
         var closingApps: [NSRunningApplication] = []
+        var wallpaperJob: WallpaperJob?
         verifiedWindows = []
         menuTrace = []
         if !preview {
@@ -241,6 +245,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
             closingApps = closeRegularApplications(exceptFor: mode)
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
+            do { wallpaperJob = try startDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
         }
         markPhase("system")
         do { try arrangeSafari(on: center, mode: mode) } catch { notes.append("Safari: \(error.localizedDescription)") }
@@ -269,7 +274,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         do { try restoreForeground(for: mode) } catch { notes.append("Передний план: \(error.localizedDescription)") }
         markPhase("foreground")
         if !preview {
-            do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
+            if let job = wallpaperJob {
+                do { try finishDesktopWallpaper(job) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
+            }
             markPhase("wallpapers")
             do { try verifyOfficeLighting(for: mode) } catch { notes.append("Свет кабинета: \(error.localizedDescription)") }
             markPhase("lighting")
@@ -304,6 +311,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if UserDefaults.standard.bool(forKey: "benchmarkKeepCodex") {
             keep.insert("com.openai.codex")
             verifiedWindows.append(["benchmarkHostPreserved":"com.openai.codex"])
+            if !mode.needsChatGPT { workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.openai.codex" })?.hide() }
         }
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
         if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
@@ -344,9 +352,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var supportDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("PIURA Modes", isDirectory: true)
     }
-    private func setDesktopWallpaper(for mode: WorkMode) throws {
+    private func startDesktopWallpaper(for mode: WorkMode) throws -> WallpaperJob {
         let directory = supportDirectory.appendingPathComponent("Wallpapers", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let job = WallpaperJob()
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
             if mode == .learning && index == 0 { resource = "Learning-Left" }
@@ -360,32 +369,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let destination = directory.appendingPathComponent(resource + ".png")
             let data = try Data(contentsOf: source)
             if (try? Data(contentsOf: destination)) != data { try data.write(to: destination, options: .atomic) }
-            // Address the actual desktop once. The redundant NSWorkspace setter
-            // synchronously decoded the same image again and cost 7–11 seconds.
+            // Prepare files first, but defer desktop changes until Spaces settle.
             guard let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
                 throw modeError("Не найден идентификатор монитора \(screen.localizedName).")
             }
-            // NSWorkspace can report the previous image while a fullscreen
-            // Space is active. Address the desktop by its real display ID too.
-            let confirmed = try runAppleScript("""
-            tell application "System Events"
-              tell desktop id \(displayID.uint32Value)
-                if picture is not "\(appleScriptEscape(destination.path))" then set picture to "\(appleScriptEscape(destination.path))"
-                repeat 20 times
-                  if picture is "\(appleScriptEscape(destination.path))" then exit repeat
-                  delay 0.1
-                end repeat
-                return picture as text
-              end tell
-            end tell
-            """)
-            guard confirmed == destination.path else {
-                throw modeError("Монитор \(screen.localizedName) не подтвердил обои.")
-            }
-            verifiedWindows.append(["wallpaper":destination.path, "display":screen.localizedName,
-                                    "orientation":screen.frame.height > screen.frame.width ? "portrait" : "landscape"])
+            // Address each desktop by its actual physical display ID.
+            let id = displayID.uint32Value, name = screen.localizedName
+            let orientation = screen.frame.height > screen.frame.width ? "portrait" : "landscape"
+            job.expected.append((id, destination.path))
+            job.records.append(["wallpaper":destination.path,"display":name,"orientation":orientation])
         }
-        verifiedWindows.append(["desktops":NSScreen.screens.count])
+        return job
+    }
+    private func finishDesktopWallpaper(_ job: WallpaperJob) throws {
+        // Change and read back AFTER all fullscreen Spaces and foreground changes.
+        let checks = job.expected.map { id,path in
+            """
+            if picture of desktop id \(id) is not "\(appleScriptEscape(path))" then
+              set picture of desktop id \(id) to "\(appleScriptEscape(path))"
+              set corrected to corrected + 1
+            end if
+            repeat 20 times
+              if picture of desktop id \(id) is "\(appleScriptEscape(path))" then exit repeat
+              delay 0.1
+            end repeat
+            if picture of desktop id \(id) is not "\(appleScriptEscape(path))" then error "Обои не подтверждены"
+            """
+        }.joined(separator:"\n")
+        let confirmed = try runAppleScript("tell application \"System Events\"\nset corrected to 0\n\(checks)\nreturn corrected as text\nend tell")
+        guard let corrected = Int(confirmed) else { throw modeError("Не удалось подтвердить обои после переключения рабочих столов.") }
+        verifiedWindows.append(contentsOf:job.records)
+        verifiedWindows.append(["desktops":job.records.count,"changedAfterLayout":corrected])
     }
     // A recoverable URL inventory is written before closing unwanted windows.
     // Browsers still own their normal close/save-confirmation behavior.
@@ -671,7 +685,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1')return 'missing';e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes8';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -708,9 +722,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func yandexWindow(id: Int, app: NSRunningApplication) throws -> AXUIElement {
         // Raise the immutable browser ID, then bind its exact AX window. Never
         // use the app's first window for both monitors: that swaps music/ERP.
-        let title = try runAppleScript("tell application \"Yandex\"\nset index of window id \(id) to 1\nactivate\nreturn title of active tab of window id \(id)\nend tell")
+        var title = try runAppleScript("tell application \"Yandex\"\nset index of window id \(id) to 1\nactivate\nreturn title of active tab of window id \(id)\nend tell")
         let root = AXUIElementCreateApplication(app.processIdentifier)
-        let deadline = Date().addingTimeInterval(3)
+        let deadline = Date().addingTimeInterval(6)
         repeat {
             var windows: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &windows)
@@ -723,6 +737,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 return match
             }
             pumpRunLoop(0.1)
+            title = (try? runAppleScript("tell application \"Yandex\" to return title of active tab of window id \(id)")) ?? title
         } while Date() < deadline
         throw modeError("Яндекс не подтвердил окно №\(id) «\(title)»; другие окна не перемещены.")
     }
@@ -767,6 +782,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         try raiseWindow(of: telegram)
         pumpRunLoop(0.2)
         if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) {
+            verifiedWindows.append(["reusedTelegramPair":true,"telegramPIDs":[telegram.processIdentifier,lite.processIdentifier]])
             return
         }
 
@@ -1000,7 +1016,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 throw modeError("Не удалось включить полный экран \(app.localizedName ?? "").")
             }
             let deadline = Date().addingTimeInterval(6)
-            while !exact(element) && Date() < deadline { pumpRunLoop(0.2) }
+            var stable = 0
+            while stable < 2 && Date() < deadline {
+                stable = exact(element) ? stable + 1 : 0
+                pumpRunLoop(0.15)
+            }
         }
         guard exact(element), let rect = windowRect(element) else {
             throw modeError("\(app.localizedName ?? "") не подтвердило настоящий полный экран.")
@@ -1203,7 +1223,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     private func verifyOfficeLighting(for mode: WorkMode) throws {
         let deadline = Date().addingTimeInterval(12)
-        var started = false
         var lastState = ""
         repeat {
             let json = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"document.documentElement.dataset.officeLighting || '{}'\"")
@@ -1216,27 +1235,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         verifiedWindows.append(["officeLighting":state])
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
-                } else if !started {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1')return 'missing';e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
-                    started = true
+                } else {
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes8';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
         } while Date() < deadline
         verifiedWindows.append(["officeLastState":lastState])
+        let documentInfo = try? runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"JSON.stringify({path:location.pathname,ready:document.readyState,scripts:Array.from(document.scripts).map(s=>s.getAttribute('src'))})\"")
+        verifiedWindows.append(["officeDocument":documentInfo ?? "unknown"])
         throw modeError("Нет подтверждения цветового круга. Проверьте связь с освещением.")
     }
     private func setDoNotDisturb(enabled: Bool) -> Bool {
+        let menuInfo = try? runAppleScript("tell application \"System Events\" to tell process \"ControlCenter\" to return description of every menu bar item of menu bar 1")
+        verifiedWindows.append(["focusMenu":menuInfo ?? "unavailable"])
         let script = """
         tell application "System Events"
           tell process "ControlCenter"
+            set inspected to ""
             try
               click first menu bar item of menu bar 1 whose description is "Control Center"
               delay 0.4
               repeat with uiItem in entire contents of window 1
                 try
-                  set itemName to name of uiItem as text
+                  set itemName to ""
+                  try
+                    set itemName to name of uiItem as text
+                  end try
+                  try
+                    set itemName to itemName & " " & (description of uiItem as text)
+                  end try
                   if itemName contains "Focus" or itemName contains "Фокус" then
+                    set inspected to inspected & "Focus=" & itemName & ";"
                     perform action "AXPress" of uiItem
                     exit repeat
                   end if
@@ -1245,8 +1275,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
               delay 0.4
               repeat with uiItem in entire contents of window 1
                 try
-                  set itemName to name of uiItem as text
+                  set itemName to ""
+                  try
+                    set itemName to name of uiItem as text
+                  end try
+                  try
+                    set itemName to itemName & " " & (description of uiItem as text)
+                  end try
                   if itemName contains "Do Not Disturb" or itemName contains "Не беспокоить" then
+                    set inspected to inspected & "DND=" & itemName & ";"
                     set currentValue to value of uiItem as integer
                     if currentValue is not \(enabled ? 1 : 0) then perform action "AXPress" of uiItem
                     key code 53
@@ -1255,12 +1292,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 end try
               end repeat
               key code 53
+            on error errorMessage
+              set inspected to inspected & errorMessage
             end try
-            return "false"
+            return "false|" & inspected
           end tell
         end tell
         """
-        return (try? runNativeAppleScript(script)) == "true"
+        let result = (try? runNativeAppleScript(script)) ?? "unavailable"
+        verifiedWindows.append(["focusResult":result])
+        return result == "true"
     }
     private func hasAccessibilityAccess(promptIfNeeded: Bool) -> Bool {
         if AXIsProcessTrusted() { return true }
@@ -1273,7 +1314,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return false
     }
     private func canControlSystemEvents() -> Bool { (try? runNativeAppleScript("tell application \"System Events\" to get name")) != nil }
-    private func pumpRunLoop(_ seconds: TimeInterval) { RunLoop.current.run(until: Date().addingTimeInterval(seconds)) }
+    private func pumpRunLoop(_ seconds: TimeInterval) {
+        if Thread.isMainThread { RunLoop.current.run(until: Date().addingTimeInterval(seconds)) }
+        else { Thread.sleep(forTimeInterval: seconds) }
+    }
     private func modeError(_ message: String) -> NSError { NSError(domain: "PIURAModes", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
     private func appleScriptEscape(_ value: String) -> String {
         value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"").replacingOccurrences(of: "\n", with: " ")

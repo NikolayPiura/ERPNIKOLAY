@@ -18,7 +18,7 @@ test('pairing excludes foreign apps and verifies both Telegram PIDs on screen',(
   assert.match(app,/visiblePIDs\.contains\(telegram.processIdentifier\) && visiblePIDs\.contains\(lite.processIdentifier\)/);
   const run=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
   assert.ok(run.indexOf('arrangeTelegramSplitView')<run.indexOf('openCompanionApps'));
-  assert.ok(run.indexOf('restoreForeground')<run.indexOf('setDesktopWallpaper'));
+  assert.ok(run.indexOf('restoreForeground')<run.indexOf('finishDesktopWallpaper'));
 });
 test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   const shell=read('index.html'),office=read('office-modes.js'),overview=read('piura-erp-restored 3/modules/Overview.html');
@@ -40,4 +40,12 @@ test('communication policy keeps all twelve rules in column reading order',()=>{
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.match(policy,/grid-auto-flow:column;grid-template-rows:repeat\(6/);
   assert.match(policy,/grid-auto-flow:row;grid-template-rows:none/);
+});
+test('wallpaper changes wait for final Spaces, while asset preparation is early',()=>{
+  const prepare=app.slice(app.indexOf('private func startDesktopWallpaper'),app.indexOf('private func finishDesktopWallpaper'));
+  assert.doesNotMatch(prepare,/runAppleScript|setDesktopImageURL|DispatchQueue/);
+  const run=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
+  assert.ok(run.indexOf('startDesktopWallpaper')<run.indexOf('arrangeSafari'));
+  assert.ok(run.indexOf('restoreForeground')<run.indexOf('finishDesktopWallpaper'));
+  assert.match(app,/changedAfterLayout/);
 });

@@ -94,7 +94,8 @@ test('real fullscreen verification and all five recipes',()=>{
   const investmentList=app.split('private let investmentURLs = [')[1].split(']')[0];
   assert.equal((investmentList.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\//g)||[]).length,5);
   assert.match(app,/set dark mode to true/);assert.doesNotMatch(app,/set dark mode to false/);
-  assert.match(app,/workspace.setDesktopImageURL/);
+  assert.match(app,/private func finishDesktopWallpaper/);
+  assert.match(app,/picture of desktop id/);
   assert.match(app,/if mode.needsMusic && !startYandexMusic/);
 });
 test('green icon-only compact dashboard and enlarged rules without metadata',()=>{
@@ -126,7 +127,7 @@ test('new profiles tolerate blank URLs and preserve loading tabs before cleanup'
   assert.match(app,/let loadDeadline/);
   assert.ok(app.indexOf('let loadDeadline')<app.indexOf('for offset in urls.indices.reversed()'));
   assert.match(app,/duplicates.dropFirst\(\).reversed\(\)/);
-  assert.match(app,/tell desktop id \\\(displayID.uint32Value\)/);
+  assert.match(app,/picture of desktop id \\\(id\)/);
 });
 test('repeat launches reuse windows and preserve exact split before any retile',()=>{
   const running=app.slice(app.indexOf('private func runningApplication'),app.indexOf('private func activateAndDismissMenus'));
