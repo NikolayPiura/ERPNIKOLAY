@@ -45,6 +45,8 @@ remain separate and use each mode's per-monitor mapping.
 
 ## Local build
 
+Measured full runs and remaining hardware limitations: [September 2 verification](MODE-TESTS-2026-09-02.md).
+
 Run `npm run build:modes`, then install the reported app at the canonical `~/Applications/PIURA Modes.app`. The stable signing requirement preserves the app identity across builds. `npm test` and `npm run check` validate web integration and safety invariants.
 
 Exact existing URLs for the additionally mentioned Perfect Money/fund and Interactive Brokers pages were not present in the inspected open profiles. No financial login URL is guessed or account created. The six confirmed investment pins are configured.

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {runInNewContext} from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const app=read('mac/PIURAModes.swift');
@@ -36,6 +37,7 @@ test('every mode has three distinct desktop images',()=>{
   assert.match(app,/mode == .climate && index == 0.*Climate-Left/);
   assert.match(app,/mode == .investments && index == 0.*Investments-Left/);
   assert.match(app,/mode == .learning && index == 2.*Learning-Right/);
+  const hashes=[];
   for(const names of [
     ['Magic-Morning-Left','Magic-Morning','Magic-Morning-Portrait'],
     ['Climate-Left','Climate','Climate-Portrait'],
@@ -44,8 +46,10 @@ test('every mode has three distinct desktop images',()=>{
     ['Mentorship','Mentorship-Center','Mentorship-Right']
   ]) {
     const files=names.map(name=>readFileSync(new URL('../mac/resources/'+name+'.png',import.meta.url)));
+    hashes.push(...files.map(file=>createHash('sha256').update(file).digest('hex')));
     assert.ok(!files[0].equals(files[1])&&!files[1].equals(files[2])&&!files[0].equals(files[2]),names.join(','));
   }
+  assert.equal(new Set(hashes).size,15,'All fifteen screen assignments must use different image content');
 });
 test('communication policy keeps all twelve rules in column reading order',()=>{
   const policy=read('communication-policy.html');
@@ -67,4 +71,9 @@ test('final screen audit forbids duplicate music windows and music in quiet mode
   const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
+});
+test('focus menu tolerates the macOS recording indicator suffix',()=>{
+  assert.match(app,/\["Control Center","Do Not Disturb"\].contains\(title\)/);
+  assert.match(app,/role:kAXMenuBarItemRole/);
+  assert.match(app,/Focus value did not change/);
 });

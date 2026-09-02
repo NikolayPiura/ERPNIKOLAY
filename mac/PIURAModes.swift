@@ -72,6 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var safariWindowID = 0
     private var erpWindowID = 0
     private var leftWindowID = -1
+    private var yandexWindowCache: [Int:AXUIElement] = [:]
     private var isModeRunning = false
     private var isPreviewRun = false
     private var verifiedWindows: [[String: Any]] = []
@@ -236,6 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         var closingApps: [NSRunningApplication] = []
         var wallpaperJob: WallpaperJob?
         verifiedWindows = []
+        yandexWindowCache.removeAll()
         menuTrace = []
         if !preview {
             guard hasAccessibilityAccess(promptIfNeeded: true) else {
@@ -732,21 +734,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // use the app's first window for both monitors: that swaps music/ERP.
         var title = try runAppleScript("tell application \"Yandex\"\nset index of window id \(id) to 1\nactivate\nreturn title of active tab of window id \(id)\nend tell")
         let root = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(root,1)
         let deadline = Date().addingTimeInterval(6)
+        var lastTitles: [String] = []
         repeat {
             var windows: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &windows)
-            if let match = (windows as? [AXUIElement] ?? []).first(where: {
+            var candidates = windows as? [AXUIElement] ?? []
+            // Fullscreen Chromium can omit another display's window from
+            // AXWindows. Retain only the exact ID binding from this run, and
+            // also inspect direct main/focused references with the same title.
+            if let cached = yandexWindowCache[id] { candidates.append(cached) }
+            for attribute in [kAXMainWindowAttribute,kAXFocusedWindowAttribute] {
+                var candidate: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(root,attribute as CFString,&candidate)
+                if let candidate,CFGetTypeID(candidate) == AXUIElementGetTypeID() { candidates.append(candidate as! AXUIElement) }
+            }
+            lastTitles = candidates.map { axString($0,kAXTitleAttribute) }
+            if let match = candidates.first(where: {
                 let axTitle = axString($0, kAXTitleAttribute)
                 return isDocumentWindow($0) && !axTitle.isEmpty && !title.isEmpty &&
                     (axTitle == title || title.contains(axTitle) || axTitle.hasPrefix(title + " —"))
             }) {
+                yandexWindowCache[id] = match
                 _ = AXUIElementPerformAction(match, kAXRaiseAction as CFString)
                 return match
             }
             pumpRunLoop(0.1)
             title = (try? runAppleScript("tell application \"Yandex\" to return title of active tab of window id \(id)")) ?? title
         } while Date() < deadline
+        verifiedWindows.append(["yandexMissingID":id,"yandexAXTitles":lastTitles,"expectedTitle":title])
         throw modeError("Яндекс не подтвердил окно №\(id) «\(title)»; другие окна не перемещены.")
     }
     private func verifyBrowserWindow(app: String, id: Int, target: DisplayTarget, expectedURL: String, fullScreen: Bool = true) throws {
@@ -912,16 +929,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Never substitute Move & Resize: that is not a fullscreen Space.
         try pressMenuPath(of: app, titles: ["Window", "Full Screen Tile", "Left of Screen"])
     }
-    private func descendant(of root: AXUIElement, title: String, deadline: Date) -> AXUIElement? {
+    private func descendant(of root: AXUIElement, title: String, deadline: Date, role: String? = nil) -> AXUIElement? {
         repeat {
             var queue: [(AXUIElement, Int)] = [(root, 0)], visited = 0
             while !queue.isEmpty, visited < 800 {
                 let (element, depth) = queue.removeFirst(); visited += 1
                 var value: CFTypeRef?
-                for attribute in [kAXTitleAttribute, kAXDescriptionAttribute] {
+                for attribute in [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute] {
                     value = nil
                     if AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
-                       value as? String == title { return element }
+                       (value as? String == title || (["Control Center","Do Not Disturb"].contains(title) && (value as? String ?? "").hasPrefix(title+","))),
+                       role == nil || axString(element,kAXRoleAttribute) == role { return element }
                 }
                 guard depth < 8 else { continue }
                 value = nil
@@ -1238,23 +1256,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return false
     }
     private func restoreForeground(for mode: WorkMode) throws {
+        var failures: [String] = []
+        func attempt(_ action: () throws -> Void) {
+            do { try action() } catch { failures.append(error.localizedDescription) }
+        }
+        attempt {
         if mode != .learning,
            let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) {
-            let erp = try yandexWindow(id: erpWindowID, app: yandex)
-            _ = AXUIElementSetAttributeValue(erp, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
-            _ = AXUIElementPerformAction(erp, kAXRaiseAction as CFString)
-            verifiedWindows.append(["erpVisibleAtFinish":true])
+            let visible = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
+            let alreadyVisible = rightmostDisplay().map { right in visible.contains { info in
+                guard info[kCGWindowOwnerPID as String] as? Int32 == yandex.processIdentifier,
+                      info[kCGWindowLayer as String] as? Int == 0,
+                      let bounds = info[kCGWindowBounds as String] as? [String:Any],
+                      let x = bounds["X"] as? Double,let y = bounds["Y"] as? Double,
+                      let w = bounds["Width"] as? Double,let h = bounds["Height"] as? Double else { return false }
+                return abs(x-right.rect.minX)<4 && abs(y-right.rect.minY)<4 && abs(w-right.rect.width)<4 && abs(h-right.rect.height)<4
+            }} ?? false
+            if !alreadyVisible {
+                let erp = try yandexWindow(id:erpWindowID,app:yandex)
+                _ = AXUIElementSetAttributeValue(erp,kAXMinimizedAttribute as CFString,kCFBooleanFalse)
+                _ = AXUIElementPerformAction(erp,kAXRaiseAction as CFString)
+            }
+            verifiedWindows.append(["erpVisibleAtFinish":true,"reusedVisibleERP":alreadyVisible])
         }
+        }
+        attempt {
         if mode == .investments || mode == .mentorship || mode == .learning,
            let safari = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.Safari" }) {
             _ = try runAppleScript("tell application \"Safari\"\nset index of window id \(safariWindowID) to 1\nactivate\nend tell")
             try raiseWindow(of: safari)
             verifiedWindows.append(["centerForeground":"Safari"])
         }
+        }
+        attempt {
         if mode.needsChatGPT,
            let chat = workspace.runningApplications.first(where: { ["com.openai.chat", "com.openai.codex"].contains($0.bundleIdentifier ?? "") }) {
             chat.activate(options: []); try raiseWindow(of: chat)
         }
+        }
+        if !failures.isEmpty { throw modeError(failures.joined(separator:" · ")) }
     }
     private func verifyFinalSides(for mode: WorkMode, left: DisplayTarget, right: DisplayTarget) throws {
         // Read-only final verification: never click Play or raise a window here.
@@ -1275,6 +1315,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if mode != .learning {
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
             try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:mode.needsMusic ? musicURL : policyURL)
+        }
+        if mode == .climate {
+            let screens = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }
+            guard screens.count == 3,
+                  let telegram = workspace.runningApplications.first(where: { $0.bundleIdentifier == telegramIDs[0] }),
+                  let lite = workspace.runningApplications.first(where: { $0.bundleIdentifier == telegramIDs[1] }),
+                  telegramSplitIsExact(telegram:telegram,lite:lite,target:target(screens[1])) else {
+                throw modeError("В конце климата на центральном экране должна быть видна пара Telegram + Telegram Lite.")
+            }
+            verifiedWindows.append(["finalTelegramPairVisible":true])
         }
         verifiedWindows.append(["finalSideWindowsVerified":true,"musicWindowCount":musicIDs.count,"musicDisplay":mode.needsMusic ? left.screen.localizedName : "none"])
     }
@@ -1311,77 +1361,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             var bar: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(root,attribute as CFString,&bar)
             if let bar, CFGetTypeID(bar) == AXUIElementGetTypeID() {
-                button = descendant(of:bar as! AXUIElement,title:"Control Center",deadline:Date())
+                button = descendant(of:bar as! AXUIElement,title:"Control Center",deadline:Date(),role:kAXMenuBarItemRole)
                 if button != nil { break }
             }
         }
-        if button == nil { button = descendant(of:root,title:"Control Center",deadline:Date()) }
-        guard let button else {
-            var attributes: CFArray?
-            _ = AXUIElementCopyAttributeNames(root,&attributes)
-            verifiedWindows.append(["focusResult":"Control Center button unavailable","focusAttributes":attributes as? [String] ?? []]); return false
+        guard let button else { verifiedWindows.append(["focusResult":"Control Center button unavailable"]); return false }
+        if let rect = windowRect(button) { postPointerMove(to:CGPoint(x:rect.midX,y:rect.midY)); pumpRunLoop(0.2) }
+        let pressed = AXUIElementPerformAction(button,kAXPressAction as CFString)
+        if pressed != .success, let rect = windowRect(button) { postPointerClick(at:CGPoint(x:rect.midX,y:rect.midY)) }
+        defer {
+            // Close only the system popup; never interact with a conversation.
+            let source = CGEventSource(stateID:.hidSystemState)
+            CGEvent(keyboardEventSource:source,virtualKey:53,keyDown:true)?.post(tap:.cghidEventTap)
+            CGEvent(keyboardEventSource:source,virtualKey:53,keyDown:false)?.post(tap:.cghidEventTap)
         }
-        if let rect = windowRect(button) {
-            postPointerMove(to: CGPoint(x:rect.midX,y:rect.midY)); pumpRunLoop(0.25)
+        // The stable identifier survives the label changing to the active Focus.
+        guard let focus = descendant(of:root,title:"controlcenter-focus-modes",deadline:Date().addingTimeInterval(2)),
+              AXUIElementPerformAction(focus,kAXPressAction as CFString) == .success else {
+            verifiedWindows.append(["focusResult":"Focus control unavailable"]); return false
         }
-        let pressed = AXUIElementPerformAction(button, kAXPressAction as CFString)
-        verifiedWindows.append(["focusMenuPress":pressed.rawValue])
-        pumpRunLoop(0.5)
-        let script = """
-        tell application "System Events"
-          tell process "ControlCenter"
-            set inspected to ""
-            try
-              repeat 10 times
-                if exists window 1 then exit repeat
-                delay 0.1
-              end repeat
-              repeat with uiItem in entire contents of window 1
-                try
-                  set itemName to ""
-                  try
-                    set itemName to name of uiItem as text
-                  end try
-                  try
-                    set itemName to itemName & " " & (description of uiItem as text)
-                  end try
-                  if itemName contains "Focus" or itemName contains "Фокус" then
-                    set inspected to inspected & "Focus=" & itemName & ";"
-                    perform action "AXPress" of uiItem
-                    exit repeat
-                  end if
-                end try
-              end repeat
-              delay 0.4
-              repeat with uiItem in entire contents of window 1
-                try
-                  set itemName to ""
-                  try
-                    set itemName to name of uiItem as text
-                  end try
-                  try
-                    set itemName to itemName & " " & (description of uiItem as text)
-                  end try
-                  if itemName contains "Do Not Disturb" or itemName contains "Не беспокоить" then
-                    set inspected to inspected & "DND=" & itemName & ";"
-                    set currentValue to value of uiItem as integer
-                    if currentValue is not \(enabled ? 1 : 0) then perform action "AXPress" of uiItem
-                    key code 53
-                    return "true"
-                  end if
-                end try
-              end repeat
-              key code 53
-            on error errorMessage
-              set inspected to inspected & errorMessage
-            end try
-            return "false|" & inspected
-          end tell
-        end tell
-        """
-        let result = (try? runNativeAppleScript(script)) ?? "unavailable"
-        verifiedWindows.append(["focusResult":result])
-        return result == "true"
+        guard let dnd = descendant(of:root,title:"Do Not Disturb",deadline:Date().addingTimeInterval(2),role:kAXCheckBoxRole) else {
+            verifiedWindows.append(["focusResult":"Do Not Disturb control unavailable"]); return false
+        }
+        func state() -> Bool? {
+            var value: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(dnd,kAXValueAttribute as CFString,&value)
+            return (value as? NSNumber).map { $0.intValue != 0 }
+        }
+        guard let current = state() else { verifiedWindows.append(["focusResult":"Focus value unavailable"]); return false }
+        if current != enabled { _ = AXUIElementPerformAction(dnd,kAXPressAction as CFString) }
+        let deadline = Date().addingTimeInterval(1)
+        while state() != enabled && Date() < deadline { pumpRunLoop(0.1) }
+        let confirmed = state() == enabled
+        verifiedWindows.append(["focusResult":confirmed ? "true" : "Focus value did not change","doNotDisturb":confirmed && enabled])
+        return confirmed
     }
     private func hasAccessibilityAccess(promptIfNeeded: Bool) -> Bool {
         if AXIsProcessTrusted() { return true }
