@@ -32,6 +32,13 @@ Wallpapers use landscape/portrait resources per screen. They are applied and ver
 
 The native Проверка menu checks browser layouts without quitting other applications or changing wallpaper. Full modes additionally change wallpaper, close other applications and start music where needed. Results are local in Application Support/PIURA Modes/Reports; avoid publishing these private reports or their browser URLs.
 
+On this Mac, all five native Safari Start Pages were configured separately:
+Suggestions, Privacy Report, Reading List and Recently Closed Tabs are hidden
+(not deleted). Start Page backgrounds are Magic-Morning, Climate, Investments,
+Learning-Left and Mentorship-Center. They are saved in Safari, so mode switching
+does not reopen customization dialogs. The corresponding desktop wallpapers
+remain separate and use each mode's per-monitor mapping.
+
 ## Local build
 
 Run `npm run build:modes`, then install the reported app at the canonical `~/Applications/PIURA Modes.app`. The stable signing requirement preserves the app identity across builds. `npm test` and `npm run check` validate web integration and safety invariants.

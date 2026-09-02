@@ -461,7 +461,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             throw modeError("Safari не подтвердил профиль «\(mode.title)». Личные вкладки не изменены.")
         }
         safariWindowID = id
-        if (value as? [AXUIElement] ?? []).filter(isDocumentWindow).count > 1 { try backupBrowserWindows("Safari") }
+        let previousWindowCount = (value as? [AXUIElement] ?? []).filter(isDocumentWindow).count
+        if previousWindowCount > (candidates.isEmpty ? 0 : 1) { try backupBrowserWindows("Safari") }
         // Close by immutable IDs, never by shifting window indices.
         _ = try runAppleScript("""
         tell application "Safari"
@@ -469,7 +470,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           repeat with oldID in oldIDs
             if (oldID as integer) is not \(id) then close window id (oldID as integer)
           end repeat
-          repeat 40 times
+          repeat 80 times
             if (count of windows) is 1 then exit repeat
             delay 0.1
           end repeat
@@ -955,7 +956,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let root = AXUIElementCreateApplication(existing.processIdentifier)
             var value: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &value)
-            if (value as? [AXUIElement] ?? []).contains(where: isDocumentWindow) { return existing }
+            if (value as? [AXUIElement] ?? []).contains(where: isDocumentWindow) {
+                if existing.isHidden { existing.unhide() }
+                return existing
+            }
         }
         guard launch, let url = workspace.urlForApplication(withBundleIdentifier: id) else { return existing }
         let configuration = NSWorkspace.OpenConfiguration()
