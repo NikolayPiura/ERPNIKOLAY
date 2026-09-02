@@ -119,3 +119,12 @@ test('isolated reusable profiles, recoverable cleanup, fullscreen and portrait w
   assert.match(app,/ethicalProgramURL/);
   assert.match(app,/tradingViewURL/);
 });
+test('new profiles tolerate blank URLs and preserve loading tabs before cleanup',()=>{
+  assert.match(app,/if u is missing value then set u to "about:blank"/);
+  assert.match(app,/desired.contains\("\/folders\/"\)/);
+  assert.match(app,/desired.contains\("\/course\/"\)/);
+  assert.match(app,/let loadDeadline/);
+  assert.ok(app.indexOf('let loadDeadline')<app.indexOf('for offset in urls.indices.reversed()'));
+  assert.match(app,/duplicates.dropFirst\(\).reversed\(\)/);
+  assert.match(app,/tell desktop id \\\(displayID.uint32Value\)/);
+});

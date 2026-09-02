@@ -366,8 +366,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func safariURLs(_ id: Int) throws -> [String] {
         let text = try runAppleScript("""
         tell application "Safari"
+          set urls to {}
+          repeat with t in every tab of window id \(id)
+            set u to URL of t
+            if u is missing value then set u to "about:blank"
+            set end of urls to u as text
+          end repeat
           set AppleScript's text item delimiters to linefeed
-          return (URL of every tab of window id \(id)) as text
+          return urls as text
         end tell
         """)
         return text.components(separatedBy: "\n")
@@ -380,10 +386,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if desired.contains("/folders/"), let id = URL(string: desired)?.lastPathComponent {
             return decoded.contains(id)
         }
+        if desired.contains("/course/"), let id = URL(string: desired)?.path.components(separatedBy: "/").dropFirst(2).first {
+            return decoded.contains(id)
+        }
         if desired.contains("/spreadsheets/d/"), let id = URL(string: desired)?.path.components(separatedBy: "/").dropFirst(3).first {
             return decoded.contains(id)
         }
-        let destination = desired.components(separatedBy: "#")[0]
+        let destination = (0..<3).reduce(desired) { value, _ in value.removingPercentEncoding ?? value }.components(separatedBy: "#")[0]
         return decoded.hasPrefix(destination) ||
             (URL(string: actual)?.host == "accounts.google.com" && decoded.contains(destination))
     }
@@ -473,6 +482,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
         }
         var urls = try safariURLs(id)
+        let loadDeadline = Date().addingTimeInterval(7)
+        while !required.allSatisfy({ desired in urls.contains(where: { tabMatches($0, desired: desired) }) }) && Date() < loadDeadline {
+            pumpRunLoop(0.2)
+            urls = try safariURLs(id)
+        }
+        // Never close a loading/authentication tab based on a transient blank
+        // URL, especially in a new profile with no existing pinned tabs.
+        guard required.allSatisfy({ desired in urls.contains(where: { tabMatches($0, desired: desired) }) }) else {
+            throw modeError("Ожидается загрузка нужных страниц профиля «\(mode.title)»; вкладки сохранены.")
+        }
         if mode == .climate && UserDefaults.standard.bool(forKey: "profileSeeded-v5.1-investments") {
             for index in urls.indices.reversed() where tabMatches(urls[index], desired: tradingViewURL) {
                 _ = try runAppleScript("tell application \"Safari\" to close tab \(index + 1) of window id \(id)")
