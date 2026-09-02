@@ -64,7 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     private var launchConfigured = false
     private var safariWindowID = 0
+    private var erpWindowID = 0
     private var isModeRunning = false
+    private var isPreviewRun = false
     private var verifiedWindows: [[String: Any]] = []
     private var menuTrace: [String] = []
     private let workspace = NSWorkspace.shared
@@ -135,10 +137,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             diagnostics.addItem(item)
         }
         diagnosticsItem.submenu = diagnostics
+        let benchmark = NSMenuItem(title: "Сохранить Codex на время замеров", action: #selector(toggleBenchmarkHost(_:)), keyEquivalent: "")
+        benchmark.target = self
+        benchmark.state = UserDefaults.standard.bool(forKey: "benchmarkKeepCodex") ? .on : .off
+        diagnostics.addItem(.separator()); diagnostics.addItem(benchmark)
         bar.addItem(diagnosticsItem)
         NSApp.mainMenu = bar
     }
     @objc private func previewMorning() { if pageReady { beginMode(.morning, preview: true) } }
+    @objc private func toggleBenchmarkHost(_ sender: NSMenuItem) {
+        let enabled = sender.state != .on
+        sender.state = enabled ? .on : .off
+        UserDefaults.standard.set(enabled, forKey: "benchmarkKeepCodex")
+    }
     @objc private func previewClimate() { if pageReady { beginMode(.climate, preview: true) } }
     @objc private func previewInvestments() { if pageReady { beginMode(.investments, preview: true) } }
     @objc private func previewLearning() { if pageReady { beginMode(.learning, preview: true) } }
@@ -180,6 +191,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Keep the most recent intent instead of discarding clicks during launch.
         guard !isModeRunning else { pendingLaunch = (mode, preview, id); return }
         requestID = id
+        isPreviewRun = preview
         isModeRunning = true
         startedAt = Date(); phaseAt = startedAt; timings = [:]
         runDeadline = Date().addingTimeInterval(150)
@@ -226,9 +238,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
             closingApps = closeRegularApplications(exceptFor: mode)
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
-            do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
         }
-        do { try openCompanionApps(for: mode) } catch { notes.append("Рабочие приложения: \(error.localizedDescription)") }
         markPhase("system")
         do { try arrangeSafari(on: center, mode: mode) } catch { notes.append("Safari: \(error.localizedDescription)") }
         markPhase("safari")
@@ -241,6 +251,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             } else { notes.append("для пары Telegram нужен Универсальный доступ PIURA Modes") }
         }
         markPhase("telegram")
+        // Notes and Zoom must never become candidates for Telegram's second half.
+        do { try openCompanionApps(for: mode) } catch { notes.append("Рабочие приложения: \(error.localizedDescription)") }
+        markPhase("companions")
         if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
@@ -250,6 +263,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
         }
         markPhase("musicAndChat")
+        do { try restoreForeground(for: mode) } catch { notes.append("Передний план: \(error.localizedDescription)") }
+        markPhase("foreground")
+        if !preview {
+            do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
+            markPhase("wallpapers")
+            do { try verifyOfficeLighting(for: mode) } catch { notes.append("Свет кабинета: \(error.localizedDescription)") }
+            markPhase("lighting")
+        }
         // Give normal quit requests the whole layout transition to finish.
         // Do not report a delayed Zoom shutdown as a failure after just 2.5 s.
         let quitDeadline = min(Date().addingTimeInterval(5), runDeadline)
@@ -277,6 +298,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func closeRegularApplications(exceptFor mode: WorkMode) -> [NSRunningApplication] {
         var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari"]
         keep.insert("ru.yandex.desktop.yandex-browser")
+        if UserDefaults.standard.bool(forKey: "benchmarkKeepCodex") {
+            keep.insert("com.openai.codex")
+            verifiedWindows.append(["benchmarkHostPreserved":"com.openai.codex"])
+        }
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
         if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
         if mode.needsZoom { keep.insert("us.zoom.xos") }
@@ -326,6 +351,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
             if mode == .learning && index == 0 { resource = "Learning-Left" }
+            if mode == .investments && index == 0 { resource = "Investments-Left" }
+            if mode == .learning && index == 2 { resource = "Learning-Right" }
             if mode == .mentorship && index == 1 { resource = "Mentorship-Center" }
             if mode == .mentorship && index == 2 { resource = "Mentorship-Right" }
             guard let source = Bundle.main.url(forResource: resource, withExtension: "png") else {
@@ -642,6 +669,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         """)
         let values = ids.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         guard values.count == 2 else { throw modeError("Не удалось выделить нужные окна Яндекса.") }
+        erpWindowID = values[0]
+        // Start the same physical color-wheel command while the windows arrange.
+        // Preview runs do not change the room lights.
+        if !isPreviewRun {
+            _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"window.piuraSetOfficeMode?.('\(mode.rawValue)') ? 'started' : 'missing'\"")
+        }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         verifiedWindows.append(["yandexTargetIDs":values, "yandexBeforeCleanup":allIDs])
@@ -731,21 +764,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
               let lite = try runningApplication(telegramIDs[1], launch: true) else {
             throw modeError("Не найдены оба приложения Telegram.")
         }
+        telegram.activate(options: [.activateAllWindows])
+        try raiseWindow(of: telegram)
+        pumpRunLoop(0.2)
         if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) {
-            telegram.activate(options: [.activateAllWindows])
-            try raiseWindow(of: telegram)
             return
         }
 
         window.orderOut(nil)
+        // Remove every other app from the chooser, preserving its windows and
+        // documents. This also repairs an existing Telegram + Notes pairing.
+        let hiddenForPairing = workspace.runningApplications.filter {
+            $0.activationPolicy == .regular && !$0.isHidden &&
+            !telegramIDs.contains($0.bundleIdentifier ?? "") && $0.bundleIdentifier != "com.piura.modes"
+        }
+        for other in hiddenForPairing { _ = other.hide() }
+        defer { for other in hiddenForPairing where !other.isTerminated { other.unhide() } }
         try moveWindowToDisplay(telegram, target: target)
         try moveWindowToDisplay(lite, target: target)
+        let liteRoot = AXUIElementCreateApplication(lite.processIdentifier)
+        var liteWindows: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(liteRoot, kAXWindowsAttribute as CFString, &liteWindows)
+        guard (liteWindows as? [AXUIElement] ?? []).filter({ isDocumentWindow($0) }).count == 1,
+              hiddenForPairing.allSatisfy({ $0.isHidden || $0.isTerminated }) else {
+            throw modeError("Не удалось изолировать единственное окно Telegram Lite. Чужое окно не выбрано.")
+        }
         telegram.activate(options: [.activateAllWindows])
         pumpRunLoop(0.4)
         try selectLeftFullScreenTile(of: telegram)
-        // The right half is macOS' second-window chooser. A real pointer click
-        // is required here; its Mission Control thumbnail is not an AX button.
-        pumpRunLoop(4.8)
+        // Only Telegram Lite remains eligible, so this cannot select Notes.
+        pumpRunLoop(1.2)
         if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) { return }
         let pendingWindow = try firstWindow(of: telegram)
         var pendingFullScreen: CFTypeRef?
@@ -757,7 +805,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         postPointerMove(to: CGPoint(x: target.rect.minX + target.rect.width * 0.75, y: target.rect.midY))
         pumpRunLoop(0.35)
         postPointerClick(at: CGPoint(x: target.rect.minX + target.rect.width * 0.75, y: target.rect.midY))
-        pumpRunLoop(5.2)
+        let pairDeadline = Date().addingTimeInterval(6)
+        while Date() < pairDeadline {
+            if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) { return }
+            pumpRunLoop(0.15)
+        }
         guard telegramSplitIsExact(telegram: telegram, lite: lite, target: target) else {
             throw modeError("macOS не объединила Telegram в один полноэкранный Split View.")
         }
@@ -907,8 +959,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let r = target.rect, tolerance: CGFloat = 24
         let bothFullScreen = aFull as? Bool == true && bFull as? Bool == true
         let expected = r
+        // Matching frames alone can describe windows in two DIFFERENT Spaces.
+        // Both exact app PIDs must also be visible in the same active display.
+        let visible = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+        let visiblePIDs = Set(visible.filter { ($0[kCGWindowLayer as String] as? Int) == 0 }.compactMap { $0[kCGWindowOwnerPID as String] as? Int32 })
         let exact =
             bothFullScreen &&
+            visiblePIDs.contains(telegram.processIdentifier) && visiblePIDs.contains(lite.processIdentifier) &&
             abs(left.minX - expected.minX) < tolerance && abs(right.maxX - expected.maxX) < tolerance &&
             abs(left.minY - expected.minY) < tolerance && abs(right.minY - expected.minY) < tolerance &&
             abs(left.height - expected.height) < tolerance && abs(right.height - expected.height) < tolerance &&
@@ -1089,7 +1146,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         _ = AXUIElementPerformAction(try firstWindow(of: app), kAXRaiseAction as CFString)
     }
     private func startYandexMusic() -> Bool {
-        let javascript = """
+        let readState = """
         (() => {
           const controls = document.querySelector('[class*="VibePlayerControls_root"]');
           if (navigator.mediaSession?.playbackState === 'playing') return 'already-playing';
@@ -1097,10 +1154,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           if (pause) return 'already-playing';
           const play = controls?.querySelector('button[aria-label="Воспроизведение"],button[aria-label*="Воспроизвести"],button[aria-label*="Play"]');
           if (!play) return 'missing';
-          play.click(); return 'pending';
+          return 'ready';
         })()
         """
-        let script = """
+        func script(_ javascript: String) -> String { """
         tell application "Yandex"
           repeat with w in every window
             repeat with t in every tab of w
@@ -1108,15 +1165,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             end repeat
           end repeat
         end tell
-        """
-        for _ in 0..<8 {
-            if let result = try? runAppleScript(script), result == "already-playing" {
-                verifiedWindows.append(["musicPlaying":true])
+        """ }
+        var clicked = false
+        for _ in 0..<12 {
+            let state = try? runAppleScript(script(readState))
+            if state == "already-playing" {
+                verifiedWindows.append(["musicPlaying":true, "playClicks":clicked ? 1 : 0])
                 return true
             }
-            pumpRunLoop(1)
+            if state == "ready" && !clicked {
+                clicked = true
+                let playOnce = readState.replacingOccurrences(of: "return 'ready';", with: "play.click(); return 'pending';")
+                _ = try? runAppleScript(script(playOnce))
+            }
+            pumpRunLoop(0.5)
         }
+        verifiedWindows.append(["musicPlaying":false, "playClicks":clicked ? 1 : 0])
         return false
+    }
+    private func restoreForeground(for mode: WorkMode) throws {
+        if mode != .learning,
+           let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) {
+            let erp = try yandexWindow(id: erpWindowID, app: yandex)
+            _ = AXUIElementSetAttributeValue(erp, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+            _ = AXUIElementPerformAction(erp, kAXRaiseAction as CFString)
+            verifiedWindows.append(["erpVisibleAtFinish":true])
+        }
+        if mode == .investments || mode == .mentorship || mode == .learning,
+           let safari = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.Safari" }) {
+            _ = try runAppleScript("tell application \"Safari\"\nset index of window id \(safariWindowID) to 1\nactivate\nend tell")
+            try raiseWindow(of: safari)
+            verifiedWindows.append(["centerForeground":"Safari"])
+        }
+        if mode.needsChatGPT,
+           let chat = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.openai.chat" }) {
+            chat.activate(options: []); try raiseWindow(of: chat)
+        }
+    }
+    private func verifyOfficeLighting(for mode: WorkMode) throws {
+        let deadline = Date().addingTimeInterval(12)
+        var started = false
+        repeat {
+            let json = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"JSON.stringify(window.piuraOfficeLighting || {})\"")
+            if let data = json.data(using: .utf8), let state = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let status = state["status"] as? String ?? ""
+                if state["mode"] as? String == mode.rawValue {
+                    if status == "done" { verifiedWindows.append(["officeLighting":state]); return }
+                    if status == "partial" || status == "failed" {
+                        verifiedWindows.append(["officeLighting":state])
+                        throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
+                    }
+                } else if !started {
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"window.piuraSetOfficeMode?.('\(mode.rawValue)')\"")
+                    started = true
+                }
+            }
+            pumpRunLoop(0.25)
+        } while Date() < deadline
+        throw modeError("Нет подтверждения цветового круга. Проверьте связь с освещением.")
     }
     private func setDoNotDisturb(enabled: Bool) -> Bool {
         let script = """
