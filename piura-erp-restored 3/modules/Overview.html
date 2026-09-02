@@ -1057,12 +1057,16 @@
     @media(max-width:1000px){.dashboard>.air .air-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}.fund-goals{min-height:auto!important}}
     @media(max-width:760px){.dashboard>.air .air-grid{grid-template-columns:1fr!important}.dashboard>.air .air-stat{min-height:170px!important}.control-grid>.home-controls-card .lamp-power-row{left:16px!important;bottom:16px!important}}
   </style>
+  <link rel="stylesheet" href="../../work-modes.css?v=4">
+  <style>.dashboard>.admin-progress{min-height:440px!important}.dashboard{row-gap:28px!important}</style>
+  <script src="../../work-modes.js?v=4" defer></script>
 </head>
 <body>
 <main class="page" data-piura-keep-full>
   <section class="dashboard">
     <article class="tile admin-progress" data-go="dynamics"><div class="admin-overview"><div class="tile-head"><h2>Админ-шкала</h2></div><section class="admin-total-panel" aria-label="Общий прогресс админ-шкалы"><div class="admin-total-head"><span>Общий прогресс</span><strong id="adminValue">4 / 98</strong></div><div class="admin-total-track"><i id="adminTotalBar"></i></div></section></div><div class="admin-dynamic-list" id="adminDynamics"></div></article>
     <article class="tile fund-goals" data-go="funds"><div class="tile-head"><h2>Цели фондов</h2></div><div class="fund-goal-list" id="fundGoals"></div></article>
+    <section data-work-modes aria-label="Режимы работы"></section>
     <section class="control-grid" aria-label="Управление комнатой">
       <article class="tile zone-card home-controls-card" aria-label="Зоны и свет">
         <div class="home-controls-head"><h2>Зоны</h2><div class="home-controls-actions"><button class="zone-master" id="zoneAllToggle" type="button" aria-label="Включить все зоны" aria-pressed="false"><span class="zone-power" aria-hidden="true">⏻</span></button><button class="master-toggle" id="masterPower" type="button" aria-label="Включить всё" aria-pressed="false" disabled hidden tabindex="-1"><span aria-hidden="true">⏻</span></button></div></div>

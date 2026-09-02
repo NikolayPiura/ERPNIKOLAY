@@ -38,6 +38,11 @@ private struct DisplayTarget {
     let screen: NSScreen
     let rect: CGRect
     var bounds: String { "{\(Int(rect.minX)), \(Int(rect.minY)), \(Int(rect.maxX)), \(Int(rect.maxY))}" }
+    var usableRect: CGRect {
+        let v = screen.visibleFrame, f = screen.frame
+        return CGRect(x: v.minX, y: rect.minY + f.maxY - v.maxY, width: v.width, height: v.height)
+    }
+    var usableBounds: String { let r = usableRect; return "{\(Int(r.minX)), \(Int(r.minY)), \(Int(r.maxX)), \(Int(r.maxY))}" }
 }
 private struct ModeResult { let ok: Bool; let message: String }
 
@@ -45,12 +50,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var window: NSWindow!
     private var webView: WKWebView!
     private var pageReady = false
-    private var pendingLaunch: (WorkMode, Bool)?
+    private var pendingLaunch: (WorkMode, Bool, String)?
+    private var requestID = ""
+    private var runDeadline = Date.distantFuture
+    private var launchConfigured = false
+    private var safariWindowID = 0
     private var isModeRunning = false
     private var verifiedWindows: [[String: Any]] = []
     private var menuTrace: [String] = []
     private let workspace = NSWorkspace.shared
     private let adminScaleURL = "https://drive.google.com/drive/u/0/folders/1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG"
+    private let workTableURL = "https://docs.google.com/spreadsheets/d/1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc/edit?gid=720489481#gid=720489481"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -68,6 +78,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         NSApp.setActivationPolicy(.regular)
         configureMenu()
         configureWindow()
+        launchConfigured = true
+        if let (mode, preview, id) = pendingLaunch {
+            pendingLaunch = nil
+            beginMode(mode, preview: preview, id: id)
+        }
     }
     // Native Split View temporarily hides this panel while macOS presents its
     // second-window chooser. Keep the process alive until the mode finishes.
@@ -83,8 +98,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
               let host = url.host, let mode = WorkMode(rawValue: host) else { return }
         let preview = URLComponents(url: url, resolvingAgainstBaseURL: false)?
             .queryItems?.contains(where: { $0.name == "preview" && $0.value == "1" }) ?? false
-        guard pageReady else { pendingLaunch = (mode, preview); return }
-        beginMode(mode, preview: preview)
+        let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
+        guard launchConfigured else { pendingLaunch = (mode, preview, id); return }
+        beginMode(mode, preview: preview, id: id)
     }
     private func configureMenu() {
         let bar = NSMenu()
@@ -133,28 +149,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         window.appearance = NSAppearance(named: .darkAqua)
         window.isMovableByWindowBackground = true
         window.contentView = webView
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
         guard let url = Bundle.main.url(forResource: "modes", withExtension: "html") else { return }
         webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, !self.isModeRunning, self.requestID.isEmpty else { return }
+            self.window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
     }
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "piura", let body = message.body as? [String: Any],
               let raw = body["mode"] as? String, let mode = WorkMode(rawValue: raw) else { return }
-        beginMode(mode, preview: body["preview"] as? Bool ?? false)
+        beginMode(mode, preview: body["preview"] as? Bool ?? false, id: body["requestID"] as? String ?? UUID().uuidString)
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         pageReady = true
-        guard let (mode, preview) = pendingLaunch else { return }
-        pendingLaunch = nil
-        beginMode(mode, preview: preview)
     }
-    private func beginMode(_ mode: WorkMode, preview: Bool) {
-        guard !isModeRunning else { return }
+    private func beginMode(_ mode: WorkMode, preview: Bool, id: String = UUID().uuidString) {
+        // Keep the most recent intent instead of discarding clicks during launch.
+        guard !isModeRunning else { pendingLaunch = (mode, preview, id); return }
+        requestID = id
         isModeRunning = true
-        NSApp.setActivationPolicy(.regular)
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        runDeadline = Date().addingTimeInterval(150)
         webView.evaluateJavaScript("window.piuraModeStarted('\(mode.rawValue)',\(preview))")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
             guard let self else { return }
@@ -163,23 +179,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 NSApp.setActivationPolicy(.accessory)
             }
             let result = self.runMode(mode, preview: preview)
-            self.finishInWebView(result)
             self.writeReport(mode: mode, preview: preview, result: result)
+            self.runDeadline = min(self.runDeadline, Date().addingTimeInterval(5))
+            self.finishInWebView(result)
             self.isModeRunning = false
+            if let (next, nextPreview, nextID) = self.pendingLaunch {
+                self.pendingLaunch = nil
+                self.beginMode(next, preview: nextPreview, id: nextID)
+                return
+            }
             if !preview {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    NSApp.terminate(nil)
+                    if !self.isModeRunning && self.requestID == id { NSApp.terminate(nil) }
                 }
             }
         }
     }
     private func runMode(_ mode: WorkMode, preview: Bool) -> ModeResult {
-        guard NSScreen.screens.count >= 3,
-              let center = display(named: "Studio Display") ?? display(at: 0),
-              let right = display(named: "H27P27") ?? rightmostDisplay(),
-              let left = display(named: "LG UltraFine") ?? leftmostDisplay() else {
+        let displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+        guard displays.count == 3 else {
             return ModeResult(ok: false, message: "Нужны все три монитора: центральный, левый и правый.")
         }
+        let left = displays[0], center = displays[1], right = displays[2]
         var notes: [String] = []
         verifiedWindows = []
         menuTrace = []
@@ -190,11 +211,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             guard canControlSystemEvents() else {
                 return ModeResult(ok: false, message: "Разрешите PIURA Modes управлять System Events и запустите режим снова.")
             }
-            closeRegularApplications(exceptFor: mode)
+            let remaining = closeRegularApplications(exceptFor: mode)
+            if !remaining.isEmpty { notes.append("Не закрылись (возможно, ожидают сохранения): " + remaining.joined(separator: ", ")) }
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
             do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
         }
         do { try arrangeSafari(on: center, mode: mode) } catch { notes.append("Safari: \(error.localizedDescription)") }
+        if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
         if mode != .learning {
             do { try arrangeYandex(right: right, left: left, mode: mode) } catch { notes.append("Яндекс: \(error.localizedDescription)") }
         }
@@ -203,6 +226,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 do { try arrangeTelegramSplitView(on: center) } catch { notes.append("Telegram: \(error.localizedDescription)") }
             } else { notes.append("для пары Telegram нужен Универсальный доступ PIURA Modes") }
         }
+        if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
             if mode.needsMusic && !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
@@ -210,9 +234,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
             }
         }
-        let success = preview
+        var success = preview
             ? "Проверено расположение режима «\(mode.title)»."
             : "Режим «\(mode.title)» включён."
+        if verifiedWindows.contains(where: { $0["requiresGoogleSignIn"] as? Bool == true }) {
+            success += " Для закрытых таблиц нужен вход в Google в профиле «Инвестиции»."
+        }
         return ModeResult(ok: notes.isEmpty, message: notes.isEmpty ? success : "Выполнено не полностью: " + notes.joined(separator: " · "))
     }
     private func display(named name: String) -> DisplayTarget? { NSScreen.screens.first(where: { $0.localizedName == name }).map(target) }
@@ -224,7 +251,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let mainHeight = NSScreen.screens.first(where: { $0.frame.origin == .zero })?.frame.height ?? f.height
         return DisplayTarget(screen: screen, rect: CGRect(x: f.minX, y: mainHeight - f.maxY, width: f.width, height: f.height))
     }
-    private func closeRegularApplications(exceptFor mode: WorkMode) {
+    private func closeRegularApplications(exceptFor mode: WorkMode) -> [String] {
         var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari"]
         if mode != .learning { keep.insert("ru.yandex.desktop.yandex-browser") }
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
@@ -236,22 +263,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         for app in apps { _ = app.terminate() }
         let deadline = Date().addingTimeInterval(2.5)
         while Date() < deadline, apps.contains(where: { !$0.isTerminated }) { pumpRunLoop(0.15) }
-        for app in apps where !app.isTerminated { _ = app.forceTerminate() }
+        // Never discard unsaved work or dismiss another app's save dialog.
+        return apps.filter { !$0.isTerminated }.map { $0.localizedName ?? "Приложение" }
     }
     private func setSystemDarkAppearance() throws {
         let result = try runAppleScript("tell application \"System Events\" to tell appearance preferences\nset dark mode to true\nreturn dark mode as text\nend tell")
         guard result == "true" else { throw modeError("macOS не подтвердила тёмный режим.") }
+        verifiedWindows.append(["macOSAppearance":"dark"])
     }
     private var supportDirectory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("PIURA Modes", isDirectory: true)
     }
     private func setDesktopWallpaper(for mode: WorkMode) throws {
-        guard let source = Bundle.main.url(forResource: mode.wallpaperResource, withExtension: "png") else { throw modeError("Файл фона отсутствует в приложении.") }
+        let source: URL
+        if mode == .climate {
+            let candidates = [
+                supportDirectory.appendingPathComponent("Wallpapers/Climate-Black-Cat.png"),
+                FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads/b32539b13fe821822bbc0c30f456-1676080.jpg!d.jpeg")
+            ]
+            guard let original = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
+                throw modeError("Оригинал чёрного кота отсутствует; текущие обои сохранены.")
+            }
+            source = original
+        } else {
+            guard let bundled = Bundle.main.url(forResource: mode.wallpaperResource, withExtension: "png") else { throw modeError("Файл фона отсутствует в приложении.") }
+            source = bundled
+        }
         let directory = supportDirectory.appendingPathComponent("Wallpapers", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let permanentURL = directory.appendingPathComponent("\(mode.wallpaperResource).png")
-        if FileManager.default.fileExists(atPath: permanentURL.path) { try FileManager.default.removeItem(at: permanentURL) }
-        try FileManager.default.copyItem(at: source, to: permanentURL)
+        let permanentURL = directory.appendingPathComponent("\(mode == .climate ? "Climate-Black-Cat" : mode.wallpaperResource).\(source.pathExtension)")
+        if source != permanentURL { try Data(contentsOf: source).write(to: permanentURL, options: .atomic) }
         let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
             .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue, .allowClipping: true,
             .fillColor: NSColor(calibratedWhite: 0.9, alpha: 1)
@@ -259,155 +300,202 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // This API changes macOS desktop wallpapers, never browser backgrounds.
         for screen in NSScreen.screens { try workspace.setDesktopImageURL(permanentURL, for: screen, options: options) }
         _ = try runAppleScript("tell application \"System Events\" to tell every desktop to set picture to \"\(appleScriptEscape(permanentURL.path))\"")
+        let confirmed = try runAppleScript("""
+        tell application "System Events"
+          repeat with d in every desktop
+            if picture of d is not "\(appleScriptEscape(permanentURL.path))" then error "Не все рабочие столы приняли обои."
+          end repeat
+          return count of desktops
+        end tell
+        """)
+        verifiedWindows.append(["wallpaper":permanentURL.path, "desktops":Int(confirmed) ?? 0])
     }
     private func arrangeSafari(on target: DisplayTarget, mode: WorkMode) throws {
-        let action: String
-        switch mode {
-        case .morning:
-            action = """
-            set targetWindow to missing value
-            repeat with w in every window
-              try
-                repeat with t in every tab of w
-                  if URL of t contains "1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG" then
+        guard let app = try runningApplication("com.apple.Safari", launch: true) else { throw modeError("Safari не найден.") }
+        let desired = mode == .morning ? adminScaleURL : mode == .climate ? workTableURL : mode == .learning ? courseURL : mode == .investments ? investmentURLs[0] : "about:blank"
+        let search = mode == .climate ? "(name of t contains \"Рабочая таблица\" or URL of t contains \"1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc\")" :
+            mode == .mentorship ? "false" : "URL of t starts with \"\(desired)\""
+        let existing = try runAppleScript("""
+        tell application "Safari"
+          repeat with w in every window
+            try
+              repeat with t in every tab of w
+                if \(search) then
+                  if \(mode == .investments ? "((count of tabs of w) is 5 or (count of tabs of w) is 6)" : "true") then
                     set current tab of w to t
-                    set targetWindow to w
+                    return id of w as text
+                  end if
+                end if
+              end repeat
+            end try
+          end repeat
+          return "0"
+        end tell
+        """)
+        var id = Int(existing) ?? 0
+        if id == 0 {
+            app.activate(options: [.activateAllWindows])
+            try pressMenuPath(of: app, titles: ["File", mode == .investments ? "New Инвестиции Window" : "New Personal Window"])
+            pumpRunLoop(0.5)
+            id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
+            guard id != 0 else { throw modeError("Safari не создал отдельное окно.") }
+            // New profile windows can select their first pinned tab. Never
+            // navigate that tab: create a separate unpinned task tab instead.
+            _ = try runAppleScript("""
+            tell application "Safari"
+              set blankURL to URL of last tab of window id \(id)
+              if blankURL is missing value or blankURL is "" or blankURL is "about:blank" or name of last tab of window id \(id) is "Start Page" then
+                set taskTab to last tab of window id \(id)
+                set URL of taskTab to "\(desired)"
+              else
+                set taskTab to make new tab at end of tabs of window id \(id) with properties {URL:"\(desired)"}
+              end if
+              set current tab of window id \(id) to taskTab
+            end tell
+            """)
+            if mode == .investments {
+                let extra = investmentURLs.dropFirst().map { "make new tab at end of tabs of window id \(id) with properties {URL:\"\($0)\"}" }.joined(separator: "\n")
+                _ = try runAppleScript("tell application \"Safari\"\n\(extra)\nend tell")
+            }
+        }
+        safariWindowID = id
+        if mode == .investments {
+            _ = try runAppleScript("""
+            tell application "Safari"
+              if (count of tabs of window id \(id)) is 6 then
+                repeat with i from 6 to 1 by -1
+                  if name of tab i of window id \(id) is "Start Page" then
+                    close tab i of window id \(id)
                     exit repeat
                   end if
                 end repeat
-              end try
-              if targetWindow is not missing value then exit repeat
-            end repeat
-            if targetWindow is missing value then
-              make new document with properties {URL:"\(adminScaleURL)"}
-              set targetWindow to front window
-            end if
-            """
-        case .climate:
-            action = """
-            set targetWindow to missing value
-            repeat with w in every window
-              try
-                repeat with t in every tab of w
-                  if name of t contains "Рабочая таблица" then
-                    set current tab of w to t
-                    set targetWindow to w
-                    exit repeat
-                  end if
-                end repeat
-              end try
-              if targetWindow is not missing value then exit repeat
-            end repeat
-            if targetWindow is missing value then error "Не найдена закреплённая вкладка «Рабочая таблица»."
-            """
-        case .investments:
-            let extraTabs = investmentURLs.dropFirst().map {
-                "make new tab at end of tabs of targetWindow with properties {URL:\"\($0)\"}"
-            }.joined(separator: "\n")
-            action = """
-            set targetWindow to missing value
-            repeat with w in every window
-              try
-                repeat with t in every tab of w
-                  if URL of t contains "1EmXh84m_H_4I--AbL2tRxBoONr6uTg1CxlyQpiSrFlA" then
-                    set current tab of w to t
-                    set targetWindow to w
-                    exit repeat
-                  end if
-                end repeat
-              end try
-              if targetWindow is not missing value then exit repeat
-            end repeat
-            if targetWindow is missing value then
-              make new document with properties {URL:"\(investmentURLs[0])"}
-              set targetWindow to front window
-              delay 0.4
-              \(extraTabs)
-            end if
-            """
-        case .learning:
-            action = "make new document with properties {URL:\"\(courseURL)\"}\nset targetWindow to front window"
-        case .mentorship:
-            action = "make new document with properties {URL:\"about:blank\"}\nset targetWindow to front window"
+              end if
+            end tell
+            """)
         }
         _ = try runAppleScript("""
         tell application "Safari"
+          set miniaturized of window id \(id) to false
+          set index of window id \(id) to 1
           activate
-          \(action)
-          set bounds of targetWindow to \(target.bounds)
-          set index of targetWindow to 1
+          repeat with w in every window
+            if id of w is not \(id) then set miniaturized of w to true
+          end repeat
         end tell
         """)
+        try placeWindow(of: app, in: target.usableRect, raise: true)
+        if mode == .climate || mode == .investments {
+            _ = try runAppleScript("tell application \"Safari\" to set bounds of window id \(id) to \(target.usableBounds)")
+            let actualURL = try runAppleScript("tell application \"Safari\" to return URL of current tab of window id \(id)")
+            try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: actualURL)
+        } else {
+            try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: desired)
+        }
+        if mode == .investments {
+            let actual = try runAppleScript("""
+            tell application "Safari"
+              set AppleScript's text item delimiters to linefeed
+              return (URL of every tab of window id \(id)) as text
+            end tell
+            """).components(separatedBy: "\n")
+            let sheetIDs = investmentURLs.compactMap { URL(string: $0)?.path.components(separatedBy: "/").dropFirst(3).first }
+            let decoded = actual.map { url in (0..<3).reduce(url) { value, _ in value.removingPercentEncoding ?? value } }
+            guard actual.count == 5, sheetIDs.allSatisfy({ id in decoded.contains(where: { $0.contains(id) }) }) else {
+                throw modeError("Профиль фондов не подтвердил ровно пять нужных таблиц; личные вкладки не изменены.")
+            }
+            verifiedWindows.append(["investmentTabs":actual, "requiresGoogleSignIn":actual.contains(where: { $0.contains("accounts.google.com") })])
+            for index in 1...5 {
+                _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab \(index) of window id \(id)")
+                try pressMenuPath(of: app, titles: ["Window"])
+                let root = AXUIElementCreateApplication(app.processIdentifier)
+                if let item = descendant(of: root, title: "Pin Tab", deadline: Date()) {
+                    _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
+                    pumpRunLoop(0.2)
+                } else { activateAndDismissMenus(app) }
+            }
+            _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab 1 of window id \(id)")
+        }
     }
     private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
         guard let erpURL = mode.erpURL else { return }
         let leftURL = mode.needsMusic ? musicURL : policyURL
-        let leftPrefix = mode.needsMusic ? musicURL : policyURL
-        _ = try runAppleScript("""
+        // Numeric IDs survive front-window reordering when another window opens.
+        let ids = try runAppleScript("""
         tell application "Yandex"
           activate
-          set erpWindow to missing value
-          set erpWindowId to -1
+          set erpID to -1
           repeat with w in every window
             set tabNumber to 0
             repeat with t in every tab of w
               set tabNumber to tabNumber + 1
-              if URL of t starts with "\(erpBaseURL)" then
-                set erpWindow to w
-                set erpWindowId to id of w
+              set u to URL of t
+              if u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html" then
+                set erpID to id of w
                 set active tab index of w to tabNumber
                 exit repeat
               end if
             end repeat
-            if erpWindow is not missing value then exit repeat
+            if erpID is not -1 then exit repeat
           end repeat
-          if erpWindow is missing value then
-            set erpWindow to make new window
-            set erpWindowId to id of erpWindow
-          end if
-          set URL of active tab of erpWindow to "\(erpURL)"
-          set bounds of erpWindow to \(right.bounds)
-          set leftWindow to missing value
+          if erpID is -1 then set erpID to id of (make new window)
+          set leftID to -1
           repeat with w in every window
-            if (id of w) is not erpWindowId then
+            if id of w is not erpID then
               set tabNumber to 0
               repeat with t in every tab of w
                 set tabNumber to tabNumber + 1
-                if URL of t starts with "\(leftPrefix)" then
-                  set leftWindow to w
+                if URL of t starts with "\(leftURL)" then
+                  set leftID to id of w
                   set active tab index of w to tabNumber
                   exit repeat
                 end if
               end repeat
             end if
-            if leftWindow is not missing value then exit repeat
+            if leftID is not -1 then exit repeat
           end repeat
-          if leftWindow is missing value then
-            set leftWindow to make new window
-            set URL of active tab of leftWindow to "\(leftURL)"
+          if leftID is -1 then
+            set leftID to id of (make new window)
+            set URL of active tab of window id leftID to "\(leftURL)"
           end if
-          set URL of active tab of leftWindow to "\(leftURL)"
-          set bounds of leftWindow to \(left.bounds)
-          set extraLeftWindows to {}
+          set URL of active tab of window id erpID to "\(erpURL)"
+          set minimized of window id erpID to false
+          set minimized of window id leftID to false
+          set bounds of window id erpID to \(right.usableBounds)
+          set bounds of window id leftID to \(left.usableBounds)
           repeat with w in every window
-            if (id of w) is not erpWindowId and (id of w) is not (id of leftWindow) then
-              set allLeftTabs to ((count of tabs of w) > 0)
-              repeat with t in every tab of w
-                if not (URL of t starts with "\(leftPrefix)") then
-                  set allLeftTabs to false
-                  exit repeat
-                end if
-              end repeat
-              if allLeftTabs then set end of extraLeftWindows to w
-            end if
+            if id of w is not erpID and id of w is not leftID then set minimized of w to true
           end repeat
-          repeat with w in extraLeftWindows
-            close w
-          end repeat
-          set index of erpWindow to 1
-          set index of leftWindow to 1
+          set index of window id erpID to 1
+          set index of window id leftID to 1
+          return (erpID as text) & "," & (leftID as text)
         end tell
         """)
+        let values = ids.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        guard values.count == 2, values[0] != values[1] else { throw modeError("Не удалось выделить два отдельных окна Яндекса.") }
+        try verifyBrowserWindow(app: "Yandex", id: values[0], target: right, expectedURL: erpURL)
+        try verifyBrowserWindow(app: "Yandex", id: values[1], target: left, expectedURL: leftURL)
+    }
+    private func verifyBrowserWindow(app: String, id: Int, target: DisplayTarget, expectedURL: String) throws {
+        let actual = try runAppleScript("""
+        tell application "\(app)"
+          set w to window id \(id)
+          set b to bounds of w
+          set u to URL of \(app == "Safari" ? "current tab" : "active tab") of w
+          return (item 1 of b as text) & "," & (item 2 of b as text) & "," & (item 3 of b as text) & "," & (item 4 of b as text) & "|" & u
+        end tell
+        """)
+        let parts = actual.components(separatedBy: "|")
+        let b = parts[0].split(separator: ",").compactMap { Double($0) }
+        guard b.count == 4, parts.count == 2, parts[1].hasPrefix(expectedURL) else {
+            throw modeError("\(app) не подтвердил нужную вкладку.")
+        }
+        let rect = CGRect(x: b[0], y: b[1], width: b[2]-b[0], height: b[3]-b[1]), expected = target.usableRect
+        guard abs(rect.midX - expected.midX) < 40, abs(rect.midY - expected.midY) < 60,
+              abs(rect.width - expected.width) < 40, abs(rect.height - expected.height) < 80 else {
+            throw modeError("\(app) не занял назначенный монитор целиком.")
+        }
+        verifiedWindows.append(["app":app, "windowID":id, "display":target.screen.localizedName,
+                                "frame":[rect.minX,rect.minY,rect.width,rect.height], "url":parts[1]])
     }
     private func arrangeTelegramSplitView(on target: DisplayTarget) throws {
         guard let telegram = try runningApplication(telegramIDs[0], launch: true),
@@ -416,10 +504,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) { return }
 
-        let safariMinimized = (try? runAppleScript("tell application \"Safari\" to if (count of windows) > 0 then set miniaturized of front window to true")) != nil
+        let safariMinimized = (try? runAppleScript("tell application \"Safari\" to set miniaturized of window id \(safariWindowID) to true")) != nil
         window.orderOut(nil)
         defer {
-            if safariMinimized { _ = try? runAppleScript("tell application \"Safari\" to if (count of windows) > 0 then set miniaturized of front window to false") }
+            if safariMinimized { _ = try? runAppleScript("tell application \"Safari\" to set miniaturized of window id \(safariWindowID) to false") }
         }
         try moveWindowToDisplay(telegram, target: target)
         try moveWindowToDisplay(lite, target: target)
@@ -451,7 +539,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if AXUIElementCopyAttributeValue(window, "AXFullScreen" as CFString, &fullscreen) == .success,
            fullscreen as? Bool == true {
             _ = AXUIElementSetAttributeValue(window, "AXFullScreen" as CFString, kCFBooleanFalse)
-            pumpRunLoop(1.2)
+            let deadline = Date().addingTimeInterval(5)
+            repeat {
+                pumpRunLoop(0.2)
+                _ = AXUIElementCopyAttributeValue(window, "AXFullScreen" as CFString, &fullscreen)
+            } while fullscreen as? Bool == true && Date() < deadline
+            pumpRunLoop(0.5)
             window = try firstWindow(of: app)
         }
         _ = AXUIElementSetAttributeValue(window, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
@@ -462,7 +555,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         pumpRunLoop(0.25)
     }
     private func pressMenuPath(of app: NSRunningApplication, titles: [String]) throws {
-        let root = AXUIElementCreateApplication(app.processIdentifier)
+        activateAndDismissMenus(app)
+        let application = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(application, 1)
+        var menuBar: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(application, kAXMenuBarAttribute as CFString, &menuBar) == .success,
+              let menuBar, CFGetTypeID(menuBar) == AXUIElementGetTypeID() else { throw modeError("Не найдено меню приложения.") }
+        let root = menuBar as! AXUIElement
         var current = root
         for (index, title) in titles.enumerated() {
             guard var item = descendant(of: current, title: title, deadline: Date().addingTimeInterval(2)) else {
@@ -474,11 +573,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             if index > 0 && index < titles.count - 1 {
                 // This menu opens its submenu only on a genuine pointer hover.
                 guard let frame = windowRect(item) else { throw modeError("Нет границ подменю «\(title)».") }
-                postPointerMove(to: CGPoint(x: frame.midX, y: max(1, frame.minY - frame.height * 0.7)))
+                _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
+                postPointerMove(to: CGPoint(x: frame.midX, y: frame.minY - frame.height * 0.7))
                 pumpRunLoop(0.2)
                 postPointerMove(to: CGPoint(x: frame.midX, y: frame.midY))
                 pumpRunLoop(1.2)
             } else if index == titles.count - 1 && index > 0 {
+                if AXUIElementPerformAction(item, kAXPressAction as CFString) == .success {
+                    pumpRunLoop(0.4)
+                    return
+                }
                 var frame = windowRect(item)
                 let visibleDeadline = Date().addingTimeInterval(2)
                 while (frame?.width ?? 0) <= 1 && Date() < visibleDeadline {
@@ -498,28 +602,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func selectLeftFullScreenTile(of app: NSRunningApplication) throws {
-        guard let bundleID = app.bundleIdentifier else { throw modeError("Не найден идентификатор Telegram.") }
-        let result = try runNativeAppleScript("""
-        tell application "System Events"
-          set targetProcess to first application process whose bundle identifier is "\(bundleID)"
-          set frontmost of targetProcess to true
-          tell targetProcess
-            try
-              click menu item "Left of Screen" of menu 1 of menu item "Full Screen Tile" of menu 1 of menu bar item "Window" of menu bar 1
-              return "left"
-            on error
-              try
-                click menu item "Left of Screen" of menu 1 of menu item "Move & Resize" of menu 1 of menu bar item "Window" of menu bar 1
-                return "left"
-              on error errorMessage
-                return "error:" & errorMessage
-              end try
-            end try
-          end tell
-        end tell
-        """)
-        menuTrace.append(result)
-        guard result == "left" else { throw modeError("Не удалось включить левую полноэкранную половину Telegram (\(result)).") }
+        app.activate(options: [.activateAllWindows])
+        pumpRunLoop(0.4)
+        // Open the real menu first; hidden submenu AppleScript clicks can fail.
+        // Never substitute Move & Resize: that is not a fullscreen Space.
+        try pressMenuPath(of: app, titles: ["Window", "Full Screen Tile", "Left of Screen"])
     }
     private func descendant(of root: AXUIElement, title: String, deadline: Date) -> AXUIElement? {
         repeat {
@@ -584,7 +671,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func telegramSplitIsExact(telegram: NSRunningApplication, lite: NSRunningApplication, target: DisplayTarget) -> Bool {
         guard let first = try? firstWindow(of: telegram), let second = try? firstWindow(of: lite),
               let a = windowRect(first), let b = windowRect(second) else { return false }
-        let left = a.minX <= b.minX ? a : b, right = a.minX <= b.minX ? b : a
+        let left = a, right = b
         var aFull: CFTypeRef?, bFull: CFTypeRef?
         _ = AXUIElementCopyAttributeValue(first, "AXFullScreen" as CFString, &aFull)
         _ = AXUIElementCopyAttributeValue(second, "AXFullScreen" as CFString, &bFull)
@@ -607,7 +694,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let candidates = ["com.openai.chat", "com.openai.codex"]
         guard let id = candidates.first(where: { workspace.urlForApplication(withBundleIdentifier: $0) != nil }),
               let app = try runningApplication(id, launch: true) else { throw modeError("Приложение ChatGPT не найдено.") }
-        try placeWindow(of: app, in: target.rect, raise: true)
+        try placeWindow(of: app, in: target.usableRect, raise: true)
         app.activate(options: [.activateAllWindows])
     }
     private func runningApplication(_ id: String, launch: Bool) throws -> NSRunningApplication? {
@@ -626,7 +713,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let deadline = Date().addingTimeInterval(12)
         while !completed && Date() < deadline { pumpRunLoop(0.1) }
         if let launchError { throw launchError }
+        if let openedApp { activateAndDismissMenus(openedApp) }
         return openedApp
+    }
+    private func activateAndDismissMenus(_ app: NSRunningApplication) {
+        app.activate(options: [.activateAllWindows])
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetMessagingTimeout(root, 1)
+        _ = AXUIElementSetAttributeValue(root, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+        var bar: CFTypeRef?
+        if AXUIElementCopyAttributeValue(root, kAXMenuBarAttribute as CFString, &bar) == .success,
+           let bar, CFGetTypeID(bar) == AXUIElementGetTypeID() {
+            var children: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(bar as! AXUIElement, kAXChildrenAttribute as CFString, &children)
+            for item in children as? [AXUIElement] ?? [] {
+                _ = AXUIElementPerformAction(item, kAXCancelAction as CFString)
+            }
+        }
+        pumpRunLoop(0.3)
+    }
+    private func isDocumentWindow(_ candidate: AXUIElement) -> Bool {
+        var role: CFTypeRef?, subrole: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(candidate, kAXRoleAttribute as CFString, &role)
+        _ = AXUIElementCopyAttributeValue(candidate, kAXSubroleAttribute as CFString, &subrole)
+        return role as? String == kAXWindowRole && subrole as? String == kAXStandardWindowSubrole
     }
     private func firstWindow(of app: NSRunningApplication) throws -> AXUIElement {
         let element = AXUIElementCreateApplication(app.processIdentifier)
@@ -637,22 +747,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             var value: CFTypeRef?
             lastError = AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &value)
             if lastError == .success,
-               let windows = value as? [AXUIElement], let window = windows.first { return window }
+               let windows = value as? [AXUIElement], let window = windows.first(where: isDocumentWindow) { return window }
             // Some native apps expose AXMainWindow/AXFocusedWindow while their
             // AXWindows collection is temporarily empty or unsupported.
             for attribute in [kAXMainWindowAttribute, kAXFocusedWindowAttribute] {
                 value = nil
                 if AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
-                   let value, CFGetTypeID(value) == AXUIElementGetTypeID() { return (value as! AXUIElement) }
+                   let value, CFGetTypeID(value) == AXUIElementGetTypeID(),
+                   isDocumentWindow(value as! AXUIElement) { return (value as! AXUIElement) }
             }
             value = nil
             if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,
                let children = value as? [AXUIElement] {
-                for child in children {
-                    var role: CFTypeRef?
-                    if AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &role) == .success,
-                       role as? String == kAXWindowRole { return child }
-                }
+                if let child = children.first(where: isDocumentWindow) { return child }
             }
             pumpRunLoop(0.15)
         } while Date() < deadline
@@ -719,7 +826,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           if (pause) return 'already-playing';
           const play = controls?.querySelector('button[aria-label="Воспроизведение"],button[aria-label*="Воспроизвести"],button[aria-label*="Play"]');
           if (!play) return 'missing';
-          play.click(); return 'started';
+          play.click(); return 'pending';
         })()
         """
         let script = """
@@ -732,7 +839,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         end tell
         """
         for _ in 0..<8 {
-            if let result = try? runAppleScript(script), ["started", "already-playing"].contains(result) { return true }
+            if let result = try? runAppleScript(script), result == "already-playing" {
+                verifiedWindows.append(["musicPlaying":true])
+                return true
+            }
             pumpRunLoop(1)
         }
         return false
@@ -790,39 +900,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"").replacingOccurrences(of: "\n", with: " ")
     }
     private func runNativeAppleScript(_ source: String) throws -> String {
-        var error: NSDictionary?
-        guard let script = NSAppleScript(source: source) else { throw modeError("Не удалось подготовить сценарий macOS.") }
-        let result = script.executeAndReturnError(&error)
-        if let error { throw modeError(error[NSAppleScript.errorMessage] as? String ?? "Ошибка управления macOS.") }
-        return result.stringValue ?? ""
+        try runAppleScript(source)
     }
     @discardableResult
     private func runAppleScript(_ source: String) throws -> String {
-        let process = Process(), input = Pipe(), output = Pipe(), errors = Pipe()
+        guard Date() < runDeadline else { throw modeError("Истекло время запуска режима; можно повторить запуск.") }
+        let process = Process()
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("piura-script-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let scriptURL = directory.appendingPathComponent("run.applescript")
+        try ("with timeout of 18 seconds\n" + source + "\nend timeout").write(to: scriptURL, atomically: true, encoding: .utf8)
+        let outURL = directory.appendingPathComponent("out"), errURL = directory.appendingPathComponent("err")
+        FileManager.default.createFile(atPath: outURL.path, contents: nil)
+        FileManager.default.createFile(atPath: errURL.path, contents: nil)
+        let output = try FileHandle(forWritingTo: outURL), errors = try FileHandle(forWritingTo: errURL)
+        defer { try? output.close(); try? errors.close() }
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-"]
-        process.standardInput = input; process.standardOutput = output; process.standardError = errors
+        process.arguments = [scriptURL.path]
+        process.standardOutput = output; process.standardError = errors
         try process.run()
-        input.fileHandleForWriting.write(Data(source.utf8))
-        try? input.fileHandleForWriting.close()
-        let deadline = Date().addingTimeInterval(20)
+        let deadline = min(Date().addingTimeInterval(20), runDeadline)
         while process.isRunning && Date() < deadline { pumpRunLoop(0.05) }
-        if process.isRunning { process.terminate(); throw modeError("macOS не ответила за 20 секунд.") }
-        let outputText = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        let errorText = String(decoding: errors.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        if process.isRunning {
+            process.terminate()
+            pumpRunLoop(0.2)
+            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
+            throw modeError("macOS не ответила за 20 секунд.")
+        }
+        let outputText = try String(contentsOf: outURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
+        let errorText = try String(contentsOf: errURL, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines)
         guard process.terminationStatus == 0 else { throw modeError(errorText.isEmpty ? "Ошибка автоматизации macOS." : errorText) }
         return outputText
     }
     private func finishInWebView(_ result: ModeResult) {
-        let payload: [String: Any] = ["ok": result.ok, "message": result.message]
+        let payload: [String: Any] = ["ok": result.ok, "message": result.message, "requestID": requestID]
         guard let data = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: data, encoding: .utf8) else { return }
         webView.evaluateJavaScript("window.piuraModeFinished(\(json))")
+        guard workspace.runningApplications.contains(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) else { return }
+        let js = "(()=>{const r=\(json);window.piuraModeFinished?.(r);document.querySelectorAll('iframe').forEach(f=>f.contentWindow.postMessage({...r,type:'piura-mode-result'},location.origin));return 'delivered'})()"
+        _ = try? runAppleScript("""
+        tell application "Yandex"
+          repeat with w in every window
+            repeat with t in every tab of w
+              if URL of t starts with "\(erpBaseURL)" then
+                try
+                  execute t javascript "\(appleScriptEscape(js))"
+                end try
+              end if
+            end repeat
+          end repeat
+        end tell
+        """)
     }
     private func writeReport(mode: WorkMode, preview: Bool, result: ModeResult) {
-        let payload: [String: Any] = ["mode": mode.rawValue, "preview": preview, "ok": result.ok, "message": result.message, "windows": verifiedWindows, "time": ISO8601DateFormatter().string(from: Date())]
+        let payload: [String: Any] = ["mode": mode.rawValue, "requestID": requestID, "preview": preview, "ok": result.ok, "message": result.message, "windows": verifiedWindows, "time": ISO8601DateFormatter().string(from: Date()), "menuTrace": menuTrace]
         try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
         if let data = try? JSONSerialization.data(withJSONObject: payload, options: [.prettyPrinted, .sortedKeys]) {
             try? data.write(to: supportDirectory.appendingPathComponent("last-run.json"), options: .atomic)
+            let history = supportDirectory.appendingPathComponent("Reports")
+            try? FileManager.default.createDirectory(at: history, withIntermediateDirectories: true)
+            try? data.write(to: history.appendingPathComponent("\(Date().timeIntervalSince1970)-\(mode.rawValue).json"), options: .atomic)
         }
     }
 }

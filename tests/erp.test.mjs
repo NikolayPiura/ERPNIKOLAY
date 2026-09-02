@@ -12,17 +12,13 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов содержит пять активных рабочих пространств', () => {
-  const modes = read('modes.html');
-  for (const mode of ['morning','climate','investments','learning','mentorship']) {
-    assert.match(modes, new RegExp(`data-mode="${mode}"`));
-  }
-  assert.equal((modes.match(/<button\b/g)||[]).length,5);
-  assert.doesNotMatch(modes, /<button[^>]+disabled/);
-  assert.match(modes, /Выберите режим/);
-  assert.match(modes, /messageHandlers\?\.piura/);
-  assert.match(modes, /piura-modes:\/\/\$\{mode\}/);
-  assert.doesNotMatch(modes, /window\.open\(ERP_MORNING/);
+test('панель режимов использует общий компонент пяти рабочих пространств', () => {
+  assert.match(read('modes.html'), /data-work-modes/);
+  const modes = read('work-modes.js');
+  for (const mode of ['morning','climate','investments','learning','mentorship']) assert.ok(modes.includes(mode+':'));
+  assert.match(modes, /messageHandlers/);
+  assert.ok(modes.includes('piura-modes://'));
+  assert.doesNotMatch(modes, /button.disabled=true/);
 });
 
 test('ERP принимает прямой запуск раздела и темы из режима macOS', () => {
@@ -32,18 +28,17 @@ test('ERP принимает прямой запуск раздела и тем�
   assert.match(shell, /\['light','dark'\]\.includes\(launchTheme\)/);
 });
 
-test('macOS-режим закрепляет три сервиса за именованными мониторами', () => {
+test('macOS-режим закрепляет три сервиса за физическим порядком мониторов', () => {
   const app = read('mac/PIURAModes.swift');
-  assert.match(app, /display\(named: "LG UltraFine"\)/);
-  assert.match(app, /display\(named: "Studio Display"\)/);
-  assert.match(app, /display\(named: "H27P27"\)/);
+  assert.match(app, /screens.sorted.*frame.midX/);
+  assert.match(app, /let left = displays\[0\], center = displays\[1\], right = displays\[2\]/);
   assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
   assert.match(app, /module=morning&theme=light/);
   assert.match(app, /module=overview&theme=dark/);
   assert.match(app, /module=funds&theme=dark/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
   assert.match(app, /url\(forResource: mode\.wallpaperResource, withExtension: "png"\)/);
-  assert.match(app, /forceTerminate\(\)/);
+  assert.doesNotMatch(app, /forceTerminate\(\)/);
   assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
   assert.ok(existsSync(new URL('mac/resources/Climate-Cat.png', root)));
   assert.match(app, /\$0\.scheme == "piura-modes"/);

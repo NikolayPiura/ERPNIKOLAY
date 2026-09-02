@@ -48,13 +48,13 @@ npm run check
 
 ## PIURA Modes for macOS
 
-`modes.html` contains five turbine-style buttons connected to the native `PIURA Modes` launcher. macOS stays **dark in every mode**; only the ERP theme changes.
+The main Overview now contains five illustrated mode buttons immediately below the fund goals. The illustrations reuse the fan/air-conditioner gradients and glow, with a distinct image per mode. `modes.html` and the installed app share the `work-modes.js` / `work-modes.css` component. macOS stays **dark in every mode**; only the ERP theme changes.
 
 | Mode | Left | Center | Right |
 | --- | --- | --- | --- |
 | Morning | Yandex Music | Safari: Admin Scale | ERP Morning, light |
 | Climate | ChatGPT above Yandex Music | Safari Working Table with native full-screen Telegram Split View above it | ERP Overview, dark |
-| Investments | ChatGPT above Yandex Music | Safari workspace containing the five fund spreadsheets with native full-screen Telegram Split View | ERP Fund Structure, dark |
+| Investments | ChatGPT above Yandex Music | Safari profile «Инвестиции», five pinned fund spreadsheets, native full-screen Telegram Split View above | ERP Fund Structure, dark |
 | Learning | Wallpaper only | Safari Extension course | Wallpaper only |
 | Mentorship | Communication Policy | Blank Safari tab | ERP Overview, dark |
 
@@ -62,6 +62,10 @@ The Telegram pair is a native macOS full-screen Split View in one Space: normal 
 
 Build with `npm run build:modes`. Open the installed **PIURA Modes.app** for the same HTML panel without Safari's external-app confirmation. The hosted/standalone HTML still uses `piura-modes://morning` or `piura-modes://climate`; Safari controls its own permission prompt. Local builds keep a consistent designated signing identity, but the first launch after replacing an older build can still require macOS permissions.
 
-Every mode copies its own bundled wallpaper to a permanent Application Support directory and sets the actual macOS desktop image on all displays, including System Events desktops. It never changes a browser background. The full action closes apps outside the selected recipe; Morning enables Do Not Disturb, while the other modes disable it. Music runs only in Morning, Climate, and Investments. The launcher hides while it works and exits when the recipe finishes, including after a partial failure.
+Wallpapers are applied to actual macOS desktops on all displays and verified through System Events. Climate uses the user's original black cat, not the previously generated kitten. Its old Downloads file is currently missing; until the original is restored or placed at `~/Library/Application Support/PIURA Modes/Wallpapers/Climate-Black-Cat.png`, Climate preserves the current wallpaper and reports the missing file. Other modes use their bundled images.
 
-Diagnostic URLs add `?preview=1`. Preview arranges the selected windows without quitting applications, changing appearance/wallpaper/Focus, playing music, or operating ChatGPT. Last result: `~/Library/Application Support/PIURA Modes/last-run.json`.
+The full action requests normal quits for apps outside the recipe and never force-quits unsaved work. Morning enables Do Not Disturb. Music runs only in Morning, Climate, and Investments. The launcher hides while it works and exits afterward. Safari's personal pinned tabs are preserved: a new task never replaces the currently selected pinned tab. The separate investments profile needs its own Google sign-in for private spreadsheets.
+
+Yandex windows use immutable IDs, not changing indexes. Displays use physical left-to-right order. Requests received during a run keep the newest choice instead of being dropped. AppleScript processes and overall runs have deadlines; buttons remain usable after cancellation or timeout. Reports contain verified URLs, window positions and Telegram fullscreen checks.
+
+Diagnostic URLs add `?preview=1`. Preview arranges the selected windows without quitting applications, changing appearance/wallpaper/Focus, playing music, or operating ChatGPT. Last result: `~/Library/Application Support/PIURA Modes/last-run.json`; history is in the adjacent `Reports` directory. A successful preview confirms layout only, not the entire mode.
