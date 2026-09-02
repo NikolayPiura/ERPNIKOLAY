@@ -1,6 +1,6 @@
 # PIURA Modes
 
-The signed local application handles the five `piura-modes://` links from the dashboard. macOS stays dark. Morning is light in ERP; Learning switches ERP to light and minimizes it. Each mode has its own ERP accent palette.
+The signed local application handles the five `piura-modes://` links from the dashboard. macOS stays dark. Morning is light in ERP; Learning switches ERP to light and minimizes it. Mode colors control the physical office lights through the existing color-wheel handler, not ERP accent palettes. The unrelated sockets and HVAC are not switched by mode colors.
 
 ## Safari profiles
 
@@ -28,7 +28,11 @@ Split View, skip unchanged wallpapers, and inventory Safari tabs once rather
 than once per pin. ERP changes module/theme in place while preserving the cloud
 connection URL. Local reports contain `durationSeconds` and per-phase `timings`.
 
-Wallpapers use landscape/portrait resources per screen. They are applied and verified by the native display ID, including when a fullscreen Space is active. See resources/WALLPAPERS.md for provenance and actual dimensions.
+Each mode uses three distinct wallpaper files, with a separate portrait composition on the right. Files are prepared early but desktop changes happen only after the fullscreen Spaces and foreground arrangement settle. They are applied and read back by native display ID; parallel wallpaper changes were rejected because Spaces could replace the result. See resources/WALLPAPERS.md, WALLPAPERS-modes7.md and WALLPAPERS-modes8.md for provenance and actual dimensions.
+
+The final read-only audit checks that music has exactly one window and that it is on the left. Learning and Mentorship must have zero music windows. Playback observation never clicks a button; an initial Play is attempted at most once. Lighting failures are reported as partial completion, not silently marked successful.
+
+For full timing runs only, the native Проверка menu has a `Сохранить Codex на время замеров` checkbox. This preserves the test host process (hidden in quiet modes); disable it after measurement. It does not relax any browser, music, wallpaper or Telegram checks. Use `node scripts/summarize-mode-benchmarks.mjs` for a filtered local timing summary; raw reports can contain private tab URLs.
 
 The native Проверка menu checks browser layouts without quitting other applications or changing wallpaper. Full modes additionally change wallpaper, close other applications and start music where needed. Results are local in Application Support/PIURA Modes/Reports; avoid publishing these private reports or their browser URLs.
 

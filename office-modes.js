@@ -11,7 +11,7 @@
       controller=document.createElement('iframe');controller.hidden=true;controller.title='Контроллер освещения';
       const timer=setTimeout(()=>reject(new Error('Контроллер освещения не загрузился')),10000);
       controller.onload=()=>{clearTimeout(timer);resolve(controller.contentWindow)};
-      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes8',location.href).href;
+      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes9',location.href).href;
       document.body.append(controller);
     });
     return ready;

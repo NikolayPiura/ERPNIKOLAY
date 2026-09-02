@@ -71,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var launchConfigured = false
     private var safariWindowID = 0
     private var erpWindowID = 0
+    private var leftWindowID = -1
     private var isModeRunning = false
     private var isPreviewRun = false
     private var verifiedWindows: [[String: Any]] = []
@@ -278,6 +279,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 do { try finishDesktopWallpaper(job) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
             }
             markPhase("wallpapers")
+            do { try verifyFinalSides(for: mode, left: left, right: right) } catch { notes.append("Итоговая проверка экранов: \(error.localizedDescription)") }
+            markPhase("screenCheck")
             do { try verifyOfficeLighting(for: mode) } catch { notes.append("Свет кабинета: \(error.localizedDescription)") }
             markPhase("lighting")
         }
@@ -358,6 +361,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let job = WallpaperJob()
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
+            if mode == .morning && index == 0 { resource = "Magic-Morning-Left" }
+            if mode == .climate && index == 0 { resource = "Climate-Left" }
             if mode == .learning && index == 0 { resource = "Learning-Left" }
             if mode == .investments && index == 0 { resource = "Investments-Left" }
             if mode == .learning && index == 2 { resource = "Learning-Right" }
@@ -399,7 +404,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let confirmed = try runAppleScript("tell application \"System Events\"\nset corrected to 0\n\(checks)\nreturn corrected as text\nend tell")
         guard let corrected = Int(confirmed) else { throw modeError("Не удалось подтвердить обои после переключения рабочих столов.") }
         verifiedWindows.append(contentsOf:job.records)
-        verifiedWindows.append(["desktops":job.records.count,"changedAfterLayout":corrected])
+        let distinct = Set(job.expected.map { $0.1 }).count
+        guard distinct == job.records.count else { throw modeError("Обои мониторов не должны повторяться.") }
+        verifiedWindows.append(["desktops":job.records.count,"distinctWallpapers":distinct,"changedAfterLayout":corrected])
     }
     // A recoverable URL inventory is written before closing unwanted windows.
     // Browsers still own their normal close/save-confirmation behavior.
@@ -682,10 +689,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let values = ids.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         guard values.count == 2 else { throw modeError("Не удалось выделить нужные окна Яндекса.") }
         erpWindowID = values[0]
+        leftWindowID = values[1]
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes8';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes9';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -1000,6 +1008,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     private func fullScreenWindow(of app: NSRunningApplication, on target: DisplayTarget, selected: AXUIElement? = nil) throws {
         var element = try selected ?? firstWindow(of: app)
+        let selectedTitle = axString(element, kAXTitleAttribute)
+        func refreshSelectedWindow() {
+            guard selected != nil, !selectedTitle.isEmpty else { return }
+            // Chromium can replace its AX window when entering a new Space.
+            // Rebind by the SAME document title, never by the first app window.
+            var windows: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(AXUIElementCreateApplication(app.processIdentifier), kAXWindowsAttribute as CFString, &windows)
+            if let match = (windows as? [AXUIElement] ?? []).first(where: { isDocumentWindow($0) && axString($0,kAXTitleAttribute) == selectedTitle }) { element = match }
+        }
         func exact(_ item: AXUIElement) -> Bool {
             var full: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(item, "AXFullScreen" as CFString, &full)
@@ -1017,12 +1034,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
             let deadline = Date().addingTimeInterval(6)
             var stable = 0
+            var triedBrowserMenu = false
+            let menuFallbackAt = Date().addingTimeInterval(1)
             while stable < 2 && Date() < deadline {
+                refreshSelectedWindow()
                 stable = exact(element) ? stable + 1 : 0
+                if stable == 0 && !triedBrowserMenu && Date() >= menuFallbackAt && app.bundleIdentifier == "ru.yandex.desktop.yandex-browser" {
+                    var flag: CFTypeRef?
+                    _ = AXUIElementCopyAttributeValue(element,"AXFullScreen" as CFString,&flag)
+                    if flag as? Bool == false {
+                        triedBrowserMenu = true
+                        _ = AXUIElementPerformAction(element,kAXRaiseAction as CFString)
+                        _ = AXUIElementSetAttributeValue(element,kAXMainAttribute as CFString,kCFBooleanTrue)
+                        // The named Enter command cannot accidentally toggle
+                        // an already-fullscreen browser back out of its Space.
+                        try? pressMenuPath(of:app,titles:["View","Enter Full Screen"])
+                    }
+                }
                 pumpRunLoop(0.15)
             }
         }
         guard exact(element), let rect = windowRect(element) else {
+            var flag: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(element,"AXFullScreen" as CFString,&flag)
+            verifiedWindows.append(["fullScreenFailure":app.bundleIdentifier ?? "", "title":selectedTitle, "flag":flag as? Bool ?? false, "frame":windowRect(element).map { [$0.minX,$0.minY,$0.width,$0.height] } ?? []])
             throw modeError("\(app.localizedName ?? "") не подтвердило настоящий полный экран.")
         }
         app.activate(options: [])
@@ -1221,6 +1256,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             chat.activate(options: []); try raiseWindow(of: chat)
         }
     }
+    private func verifyFinalSides(for mode: WorkMode, left: DisplayTarget, right: DisplayTarget) throws {
+        // Read-only final verification: never click Play or raise a window here.
+        let musicIDs = try runAppleScript("""
+        tell application "Yandex"
+          set matches to {}
+          repeat with w in every window
+            repeat with t in every tab of w
+              if URL of t starts with "\(musicURL)" then set end of matches to id of w
+            end repeat
+          end repeat
+          return matches
+        end tell
+        """).split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        guard mode.needsMusic ? musicIDs == [leftWindowID] : musicIDs.isEmpty else {
+            throw modeError("Музыка должна быть только в одном левом окне и отсутствовать в обучении/наставничестве.")
+        }
+        if mode != .learning {
+            try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
+            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:mode.needsMusic ? musicURL : policyURL)
+        }
+        verifiedWindows.append(["finalSideWindowsVerified":true,"musicWindowCount":musicIDs.count,"musicDisplay":mode.needsMusic ? left.screen.localizedName : "none"])
+    }
     private func verifyOfficeLighting(for mode: WorkMode) throws {
         let deadline = Date().addingTimeInterval(12)
         var lastState = ""
@@ -1236,7 +1293,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes8';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes9';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
@@ -1247,15 +1304,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         throw modeError("Нет подтверждения цветового круга. Проверьте связь с освещением.")
     }
     private func setDoNotDisturb(enabled: Bool) -> Bool {
-        let menuInfo = try? runAppleScript("tell application \"System Events\" to tell process \"ControlCenter\" to return description of every menu bar item of menu bar 1")
-        verifiedWindows.append(["focusMenu":menuInfo ?? "unavailable"])
+        guard let controlCenter = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.controlcenter" }) else { return false }
+        let root = AXUIElementCreateApplication(controlCenter.processIdentifier)
+        var button: AXUIElement?
+        for attribute in ["AXExtrasMenuBar", kAXMenuBarAttribute] {
+            var bar: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(root,attribute as CFString,&bar)
+            if let bar, CFGetTypeID(bar) == AXUIElementGetTypeID() {
+                button = descendant(of:bar as! AXUIElement,title:"Control Center",deadline:Date())
+                if button != nil { break }
+            }
+        }
+        if button == nil { button = descendant(of:root,title:"Control Center",deadline:Date()) }
+        guard let button else {
+            var attributes: CFArray?
+            _ = AXUIElementCopyAttributeNames(root,&attributes)
+            verifiedWindows.append(["focusResult":"Control Center button unavailable","focusAttributes":attributes as? [String] ?? []]); return false
+        }
+        if let rect = windowRect(button) {
+            postPointerMove(to: CGPoint(x:rect.midX,y:rect.midY)); pumpRunLoop(0.25)
+        }
+        let pressed = AXUIElementPerformAction(button, kAXPressAction as CFString)
+        verifiedWindows.append(["focusMenuPress":pressed.rawValue])
+        pumpRunLoop(0.5)
         let script = """
         tell application "System Events"
           tell process "ControlCenter"
             set inspected to ""
             try
-              click first menu bar item of menu bar 1 whose description is "Control Center"
-              delay 0.4
+              repeat 10 times
+                if exists window 1 then exit repeat
+                delay 0.1
+              end repeat
               repeat with uiItem in entire contents of window 1
                 try
                   set itemName to ""

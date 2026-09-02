@@ -28,12 +28,24 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   assert.match(overview,/commitLampWheelColor\(hex\).*window.piuraSetOfficeColor\(hex\)/);
   assert.match(overview,/if\(!lightingOnly\)refreshFinancialSummary/);
   assert.match(office,/status:devices.every\(x=>x.ok\)\?'done':'partial'/);
+  assert.match(overview,/item.status==='fulfilled'&&!item.value\?\.errors\?\.length/);
+  assert.match(overview,/error\?\.name==='TimeoutError'\|\|error\?\.name==='AbortError'\)break/);
 });
-test('learning has a new right image and investments have three distinct assets',()=>{
+test('every mode has three distinct desktop images',()=>{
+  assert.match(app,/mode == .morning && index == 0.*Magic-Morning-Left/);
+  assert.match(app,/mode == .climate && index == 0.*Climate-Left/);
   assert.match(app,/mode == .investments && index == 0.*Investments-Left/);
   assert.match(app,/mode == .learning && index == 2.*Learning-Right/);
-  const files=['Investments-Left','Investments','Investments-Portrait'].map(name=>readFileSync(new URL('../mac/resources/'+name+'.png',import.meta.url)));
-  assert.ok(!files[0].equals(files[1])&&!files[1].equals(files[2]));
+  for(const names of [
+    ['Magic-Morning-Left','Magic-Morning','Magic-Morning-Portrait'],
+    ['Climate-Left','Climate','Climate-Portrait'],
+    ['Investments-Left','Investments','Investments-Portrait'],
+    ['Learning-Left','Learning','Learning-Right'],
+    ['Mentorship','Mentorship-Center','Mentorship-Right']
+  ]) {
+    const files=names.map(name=>readFileSync(new URL('../mac/resources/'+name+'.png',import.meta.url)));
+    assert.ok(!files[0].equals(files[1])&&!files[1].equals(files[2])&&!files[0].equals(files[2]),names.join(','));
+  }
 });
 test('communication policy keeps all twelve rules in column reading order',()=>{
   const policy=read('communication-policy.html');
@@ -48,4 +60,11 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
   assert.ok(run.indexOf('startDesktopWallpaper')<run.indexOf('arrangeSafari'));
   assert.ok(run.indexOf('restoreForeground')<run.indexOf('finishDesktopWallpaper'));
   assert.match(app,/changedAfterLayout/);
+});
+test('final screen audit forbids duplicate music windows and music in quiet modes',()=>{
+  assert.match(app,/musicIDs == \[leftWindowID\] : musicIDs.isEmpty/);
+  assert.match(app,/finalSideWindowsVerified/);
+  const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
+  assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
+  assert.match(app,/distinct == job.records.count/);
 });
