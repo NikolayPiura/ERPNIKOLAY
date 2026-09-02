@@ -37,10 +37,11 @@ test('macOS-режим закрепляет три сервиса за физи�
   assert.match(app, /module=overview&theme=dark/);
   assert.match(app, /module=funds&theme=dark/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
-  assert.match(app, /url\(forResource: mode\.wallpaperResource, withExtension: "png"\)/);
+  assert.match(app, /url\(forResource: resource, withExtension: "png"\)/);
+  assert.match(app, /mode.wallpaperResource \+ \(screen.frame.height > screen.frame.width/);
   assert.doesNotMatch(app, /forceTerminate\(\)/);
   assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
-  assert.ok(existsSync(new URL('mac/resources/Climate-Cat.png', root)));
+  assert.ok(existsSync(new URL('mac/resources/Climate.png', root)));
   assert.match(app, /\$0\.scheme == "piura-modes"/);
   assert.match(app, /WorkMode\(rawValue: host\)/);
   assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
@@ -353,8 +354,9 @@ test('главная показывает крупные программы бе
   assert.doesNotMatch(dashboard, /overviewWeekChart|overviewPsToday|overviewPsDayRecord|overviewPsWeekRecord/);
   assert.match(overview, /\.admin-progress\{min-height:560px!important/);
   assert.match(overview, /\.fund-goals\{min-height:610px!important/);
-  assert.match(shell, /\.admin-progress\{min-height:620px!important\}/);
-  assert.match(shell, /\.fund-goals\{min-height:560px!important\}/);
+  assert.match(shell, /row-gap:14px!important/);
+  assert.match(overview, /\.dashboard>\.admin-progress\{min-height:0!important/);
+  assert.match(overview, /\.dashboard>\.fund-goals\{min-height:0!important/);
   assert.match(overview, /calm, equal control surfaces/);
   assert.match(overview, /\.fund-goal-list\{flex:1;grid-template-columns:repeat\(5,minmax\(0,1fr\)\)!important/);
   assert.match(overview, /background:var\(--erp-raised,var\(--raised\)\)!important/);

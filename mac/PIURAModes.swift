@@ -16,7 +16,7 @@ private enum WorkMode: String {
     var wallpaperResource: String {
         switch self {
         case .morning: "Magic-Morning"
-        case .climate: "Climate-Cat"
+        case .climate: "Climate"
         case .investments: "Investments"
         case .learning: "Learning"
         case .mentorship: "Mentorship"
@@ -27,7 +27,7 @@ private enum WorkMode: String {
         case .morning: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=morning&theme=light"
         case .climate, .mentorship: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=dark"
         case .investments: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=funds&theme=dark"
-        case .learning: nil
+        case .learning: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=dark"
         }
     }
     var needsTelegram: Bool { self == .climate || self == .investments }
@@ -63,6 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let workTableURL = "https://docs.google.com/spreadsheets/d/1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc/edit?gid=720489481#gid=720489481"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
+    private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
+    private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
     private let courseURL = "https://extension.flag.today/course/8ad3b992482ce35a3a4357adf3ef54251331cd5326808a871e41e8a0d566f84d/complete?savedLesson=%D0%A3%D1%80%D0%BE%D0%BA%20%D0%BD%D0%BE%D0%BC%D0%B5%D1%80%207"
     private let investmentURLs = [
@@ -218,9 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         do { try arrangeSafari(on: center, mode: mode) } catch { notes.append("Safari: \(error.localizedDescription)") }
         if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
-        if mode != .learning {
-            do { try arrangeYandex(right: right, left: left, mode: mode) } catch { notes.append("Яндекс: \(error.localizedDescription)") }
-        }
+        do { try arrangeYandex(right: right, left: left, mode: mode) } catch { notes.append("Яндекс: \(error.localizedDescription)") }
         if mode.needsTelegram {
             if AXIsProcessTrusted() {
                 do { try arrangeTelegramSplitView(on: center) } catch { notes.append("Telegram: \(error.localizedDescription)") }
@@ -230,15 +230,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
             if mode.needsMusic && !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
-            if mode.needsChatGPT {
-                do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
-            }
+        }
+        if mode.needsChatGPT {
+            do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
         }
         var success = preview
             ? "Проверено расположение режима «\(mode.title)»."
             : "Режим «\(mode.title)» включён."
         if verifiedWindows.contains(where: { $0["requiresGoogleSignIn"] as? Bool == true }) {
-            success += " Для закрытых таблиц нужен вход в Google в профиле «Инвестиции»."
+            success += " Для закрытых страниц нужен вход в Google в профиле «\(mode.title)»."
         }
         return ModeResult(ok: notes.isEmpty, message: notes.isEmpty ? success : "Выполнено не полностью: " + notes.joined(separator: " · "))
     }
@@ -253,7 +253,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     private func closeRegularApplications(exceptFor mode: WorkMode) -> [String] {
         var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari"]
-        if mode != .learning { keep.insert("ru.yandex.desktop.yandex-browser") }
+        keep.insert("ru.yandex.desktop.yandex-browser")
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
         if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
         let currentPID = ProcessInfo.processInfo.processIdentifier
@@ -275,151 +275,268 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("PIURA Modes", isDirectory: true)
     }
     private func setDesktopWallpaper(for mode: WorkMode) throws {
-        let source: URL
-        if mode == .climate {
-            let candidates = [
-                supportDirectory.appendingPathComponent("Wallpapers/Climate-Black-Cat.png"),
-                FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads/b32539b13fe821822bbc0c30f456-1676080.jpg!d.jpeg")
-            ]
-            guard let original = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
-                throw modeError("Оригинал чёрного кота отсутствует; текущие обои сохранены.")
-            }
-            source = original
-        } else {
-            guard let bundled = Bundle.main.url(forResource: mode.wallpaperResource, withExtension: "png") else { throw modeError("Файл фона отсутствует в приложении.") }
-            source = bundled
-        }
         let directory = supportDirectory.appendingPathComponent("Wallpapers", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let permanentURL = directory.appendingPathComponent("\(mode == .climate ? "Climate-Black-Cat" : mode.wallpaperResource).\(source.pathExtension)")
-        if source != permanentURL { try Data(contentsOf: source).write(to: permanentURL, options: .atomic) }
         let options: [NSWorkspace.DesktopImageOptionKey: Any] = [
             .imageScaling: NSImageScaling.scaleProportionallyUpOrDown.rawValue, .allowClipping: true,
-            .fillColor: NSColor(calibratedWhite: 0.9, alpha: 1)
+            .fillColor: NSColor(calibratedWhite: 0.08, alpha: 1)
         ]
-        // This API changes macOS desktop wallpapers, never browser backgrounds.
-        for screen in NSScreen.screens { try workspace.setDesktopImageURL(permanentURL, for: screen, options: options) }
-        _ = try runAppleScript("tell application \"System Events\" to tell every desktop to set picture to \"\(appleScriptEscape(permanentURL.path))\"")
-        let confirmed = try runAppleScript("""
-        tell application "System Events"
-          repeat with d in every desktop
-            if picture of d is not "\(appleScriptEscape(permanentURL.path))" then error "Не все рабочие столы приняли обои."
-          end repeat
-          return count of desktops
-        end tell
-        """)
-        verifiedWindows.append(["wallpaper":permanentURL.path, "desktops":Int(confirmed) ?? 0])
+        for screen in NSScreen.screens {
+            let resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
+            guard let source = Bundle.main.url(forResource: resource, withExtension: "png") else {
+                throw modeError("Нет файла обоев \(resource).")
+            }
+            let destination = directory.appendingPathComponent(resource + ".png")
+            let data = try Data(contentsOf: source)
+            if (try? Data(contentsOf: destination)) != data { try data.write(to: destination, options: .atomic) }
+            try workspace.setDesktopImageURL(destination, for: screen, options: options)
+            guard let displayID = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
+                throw modeError("Не найден идентификатор монитора \(screen.localizedName).")
+            }
+            // NSWorkspace can report the previous image while a fullscreen
+            // Space is active. Address the desktop by its real display ID too.
+            let confirmed = try runAppleScript("""
+            tell application "System Events"
+              tell desktop id \(displayID.uint32Value)
+                set picture to "\(appleScriptEscape(destination.path))"
+                repeat 20 times
+                  if picture is "\(appleScriptEscape(destination.path))" then exit repeat
+                  delay 0.1
+                end repeat
+                return picture as text
+              end tell
+            end tell
+            """)
+            guard confirmed == destination.path else {
+                throw modeError("Монитор \(screen.localizedName) не подтвердил обои.")
+            }
+            verifiedWindows.append(["wallpaper":destination.path, "display":screen.localizedName,
+                                    "orientation":screen.frame.height > screen.frame.width ? "portrait" : "landscape"])
+        }
+        verifiedWindows.append(["desktops":NSScreen.screens.count])
     }
-    private func arrangeSafari(on target: DisplayTarget, mode: WorkMode) throws {
-        guard let app = try runningApplication("com.apple.Safari", launch: true) else { throw modeError("Safari не найден.") }
-        let desired = mode == .morning ? adminScaleURL : mode == .climate ? workTableURL : mode == .learning ? courseURL : mode == .investments ? investmentURLs[0] : "about:blank"
-        let search = mode == .climate ? "(name of t contains \"Рабочая таблица\" or URL of t contains \"1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc\")" :
-            mode == .mentorship ? "false" : "URL of t starts with \"\(desired)\""
-        let existing = try runAppleScript("""
-        tell application "Safari"
+    // A recoverable URL inventory is written before closing unwanted windows.
+    // Browsers still own their normal close/save-confirmation behavior.
+    private func backupBrowserWindows(_ browser: String) throws {
+        let snapshot = try runAppleScript("""
+        tell application "\(browser)"
+          set inventory to ""
           repeat with w in every window
             try
+              set inventory to inventory & "WINDOW " & (id of w as text) & linefeed
               repeat with t in every tab of w
-                if \(search) then
-                  if \(mode == .investments ? "((count of tabs of w) is 5 or (count of tabs of w) is 6)" : "true") then
-                    set current tab of w to t
-                    return id of w as text
-                  end if
-                end if
+                set inventory to inventory & (URL of t as text) & linefeed
               end repeat
             end try
           end repeat
-          return "0"
+          return inventory
         end tell
         """)
-        var id = Int(existing) ?? 0
-        if id == 0 {
-            app.activate(options: [.activateAllWindows])
-            try pressMenuPath(of: app, titles: ["File", mode == .investments ? "New Инвестиции Window" : "New Personal Window"])
-            pumpRunLoop(0.5)
-            id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
-            guard id != 0 else { throw modeError("Safari не создал отдельное окно.") }
-            // New profile windows can select their first pinned tab. Never
-            // navigate that tab: create a separate unpinned task tab instead.
-            _ = try runAppleScript("""
-            tell application "Safari"
-              set blankURL to URL of last tab of window id \(id)
-              if blankURL is missing value or blankURL is "" or blankURL is "about:blank" or name of last tab of window id \(id) is "Start Page" then
-                set taskTab to last tab of window id \(id)
-                set URL of taskTab to "\(desired)"
-              else
-                set taskTab to make new tab at end of tabs of window id \(id) with properties {URL:"\(desired)"}
-              end if
-              set current tab of window id \(id) to taskTab
-            end tell
-            """)
-            if mode == .investments {
-                let extra = investmentURLs.dropFirst().map { "make new tab at end of tabs of window id \(id) with properties {URL:\"\($0)\"}" }.joined(separator: "\n")
-                _ = try runAppleScript("tell application \"Safari\"\n\(extra)\nend tell")
+        let directory = supportDirectory.appendingPathComponent("SessionBackups")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                attributes: [.posixPermissions: 0o700])
+        let destination = directory.appendingPathComponent("\(requestID)-\(browser).txt")
+        try snapshot.write(to: destination, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: destination.path)
+    }
+    private func axString(_ element: AXUIElement, _ attribute: String) -> String {
+        var value: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(element, attribute as CFString, &value)
+        return value as? String ?? ""
+    }
+    private func profileName(of window: AXUIElement) -> String? {
+        var queue: [(AXUIElement, Int)] = [(window, 0)]
+        var visited = 0
+        while !queue.isEmpty && visited < 200 {
+            let (item, depth) = queue.removeFirst(); visited += 1
+            let identifier = axString(item, kAXIdentifierAttribute)
+            if identifier.hasPrefix("TabGroupPickerButton?"),
+               let components = URLComponents(string: "https://local/" + identifier),
+               let name = components.queryItems?.first(where: { $0.name == "Profile" })?.value { return name }
+            // Do not traverse page contents or inspect messages.
+            if depth < 5 && axString(item, kAXRoleAttribute) != "AXWebArea" {
+                var children: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(item, kAXChildrenAttribute as CFString, &children)
+                queue.append(contentsOf: (children as? [AXUIElement] ?? []).map { ($0, depth + 1) })
             }
         }
-        safariWindowID = id
-        if mode == .investments {
-            _ = try runAppleScript("""
-            tell application "Safari"
-              if (count of tabs of window id \(id)) is 6 then
-                repeat with i from 6 to 1 by -1
-                  if name of tab i of window id \(id) is "Start Page" then
-                    close tab i of window id \(id)
-                    exit repeat
-                  end if
-                end repeat
-              end if
-            end tell
-            """)
+        let title = axString(window, kAXTitleAttribute)
+        return title.components(separatedBy: " — ").count > 1 ? title.components(separatedBy: " — ").first : nil
+    }
+    private func safariURLs(_ id: Int) throws -> [String] {
+        let text = try runAppleScript("""
+        tell application "Safari"
+          set AppleScript's text item delimiters to linefeed
+          return (URL of every tab of window id \(id)) as text
+        end tell
+        """)
+        return text.components(separatedBy: "\n")
+    }
+    private func isSafariBlank(_ url: String) -> Bool {
+        ["", "missing value", "about:blank", "favorites://"].contains(url)
+    }
+    private func tabMatches(_ actual: String, desired: String) -> Bool {
+        let decoded = (0..<3).reduce(actual) { value, _ in value.removingPercentEncoding ?? value }
+        if desired.contains("/folders/"), let id = URL(string: desired)?.lastPathComponent {
+            return decoded.contains(id)
         }
+        if desired.contains("/spreadsheets/d/"), let id = URL(string: desired)?.path.components(separatedBy: "/").dropFirst(3).first {
+            return decoded.contains(id)
+        }
+        let destination = desired.components(separatedBy: "#")[0]
+        return decoded.hasPrefix(destination) ||
+            (URL(string: actual)?.host == "accounts.google.com" && decoded.contains(destination))
+    }
+    private func arrangeSafari(on target: DisplayTarget, mode: WorkMode) throws {
+        guard let app = try runningApplication("com.apple.Safari", launch: true) else { throw modeError("Safari не найден.") }
+        try backupBrowserWindows("Safari")
+        let root = AXUIElementCreateApplication(app.processIdentifier)
+        var value: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &value)
+        let candidates = (value as? [AXUIElement] ?? []).filter { isDocumentWindow($0) && profileName(of: $0) == mode.title }
+        var id = 0
+        if let existing = candidates.first {
+            _ = AXUIElementSetAttributeValue(existing, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
+            _ = AXUIElementPerformAction(existing, kAXRaiseAction as CFString)
+            pumpRunLoop(0.25)
+            id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
+        } else {
+            try pressMenuPath(of: app, titles: ["File", "New \(mode.title) Window"])
+            pumpRunLoop(0.4)
+            id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
+        }
+        guard id != 0, profileName(of: try firstWindow(of: app)) == mode.title else {
+            throw modeError("Safari не подтвердил профиль «\(mode.title)». Личные вкладки не изменены.")
+        }
+        safariWindowID = id
+        // Close by immutable IDs, never by shifting window indices.
         _ = try runAppleScript("""
         tell application "Safari"
+          set oldIDs to id of every window
+          repeat with oldID in oldIDs
+            if (oldID as integer) is not \(id) then close window id (oldID as integer)
+          end repeat
+          repeat 40 times
+            if (count of windows) is 1 then exit repeat
+            delay 0.1
+          end repeat
+          if (count of windows) is not 1 then error "Safari ожидает закрытия старого окна."
           set miniaturized of window id \(id) to false
           set index of window id \(id) to 1
           activate
-          repeat with w in every window
-            if id of w is not \(id) then set miniaturized of w to true
-          end repeat
         end tell
         """)
-        try placeWindow(of: app, in: target.usableRect, raise: true)
-        if mode == .climate || mode == .investments {
-            _ = try runAppleScript("tell application \"Safari\" to set bounds of window id \(id) to \(target.usableBounds)")
-            let actualURL = try runAppleScript("tell application \"Safari\" to return URL of current tab of window id \(id)")
-            try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: actualURL)
-        } else {
-            try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: desired)
+        let extras = UserDefaults.standard.stringArray(forKey: "investmentExtraURLs") ?? []
+        let required: [String]
+        switch mode {
+        case .morning: required = [adminScaleURL, ethicalProgramURL]
+        case .climate: required = [workTableURL]
+        case .investments: required = investmentURLs + [tradingViewURL] + extras
+        case .learning: required = [courseURL]
+        case .mentorship: required = []
         }
-        if mode == .investments {
-            let actual = try runAppleScript("""
-            tell application "Safari"
-              set AppleScript's text item delimiters to linefeed
-              return (URL of every tab of window id \(id)) as text
-            end tell
-            """).components(separatedBy: "\n")
-            let sheetIDs = investmentURLs.compactMap { URL(string: $0)?.path.components(separatedBy: "/").dropFirst(3).first }
-            let decoded = actual.map { url in (0..<3).reduce(url) { value, _ in value.removingPercentEncoding ?? value } }
-            guard actual.count == 5, sheetIDs.allSatisfy({ id in decoded.contains(where: { $0.contains(id) }) }) else {
-                throw modeError("Профиль фондов не подтвердил ровно пять нужных таблиц; личные вкладки не изменены.")
+        let firstSetup = !UserDefaults.standard.bool(forKey: "profileSeeded-v5.1-\(mode.rawValue)")
+        for desired in required {
+            let before = try safariURLs(id)
+            let duplicates = before.indices.filter { tabMatches(before[$0], desired: desired) }
+            for offset in duplicates.dropFirst().reversed() {
+                _ = try runAppleScript("tell application \"Safari\" to close tab \(offset + 1) of window id \(id)")
             }
-            verifiedWindows.append(["investmentTabs":actual, "requiresGoogleSignIn":actual.contains(where: { $0.contains("accounts.google.com") })])
-            for index in 1...5 {
+            let urls = try safariURLs(id)
+            let existing = urls.firstIndex(where: { tabMatches($0, desired: desired) })
+            let index: Int
+            if let existing { index = existing + 1 }
+            else {
+                index = Int(try runAppleScript("""
+                tell application "Safari"
+                  set taskTab to make new tab at end of tabs of window id \(id) with properties {URL:"\(appleScriptEscape(desired))"}
+                  set current tab of window id \(id) to taskTab
+                  return count of tabs of window id \(id)
+                end tell
+                """)) ?? 0
+            }
+            guard index > 0 else { throw modeError("Safari не создал вкладку.") }
+            // Pin once (or when restoring a genuinely missing tab), not on every launch.
+            if mode != .learning && (firstSetup || existing == nil) {
                 _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab \(index) of window id \(id)")
                 try pressMenuPath(of: app, titles: ["Window"])
-                let root = AXUIElementCreateApplication(app.processIdentifier)
-                if let item = descendant(of: root, title: "Pin Tab", deadline: Date()) {
-                    _ = AXUIElementPerformAction(item, kAXPressAction as CFString)
-                    pumpRunLoop(0.2)
-                } else { activateAndDismissMenus(app) }
+                var menuBar: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(root, kAXMenuBarAttribute as CFString, &menuBar)
+                guard let menuBar, CFGetTypeID(menuBar) == AXUIElementGetTypeID() else { throw modeError("Нет меню закрепления вкладки.") }
+                let menuRoot = menuBar as! AXUIElement
+                if let pin = descendant(of: menuRoot, title: "Pin Tab", deadline: Date()) {
+                    _ = AXUIElementPerformAction(pin, kAXPressAction as CFString)
+                    pumpRunLoop(0.15)
+                } else if descendant(of: menuRoot, title: "Unpin Tab", deadline: Date()) != nil {
+                    activateAndDismissMenus(app)
+                } else { throw modeError("Safari не подтвердил закрепление вкладки.") }
             }
-            _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab 1 of window id \(id)")
         }
+        var urls = try safariURLs(id)
+        if mode == .climate && UserDefaults.standard.bool(forKey: "profileSeeded-v5.1-investments") {
+            for index in urls.indices.reversed() where tabMatches(urls[index], desired: tradingViewURL) {
+                _ = try runAppleScript("tell application \"Safari\" to close tab \(index + 1) of window id \(id)")
+            }
+            urls = try safariURLs(id)
+        }
+        // Learning has exactly the course; other task profiles drop only empty
+        // startup tabs. Climate keeps the user's remaining work tabs unchanged.
+        for offset in urls.indices.reversed() {
+            let blank = isSafariBlank(urls[offset])
+            let remove = mode == .learning ? !tabMatches(urls[offset], desired: courseURL) :
+                (mode == .morning || mode == .investments) && blank && urls.count > 1
+            if remove { _ = try runAppleScript("tell application \"Safari\" to close tab \(offset + 1) of window id \(id)") }
+        }
+        urls = try safariURLs(id)
+        if mode == .mentorship {
+            let blankIndex = urls.firstIndex(where: isSafariBlank)
+            if let blankIndex {
+                _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab \(blankIndex + 1) of window id \(id)")
+            } else {
+                _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to (make new tab at end of tabs of window id \(id) with properties {URL:\"about:blank\"})")
+            }
+        } else if let desired = required.first, let index = urls.firstIndex(where: { tabMatches($0, desired: desired) }) {
+            _ = try runAppleScript("tell application \"Safari\" to set current tab of window id \(id) to tab \(index + 1) of window id \(id)")
+        }
+        guard required.allSatisfy({ desired in urls.contains(where: { tabMatches($0, desired: desired) }) }) else {
+            throw modeError("Профиль «\(mode.title)» не подтвердил нужные вкладки.")
+        }
+        UserDefaults.standard.set(true, forKey: "profileSeeded-v5.1-\(mode.rawValue)")
+        try fullScreenWindow(of: app, on: target)
+        let active = try runAppleScript("tell application \"Safari\" to return URL of current tab of window id \(id)")
+        try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: active)
+        verifiedWindows.append(["safariProfile":mode.title, "tabCount":urls.count,
+                                "requiresGoogleSignIn":urls.contains(where: { $0.contains("accounts.google.com") })])
+        if mode == .investments { verifiedWindows.append(["investmentTabs":urls]) }
     }
     private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
         guard let erpURL = mode.erpURL else { return }
+        _ = try runningApplication("ru.yandex.desktop.yandex-browser", launch: true)
+        try backupBrowserWindows("Yandex")
         let leftURL = mode.needsMusic ? musicURL : policyURL
-        // Numeric IDs survive front-window reordering when another window opens.
+        let needsLeft = mode != .learning
+        let leftScript = needsLeft ? """
+          repeat with w in every window
+            if id of w is not erpID then
+              set tabNumber to 0
+              repeat with t in every tab of w
+                set tabNumber to tabNumber + 1
+                if URL of t starts with "\(leftURL)" then
+                  set leftID to id of w
+                  set active tab index of w to tabNumber
+                  exit repeat
+                end if
+              end repeat
+            end if
+            if leftID is not -1 then exit repeat
+          end repeat
+          if leftID is -1 then
+            set leftID to id of (make new window)
+            set URL of active tab of window id leftID to "\(leftURL)"
+          end if
+          set minimized of window id leftID to false
+          set bounds of window id leftID to \(left.usableBounds)
+        """ : ""
         let ids = try runAppleScript("""
         tell application "Yandex"
           activate
@@ -439,41 +556,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           end repeat
           if erpID is -1 then set erpID to id of (make new window)
           set leftID to -1
-          repeat with w in every window
-            if id of w is not erpID then
-              set tabNumber to 0
-              repeat with t in every tab of w
-                set tabNumber to tabNumber + 1
-                if URL of t starts with "\(leftURL)" then
-                  set leftID to id of w
-                  set active tab index of w to tabNumber
-                  exit repeat
-                end if
-              end repeat
-            end if
-            if leftID is not -1 then exit repeat
-          end repeat
-          if leftID is -1 then
-            set leftID to id of (make new window)
-            set URL of active tab of window id leftID to "\(leftURL)"
-          end if
-          set URL of active tab of window id erpID to "\(erpURL)"
+          \(leftScript)
+          if URL of active tab of window id erpID is not "\(erpURL)" then set URL of active tab of window id erpID to "\(erpURL)"
           set minimized of window id erpID to false
-          set minimized of window id leftID to false
           set bounds of window id erpID to \(right.usableBounds)
-          set bounds of window id leftID to \(left.usableBounds)
-          repeat with w in every window
-            if id of w is not erpID and id of w is not leftID then set minimized of w to true
-          end repeat
           set index of window id erpID to 1
-          set index of window id leftID to 1
+          \(needsLeft ? "set index of window id leftID to 1" : "")
           return (erpID as text) & "," & (leftID as text)
         end tell
         """)
         let values = ids.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-        guard values.count == 2, values[0] != values[1] else { throw modeError("Не удалось выделить два отдельных окна Яндекса.") }
+        guard values.count == 2 else { throw modeError("Не удалось выделить нужные окна Яндекса.") }
+        let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
+            .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        verifiedWindows.append(["yandexTargetIDs":values, "yandexBeforeCleanup":allIDs])
+        for oldID in allIDs where !values.contains(oldID) {
+            _ = try runAppleScript("tell application \"Yandex\" to close window id \(oldID)")
+        }
+        pumpRunLoop(0.4)
+        let remainingIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
+            .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        verifiedWindows.append(["yandexAfterCleanup":remainingIDs])
+        guard Set(remainingIDs) == Set(values.filter { $0 != -1 }) else {
+            throw modeError("Яндекс не подтвердил закрытие лишних окон.")
+        }
         try verifyBrowserWindow(app: "Yandex", id: values[0], target: right, expectedURL: erpURL)
-        try verifyBrowserWindow(app: "Yandex", id: values[1], target: left, expectedURL: leftURL)
+        if needsLeft {
+            try verifyBrowserWindow(app: "Yandex", id: values[1], target: left, expectedURL: leftURL)
+        } else {
+            _ = try runAppleScript("tell application \"Yandex\" to set minimized of window id \(values[0]) to true")
+            let minimized = try runAppleScript("tell application \"Yandex\" to return minimized of window id \(values[0]) as text")
+            guard minimized == "true" else { throw modeError("ERP не свернулась для режима обучения.") }
+            verifiedWindows.append(["learningERPMinimized":true])
+        }
     }
     private func verifyBrowserWindow(app: String, id: Int, target: DisplayTarget, expectedURL: String) throws {
         let actual = try runAppleScript("""
@@ -489,7 +604,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard b.count == 4, parts.count == 2, parts[1].hasPrefix(expectedURL) else {
             throw modeError("\(app) не подтвердил нужную вкладку.")
         }
-        let rect = CGRect(x: b[0], y: b[1], width: b[2]-b[0], height: b[3]-b[1]), expected = target.usableRect
+        let rect = CGRect(x: b[0], y: b[1], width: b[2]-b[0], height: b[3]-b[1])
+        let expected = app == "Safari" ? target.rect : target.usableRect
         guard abs(rect.midX - expected.midX) < 40, abs(rect.midY - expected.midY) < 60,
               abs(rect.width - expected.width) < 40, abs(rect.height - expected.height) < 80 else {
             throw modeError("\(app) не занял назначенный монитор целиком.")
@@ -502,13 +618,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
               let lite = try runningApplication(telegramIDs[1], launch: true) else {
             throw modeError("Не найдены оба приложения Telegram.")
         }
-        if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) { return }
-
-        let safariMinimized = (try? runAppleScript("tell application \"Safari\" to set miniaturized of window id \(safariWindowID) to true")) != nil
-        window.orderOut(nil)
-        defer {
-            if safariMinimized { _ = try? runAppleScript("tell application \"Safari\" to set miniaturized of window id \(safariWindowID) to false") }
+        if telegramSplitIsExact(telegram: telegram, lite: lite, target: target) {
+            telegram.activate(options: [.activateAllWindows])
+            try raiseWindow(of: telegram)
+            return
         }
+
+        window.orderOut(nil)
         try moveWindowToDisplay(telegram, target: target)
         try moveWindowToDisplay(lite, target: target)
         telegram.activate(options: [.activateAllWindows])
@@ -694,8 +810,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let candidates = ["com.openai.chat", "com.openai.codex"]
         guard let id = candidates.first(where: { workspace.urlForApplication(withBundleIdentifier: $0) != nil }),
               let app = try runningApplication(id, launch: true) else { throw modeError("Приложение ChatGPT не найдено.") }
-        try placeWindow(of: app, in: target.usableRect, raise: true)
+        try fullScreenWindow(of: app, on: target)
         app.activate(options: [.activateAllWindows])
+    }
+    private func fullScreenWindow(of app: NSRunningApplication, on target: DisplayTarget) throws {
+        var element = try firstWindow(of: app)
+        func exact(_ item: AXUIElement) -> Bool {
+            var full: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(item, "AXFullScreen" as CFString, &full)
+            guard full as? Bool == true, let rect = windowRect(item) else { return false }
+            return abs(rect.minX - target.rect.minX) < 4 && abs(rect.minY - target.rect.minY) < 4 &&
+                abs(rect.width - target.rect.width) < 4 && abs(rect.height - target.rect.height) < 4
+        }
+        if !exact(element) {
+            try placeWindow(of: app, in: target.usableRect, raise: true)
+            element = try firstWindow(of: app)
+            guard AXUIElementSetAttributeValue(element, "AXFullScreen" as CFString, kCFBooleanTrue) == .success else {
+                throw modeError("Не удалось включить полный экран \(app.localizedName ?? "").")
+            }
+            let deadline = Date().addingTimeInterval(6)
+            while !exact(element) && Date() < deadline { pumpRunLoop(0.2) }
+        }
+        guard exact(element), let rect = windowRect(element) else {
+            throw modeError("\(app.localizedName ?? "") не подтвердило настоящий полный экран.")
+        }
+        _ = AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+        verifiedWindows.append(["app":app.bundleIdentifier ?? "", "fullScreen":true,
+                                "display":target.screen.localizedName,
+                                "frame":[rect.minX,rect.minY,rect.width,rect.height]])
     }
     private func runningApplication(_ id: String, launch: Bool) throws -> NSRunningApplication? {
         let existing = workspace.runningApplications.first(where: { $0.bundleIdentifier == id && !$0.isTerminated })
@@ -745,6 +887,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         var lastError = AXError.noValue
         repeat {
             var value: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXFocusedWindowAttribute as CFString, &value) == .success,
+               let value, CFGetTypeID(value) == AXUIElementGetTypeID(), isDocumentWindow(value as! AXUIElement) {
+                return value as! AXUIElement
+            }
+            value = nil
             lastError = AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &value)
             if lastError == .success,
                let windows = value as? [AXUIElement], let window = windows.first(where: isDocumentWindow) { return window }

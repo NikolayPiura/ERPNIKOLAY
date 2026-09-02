@@ -89,11 +89,33 @@ test('real fullscreen verification and all five recipes',()=>{
   assert.match(app,/titles: \["Window", "Full Screen Tile", "Left of Screen"\]/);
   assert.match(app,/bothFullScreen = aFull as\? Bool == true && bFull as\? Bool == true/);
   assert.match(app,/let left = a, right = b/);
-  assert.match(app,/actual.count == 5/);
-  assert.match(app,/New Инвестиции Window/);
+  assert.match(app,/required\.allSatisfy/);
+  assert.match(app,/New \\\(mode\.title\) Window/);
   const investmentList=app.split('private let investmentURLs = [')[1].split(']')[0];
   assert.equal((investmentList.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\//g)||[]).length,5);
   assert.match(app,/set dark mode to true/);assert.doesNotMatch(app,/set dark mode to false/);
   assert.match(app,/workspace.setDesktopImageURL/);
   assert.match(app,/if mode.needsMusic && !startYandexMusic/);
+});
+test('green icon-only compact dashboard and enlarged rules without metadata',()=>{
+  const p=panel(),css=read('work-modes.css'),policy=read('communication-policy.html');
+  assert.doesNotMatch(p.root.innerHTML,/<strong>|Три экрана · пять режимов/);
+  assert.match(css,/\.work-mode\[data-mode\]\{--tone:#63e4d3/);
+  assert.equal((policy.match(/<li>/g)||[]).length,12);
+  assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
+});
+test('isolated reusable profiles, recoverable cleanup, fullscreen and portrait wallpapers',()=>{
+  assert.match(app,/profileName\(of: \$0\) == mode.title/);
+  assert.match(app,/profileSeeded-v5/);
+  assert.match(app,/firstSetup \|\| existing == nil/);
+  assert.match(app,/SessionBackups/);
+  assert.match(app,/set oldIDs to id of every window/);
+  assert.match(app,/close window id \(oldID as integer\)/);
+  assert.doesNotMatch(app,/then set miniaturized of w to true|then set minimized of w to true/);
+  assert.match(app,/learningERPMinimized/);
+  assert.match(app,/fullScreenWindow\(of: app, on: target\)/);
+  assert.match(app,/\? "-Portrait" : ""/);
+  assert.doesNotMatch(app,/every desktop to set picture/);
+  assert.match(app,/ethicalProgramURL/);
+  assert.match(app,/tradingViewURL/);
 });
