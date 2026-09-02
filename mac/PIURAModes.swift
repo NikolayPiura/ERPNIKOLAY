@@ -214,6 +214,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         let left = displays[0], center = displays[1], right = displays[2]
         var notes: [String] = []
+        var closingApps: [NSRunningApplication] = []
         verifiedWindows = []
         menuTrace = []
         if !preview {
@@ -223,8 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             guard canControlSystemEvents() else {
                 return ModeResult(ok: false, message: "Разрешите PIURA Modes управлять System Events и запустите режим снова.")
             }
-            let remaining = closeRegularApplications(exceptFor: mode)
-            if !remaining.isEmpty { notes.append("Не закрылись (возможно, ожидают сохранения): " + remaining.joined(separator: ", ")) }
+            closingApps = closeRegularApplications(exceptFor: mode)
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
             do { try setDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
         }
@@ -250,6 +250,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
         }
         markPhase("musicAndChat")
+        // Give normal quit requests the whole layout transition to finish.
+        // Do not report a delayed Zoom shutdown as a failure after just 2.5 s.
+        let quitDeadline = min(Date().addingTimeInterval(5), runDeadline)
+        while Date() < quitDeadline && closingApps.contains(where: { !$0.isTerminated }) { pumpRunLoop(0.1) }
+        let remaining = closingApps.filter { !$0.isTerminated }.map { $0.localizedName ?? "Приложение" }
+        if !remaining.isEmpty { notes.append("Не закрылись (возможно, ожидают сохранения): " + remaining.joined(separator: ", ")) }
+        markPhase("finishQuitting")
         var success = preview
             ? "Проверено расположение режима «\(mode.title)»."
             : "Режим «\(mode.title)» включён."
@@ -267,7 +274,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let mainHeight = NSScreen.screens.first(where: { $0.frame.origin == .zero })?.frame.height ?? f.height
         return DisplayTarget(screen: screen, rect: CGRect(x: f.minX, y: mainHeight - f.maxY, width: f.width, height: f.height))
     }
-    private func closeRegularApplications(exceptFor mode: WorkMode) -> [String] {
+    private func closeRegularApplications(exceptFor mode: WorkMode) -> [NSRunningApplication] {
         var keep: Set<String> = ["com.piura.modes", "com.apple.finder", "com.apple.Safari"]
         keep.insert("ru.yandex.desktop.yandex-browser")
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
@@ -279,10 +286,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             app.activationPolicy == .regular && app.processIdentifier != currentPID && (app.bundleIdentifier.map { !keep.contains($0) } ?? true)
         }
         for app in apps { _ = app.terminate() }
-        let deadline = Date().addingTimeInterval(2.5)
-        while Date() < deadline, apps.contains(where: { !$0.isTerminated }) { pumpRunLoop(0.15) }
         // Never discard unsaved work or dismiss another app's save dialog.
-        return apps.filter { !$0.isTerminated }.map { $0.localizedName ?? "Приложение" }
+        return apps
     }
     private func setSystemDarkAppearance() throws {
         let result = try runAppleScript("tell application \"System Events\" to tell appearance preferences\nif dark mode is false then set dark mode to true\nreturn dark mode as text\nend tell")
