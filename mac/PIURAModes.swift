@@ -382,6 +382,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         ["", "missing value", "about:blank", "favorites://"].contains(url)
     }
     private func tabMatches(_ actual: String, desired: String) -> Bool {
+        if isSafariBlank(actual) && isSafariBlank(desired) { return true }
         let decoded = (0..<3).reduce(actual) { value, _ in value.removingPercentEncoding ?? value }
         if desired.contains("/folders/"), let id = URL(string: desired)?.lastPathComponent {
             return decoded.contains(id)
@@ -522,8 +523,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         UserDefaults.standard.set(true, forKey: "profileSeeded-v5.1-\(mode.rawValue)")
         try fullScreenWindow(of: app, on: target)
-        let active = try runAppleScript("tell application \"Safari\" to return URL of current tab of window id \(id)")
-        try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: active)
+        try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: required.first ?? "about:blank")
         verifiedWindows.append(["safariProfile":mode.title, "tabCount":urls.count,
                                 "requiresGoogleSignIn":urls.contains(where: { $0.contains("accounts.google.com") })])
         if mode == .investments { verifiedWindows.append(["investmentTabs":urls]) }
@@ -620,7 +620,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         """)
         let parts = actual.components(separatedBy: "|")
         let b = parts[0].split(separator: ",").compactMap { Double($0) }
-        guard b.count == 4, parts.count == 2, parts[1].hasPrefix(expectedURL) else {
+        guard b.count == 4, parts.count == 2,
+              app == "Safari" ? tabMatches(parts[1], desired: expectedURL) : parts[1].hasPrefix(expectedURL) else {
             throw modeError("\(app) не подтвердил нужную вкладку.")
         }
         let rect = CGRect(x: b[0], y: b[1], width: b[2]-b[0], height: b[3]-b[1])
