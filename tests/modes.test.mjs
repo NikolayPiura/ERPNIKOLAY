@@ -54,7 +54,7 @@ test('old callbacks cannot overwrite the newest request; errors release busy sta
   assert.equal(p.status.dataset.state,'error');
   assert.equal(p.status.textContent,'Ошибка');
   assert.ok(p.buttons.every(b=>!b.attributes['aria-busy']));
-  assert.equal(p.timers.size,0);
+  assert.equal(p.timers.size,1); // The nonblocking error toast expires.
   p.click(4);assert.equal(p.messages.length,3);
 });
 test('browser uses user-initiated protocol links, timeout never claims completion',()=>{
@@ -127,4 +127,28 @@ test('new profiles tolerate blank URLs and preserve loading tabs before cleanup'
   assert.ok(app.indexOf('let loadDeadline')<app.indexOf('for offset in urls.indices.reversed()'));
   assert.match(app,/duplicates.dropFirst\(\).reversed\(\)/);
   assert.match(app,/tell desktop id \\\(displayID.uint32Value\)/);
+});
+test('repeat launches reuse windows and preserve exact split before any retile',()=>{
+  const running=app.slice(app.indexOf('private func runningApplication'),app.indexOf('private func activateAndDismissMenus'));
+  assert.ok(running.indexOf('return existing')<running.indexOf('workspace.openApplication'));
+  const split=app.slice(app.indexOf('private func arrangeTelegramSplitView'),app.indexOf('private func moveWindowToDisplay'));
+  assert.ok(split.indexOf('telegramSplitIsExact')<split.indexOf('moveWindowToDisplay'));
+  assert.match(app,/"durationSeconds"/);assert.match(app,/"timings"/);
+  assert.match(app,/selected: erpWindow/);assert.match(app,/selected: leftWindow/);
+  assert.doesNotMatch(app,/set bounds of window id (erpID|leftID)/);
+});
+test('companion apps, learning exception and selective wallpapers',()=>{
+  assert.match(app,/mode.needsZoom.*keep.insert\("us.zoom.xos"\)/);
+  assert.match(app,/mode == .climate.*keep.insert\("com.apple.Notes"\)/);
+  assert.match(app,/case .learning:.*theme=light/);
+  for(const file of ['Learning-Left','Mentorship-Center','Mentorship-Right']) assert.match(app,new RegExp(file));
+});
+test('successful status disappears and mode colors can change ERP without reloading',()=>{
+  const p=panel();p.click(1);p.window.piuraModeFinished({ok:true,message:'Режим климат включён.'});
+  assert.equal(p.status.textContent,'');
+  const shell=read('index.html');
+  assert.match(shell,/window.piuraApplyWorkMode=mode/);
+  assert.match(shell,/if\(current\[0\]!==appearance.module\)selectModule/);
+  assert.match(shell,/history.replaceState\(null,'',url\)/);
+  for(const mode of names)assert.match(shell,new RegExp(mode+':\\{module:'));
 });

@@ -354,7 +354,7 @@ test('главная показывает крупные программы бе
   assert.doesNotMatch(dashboard, /overviewWeekChart|overviewPsToday|overviewPsDayRecord|overviewPsWeekRecord/);
   assert.match(overview, /\.admin-progress\{min-height:560px!important/);
   assert.match(overview, /\.fund-goals\{min-height:610px!important/);
-  assert.match(shell, /row-gap:14px!important/);
+  assert.match(shell, /row-gap:clamp\(32px,3\.3vh,64px\)!important/);
   assert.match(overview, /\.dashboard>\.admin-progress\{min-height:0!important/);
   assert.match(overview, /\.dashboard>\.fund-goals\{min-height:0!important/);
   assert.match(overview, /calm, equal control surfaces/);

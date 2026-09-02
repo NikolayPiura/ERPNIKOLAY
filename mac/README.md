@@ -1,6 +1,6 @@
 # PIURA Modes
 
-The signed local application handles the five `piura-modes://` links from the dashboard. macOS stays dark; only Morning uses the ERP light theme.
+The signed local application handles the five `piura-modes://` links from the dashboard. macOS stays dark. Morning is light in ERP; Learning switches ERP to light and minimizes it. Each mode has its own ERP accent palette.
 
 ## Safari profiles
 
@@ -17,6 +17,16 @@ Only the current profile window remains open. Before closing other browser windo
 ## Screens and verification
 
 Exactly three connected screens are ordered physically left to right. Safari is native fullscreen in the center; ChatGPT is fullscreen on the left. Telegram uses macOS Full Screen Tile, not resized floating windows; both fullscreen flags and adjacent frames are checked. ERP stays right. Learning keeps only a minimized ERP window in Yandex.
+
+Yandex ERP and music/policy windows are independently identified by immutable
+browser IDs and full tab titles (window names may be ellipsized). Their exact AX
+windows enter native fullscreen, with separate screen verification. Climate
+keeps/opens Zoom and Notes; Mentorship keeps/opens Zoom without taking foreground.
+
+Repeated runs reuse existing document windows, preserve a verified Telegram
+Split View, skip unchanged wallpapers, and inventory Safari tabs once rather
+than once per pin. ERP changes module/theme in place while preserving the cloud
+connection URL. Local reports contain `durationSeconds` and per-phase `timings`.
 
 Wallpapers use landscape/portrait resources per screen. They are applied and verified by the native display ID, including when a fullscreen Space is active. See resources/WALLPAPERS.md for provenance and actual dimensions.
 

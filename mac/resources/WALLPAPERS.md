@@ -29,3 +29,21 @@ Prompt: Photorealistic-natural Mac desktop wallpaper. Requested 2160x3840 portra
 ## Mentorship-Portrait
 
 Prompt: Photorealistic-natural Mac desktop wallpaper. Requested 2160x3840 portrait. Sunlight through a quiet bamboo grove and a simple stone garden path, detailed natural leaves, deep forest greens and warm cream light, serene attentive atmosphere, elegant vertical composition. Crisp fine natural textures and clean optics; no text, logos, frames, watermarks or mockup. Full bleed.
+# September 1 refinement — three selective replacements
+
+Generated with the built-in image generator. The approved morning wallpapers,
+learning center, and mentorship left wallpaper are unchanged. These are desktop
+images, independent of Safari's Start Page image. The originals remain in the
+Codex generated-images directory.
+
+## Learning-Left.png
+
+Create a beautiful premium desktop wallpaper, 16:9 landscape. Photorealistic tranquil alpine lake at first light, clear turquoise water, distant layered mountains, a soft warm sunrise glancing across the peaks, elegant spacious composition for a focused learning environment. Natural textures, refined cinematic photography, calming and luminous without harsh saturation. No people, buildings, text, logos or watermarks.
+
+## Mentorship-Center.png
+
+Create a beautiful premium desktop wallpaper, 16:9 landscape. Photorealistic serene Japanese-inspired modern study opening onto a lush green garden, honey-colored timber, warm indirect light, a clean writing desk with closed notebook, peaceful balanced architectural photography. Refined, inspiring atmosphere for thoughtful conversation and mentorship. Generous visual breathing space, natural materials, no people, no screens, no readable text, no logos, no watermarks.
+
+## Mentorship-Right.png
+
+Create a beautiful premium desktop wallpaper for a tall portrait monitor, 9:16 portrait orientation. Photorealistic soaring sunlit limestone canyon with a slender waterfall descending into an emerald pool, delicate ferns and warm light from the sky high above, peaceful majestic vertical composition, subtle cinematic color grading with natural textures. Sophisticated calm atmosphere for mentorship and focus. No people, no text, no logos, no watermarks.
