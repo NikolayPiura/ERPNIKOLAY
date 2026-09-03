@@ -25,7 +25,7 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   const shell=read('index.html'),office=read('office-modes.js'),overview=read('piura-erp-restored 3/modules/Overview.html');
   assert.doesNotMatch(shell,/prefs\.palette=(mode|launchWorkMode)/);
   assert.doesNotMatch(office,/controlHvac|toggleEverything|zoneAllToggle/);
-  assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\]\)/);
+  assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\],100\)/);
   assert.match(overview,/commitLampWheelColor\(hex\).*window.piuraSetOfficeColor\(hex\)/);
   assert.match(overview,/if\(!lightingOnly\)refreshFinancialSummary/);
   assert.match(office,/status:devices.every\(x=>x.ok\)\?'done':'partial'/);
@@ -34,13 +34,13 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
 });
 test('every mode has three distinct desktop images',()=>{
   assert.match(app,/mode == .morning && index == 0.*Magic-Morning-Left/);
-  assert.match(app,/mode == .climate && index == 0.*Climate-Left/);
-  assert.match(app,/mode == .investments && index == 0.*Investments-Left/);
+
+  assert.match(app,/mode == .work && index == 0.*Investments-Left/);
   assert.match(app,/mode == .learning && index == 2.*Learning-Right/);
   const hashes=[];
   for(const names of [
     ['Magic-Morning-Left','Magic-Morning','Magic-Morning-Portrait'],
-    ['Climate-Left','Climate','Climate-Portrait'],
+
     ['Investments-Left','Investments','Investments-Portrait'],
     ['Learning-Left','Learning','Learning-Right'],
     ['Mentorship','Mentorship-Center','Mentorship-Right']
@@ -49,7 +49,7 @@ test('every mode has three distinct desktop images',()=>{
     hashes.push(...files.map(file=>createHash('sha256').update(file).digest('hex')));
     assert.ok(!files[0].equals(files[1])&&!files[1].equals(files[2])&&!files[0].equals(files[2]),names.join(','));
   }
-  assert.equal(new Set(hashes).size,15,'All fifteen screen assignments must use different image content');
+  assert.equal(new Set(hashes).size,12,'All twelve screen assignments must use different image content');
 });
 test('communication policy keeps all twelve rules in column reading order',()=>{
   const policy=read('communication-policy.html');

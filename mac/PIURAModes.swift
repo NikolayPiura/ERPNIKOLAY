@@ -3,12 +3,16 @@ import ApplicationServices
 import WebKit
 
 private enum WorkMode: String {
-    case morning, climate, investments, learning, mentorship
+    case morning, work, learning, mentorship
+    static func resolve(_ value: String) -> WorkMode? {
+        ["climate", "investments"].contains(value) ? .work : WorkMode(rawValue: value)
+    }
+    // Keep the existing Safari profile and its logins/pinned work tabs.
+    var safariProfile: String { self == .work ? "Климат" : title }
     var title: String {
         switch self {
         case .morning: "Утро"
-        case .climate: "Климат"
-        case .investments: "Инвестиции"
+        case .work: "Работа"
         case .learning: "Обучение"
         case .mentorship: "Наставничество"
         }
@@ -16,8 +20,7 @@ private enum WorkMode: String {
     var wallpaperResource: String {
         switch self {
         case .morning: "Magic-Morning"
-        case .climate: "Climate"
-        case .investments: "Investments"
+        case .work: "Investments"
         case .learning: "Learning"
         case .mentorship: "Mentorship"
         }
@@ -25,16 +28,15 @@ private enum WorkMode: String {
     var erpURL: String? {
         let base: String = switch self {
         case .morning: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=morning&theme=light"
-        case .climate, .mentorship: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=dark"
-        case .investments: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=funds&theme=dark"
+        case .work, .mentorship: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=dark"
         case .learning: "https://nikolaypiura.github.io/ERPNIKOLAY/?module=overview&theme=light"
         }
         return base + "&workmode=" + rawValue
     }
-    var needsTelegram: Bool { self == .climate || self == .investments }
-    var needsChatGPT: Bool { self == .climate || self == .investments }
-    var needsMusic: Bool { self == .morning || self == .climate || self == .investments }
-    var needsZoom: Bool { self == .climate || self == .mentorship }
+    var needsTelegram: Bool { self == .work }
+    var needsChatGPT: Bool { self == .work }
+    var needsMusic: Bool { self == .morning || self == .work }
+    var needsZoom: Bool { self == .work || self == .mentorship }
 }
 private struct DisplayTarget {
     let screen: NSScreen
@@ -116,7 +118,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.first(where: { $0.scheme == "piura-modes" }),
-              let host = url.host, let mode = WorkMode(rawValue: host) else { return }
+              let host = url.host, let mode = WorkMode.resolve(host) else { return }
         let preview = URLComponents(url: url, resolvingAgainstBaseURL: false)?
             .queryItems?.contains(where: { $0.name == "preview" && $0.value == "1" }) ?? false
         let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
@@ -134,8 +136,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let diagnostics = NSMenu(title: "Проверка")
         for (title, action, key) in [
             ("Расположение «Утро»", #selector(previewMorning), "1"),
-            ("Расположение «Климат»", #selector(previewClimate), "2"),
-            ("Расположение «Инвестиции»", #selector(previewInvestments), "3"),
+            ("Расположение «Работа»", #selector(previewWork), "2"),
             ("Расположение «Обучение»", #selector(previewLearning), "4"),
             ("Расположение «Наставничество»", #selector(previewMentorship), "5")
         ] {
@@ -158,8 +159,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         sender.state = enabled ? .on : .off
         UserDefaults.standard.set(enabled, forKey: "benchmarkKeepCodex")
     }
-    @objc private func previewClimate() { if pageReady { beginMode(.climate, preview: true) } }
-    @objc private func previewInvestments() { if pageReady { beginMode(.investments, preview: true) } }
+    @objc private func previewWork() { if pageReady { beginMode(.work, preview: true) } }
     @objc private func previewLearning() { if pageReady { beginMode(.learning, preview: true) } }
     @objc private func previewMentorship() { if pageReady { beginMode(.mentorship, preview: true) } }
     private func configureWindow() {
@@ -189,7 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "piura", let body = message.body as? [String: Any],
-              let raw = body["mode"] as? String, let mode = WorkMode(rawValue: raw) else { return }
+              let raw = body["mode"] as? String, let mode = WorkMode.resolve(raw) else { return }
         beginMode(mode, preview: body["preview"] as? Bool ?? false, id: body["requestID"] as? String ?? UUID().uuidString)
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -268,7 +268,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
-            if mode.needsMusic && !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
+            if mode.needsMusic {
+                do { try configureMusic(for:mode) } catch { notes.append("Оформление музыки: \(error.localizedDescription)") }
+                if !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
+            }
         }
         if mode.needsChatGPT {
             do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }
@@ -276,6 +279,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         markPhase("musicAndChat")
         do { try restoreForeground(for: mode) } catch { notes.append("Передний план: \(error.localizedDescription)") }
         markPhase("foreground")
+        verifiedWindows.append(["workspaceReadySeconds":Date().timeIntervalSince(startedAt),"workspaceErrors":notes])
         if !preview {
             if let job = wallpaperJob {
                 do { try finishDesktopWallpaper(job) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
@@ -321,7 +325,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
         if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
         if mode.needsZoom { keep.insert("us.zoom.xos") }
-        if mode == .climate { keep.insert("com.apple.Notes") }
+        if mode == .work { keep.insert("com.apple.Notes") }
         let currentPID = ProcessInfo.processInfo.processIdentifier
         let apps = workspace.runningApplications.filter { app in
             app.activationPolicy == .regular && app.processIdentifier != currentPID && (app.bundleIdentifier.map { !keep.contains($0) } ?? true)
@@ -338,7 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func openCompanionApps(for mode: WorkMode) throws {
         var ids: [String] = []
         if mode.needsZoom { ids.append("us.zoom.xos") }
-        if mode == .climate { ids.append("com.apple.Notes") }
+        if mode == .work { ids.append("com.apple.Notes") }
         for id in ids {
             if workspace.runningApplications.contains(where: { $0.bundleIdentifier == id && !$0.isTerminated }) {
                 verifiedWindows.append(["companionApp":id, "reused":true]); continue
@@ -364,9 +368,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
             if mode == .morning && index == 0 { resource = "Magic-Morning-Left" }
-            if mode == .climate && index == 0 { resource = "Climate-Left" }
+            if mode == .work && index == 0 { resource = "Investments-Left" }
             if mode == .learning && index == 0 { resource = "Learning-Left" }
-            if mode == .investments && index == 0 { resource = "Investments-Left" }
             if mode == .learning && index == 2 { resource = "Learning-Right" }
             if mode == .mentorship && index == 1 { resource = "Mentorship-Center" }
             if mode == .mentorship && index == 2 { resource = "Mentorship-Right" }
@@ -409,6 +412,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let distinct = Set(job.expected.map { $0.1 }).count
         guard distinct == job.records.count else { throw modeError("Обои мониторов не должны повторяться.") }
         verifiedWindows.append(["desktops":job.records.count,"distinctWallpapers":distinct,"changedAfterLayout":corrected])
+        try synchronizeWallpaperSpaces(job)
+    }
+    private func synchronizeWallpaperSpaces(_ job: WallpaperJob) throws {
+        let storeURL = supportDirectory.deletingLastPathComponent().appendingPathComponent("com.apple.wallpaper/Store/Index.plist")
+        let originalData = try Data(contentsOf:storeURL)
+        guard let original = try PropertyListSerialization.propertyList(from:originalData, options:[], format:nil) as? [String:Any] else {
+            throw modeError("Не удалось прочитать рабочие пространства обоев.")
+        }
+        var urls: [String:URL] = [:]
+        for (id,path) in job.expected {
+            guard let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue() else { throw modeError("Нет UUID монитора.") }
+            urls[CFUUIDCreateString(nil,uuid) as String] = URL(fileURLWithPath:path)
+        }
+        if !WallpaperStore.matches(urls,in:original) {
+            let updated = try WallpaperStore.applying(urls,to:original)
+            guard WallpaperStore.matches(urls,in:updated) else { throw modeError("Не подтверждены обои всех рабочих пространств.") }
+            let backup = supportDirectory.appendingPathComponent("WallpaperStore-before-modes10.plist")
+            if !FileManager.default.fileExists(atPath:backup.path) { try originalData.write(to:backup,options:.atomic) }
+            let data = try PropertyListSerialization.data(fromPropertyList:updated, format:.binary, options:0)
+            try data.write(to:storeURL,options:.atomic)
+            // Reload only the user's wallpaper renderer, never Dock or apps.
+            for agent in NSRunningApplication.runningApplications(withBundleIdentifier:"com.apple.wallpaper.agent") { _ = agent.terminate() }
+            pumpRunLoop(0.4)
+        }
+        let reloaded = try PropertyListSerialization.propertyList(from:Data(contentsOf:storeURL),options:[],format:nil) as? [String:Any] ?? [:]
+        guard WallpaperStore.matches(urls,in:reloaded) else { throw modeError("macOS перезаписала обои пространств; требуется повторная проверка.") }
+        verifiedWindows.append(["wallpaperSpacesSynchronized":true,"physicalDisplayUUIDs":Array(urls.keys),"spaceCount":(reloaded["Spaces"] as? [String:Any])?.count ?? 0])
     }
     // A recoverable URL inventory is written before closing unwanted windows.
     // Browsers still own their normal close/save-confirmation behavior.
@@ -498,7 +528,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let root = AXUIElementCreateApplication(app.processIdentifier)
         var value: CFTypeRef?
         _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &value)
-        let candidates = (value as? [AXUIElement] ?? []).filter { isDocumentWindow($0) && profileName(of: $0) == mode.title }
+        let candidates = (value as? [AXUIElement] ?? []).filter { isDocumentWindow($0) && profileName(of: $0) == mode.safariProfile }
         var id = 0
         if let existing = candidates.first {
             _ = AXUIElementSetAttributeValue(existing, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
@@ -506,11 +536,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             pumpRunLoop(0.25)
             id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
         } else {
-            try pressMenuPath(of: app, titles: ["File", "New \(mode.title) Window"])
+            try pressMenuPath(of: app, titles: ["File", "New \(mode.safariProfile) Window"])
             pumpRunLoop(0.4)
             id = Int(try runAppleScript("tell application \"Safari\" to return id of front window as text")) ?? 0
         }
-        guard id != 0, profileName(of: try firstWindow(of: app)) == mode.title else {
+        guard id != 0, profileName(of: try firstWindow(of: app)) == mode.safariProfile else {
             throw modeError("Safari не подтвердил профиль «\(mode.title)». Личные вкладки не изменены.")
         }
         safariWindowID = id
@@ -537,8 +567,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let required: [String]
         switch mode {
         case .morning: required = [adminScaleURL, ethicalProgramURL]
-        case .climate: required = [workTableURL]
-        case .investments: required = investmentURLs + [tradingViewURL] + extras
+        case .work: required = [workTableURL] + investmentURLs + [tradingViewURL] + extras
         case .learning: required = [courseURL]
         case .mentorship: required = []
         }
@@ -593,18 +622,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard required.allSatisfy({ desired in urls.contains(where: { tabMatches($0, desired: desired) }) }) else {
             throw modeError("Ожидается загрузка нужных страниц профиля «\(mode.title)»; вкладки сохранены.")
         }
-        if mode == .climate && UserDefaults.standard.bool(forKey: "profileSeeded-v5.1-investments") {
-            for index in urls.indices.reversed() where tabMatches(urls[index], desired: tradingViewURL) {
-                _ = try runAppleScript("tell application \"Safari\" to close tab \(index + 1) of window id \(id)")
-            }
-            urls.removeAll(where: { tabMatches($0, desired: tradingViewURL) })
-        }
         // Learning has exactly the course; other task profiles drop only empty
         // startup tabs. Climate keeps the user's remaining work tabs unchanged.
         for offset in urls.indices.reversed() {
             let blank = isSafariBlank(urls[offset])
             let remove = mode == .learning ? !tabMatches(urls[offset], desired: courseURL) :
-                (mode == .morning || mode == .investments) && blank && urls.count > 1
+                (mode == .morning || mode == .work) && blank && urls.count > 1
             if remove {
                 _ = try runAppleScript("tell application \"Safari\" to close tab \(offset + 1) of window id \(id)")
                 urls.remove(at: offset)
@@ -628,7 +651,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         try verifyBrowserWindow(app: "Safari", id: id, target: target, expectedURL: required.first ?? "about:blank")
         verifiedWindows.append(["safariProfile":mode.title, "tabCount":urls.count,
                                 "requiresGoogleSignIn":urls.contains(where: { $0.contains("accounts.google.com") })])
-        if mode == .investments { verifiedWindows.append(["investmentTabs":urls]) }
+        if mode == .work { verifiedWindows.append(["workIncludesInvestmentTabs":required.allSatisfy { desired in urls.contains { tabMatches($0, desired:desired) } }]) }
     }
     private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
         guard let erpURL = mode.erpURL else { return }
@@ -695,7 +718,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes9';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10'){if(!document.getElementById('piura-office-loader-10')){const s=document.createElement('script');s.id='piura-office-loader-10';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -1255,6 +1278,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         verifiedWindows.append(["musicPlaying":false, "playClicks":clicked ? 1 : 0])
         return false
     }
+    private func configureMusic(for mode:WorkMode) throws {
+        // Moderate output levels, without a separate app or blocking UI step.
+        let volume = mode == .morning ? 25 : 40
+        guard let source = Bundle.main.url(forResource:"music-appearance",withExtension:"js") else { throw modeError("Нет оформления музыки.") }
+        let inspect = try String(contentsOf:source,encoding:.utf8).replacingOccurrences(of:"PIURA_MODE",with:"'\(mode.rawValue)'")
+        let result = try runAppleScript("""
+        set volume output volume \(volume)
+        tell application "Yandex" to return execute active tab of window id \(leftWindowID) javascript "\(appleScriptEscape(inspect))"
+        """)
+        verifiedWindows.append(["musicAppearance":result,"outputVolume":volume])
+        if mode == .morning && !result.contains("\"light\":true") { throw modeError("Светлая музыка не подтверждена.") }
+    }
     private func restoreForeground(for mode: WorkMode) throws {
         var failures: [String] = []
         func attempt(_ action: () throws -> Void) {
@@ -1281,7 +1316,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         }
         attempt {
-        if mode == .investments || mode == .mentorship || mode == .learning,
+        if mode == .mentorship || mode == .learning,
            let safari = workspace.runningApplications.first(where: { $0.bundleIdentifier == "com.apple.Safari" }) {
             _ = try runAppleScript("tell application \"Safari\"\nset index of window id \(safariWindowID) to 1\nactivate\nend tell")
             try raiseWindow(of: safari)
@@ -1316,13 +1351,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
             try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:mode.needsMusic ? musicURL : policyURL)
         }
-        if mode == .climate {
+        if mode == .work {
             let screens = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }
             guard screens.count == 3,
                   let telegram = workspace.runningApplications.first(where: { $0.bundleIdentifier == telegramIDs[0] }),
                   let lite = workspace.runningApplications.first(where: { $0.bundleIdentifier == telegramIDs[1] }),
                   telegramSplitIsExact(telegram:telegram,lite:lite,target:target(screens[1])) else {
-                throw modeError("В конце климата на центральном экране должна быть видна пара Telegram + Telegram Lite.")
+                throw modeError("В конце работы на центральном экране должна быть видна пара Telegram + Telegram Lite.")
             }
             verifiedWindows.append(["finalTelegramPairVisible":true])
         }
@@ -1343,7 +1378,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='1'){if(!document.getElementById('piura-office-loader')){const s=document.createElement('script');s.id='piura-office-loader';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes9';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10'){if(!document.getElementById('piura-office-loader-10')){const s=document.createElement('script');s.id='piura-office-loader-10';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
@@ -1480,7 +1515,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
 }
-let application = NSApplication.shared
-let appDelegate = AppDelegate()
-application.delegate = appDelegate
-application.run()
+@main
+struct PIURAModesMain {
+    static func main() {
+        let application = NSApplication.shared
+        let appDelegate = AppDelegate()
+        application.delegate = appDelegate
+        application.run()
+    }
+}

@@ -12,9 +12,11 @@ cp "$REPO_DIR/modes.html" "$APP_DIR/Contents/Resources/modes.html"
 cp "$REPO_DIR/work-modes.css" "$REPO_DIR/work-modes.js" "$APP_DIR/Contents/Resources/"
 cp "$REPO_DIR/communication-policy.html" "$APP_DIR/Contents/Resources/communication-policy.html"
 cp "$SCRIPT_DIR"/resources/*.png "$APP_DIR/Contents/Resources/"
+cp "$SCRIPT_DIR"/resources/music-appearance.js "$APP_DIR/Contents/Resources/"
 
 /usr/bin/swiftc \
   "$SCRIPT_DIR/PIURAModes.swift" \
+  "$SCRIPT_DIR/WallpaperStore.swift" \
   -framework Cocoa \
   -framework WebKit \
   -o "$APP_DIR/Contents/MacOS/PIURA Modes"

@@ -12,10 +12,10 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов использует общий компонент пяти рабочих пространств', () => {
+test('панель режимов использует общий компонент четырёх рабочих пространств', () => {
   assert.match(read('modes.html'), /data-work-modes/);
   const modes = read('work-modes.js');
-  for (const mode of ['morning','climate','investments','learning','mentorship']) assert.ok(modes.includes(mode+':'));
+  for (const mode of ['morning','work','learning','mentorship']) assert.ok(modes.includes(mode+':'));
   assert.match(modes, /messageHandlers/);
   assert.ok(modes.includes('piura-modes://'));
   assert.doesNotMatch(modes, /button.disabled=true/);
@@ -35,7 +35,7 @@ test('macOS-режим закрепляет три сервиса за физи�
   assert.match(app, /1wjAuLeNUYsIzeTrBJPDWbKXQAIGKZUPG/);
   assert.match(app, /module=morning&theme=light/);
   assert.match(app, /module=overview&theme=dark/);
-  assert.match(app, /module=funds&theme=dark/);
+  assert.match(app, /required = \[workTableURL\] \+ investmentURLs/);
   assert.match(app, /https:\/\/music\.yandex\.ru\//);
   assert.match(app, /url\(forResource: resource, withExtension: "png"\)/);
   assert.match(app, /mode.wallpaperResource \+ \(screen.frame.height > screen.frame.width/);
@@ -43,7 +43,7 @@ test('macOS-режим закрепляет три сервиса за физи�
   assert.ok(existsSync(new URL('mac/resources/Magic-Morning.png', root)));
   assert.ok(existsSync(new URL('mac/resources/Climate.png', root)));
   assert.match(app, /\$0\.scheme == "piura-modes"/);
-  assert.match(app, /WorkMode\(rawValue: host\)/);
+  assert.match(app, /WorkMode.resolve\(host\)/);
   assert.match(read('mac/Info.plist'), /<string>piura-modes<\/string>/);
 });
 
