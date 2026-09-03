@@ -95,7 +95,7 @@ test('real fullscreen verification and all four recipes',()=>{
   assert.equal((investmentList.match(/https:\/\/docs\.google\.com\/spreadsheets\/d\//g)||[]).length,5);
   assert.match(app,/set dark mode to true/);assert.doesNotMatch(app,/set dark mode to false/);
   assert.match(app,/private func finishDesktopWallpaper/);
-  assert.match(app,/picture of desktop id/);
+  assert.match(app,/synchronizeWallpaperSpaces/);
   assert.match(app,/if !startYandexMusic/);
 });
 test('green icon-only compact dashboard and enlarged rules without metadata',()=>{

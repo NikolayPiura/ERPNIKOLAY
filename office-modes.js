@@ -1,10 +1,12 @@
 /* Physical office lighting, using the existing overview color-wheel handler. */
 (()=>{
+  if(window.piuraOfficeVersion==='10.1')return;
+  window.piuraOfficeVersion='10.1';
   const colors={morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df'};
   let controller,ready,queue=Promise.resolve();
   const setState=state=>{window.piuraOfficeLighting=state;document.documentElement.dataset.officeLighting=JSON.stringify(state)};
   setState({status:'idle'});
-  document.documentElement.dataset.officeControllerReady='10';
+  document.documentElement.dataset.officeControllerReady='10.1';
   document.addEventListener('piura:office-mode',()=>window.piuraSetOfficeMode(document.documentElement.dataset.officeModeRequest));
   function getController(){
     if(!ready)ready=new Promise((resolve,reject)=>{

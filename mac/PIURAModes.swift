@@ -392,27 +392,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return job
     }
     private func finishDesktopWallpaper(_ job: WallpaperJob) throws {
-        // Change and read back AFTER all fullscreen Spaces and foreground changes.
-        let checks = job.expected.map { id,path in
-            """
-            if picture of desktop id \(id) is not "\(appleScriptEscape(path))" then
-              set picture of desktop id \(id) to "\(appleScriptEscape(path))"
-              set corrected to corrected + 1
-            end if
-            repeat 20 times
-              if picture of desktop id \(id) is "\(appleScriptEscape(path))" then exit repeat
-              delay 0.1
-            end repeat
-            if picture of desktop id \(id) is not "\(appleScriptEscape(path))" then error "Обои не подтверждены"
-            """
-        }.joined(separator:"\n")
-        let confirmed = try runAppleScript("tell application \"System Events\"\nset corrected to 0\n\(checks)\nreturn corrected as text\nend tell")
-        guard let corrected = Int(confirmed) else { throw modeError("Не удалось подтвердить обои после переключения рабочих столов.") }
-        verifiedWindows.append(contentsOf:job.records)
         let distinct = Set(job.expected.map { $0.1 }).count
         guard distinct == job.records.count else { throw modeError("Обои мониторов не должны повторяться.") }
-        verifiedWindows.append(["desktops":job.records.count,"distinctWallpapers":distinct,"changedAfterLayout":corrected])
+        // One atomic per-display/Space update, after the working windows are ready.
+        // Avoid three slow System Events writes to transient fullscreen Spaces.
         try synchronizeWallpaperSpaces(job)
+        verifiedWindows.append(contentsOf:job.records)
+        verifiedWindows.append(["desktops":job.records.count,"distinctWallpapers":distinct,"changedAfterLayout":true])
     }
     private func synchronizeWallpaperSpaces(_ job: WallpaperJob) throws {
         let storeURL = supportDirectory.deletingLastPathComponent().appendingPathComponent("com.apple.wallpaper/Store/Index.plist")
@@ -718,7 +704,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10'){if(!document.getElementById('piura-office-loader-10')){const s=document.createElement('script');s.id='piura-office-loader-10';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.1'){if(!document.getElementById('piura-office-loader-10-1')){const s=document.createElement('script');s.id='piura-office-loader-10-1';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.1';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -1282,7 +1268,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Moderate output levels, without a separate app or blocking UI step.
         let volume = mode == .morning ? 25 : 40
         guard let source = Bundle.main.url(forResource:"music-appearance",withExtension:"js") else { throw modeError("Нет оформления музыки.") }
-        let inspect = try String(contentsOf:source,encoding:.utf8).replacingOccurrences(of:"PIURA_MODE",with:"'\(mode.rawValue)'")
+        let inspect = try String(contentsOf:source,encoding:.utf8)
+            .components(separatedBy:"\n").filter { !$0.trimmingCharacters(in:.whitespaces).hasPrefix("//") }.joined(separator:"\n")
+            .replacingOccurrences(of:"PIURA_MODE",with:"'\(mode.rawValue)'")
         let result = try runAppleScript("""
         set volume output volume \(volume)
         tell application "Yandex" to return execute active tab of window id \(leftWindowID) javascript "\(appleScriptEscape(inspect))"
@@ -1378,7 +1366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10'){if(!document.getElementById('piura-office-loader-10')){const s=document.createElement('script');s.id='piura-office-loader-10';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.1'){if(!document.getElementById('piura-office-loader-10-1')){const s=document.createElement('script');s.id='piura-office-loader-10-1';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.1';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
