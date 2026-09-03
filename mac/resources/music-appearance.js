@@ -6,7 +6,7 @@
   let style=existing;
   if(!style){style=document.createElement('style');style.id=id;document.head.append(style)}
   style.textContent=`
-    :root,body,body.ym-dark-theme {
+    :root,body,.ym-dark-theme {
       color-scheme:light!important;
       --ym-background-color-primary-enabled-basic:#fff!important;
       --ym-background-color-primary-enabled-content:#f8faf7!important;
@@ -42,5 +42,6 @@
     body canvas {opacity:.12!important}
   `;
   const base=getComputedStyle(document.body).getPropertyValue('--ym-background-color-primary-enabled-basic').trim();
-  return JSON.stringify({theme:'morning-light',light:base==='#fff',background:base});
+  const samples=[[60,300],[innerWidth/2,300]].map(([x,y])=>{let e=document.elementFromPoint(x,y),a=[];for(let n=0;e&&n<6;n++,e=e.parentElement){const s=getComputedStyle(e);a.push({tag:e.tagName,css:e.className,bg:s.backgroundColor,image:s.backgroundImage})}return a});
+  return JSON.stringify({theme:'morning-light',light:base==='#fff',background:base,samples});
 })(PIURA_MODE)

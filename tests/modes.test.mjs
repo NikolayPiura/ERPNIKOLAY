@@ -127,7 +127,7 @@ test('new profiles tolerate blank URLs and preserve loading tabs before cleanup'
   assert.match(app,/let loadDeadline/);
   assert.ok(app.indexOf('let loadDeadline')<app.indexOf('for offset in urls.indices.reversed()'));
   assert.match(app,/duplicates.dropFirst\(\).reversed\(\)/);
-  assert.match(app,/picture of desktop id \\\(id\)/);
+  assert.match(app,/CGDisplayCreateUUIDFromDisplayID/);
 });
 test('repeat launches reuse windows and preserve exact split before any retile',()=>{
   const running=app.slice(app.indexOf('private func runningApplication'),app.indexOf('private func activateAndDismissMenus'));

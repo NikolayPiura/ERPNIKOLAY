@@ -704,7 +704,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.1'){if(!document.getElementById('piura-office-loader-10-1')){const s=document.createElement('script');s.id='piura-office-loader-10-1';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.1';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.2'){if(!document.getElementById('piura-office-loader-10-2')){const s=document.createElement('script');s.id='piura-office-loader-10-2';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.2';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -1366,7 +1366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.1'){if(!document.getElementById('piura-office-loader-10-1')){const s=document.createElement('script');s.id='piura-office-loader-10-1';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.1';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.2'){if(!document.getElementById('piura-office-loader-10-2')){const s=document.createElement('script');s.id='piura-office-loader-10-2';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.2';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
