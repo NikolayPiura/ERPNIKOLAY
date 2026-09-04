@@ -86,7 +86,9 @@ test('morning keeps music in the left window and shows goals with plans above it
   assert.match(admin,/browseMode=adminPreview\?'sections'/);
   assert.match(admin,/body\[data-admin-preview="1"\] \.topbar/);
   assert.match(admin,/grid-template-columns:1fr!important/);
-  assert.match(admin,/grid-template-rows:repeat\(8,minmax\(0,1fr\)\)/);
+  assert.match(admin,/grid-template-rows:repeat\(8,auto\)/);
+  assert.match(admin,/--accent:#54b8ff/);
+  assert.match(admin,/body\[data-admin-preview="1"\] \.check-btn[^\{]*\{display:none/);
   assert.match(admin,/body\[data-admin-preview="1"\] \.block-more\{display:none/);
 });
 test('focus menu tolerates the macOS recording indicator suffix',()=>{
