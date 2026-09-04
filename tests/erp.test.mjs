@@ -225,6 +225,8 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /updated:\[\.\.\.new Set\(updated\)\]/);
   assert.match(overview, /floor lamp basic/i);
   assert.match(overview, /Date\.now\(\)-discoveredGoveeAt<300000/);
+  assert.match(overview, /Promise\.all\(\[controlLamp\('color',value\),controlLamp\('power','on'\)\]\)/);
+  assert.match(overview, /Promise\.all\(\[controlAllLights\('color',hex\),controlAllLights\('brightness',100\)\]\)/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
   assert.doesNotMatch(overview, /class="fund-goal-index"/);
