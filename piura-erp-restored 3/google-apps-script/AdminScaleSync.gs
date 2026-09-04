@@ -235,6 +235,10 @@ function goveeSelectLights_(devices, props) {
   return devices.filter(function(device) {
     const instances = (device.capabilities || []).map(function(capability) { return capability.instance; });
     return instances.indexOf('powerSwitch') >= 0 && (!sensor || device.device !== sensor.device);
+  }).sort(function(a, b) {
+    const aPriority = /floor lamp basic/i.test(String(a.deviceName || '')) ? 0 : 1;
+    const bPriority = /floor lamp basic/i.test(String(b.deviceName || '')) ? 0 : 1;
+    return aPriority - bPriority;
   });
 }
 
