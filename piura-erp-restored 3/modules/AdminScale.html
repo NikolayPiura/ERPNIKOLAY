@@ -465,21 +465,23 @@ body[data-admin-workspace="scale"] .dyn-tabs:not(.section-tabs) .dyn-tab{justify
 body[data-admin-workspace]:not([data-admin-workspace="scale"]) .browse-mode,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .dyn-tabs,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .topbar-right{display:none!important}
 @media(max-width:900px){.topbar-inner{padding-inline:10px!important}.workspace-nav button{padding-inline:9px}.dyn-tabs,.dyn-tabs.section-tabs{min-width:360px!important}.dyn-tabs .tab-name{display:none!important}}
 /* Read-only half-screen view used by the Morning dashboard. */
-body[data-admin-preview="1"]{--layout-main-pad:18px 16px 32px;--layout-base-font:15px;background:#f5f7f2!important}
+body[data-admin-preview="1"]{--layout-main-pad:12px;--layout-base-font:14px;overflow:hidden!important}
 body[data-admin-preview="1"] .topbar,body[data-admin-preview="1"] .modal-overlay{display:none!important}
-body[data-admin-preview="1"] .main{max-width:none!important;padding:18px 16px 32px!important}
-body[data-admin-preview="1"] .section-overview-head{display:none!important}
-body[data-admin-preview="1"] .section-overview-grid{max-width:none!important;gap:12px!important}
-body[data-admin-preview="1"] .section-dyn-card{padding:12px!important;border-radius:18px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 10px 32px rgba(28,42,24,.07)!important}
-body[data-admin-preview="1"] .section-dyn-title{padding:2px 5px 10px!important;gap:9px!important}
-body[data-admin-preview="1"] .section-dyn-title b{font-size:.9rem!important;color:#49a14b!important}
-body[data-admin-preview="1"] .section-dyn-title span{font-size:1.08rem!important;color:#243026!important}
-body[data-admin-preview="1"] .level-block{background:#fff!important;border-color:#e2e8de!important;border-radius:13px!important}
-body[data-admin-preview="1"] .items-list{padding:7px!important}
-body[data-admin-preview="1"] .item-row{min-height:38px!important;padding:7px 9px!important;font-size:.82rem!important;line-height:1.35!important;background:#f8faf6!important}
-body[data-admin-preview="1"] .item-num{font-size:.63rem!important}
+body[data-admin-preview="1"] .main{width:100%;height:100vh;max-width:none!important;padding:12px!important;overflow:hidden!important}
+body[data-admin-preview="1"] .section-overview-head{height:48px;padding:2px 4px 10px!important;margin:0 0 8px!important}
+body[data-admin-preview="1"] .section-overview-head h2{margin:0!important;font-size:1.75rem!important;line-height:36px!important}
+body[data-admin-preview="1"] .section-overview-grid{height:calc(100vh - 68px);max-width:none!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;grid-template-rows:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+body[data-admin-preview="1"] .section-dyn-card{min-width:0;min-height:0;overflow:hidden;padding:8px!important;border-radius:12px!important;background:var(--surface)!important;box-shadow:none!important}
+body[data-admin-preview="1"] .section-dyn-title{padding:0 3px 6px!important;gap:7px!important}
+body[data-admin-preview="1"] .section-dyn-title b{font-size:.72rem!important;color:var(--accent)!important}
+body[data-admin-preview="1"] .section-dyn-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.9rem!important;color:var(--text)!important}
+body[data-admin-preview="1"] .level-block{height:calc(100% - 25px);overflow:hidden;background:var(--surface2)!important;border-color:var(--border)!important;border-radius:9px!important}
+body[data-admin-preview="1"] .items-list{height:100%;padding:5px!important;gap:3px!important;overflow:hidden!important}
+body[data-admin-preview="1"] .item-row{min-height:0!important;margin:0!important;padding:4px 6px!important;gap:5px!important;background:var(--bg2)!important}
+body[data-admin-preview="1"] .item-text{min-height:0!important;font-size:.64rem!important;line-height:1.18!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+body[data-admin-preview="1"] .item-num{font-size:.54rem!important}
 body[data-admin-preview="1"] .check-btn,body[data-admin-preview="1"] .hide-btn,body[data-admin-preview="1"] .del-btn,body[data-admin-preview="1"] .save-bar,body[data-admin-preview="1"] .add-block-btn{display:none!important}
-body[data-admin-preview="1"] .block-more{pointer-events:none}
+body[data-admin-preview="1"] .block-more{display:none!important}
 </style>
 </head>
 <body data-theme="dark">
