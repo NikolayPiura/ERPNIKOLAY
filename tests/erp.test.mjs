@@ -183,6 +183,8 @@ test('обзор управляет вентилятором, очистител
   assert.match(bridge, /pending = \[\] if device_ids is not None else/);
   assert.match(bridge, /PURIFIER = \("purifier", "Очиститель", "192\.168\.4\.39", "Levoit"\)/);
   assert.match(bridge, /if percentage not in \{33, 66, 100\}/);
+  assert.match(bridge, /def ensure_home_assistant_host\(\)/);
+  assert.match(bridge, /\["\/usr\/bin\/open", "-gja", str\(DOCKER_APP\)\]/);
   assert.match(overview, /fan-card\.is-on \.fan-blades\{animation:fanSpin/);
   assert.match(overview, /id="masterPower"/);
   assert.match(overview, /master-toggle\[hidden\]\{display:none!important\}/);
@@ -201,6 +203,8 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /id="hvacRange"/);
   assert.match(overview, /id="hvacRangePlus"/);
   assert.match(overview, /function shiftHvacRange\(direction\)/);
+  assert.match(overview, /hvacBandValue\(thermostat\?\.coolSetpointC\)/);
+  assert.match(overview, /fToC\(heatF\+step\)/);
   assert.match(overview, /commitHvac\(\{mode:'auto',heatC,coolC\}\)/);
   assert.match(overview, /hvac-card\.is-running \.hvac-flow path/);
   assert.match(overview, /purifier\.is-on \.purifier-art\{animation:purifierBodyBreathe/);

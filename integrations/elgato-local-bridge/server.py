@@ -52,6 +52,9 @@ HA_URL = "http://localhost:8123"
 HA_AUTH_PATH = Path("/Users/Nikolay/homeassistant/.storage/auth")
 HA_CONFIG_ENTRIES_PATH = Path("/Users/Nikolay/homeassistant/.storage/core.config_entries")
 HA_ENTITY_REGISTRY_PATH = Path("/Users/Nikolay/homeassistant/.storage/core.entity_registry")
+DOCKER_APP = Path("/Applications/Docker.app")
+HA_START_RETRY_SECONDS = 60
+_last_ha_start_attempt = 0.0
 PENDING_DEVICES = (
     {
         "id": "garage",
@@ -306,6 +309,21 @@ def ha_access_token() -> str:
     return token
 
 
+def ensure_home_assistant_host() -> None:
+    """Start Docker Desktop quietly so its restart-managed HA container is available."""
+    global _last_ha_start_attempt
+    now = time.monotonic()
+    if not DOCKER_APP.exists() or now - _last_ha_start_attempt < HA_START_RETRY_SECONDS:
+        return
+    _last_ha_start_attempt = now
+    subprocess.Popen(
+        ["/usr/bin/open", "-gja", str(DOCKER_APP)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+
+
 def ha_api_request(path: str, payload: dict | None = None) -> dict | list:
     body = None if payload is None else json.dumps(payload).encode("utf-8")
     request = Request(
@@ -539,8 +557,9 @@ def purifier_status() -> dict:
             }
         )
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
+        ensure_home_assistant_host()
         result["error"] = str(error)
-        result["status"] = "Home Assistant не получил состояние VeSync"
+        result["status"] = "Запускаем Home Assistant"
     return result
 
 
@@ -824,4 +843,5 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    ensure_home_assistant_host()
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

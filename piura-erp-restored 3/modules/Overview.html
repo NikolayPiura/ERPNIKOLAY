@@ -1321,7 +1321,8 @@ async function refreshSmartHome(){await Promise.allSettled([refreshFan(),refresh
 async function toggleEverything(){const target=!anythingIsOn();everythingBusy=true;document.getElementById('masterPower').classList.add('is-busy');renderFan({online:fanOnline,power:fanPower});renderPurifier(purifierState);renderZoneDevices();setLampBusy(true);try{const changeFan=async()=>{if(fanOnline)await setFanPower(target)},changePurifier=async()=>{if(purifierState.controllable)await setPurifierPower(target)},changeZones=async()=>setAllZonePower(target),changeLights=async()=>controlAllLights('power',target?'on':'off');if(target){await Promise.allSettled([changeFan(),changePurifier(),changeZones(),changeLights()])}else{await Promise.allSettled([changeLights(),changeZones(),changePurifier(),changeFan()])}await Promise.allSettled([refreshFan(),refreshPurifier(),refreshMap(),refreshZoneDevices(),refreshElgato()])}finally{everythingBusy=false;setLampBusy(false);renderFan({online:fanOnline,power:fanPower});renderPurifier(purifierState);renderZoneDevices();updateLampPanel()}}
 
 const cToF=value=>Number.isFinite(Number(value))?Number(value)*9/5+32:null;
-const hvacBandStart=value=>{const fahrenheit=cToF(value);return fahrenheit==null?null:Math.round(fahrenheit)};
+const fToC=value=>Number.isFinite(Number(value))?(Number(value)-32)*5/9:null;
+const hvacBandValue=value=>{const fahrenheit=cToF(value);return fahrenheit==null?null:Math.round(fahrenheit)};
 function renderHvac(state){
   if(state&&typeof state==='object')hvacState={...state};
   const thermostat=hvacState,available=Boolean(thermostat),card=document.getElementById('hvacCard'),mode=thermostat?.currentMode;
@@ -1329,14 +1330,14 @@ function renderHvac(state){
   card.classList.toggle('is-running',['heat','cool'].includes(mode));
   card.classList.toggle('is-heating',mode==='heat');
   card.classList.toggle('is-cooling',mode==='cool');
-  const lower=hvacBandStart(thermostat?.heatSetpointC);
-  document.getElementById('hvacRange').textContent=lower==null?'—':`${lower}–${lower+5}`;
+  const lower=hvacBandValue(thermostat?.heatSetpointC),upper=hvacBandValue(thermostat?.coolSetpointC);
+  document.getElementById('hvacRange').textContent=lower==null||upper==null?'—':`${lower}–${upper}`;
   document.getElementById('hvacRangeMinus').disabled=!available||hvacBusy;
   document.getElementById('hvacRangePlus').disabled=!available||hvacBusy;
 }
 async function refreshHvac(){try{const data=await requestLocal(ECOBEE_BRIDGE,'/api/status'),thermostat=data?.thermostat;if(!thermostat)throw new Error('Нет данных термостата');hvacState=thermostat;localStorage.setItem(HVAC_SNAPSHOT_KEY,JSON.stringify(thermostat));renderHvac(thermostat)}catch(error){if(!hvacState)hvacState=cache(HVAC_SNAPSHOT_KEY);renderHvac(hvacState);console.warn('Кондиционер',error)}}
 async function commitHvac(next){if(!hvacState||hvacBusy)return;hvacBusy=true;renderHvac();try{const data=await requestLocal(ECOBEE_BRIDGE,'/api/control',{method:'POST',body:JSON.stringify(next)});hvacState=data?.thermostat||hvacState;localStorage.setItem(HVAC_SNAPSHOT_KEY,JSON.stringify(hvacState))}catch(error){console.warn('Кондиционер',error);await refreshHvac()}finally{hvacBusy=false;renderHvac()}}
-async function shiftHvacRange(direction){if(!hvacState||hvacBusy)return;const step=5/9*Number(direction);let heatC=Math.round((Number(hvacState.heatSetpointC)+step)*10)/10;heatC=clamp(heatC,7,32.2);let coolC=Math.round((heatC+2.8)*10)/10;if(coolC>35){coolC=35;heatC=32.2}await commitHvac({mode:'auto',heatC,coolC})}
+async function shiftHvacRange(direction){if(!hvacState||hvacBusy)return;const heatF=hvacBandValue(hvacState.heatSetpointC),coolF=hvacBandValue(hvacState.coolSetpointC),step=Number(direction);if(heatF==null||coolF==null||!step)return;let heatC=Math.round(clamp(fToC(heatF+step),7,32.2)*10)/10;let coolC=Math.round(clamp(fToC(coolF+step),heatC+2.8,35)*10)/10;if(coolC>=35)heatC=Math.min(32.2,Math.round((coolC-2.8)*10)/10);await commitHvac({mode:'auto',heatC,coolC})}
 function setNumbersVisible(visible){const section=document.getElementById('overviewNumbers'),button=document.getElementById('numbersToggle');section.hidden=!visible;button.classList.toggle('is-open',visible);button.setAttribute('aria-expanded',String(visible));button.setAttribute('aria-label',visible?'Скрыть финансовые показатели':'Показать финансовые показатели')}
 
 function climateProfile(type,value){const missing=value==null||!Number.isFinite(Number(value)),v=Number(value),decimal=n=>Number(n).toLocaleString('ru-RU',{maximumFractionDigits:1}),base={type:type==='air'?'co2':type,label:type==='temperature'?'Температура':type==='humidity'?'Влажность':'Воздух · CO₂'};if(missing)return{...base,value:'—',status:'Нет данных',severity:'unavailable'};if(type==='temperature'){const target=70,tolerance=.5,isIdeal=Math.abs(v-target)<=tolerance;return{...base,value:decimal(v)+'°F',status:isIdeal?'Комфортно':v>target?'Жарко':'Прохладно',severity:isIdeal?'good':'outside'}}if(type==='humidity'){const target=45,isIdeal=Math.abs(v-target)<=2,status=v>50?'Очень влажно':v>47?'Влажно':v<43?'Сухо':'Комфортно';return{...base,value:decimal(v)+'%',status,severity:isIdeal?'good':'outside'}}return{...base,type:'co2',value:Math.round(v).toLocaleString('ru-RU')+' ppm',status:v<=500?'Чисто':'Проветрить',severity:v<=500?'good':'outside'}}
