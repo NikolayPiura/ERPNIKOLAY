@@ -6,7 +6,7 @@ The signed local application handles the five `piura-modes://` links from the da
 
 Create profiles named `Утро`, `Климат`, `Инвестиции`, `Обучение`, and `Наставничество` in Safari before use. Profile identity is verified from the native toolbar, not inferred from a shared Google URL. Profiles keep their own cookies; private Google pages can require a one-time sign-in.
 
-- Morning: the supplied Admin Scale Drive folder and Ethical Program, pinned.
+- Morning: the supplied Admin Scale Drive folder and Ethical Program, pinned. The left Yandex window starts Yandex Music, then keeps it playing in a background tab while a full-screen two-column Goals + Plans preview stays visible above it.
 - Climate: the existing work profile and its work-table pin. TradingView is removed only after investment setup succeeds.
 - Investments: five supplied sheets plus the observed TradingView URL, pinned. Existing pins are reused, redirect URLs are matched by document identity, and duplicates are removed.
 - Learning: only the supplied Flag course.

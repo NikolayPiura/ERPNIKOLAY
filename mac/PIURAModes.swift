@@ -84,6 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let workTableURL = "https://docs.google.com/spreadsheets/d/1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc/edit?gid=720489481#gid=720489481"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
+    private let morningAdminPreviewURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -396,7 +397,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard distinct == job.records.count else { throw modeError("Обои мониторов не должны повторяться.") }
         // One atomic per-display/Space update, after the working windows are ready.
         // Avoid three slow System Events writes to transient fullscreen Spaces.
-        try synchronizeWallpaperSpaces(job)
+        // Register each current desktop through AppKit as well. A matching
+        // preferences file alone does not prove that WallpaperAgent loaded it.
+        for (id,path) in job.expected {
+            guard let screen = NSScreen.screens.first(where: { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == id }) else { throw modeError("Монитор отключён во время смены обоев.") }
+            let url = URL(fileURLWithPath:path)
+            try NSWorkspace.shared.setDesktopImageURL(url, for:screen, options:[.imageScaling:NSImageScaling.scaleProportionallyUpOrDown.rawValue,.allowClipping:true])
+        }
+        let deadline = Date().addingTimeInterval(3)
+        func currentWallpapersMatch() -> Bool {
+            job.expected.allSatisfy { id,path in
+                guard let screen = NSScreen.screens.first(where: { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == id }) else { return false }
+                return NSWorkspace.shared.desktopImageURL(for:screen)?.standardizedFileURL == URL(fileURLWithPath:path).standardizedFileURL
+            }
+        }
+        while !currentWallpapersMatch() && Date() < deadline { pumpRunLoop(0.1) }
+        for screen in NSScreen.screens { verifiedWindows.append(["wallpaperSystemReadback":NSWorkspace.shared.desktopImageURL(for:screen)?.path ?? "missing", "display":screen.localizedName]) }
+        guard currentWallpapersMatch() else { throw modeError("macOS не подтвердила применение обоев на всех трёх мониторах.") }
+        verifiedWindows.append(["wallpaperAppKitReadback":true])
         verifiedWindows.append(contentsOf:job.records)
         verifiedWindows.append(["desktops":job.records.count,"distinctWallpapers":distinct,"changedAfterLayout":true])
     }
@@ -644,6 +662,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard let app = try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) else { throw modeError("Яндекс не найден.") }
         let leftURL = mode.needsMusic ? musicURL : policyURL
         let needsLeft = mode != .learning
+        let morningPreviewScript = mode == .morning ? """
+          set musicTabNumber to 0
+          set previewTabNumber to 0
+          set tabNumber to 0
+          repeat with t in every tab of window id leftID
+            set tabNumber to tabNumber + 1
+            set tabURL to URL of t
+            if tabURL starts with "\(musicURL)" then set musicTabNumber to tabNumber
+            if tabURL starts with "\(morningAdminPreviewURL)" then set previewTabNumber to tabNumber
+          end repeat
+          if previewTabNumber is 0 then
+            make new tab at end of tabs of window id leftID with properties {URL:"\(morningAdminPreviewURL)"}
+          end if
+          if musicTabNumber is not 0 then set active tab index of window id leftID to musicTabNumber
+        """ : ""
         let leftScript = needsLeft ? """
           repeat with w in every window
             if id of w is not erpID then
@@ -664,6 +697,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set URL of active tab of window id leftID to "\(leftURL)"
           end if
           set minimized of window id leftID to false
+          \(morningPreviewScript)
         """ : ""
         let ids = try runAppleScript("""
         tell application "Yandex"
@@ -1284,6 +1318,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             do { try action() } catch { failures.append(error.localizedDescription) }
         }
         attempt {
+        if mode == .morning {
+            let result = try runAppleScript("""
+            tell application "Yandex"
+              set previewTabNumber to 0
+              set tabNumber to 0
+              repeat with t in every tab of window id \(leftWindowID)
+                set tabNumber to tabNumber + 1
+                if URL of t starts with "\(morningAdminPreviewURL)" then set previewTabNumber to tabNumber
+              end repeat
+              if previewTabNumber is 0 then error "Нет вкладки целей и планов."
+              set active tab index of window id \(leftWindowID) to previewTabNumber
+              set minimized of window id \(leftWindowID) to false
+              return URL of active tab of window id \(leftWindowID)
+            end tell
+            """)
+            guard result.hasPrefix(morningAdminPreviewURL) else { throw modeError("Слева не открылся обзор целей и планов.") }
+            verifiedWindows.append(["morningLeftForeground":"goals-and-plans","musicHiddenBehind":true])
+        }
+        }
+        attempt {
         if mode != .learning,
            let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) {
             let visible = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
@@ -1337,7 +1391,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         if mode != .learning {
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
-            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:mode.needsMusic ? musicURL : policyURL)
+            let expectedLeftURL = mode == .morning ? morningAdminPreviewURL : (mode.needsMusic ? musicURL : policyURL)
+            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expectedLeftURL)
         }
         if mode == .work {
             let screens = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }

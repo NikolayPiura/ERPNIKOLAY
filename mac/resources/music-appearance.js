@@ -40,8 +40,12 @@
       background-color:#fff!important;color:#1c291a!important;
     }
     body canvas {opacity:.12!important}
+    body [class*="CommonLayout_root"] {background:#fbfdf9!important}
+    body [class*="NavbarDesktop_root"] {background:#fff!important}
+    body [class*="VibePage_root"] {background:transparent!important}
   `;
   const base=getComputedStyle(document.body).getPropertyValue('--ym-background-color-primary-enabled-basic').trim();
-  const samples=[[60,300],[innerWidth/2,300]].map(([x,y])=>{let e=document.elementFromPoint(x,y),a=[];for(let n=0;e&&n<6;n++,e=e.parentElement){const s=getComputedStyle(e);a.push({tag:e.tagName,css:e.className,bg:s.backgroundColor,image:s.backgroundImage})}return a});
-  return JSON.stringify({theme:'morning-light',light:base==='#fff',background:base,samples});
+  const layout=document.querySelector('[class*="CommonLayout_root"]');
+  const background=layout?getComputedStyle(layout).backgroundColor:null;
+  return JSON.stringify({theme:'morning-light',light:base==='#fff'&&background==='rgb(251, 253, 249)',background});
 })(PIURA_MODE)

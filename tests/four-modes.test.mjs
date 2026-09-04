@@ -12,7 +12,7 @@ test('four office colors use 100% lighting, serialize and deduplicate pending re
   const controller={piuraSetOfficeColor:async(...args)=>{calls.push(args);return [{source:'test',ok:true}]}};
   const document={documentElement:{dataset:attributes},addEventListener:(name,fn)=>listeners[name]=fn,
     createElement:()=>({contentWindow:controller,remove(){}}),body:{append(node){node.onload()}}};
-  const context={window,document,URL,location:{href:'https://example.com/ERPNIKOLAY/'},crypto:{randomUUID:()=>String(Math.random())},performance,setTimeout,clearTimeout};
+  const context={window,document,URL,MutationObserver:class{observe(){}},location:{href:'https://example.com/ERPNIKOLAY/'},crypto:{randomUUID:()=>String(Math.random())},performance,setTimeout,clearTimeout};
   const script=read('office-modes.js');runInNewContext(script,context);
   assert.equal(calls.length,0);
   for(const [mode,color] of Object.entries({morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df'})){
@@ -30,7 +30,7 @@ test('four office colors use 100% lighting, serialize and deduplicate pending re
 });
 test('music morning skin is reversible, does not reload or toggle playback',()=>{
   const script=read('mac/resources/music-appearance.js');let element;
-  const context={PIURA_MODE:'morning',document:{body:{},getElementById:()=>element,createElement:()=>({remove(){element=undefined}}),head:{append(x){element=x}}},getComputedStyle:()=>({getPropertyValue:()=>'#fff'})};
+  const context={PIURA_MODE:'morning',document:{body:{},querySelector:()=>({}),getElementById:()=>element,createElement:()=>({remove(){element=undefined}}),head:{append(x){element=x}}},getComputedStyle:()=>({getPropertyValue:()=>'#fff',backgroundColor:'rgb(251, 253, 249)'})};
   assert.equal(JSON.parse(runInNewContext(script,context)).light,true);
   assert.match(element.textContent,/background-color:#fff/);
   context.PIURA_MODE='work';runInNewContext(script,context);assert.equal(element,undefined);

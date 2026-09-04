@@ -464,6 +464,22 @@ body[data-admin-workspace="scale"] .dyn-tabs:not(.section-tabs) .dyn-tab{justify
 #embeddedFrame{display:block;width:100%;height:100%;border:0;background:#07090e}
 body[data-admin-workspace]:not([data-admin-workspace="scale"]) .browse-mode,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .dyn-tabs,body[data-admin-workspace]:not([data-admin-workspace="scale"]) .topbar-right{display:none!important}
 @media(max-width:900px){.topbar-inner{padding-inline:10px!important}.workspace-nav button{padding-inline:9px}.dyn-tabs,.dyn-tabs.section-tabs{min-width:360px!important}.dyn-tabs .tab-name{display:none!important}}
+/* Read-only half-screen view used by the Morning dashboard. */
+body[data-admin-preview="1"]{--layout-main-pad:18px 16px 32px;--layout-base-font:15px;background:#f5f7f2!important}
+body[data-admin-preview="1"] .topbar,body[data-admin-preview="1"] .modal-overlay{display:none!important}
+body[data-admin-preview="1"] .main{max-width:none!important;padding:18px 16px 32px!important}
+body[data-admin-preview="1"] .section-overview-head{display:none!important}
+body[data-admin-preview="1"] .section-overview-grid{max-width:none!important;gap:12px!important}
+body[data-admin-preview="1"] .section-dyn-card{padding:12px!important;border-radius:18px!important;background:rgba(255,255,255,.96)!important;box-shadow:0 10px 32px rgba(28,42,24,.07)!important}
+body[data-admin-preview="1"] .section-dyn-title{padding:2px 5px 10px!important;gap:9px!important}
+body[data-admin-preview="1"] .section-dyn-title b{font-size:.9rem!important;color:#49a14b!important}
+body[data-admin-preview="1"] .section-dyn-title span{font-size:1.08rem!important;color:#243026!important}
+body[data-admin-preview="1"] .level-block{background:#fff!important;border-color:#e2e8de!important;border-radius:13px!important}
+body[data-admin-preview="1"] .items-list{padding:7px!important}
+body[data-admin-preview="1"] .item-row{min-height:38px!important;padding:7px 9px!important;font-size:.82rem!important;line-height:1.35!important;background:#f8faf6!important}
+body[data-admin-preview="1"] .item-num{font-size:.63rem!important}
+body[data-admin-preview="1"] .check-btn,body[data-admin-preview="1"] .hide-btn,body[data-admin-preview="1"] .del-btn,body[data-admin-preview="1"] .save-bar,body[data-admin-preview="1"] .add-block-btn{display:none!important}
+body[data-admin-preview="1"] .block-more{pointer-events:none}
 </style>
 </head>
 <body data-theme="dark">
@@ -716,6 +732,9 @@ body[data-admin-workspace]:not([data-admin-workspace="scale"]) .browse-mode,body
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
+const adminPreviewParams=new URLSearchParams(location.search);
+const adminPreview=adminPreviewParams.get('preview')==='1';
+if(adminPreview)document.body.dataset.adminPreview='1';
 /* ══ DYN DATA ══ */
 const DYN=[
   {id:1,name:"Я",short:"Я",def:"ПЕРВАЯ ДИНАМИКА — это САМ ЧЕЛОВЕК. Это усилие, направленное на выживание в качестве индивидуума, стремление быть индивидуумом. Эта динамика включает собственное тело и разум человека. Это стремление достичь наивысшей степени выживания для самого себя на наиболее долгий срок."},
@@ -1092,7 +1111,8 @@ function saveDynNames(a){db.__dynNames=a;persist();}
 const _origBuildTabs=buildTabs;
 
 /* ══ THEME ══ */
-let theme='dark';localStorage.setItem('adm_theme','dark');
+let theme=adminPreview&&adminPreviewParams.get('theme')==='light'?'light':'dark';
+if(!adminPreview)localStorage.setItem('adm_theme','dark');
 document.body.dataset.theme=theme;
 function syncTheme(){
   document.querySelectorAll('.theme-opt').forEach(b=>b.classList.toggle('active',b.dataset.t===theme));
@@ -1299,8 +1319,10 @@ window.addEventListener('pageshow',refreshDocs);
 
 /* ══ ACTIVE TAB ══ */
 let activeTab=1;
-let browseMode=db.__browseMode==='sections'?'sections':'dynamics';
-let activeSection=['цели','проги','планы'].includes(db.__activeSection)?db.__activeSection:'цели';
+let browseMode=adminPreview?'sections':(db.__browseMode==='sections'?'sections':'dynamics');
+let activeSection=adminPreview&&['цели','проги','планы'].includes(adminPreviewParams.get('section'))
+  ?adminPreviewParams.get('section')
+  :(['цели','проги','планы'].includes(db.__activeSection)?db.__activeSection:'цели');
 function setBrowseMode(mode){browseMode=mode;db.__browseMode=mode;persist();document.getElementById('modeDynamics').classList.toggle('active',mode==='dynamics');document.getElementById('modeSections').classList.toggle('active',mode==='sections');buildTabs();buildPanels();}
 document.getElementById('modeDynamics').addEventListener('click',()=>setBrowseMode('dynamics'));
 document.getElementById('modeSections').addEventListener('click',()=>setBrowseMode('sections'));
@@ -1616,7 +1638,7 @@ function setAdminWorkspace(view){
 }
     document.querySelectorAll('[data-workspace]').forEach(button=>button.addEventListener('click',()=>setAdminWorkspace(button.dataset.workspace)));
     window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura:cloud-data-applied')document.getElementById('embeddedFrame')?.contentWindow?.postMessage(event.data,location.origin);if(event.data?.type==='piura:firebase-token'){firebaseBridgeToken=String(event.data.token||'');if(firebaseBridgeToken)refreshDocs()}});
-    setAdminWorkspace(localStorage.getItem(ADMIN_WORKSPACE_KEY)||'scale');
+    setAdminWorkspace(adminPreview?'scale':(localStorage.getItem(ADMIN_WORKSPACE_KEY)||'scale'));
 buildTabs();
 buildPanels();
 applyDoneColors();

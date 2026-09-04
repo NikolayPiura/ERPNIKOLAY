@@ -67,10 +67,22 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
 });
 test('final screen audit forbids duplicate music windows and music in quiet modes',()=>{
   assert.match(app,/musicIDs == \[leftWindowID\] : musicIDs.isEmpty/);
+  assert.match(app,/mode == \.morning \? morningAdminPreviewURL/);
+  assert.match(app,/"morningLeftForeground":"goals-and-plans","musicHiddenBehind":true/);
   assert.match(app,/finalSideWindowsVerified/);
   const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
+});
+test('morning keeps music in the left window and shows goals with plans above it',()=>{
+  const preview=read('morning-admin-preview.html');
+  const admin=read('piura-erp-restored 3/modules/AdminScale.html');
+  assert.match(preview,/grid-template-columns:1fr 1fr/);
+  assert.match(preview,/section=%D1%86%D0%B5%D0%BB%D0%B8/);
+  assert.match(preview,/section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B/);
+  assert.match(admin,/const adminPreviewParams=new URLSearchParams\(location\.search\)/);
+  assert.match(admin,/browseMode=adminPreview\?'sections'/);
+  assert.match(admin,/body\[data-admin-preview="1"\] \.topbar/);
 });
 test('focus menu tolerates the macOS recording indicator suffix',()=>{
   assert.match(app,/\["Control Center","Do Not Disturb"\].contains\(title\)/);
