@@ -84,7 +84,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let workTableURL = "https://docs.google.com/spreadsheets/d/1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc/edit?gid=720489481#gid=720489481"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
-    private let morningAdminPreviewURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
+    private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260904a" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -670,7 +671,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set tabNumber to tabNumber + 1
             set tabURL to URL of t
             if tabURL starts with "\(musicURL)" then set musicTabNumber to tabNumber
-            if tabURL starts with "\(morningAdminPreviewURL)" then set previewTabNumber to tabNumber
+            if tabURL starts with "\(morningAdminPreviewBaseURL)" then
+              set previewTabNumber to tabNumber
+              if tabURL is not "\(morningAdminPreviewURL)" then set URL of t to "\(morningAdminPreviewURL)"
+            end if
           end repeat
           if previewTabNumber is 0 then
             make new tab at end of tabs of window id leftID with properties {URL:"\(morningAdminPreviewURL)"}
@@ -1325,7 +1329,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
               set tabNumber to 0
               repeat with t in every tab of window id \(leftWindowID)
                 set tabNumber to tabNumber + 1
-                if URL of t starts with "\(morningAdminPreviewURL)" then set previewTabNumber to tabNumber
+                if URL of t starts with "\(morningAdminPreviewBaseURL)" then set previewTabNumber to tabNumber
               end repeat
               if previewTabNumber is 0 then error "Нет вкладки целей и планов."
               set active tab index of window id \(leftWindowID) to previewTabNumber
