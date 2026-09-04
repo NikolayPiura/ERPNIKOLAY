@@ -138,7 +138,7 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /minimal-lamp \.master-toggle\{display:none!important\}/);
   assert.match(overview, /goveeControl/);
   assert.match(overview, /ELGATO_BRIDGE='http:\/\/127\.0\.0\.1:45831'/);
-  assert.match(overview, /function controlAllLights\(command,value\)/);
+  assert.match(overview, /function controlAllLights\(command,value,options=\{\}\)/);
   assert.match(overview, /elgatoLightCount/);
   assert.match(overview, /id="lampBrightness"/);
   assert.doesNotMatch(overview, /data-lamp-scene/);
@@ -225,8 +225,12 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /updated:\[\.\.\.new Set\(updated\)\]/);
   assert.match(overview, /floor lamp basic/i);
   assert.match(overview, /Date\.now\(\)-discoveredGoveeAt<300000/);
-  assert.match(overview, /Promise\.all\(\[controlLamp\('color',value\),controlLamp\('power','on'\)\]\)/);
-  assert.match(overview, /Promise\.all\(\[controlAllLights\('color',hex\),controlAllLights\('brightness',100\)\]\)/);
+  assert.match(overview, /discoveredGoveePromise&&discoveredGoveePromiseKey===key/);
+  assert.match(overview, /Promise\.all\(\[controlLamp\('color',value,goveeOptions\),controlLamp\('power','on',goveeOptions\)\]\)/);
+  assert.match(overview, /Promise\.all\(\[controlAllLights\('color',hex,\{excludePriorityGovee:direct\}\),controlAllLights\('brightness',100,\{excludePriorityGovee:direct\}\)\]\)/);
+  assert.match(overview, /FLOOR_LAMP_HEAD_START_MS=900/);
+  assert.match(overview, /controlPriorityFloorLamp\(hex,brightness\)/);
+  assert.match(overview, /excludePriorityGovee:direct/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
   assert.doesNotMatch(overview, /class="fund-goal-index"/);
