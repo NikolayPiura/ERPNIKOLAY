@@ -5,7 +5,7 @@ The dashboard is hosted over HTTPS, while the home devices expose local-network 
 Configured devices:
 
 - Elgato Light Strip Pro D026
-- 341
+- Elgato Light Strip Pro 8C54
 - TP-Link HS103 plugs 1, 2, 3 and 5
 - TP-Link HS300 strip with six individually controlled outlets (after one-time local Kasa sign-in)
 - Levoit purifier through the local Home Assistant session (power, three speeds and filter life)

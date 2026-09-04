@@ -35,7 +35,7 @@ HOST = "127.0.0.1"
 PORT = 45831
 DEVICES = (
     ("Elgato Light Strip Pro D026", "elgato-light-strip-pro-d026.local"),
-    ("341", "elgato-light-strip-pro-8c54.local"),
+    ("Elgato Light Strip Pro 8C54", "elgato-light-strip-pro-8c54.local"),
 )
 SMART_PLUGS = (
     ("1", "Основное", "192.168.4.36", "HS103"),
