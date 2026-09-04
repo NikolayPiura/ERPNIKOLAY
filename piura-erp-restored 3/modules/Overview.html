@@ -1206,7 +1206,37 @@ function updateLampPanel(){const available=lightControlAvailable(),power=documen
 async function requestLocal(base,path,options={}){const method=String(options.method||'GET').toUpperCase(),response=await fetch(base+path,{...options,method,mode:'cors',cache:'no-store',signal:method==='POST'?AbortSignal.timeout(4500):options.signal,headers:method==='POST'?{'Content-Type':'application/json',...(options.headers||{})}:options.headers}),data=await response.json();if(!response.ok||data?.ok===false)throw new Error(data?.error||'Локальное устройство недоступно');return data}
 async function requestElgato(path,options={}){const attempts=String(options.method||'GET').toUpperCase()==='POST'?2:1;let lastError;for(let attempt=0;attempt<attempts;attempt++){try{return await requestLocal(ELGATO_BRIDGE,path,options)}catch(error){lastError=error;if(error?.name==='TimeoutError'||error?.name==='AbortError')break;if(attempt+1<attempts)await new Promise(resolve=>setTimeout(resolve,180))}}throw lastError}
 async function requestSmartLife(path,options={}){return requestLocal(SMART_LIFE_BRIDGE,path,options)}
-async function controlLamp(command,value){const data=await requestGovee('goveeControl',{command,value});if(data?.ok===false)throw new Error(data.error||'Команда не выполнена');return data}
+async function controlLamp(command,value){
+ const config=goveeConfig();
+ if(config?.mode!=='direct'){
+  const data=await requestGovee('goveeControl',{command,value});
+  if(data?.ok===false)throw new Error(data.error||'Команда не выполнена');
+  return data;
+ }
+ const {sensor}=await discoverGovee();
+ const response=await goveeApi('/router/api/v1/user/devices');
+ const lights=(Array.isArray(response.data)?response.data:[]).filter(device=>{
+  const instances=(device.capabilities||[]).map(capability=>capability.instance);
+  return instances.includes('powerSwitch')&&device.device!==sensor?.device;
+ });
+ if(!lights.length)throw new Error('Лампы Govee не найдены');
+ const instance=command==='power'?'powerSwitch':command==='brightness'?'brightness':command==='kelvin'?'colorTemperatureK':'colorRgb';
+ let normalized=value;
+ if(command==='power')normalized=/^(on|1|true)$/i.test(String(value))?1:0;
+ if(command==='brightness')normalized=Math.max(1,Math.min(100,Number(value)||1));
+ if(command==='kelvin')normalized=Math.max(2000,Math.min(9000,Number(value)||4000));
+ if(command==='color')normalized=parseInt(String(value).replace('#',''),16);
+ const results=await Promise.allSettled(lights.map(light=>{
+  const capability=(light.capabilities||[]).find(cap=>cap.instance===instance);
+  if(!capability)throw new Error((light.deviceName||light.sku)+' не поддерживает '+command);
+  return goveeApi('/router/api/v1/device/control',{method:'POST',body:{requestId:crypto.randomUUID(),payload:{sku:light.sku,device:light.device,capability:{type:capability.type,instance,value:normalized}}}});
+ }));
+ const errors=results.flatMap((result,index)=>result.status==='rejected'?[{name:lights[index].deviceName||lights[index].sku,error:String(result.reason?.message||result.reason)}]:[]);
+ const updated=results.flatMap((result,index)=>result.status==='fulfilled'?[lights[index].deviceName||lights[index].sku]:[]);
+ const data={ok:errors.length===0,command,value:normalized,updated,errors};
+ if(!data.ok)throw new Error(errors.map(item=>item.name+': '+item.error).join('; '));
+ return data;
+}
 
 function renderLamp(data){goveeLightAvailable=Boolean(data?.lightAvailable);goveeLampOn=goveeLightAvailable&&Boolean(data?.power);if(goveeLightAvailable){const color=rgbHex(data?.colorRgb);if(color)selectLampColor(color);if(data?.brightness!=null)setLampBrightness(data.brightness)}updateLampPanel()}
 async function refreshElgato(){try{const data=await requestElgato('/status');elgatoLightCount=Number(data.count)||0;elgatoLampOn=elgatoLightCount>0&&Boolean(data.power);if(elgatoLightCount&&!goveeLightAvailable){if(data.colorHex)selectLampColor(data.colorHex);setLampBrightness(data.brightness??data.devices?.[0]?.brightness??currentBrightness)}}catch(error){elgatoLightCount=0;elgatoLampOn=false;console.warn('Elgato bridge',error)}updateLampPanel()}

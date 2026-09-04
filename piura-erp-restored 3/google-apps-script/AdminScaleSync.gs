@@ -163,8 +163,8 @@ function goveeOverview_() {
 
 function goveeControl_(parameter) {
   const props = PropertiesService.getScriptProperties();
-  const light = goveeSelectDevice_(goveeDevices_(), 'light', props);
-  if (!light) throw new Error('No controllable Govee light was found');
+  const lights = goveeSelectLights_(goveeDevices_(), props);
+  if (!lights.length) throw new Error('No controllable Govee light was found');
   const command = String(parameter.command || '');
   let instance, value;
   if (command === 'power') {
@@ -184,22 +184,21 @@ function goveeControl_(parameter) {
   } else {
     throw new Error('Unknown Govee command');
   }
-  const capability = (light.capabilities || []).find(function(item) { return item.instance === instance; });
-  if (!capability) throw new Error('The light does not support ' + command);
-  goveeFetch_('https://openapi.api.govee.com/router/api/v1/device/control', {
-    method: 'post',
-    contentType: 'application/json',
-    headers: {'Govee-API-Key': goveeApiKey_()},
-    payload: JSON.stringify({
-      requestId: Utilities.getUuid(),
-      payload: {
-        sku: light.sku,
-        device: light.device,
-        capability: {type: capability.type, instance: capability.instance, value: value}
-      }
-    })
+  const updated = [], errors = [];
+  lights.forEach(function(light) {
+    try {
+      const capability = (light.capabilities || []).find(function(item) { return item.instance === instance; });
+      if (!capability) throw new Error('The light does not support ' + command);
+      goveeFetch_('https://openapi.api.govee.com/router/api/v1/device/control', {
+        method: 'post', contentType: 'application/json', headers: {'Govee-API-Key': goveeApiKey_()},
+        payload: JSON.stringify({requestId: Utilities.getUuid(), payload: {sku: light.sku, device: light.device, capability: {type: capability.type, instance: capability.instance, value: value}}})
+      });
+      updated.push(light.deviceName || light.sku);
+    } catch (error) {
+      errors.push({name: light.deviceName || light.sku, error: String(error.message || error)});
+    }
   });
-  return {ok: true, command: command, value: value, updatedAt: new Date().toISOString()};
+  return {ok: errors.length === 0, command: command, value: value, updated: updated, errors: errors, updatedAt: new Date().toISOString()};
 }
 
 function goveeApiKey_() {
@@ -229,6 +228,14 @@ function goveeSelectDevice_(devices, kind, props) {
     return hasCapabilities && (!configuredDevice || configuredDevice === String(device.device || '').toUpperCase()) &&
       (!configuredSku || configuredSku === String(device.sku || '').toUpperCase());
   }) || null;
+}
+
+function goveeSelectLights_(devices, props) {
+  const sensor = goveeSelectDevice_(devices, 'sensor', props);
+  return devices.filter(function(device) {
+    const instances = (device.capabilities || []).map(function(capability) { return capability.instance; });
+    return instances.indexOf('powerSwitch') >= 0 && (!sensor || device.device !== sensor.device);
+  });
 }
 
 function goveeState_(device) {

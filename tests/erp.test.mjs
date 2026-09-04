@@ -220,6 +220,8 @@ test('обзор управляет вентилятором, очистител
   assert.doesNotMatch(overview, /id="smartHomeDevices"|id="smartHomeRefresh"|id="smartHomeAllOn"|id="smartHomeAllOff"|id="smartHomeMessage"|id="lampStatus"/);
   assert.match(overview, /temperature/);
   assert.match(overview, /humidity/);
+  assert.match(overview, /Promise\.allSettled\(lights\.map\(light=>/);
+  assert.match(overview, /updated=results\.flatMap/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
   assert.doesNotMatch(overview, /class="fund-goal-index"/);
