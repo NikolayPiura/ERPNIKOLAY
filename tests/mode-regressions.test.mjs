@@ -78,15 +78,15 @@ test('morning keeps music in the left window and shows goals with plans above it
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(preview,/grid-template-columns:1fr 1fr/);
-  assert.match(preview,/Куда направлено внимание|Что двигаем сегодня|class="mark"/);
+  assert.doesNotMatch(preview,/Куда направлено внимание|Что двигаем сегодня|class="mark"/);
   assert.match(preview,/theme=light/);
   assert.match(preview,/section=%D1%86%D0%B5%D0%BB%D0%B8/);
   assert.match(preview,/section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B/);
   assert.match(admin,/const adminPreviewParams=new URLSearchParams\(location\.search\)/);
   assert.match(admin,/browseMode=adminPreview\?'sections'/);
   assert.match(admin,/body\[data-admin-preview="1"\] \.topbar/);
-  assert.match(admin,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(admin,/grid-template-rows:repeat\(4,minmax\(0,1fr\)\)/);
+  assert.match(admin,/grid-template-columns:1fr!important/);
+  assert.match(admin,/grid-template-rows:repeat\(8,minmax\(0,1fr\)\)/);
   assert.match(admin,/body\[data-admin-preview="1"\] \.block-more\{display:none/);
 });
 test('focus menu tolerates the macOS recording indicator suffix',()=>{
