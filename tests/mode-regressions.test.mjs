@@ -78,8 +78,8 @@ test('morning keeps music in the left window and shows goals with plans above it
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(preview,/grid-template-columns:1fr 1fr/);
-  assert.doesNotMatch(preview,/Куда направлено внимание|Что двигаем сегодня|class="mark"/);
-  assert.match(preview,/theme=dark/);
+  assert.match(preview,/Куда направлено внимание|Что двигаем сегодня|class="mark"/);
+  assert.match(preview,/theme=light/);
   assert.match(preview,/section=%D1%86%D0%B5%D0%BB%D0%B8/);
   assert.match(preview,/section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B/);
   assert.match(admin,/const adminPreviewParams=new URLSearchParams\(location\.search\)/);

@@ -3,22 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#090c12">
+  <meta name="theme-color" content="#f2f5ec">
   <title>Утро · Цели и планы</title>
   <style>
     *{box-sizing:border-box}
     html,body{width:100%;height:100%;margin:0;overflow:hidden}
-    body{background:#090c12}
-    main{height:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
-    section{min-width:0;overflow:hidden;border:1px solid rgba(255,255,255,.085);border-radius:18px;background:#0d1119}
-    iframe{display:block;width:100%;height:100%;border:0;background:#090c12}
-    @media(max-width:900px){main{gap:7px;padding:7px}section{border-radius:12px}}
+    body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,sans-serif;color:#172018;background:radial-gradient(circle at 18% 0,#faffdf 0,transparent 34%),linear-gradient(135deg,#f7f9f2,#eef4e9)}
+    main{height:100%;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
+    section{min-width:0;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden;border:1px solid rgba(49,83,47,.13);border-radius:26px;background:rgba(255,255,255,.72);box-shadow:0 20px 70px rgba(30,55,25,.10);backdrop-filter:blur(18px)}
+    header{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid rgba(49,83,47,.10)}
+    .mark{display:grid;place-items:center;width:34px;height:34px;border-radius:12px;background:#b8ff70;color:#24431d;font-weight:800;box-shadow:0 7px 22px rgba(90,170,52,.22)}
+    h1{font-size:clamp(18px,1.35vw,28px);line-height:1;margin:0;letter-spacing:-.025em}
+    p{margin:5px 0 0;color:#728071;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    iframe{display:block;width:100%;height:100%;border:0;background:#f5f7f2}
+    @media(max-width:900px){main{gap:8px;padding:8px}section{border-radius:18px}header{padding:13px 14px 11px}.mark{width:30px;height:30px}p{display:none}}
   </style>
 </head>
 <body>
   <main aria-label="Утренний обзор целей и планов">
-    <section><iframe title="Цели по восьми динамикам" src="piura-erp-restored%203/modules/AdminScale.html?preview=1&amp;section=%D1%86%D0%B5%D0%BB%D0%B8&amp;theme=dark"></iframe></section>
-    <section><iframe title="Планы по восьми динамикам" src="piura-erp-restored%203/modules/AdminScale.html?preview=1&amp;section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B&amp;theme=dark"></iframe></section>
+    <section>
+      <header><span class="mark">01</span><div><h1>Цели</h1><p>Куда направлено внимание</p></div></header>
+      <iframe title="Цели по восьми динамикам" src="piura-erp-restored%203/modules/AdminScale.html?preview=1&amp;section=%D1%86%D0%B5%D0%BB%D0%B8&amp;theme=light"></iframe>
+    </section>
+    <section>
+      <header><span class="mark">02</span><div><h1>Планы</h1><p>Что двигаем сегодня</p></div></header>
+      <iframe title="Планы по восьми динамикам" src="piura-erp-restored%203/modules/AdminScale.html?preview=1&amp;section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B&amp;theme=light"></iframe>
+    </section>
   </main>
 </body>
 </html>
