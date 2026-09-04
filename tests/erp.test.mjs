@@ -222,6 +222,7 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /humidity/);
   assert.match(overview, /Promise\.allSettled\(lights\.map\(light=>/);
   assert.match(overview, /updated=results\.flatMap/);
+  assert.match(overview, /updated:\[\.\.\.new Set\(updated\)\]/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
   assert.doesNotMatch(overview, /class="fund-goal-index"/);
