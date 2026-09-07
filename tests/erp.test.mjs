@@ -284,9 +284,9 @@ test('ПС №1 сохраняет старые данные при миграц
 test('ПС №1 оставляет по одному действию в динамиках 4–6 и сохраняет старые отметки', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
   for (const id of [401,501,602]) {
-    assert.match(weekly, new RegExp(`\\[${id},[456],'Сделана добрая идея, сделано доброе дело',300\\]`));
+    assert.match(weekly, new RegExp(`\\[${id},[456],'Сделано доброе дело',300\\]`));
   }
-  assert.match(weekly, /TASKS_VERSION=6/);
+  assert.match(weekly, /TASKS_VERSION=7/);
   assert.match(weekly, /mergeCurrentTask\(401,\[404\]\)/);
   assert.match(weekly, /mergeCurrentTask\(501,\[502\]\)/);
   assert.match(weekly, /mergeCurrentTask\(602,\[603,604\]\)/);
@@ -469,13 +469,15 @@ test('ПС №1 использует один дневной или недель
   assert.equal(dynamics.length,8);
   assert.deepEqual(dynamics.map(match=>match[2]),['Я','Семья','Группа','Человечество','Жизнь','Вселенная','Духовное','Бесконечность']);
   assert.equal(tasks.length,19);
-  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),2935);
+  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),2945);
   assert.equal(tasks.find(task=>task.name==='Сессия')?.weight,75);
+  assert.equal(tasks.find(task=>task.name==='Обучение (пара, инвестиции, наставничество, заочное или очное)')?.weight,20);
+  assert.equal(tasks.find(task=>task.name==='Все встречи проведены в тайминге')?.weight,70);
   assert.equal(tasks.find(task=>task.name==='День без расстройств')?.weight,200);
   assert.equal(tasks.find(task=>task.name==='Описана тэта')?.weight,1000);
   assert.equal(tasks.find(task=>task.name==='Хорошо сделан кайдзен-час')?.weight,20);
   assert.equal(tasks.find(task=>task.name==='Все задачи предыдущего дня')?.weight,70);
-  assert.equal(tasks.filter(task=>task.name==='Сделана добрая идея, сделано доброе дело'&&task.weight===300).length,3);
+  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===300).length,3);
   assert.equal(tasks.find(task=>task.name==='Выполнен пункт этического плана')?.weight,300);
   assert.ok(tasks.some(task=>task.name==='Личная гигиена, душ, зубы, витамины'));
   assert.ok(tasks.some(task=>task.name==='Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов'));
@@ -553,7 +555,7 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="scoreLine"/);
   assert.match(weekly, /'#35d8f5'/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=16,DYNAMICS_VERSION=1,TASKS_VERSION=6,WEEK_CYCLE_VERSION=3/);
+  assert.match(weekly, /SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=7,WEEK_CYCLE_VERSION=3/);
   assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,404,502,601,603,604,703\]/);
   assert.match(weekly, /if\(needsTaskMigration\)migrateTaskCatalog\(\)/);
   assert.match(weekly, /function mergeCurrentTask\(canonicalId,legacyIds\)/);
