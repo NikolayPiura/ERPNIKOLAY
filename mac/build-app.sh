@@ -13,6 +13,7 @@ cp "$REPO_DIR/work-modes.css" "$REPO_DIR/work-modes.js" "$APP_DIR/Contents/Resou
 cp "$REPO_DIR/communication-policy.html" "$APP_DIR/Contents/Resources/communication-policy.html"
 cp "$SCRIPT_DIR"/resources/*.png "$APP_DIR/Contents/Resources/"
 cp "$SCRIPT_DIR"/resources/music-appearance.js "$APP_DIR/Contents/Resources/"
+cp "$SCRIPT_DIR"/resources/yandex-music-action.js "$APP_DIR/Contents/Resources/"
 
 /usr/bin/swiftc \
   "$SCRIPT_DIR/PIURAModes.swift" \

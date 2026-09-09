@@ -1,6 +1,7 @@
 import Cocoa
 import ApplicationServices
 import WebKit
+import Darwin
 
 private enum WorkMode: String {
     case morning, work, learning, mentorship
@@ -79,6 +80,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var erpWindowID = 0
     private var leftWindowID = -1
     private var yandexWindowCache: [Int:AXUIElement] = [:]
+    private var yandexMusicExtensionButton: AXUIElement?
     private var isModeRunning = false
     private var isPreviewRun = false
     private var verifiedWindows: [[String: Any]] = []
@@ -292,9 +294,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 self.performMusicCommand(next, id: nextID)
                 return
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                if !self.isModeRunning && !self.remoteCommandRunning && self.requestID == id { NSApp.terminate(nil) }
-            }
+            // Stay resident as an accessory after the first command. Subsequent
+            // Play/Pause presses then reuse the same native bridge instead of
+            // cold-launching another process, while no window or Dock icon is shown.
         }
     }
     private func writeMusicReport(_ payload: [String: Any]) {
@@ -306,6 +308,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func controlYandexMusic(_ command: String) throws -> [String: Any] {
+        try repairYandexMusicExtension()
         guard try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) != nil else {
             throw modeError("Яндекс Браузер не найден.")
         }
@@ -362,7 +365,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           let apiPlaying=null,track=null;
           try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying();if(typeof api?.getCurrentTrack==='function')track=api.getCurrentTrack()}catch{}
           /* Yandex Media Session may lag behind its global player button. */
-          const playing=apiPlaying??(mediaPlaying||sessionState==='playing'||!!pause&&!play);
+          const playing=apiPlaying??(globalButtons.length?!!pause&&!play:(mediaPlaying||sessionState==='playing'));
           const metadata=navigator.mediaSession?.metadata;
           const trackArtists=Array.isArray(track?.artists)?track.artists.map(item=>item?.title||item?.name||'').filter(Boolean).join(', '):'';
           const artist=(trackArtists||metadata?.artist||'').trim();
@@ -409,7 +412,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           const api=window.externalAPI;
           let apiPlaying=null;
           try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying()}catch{}
-          const playing=apiPlaying??(media.some(item=>!item.paused&&!item.ended)||sessionState==='playing'||!!pause&&!play);
+          const playing=apiPlaying??(globalButtons.length?!!pause&&!play:(media.some(item=>!item.paused&&!item.ended)||sessionState==='playing'));
           try{
             if(action==='toggle'&&typeof api?.togglePause==='function'){api.togglePause();return JSON.stringify({clicked:true,mechanism:'externalAPI',expectedState:playing?'paused':'playing'})}
             if(action==='next'&&typeof api?.next==='function'){api.next();return JSON.stringify({clicked:true,mechanism:'externalAPI'})}
@@ -429,7 +432,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if action["mechanism"] as? String == "accessibility" {
             try pressYandexMusicAccessibility(windowID: windowID, tabNumber: tabNumber, command: command, wasPlaying: before["state"] as? String == "playing")
         }
-        pumpRunLoop(command == "toggle" ? 0.55 : 0.7)
+        pumpRunLoop(0.15)
         var result = before
         let expectedState = action["expectedState"] as? String
         if let data = try? execute(readState).data(using: .utf8),
@@ -451,6 +454,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             // attached its handler. Retry only while the observed state is still
             // unchanged, so an already successful Play can never be toggled back.
             attempts = 2
+            yandexMusicExtensionButton = nil
             try pressYandexMusicAccessibility(
                 windowID: windowID,
                 tabNumber: tabNumber,
@@ -488,8 +492,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           if(!buttons.length)return JSON.stringify({ready:false,reason:'global-controls-missing'});
           const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'};
           const label=button=>(button.getAttribute('aria-label')||button.title||'').trim().toLowerCase();
-          const words=\(command == "toggle" ? (wasPlaying ? "['пауза','pause']" : "['воспроиз','play']") : (command == "next" ? "['следующ','next']" : "['предыдущ','previous']"));
-          const target=buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
+          const words=\(command == "next" ? "['следующ','next']" : "['предыдущ','previous']");
+          const target=\(command == "toggle" ? "buttons.find(button=>visible(button)&&String(button.className||'').includes('VibePlayerControls_playButton'))" : "buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)))");
           if(!target)return JSON.stringify({ready:false,reason:'global-button-missing',labels:buttons.filter(visible).map(label)});
           target.dataset.piuraMusicTarget='true';
           target.dataset.piuraOriginalAria=target.getAttribute('aria-label')||'';
@@ -507,40 +511,113 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           target.removeAttribute('data-piura-music-target');
           delete target.dataset.piuraOriginalAria;
           if(current==='\(marker)'){
-            const restored=\(command == "toggle" ? (wasPlaying ? "'Воспроизведение'" : "'Пауза'") : "original");
-            if(restored)target.setAttribute('aria-label',restored);else target.removeAttribute('aria-label');
+            if(original)target.setAttribute('aria-label',original);else target.removeAttribute('aria-label');
           }
           return 'clean';
         })()
         """
+        _ = try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"document.documentElement.setAttribute('data-piura-music-command','\(command)')\"")
+        if ["toggle", "next", "previous"].contains(command),
+           let cached = yandexMusicExtensionButton,
+           AXUIElementPerformAction(cached, kAXPressAction as CFString) == .success {
+            pumpRunLoop(0.1)
+            return
+        }
+        yandexMusicExtensionButton = nil
+        // Chromium only exposes a trusted AXPress target while its player window
+        // is a normal front window. Keep every already-visible Yandex window at
+        // the screen-saver layer for the few hundred milliseconds required by
+        // AXPress: the ERP stays pixel-for-pixel unchanged while the hidden
+        // player becomes frontmost underneath it.
+        let frozenWindows = elevateVisibleYandexWindows()
+        guard !frozenWindows.isEmpty else {
+            throw modeError("Не удалось скрыто подготовить управление плеером.")
+        }
+        var levelsRestored = false
+        var invisibleMusicWindowID: UInt32?
+        defer {
+            if let invisibleMusicWindowID { _ = setSkyLightWindowAlpha(invisibleMusicWindowID, 1) }
+            if !levelsRestored { restoreYandexWindowLevels(frozenWindows) }
+        }
+        pumpRunLoop(0.05)
         let preparation = try runAppleScript("""
         tell application "Yandex"
           set frontID to id of front window
-          set wasMini to minimized of window id \(windowID)
+          set oldBounds to bounds of window id \(windowID)
           set minimized of window id \(windowID) to false
           set active tab index of window id \(windowID) to \(tabNumber)
           set index of window id \(windowID) to 1
           activate
-          return (frontID as text) & "," & (wasMini as text)
+          return (frontID as text) & "," & (item 1 of oldBounds as text) & "," & (item 2 of oldBounds as text) & "," & (item 3 of oldBounds as text) & "," & (item 4 of oldBounds as text)
         end tell
         """)
         let values = preparation.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        let frontID = values.first.flatMap(Int.init)
-        let wasMinimized = values.count > 1 && values[1] == "true"
-        var raised = true
+        guard values.count == 5, let frontID = Int(values[0]),
+              let x1 = Int(values[1]), let y1 = Int(values[2]),
+              let x2 = Int(values[3]), let y2 = Int(values[4]) else {
+            _ = try? runAppleScript("tell application \"Yandex\" to set minimized of window id \(windowID) to true")
+            throw modeError("Не удалось подготовить скрытый плеер.")
+        }
+        let existingWindowIDs = Set(frozenWindows.map(\.windowID))
+        guard let musicWindowID = visibleYandexWindowIDs().first(where: { !existingWindowIDs.contains($0) }),
+              setSkyLightWindowAlpha(musicWindowID, 0.001) else {
+            _ = try? runAppleScript("tell application \"Yandex\" to set minimized of window id \(windowID) to true")
+            throw modeError("Не удалось сделать плеер невидимым.")
+        }
+        invisibleMusicWindowID = musicWindowID
+        // The player is now frontmost and compositor-visible to Chromium. A
+        // 0.1% alpha keeps Chromium's trusted control live,
+        // while the user continues to see the ERP immediately below unchanged.
+        restoreYandexWindowLevels(frozenWindows)
+        levelsRestored = true
+        pumpRunLoop(0.05)
         defer {
             _ = try? runAppleScript("""
             tell application "Yandex"
               try
                 execute tab \(tabNumber) of window id \(windowID) javascript "\(appleScriptEscape(cleanupControl))"
               end try
-              if \(wasMinimized ? "true" : "false") then set minimized of window id \(windowID) to true
-              \(frontID.map { "if exists window id \($0) then set index of window id \($0) to 1" } ?? "")
-              if \(raised ? "true" : "false") then activate
+              set minimized of window id \(windowID) to true
+              set bounds of window id \(windowID) to {\(x1), \(y1), \(x2), \(y2)}
+              if exists window id \(frontID) then set index of window id \(frontID) to 1
+              activate
             end tell
             """)
         }
         let root = AXUIElementCreateApplication(yandex.processIdentifier)
+        AXUIElementSetMessagingTimeout(root, 1)
+        if ["toggle", "next", "previous"].contains(command) {
+            let extensionTitle = "play/pause button for yandex music"
+            var rawWindows: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &rawWindows)
+            let stop = Date().addingTimeInterval(3)
+            var queue = (rawWindows as? [AXUIElement] ?? []).map { ($0, 0) }, visited = 0
+            while !queue.isEmpty, visited < 8_000, Date() < stop {
+                let (element, depth) = queue.removeFirst(); visited += 1
+                let searchable = [kAXTitleAttribute, kAXDescriptionAttribute, kAXHelpAttribute]
+                    .map { axString(element, $0).lowercased() }.joined(separator: " ")
+                let extensionStateTitles = ["play", "pause", "воспроизведение", "пауза"]
+                let compactTitle = searchable.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+                let isExtensionControl = searchable.contains(extensionTitle)
+                    || extensionStateTitles.contains(where: { compactTitle == $0 || compactTitle.hasPrefix($0 + " ") })
+                if isExtensionControl {
+                    guard AXUIElementPerformAction(element, kAXPressAction as CFString) == .success else {
+                        throw modeError("Скрытая кнопка Play/Pause недоступна.")
+                    }
+                    yandexMusicExtensionButton = element
+                    pumpRunLoop(0.1)
+                    return
+                }
+                let role = axString(element, kAXRoleAttribute)
+                guard depth < 14, role != "AXWebArea", role != kAXScrollAreaRole else { continue }
+                var rawChildren: CFTypeRef?
+                if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &rawChildren) == .success,
+                   let children = rawChildren as? [AXUIElement] {
+                    queue.append(contentsOf: children.map { ($0, depth + 1) })
+                }
+            }
+            throw modeError("Не найдена скрытая кнопка Play/Pause Яндекс Музыки.")
+        }
         func deepMatch(in candidate: AXUIElement, until stop: Date) -> AXUIElement? {
             var queue: [(AXUIElement, Int)] = [(candidate, 0)], visited = 0
             while !queue.isEmpty, visited < 12_000, Date() < stop {
@@ -585,24 +662,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 button = candidate
             }
         }
-        if button == nil { button = findPlayerButton(1.8) }
-        if button == nil {
-            _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")
-            raised = true
-            pumpRunLoop(0.3)
-            button = findPlayerButton(2.8)
-        }
+        if button == nil { button = findPlayerButton(2.8) }
         guard let button else { throw modeError("Не найдена точная кнопка «\(expectedLabel)» в живом плеере.") }
         if AXUIElementPerformAction(button, kAXPressAction as CFString) != .success {
-            guard let frame = windowRect(button), frame.width > 1, frame.height > 1 else {
-                throw modeError("Кнопка «\(expectedLabel)» недоступна для нажатия.")
-            }
-            if !raised {
-                _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")
-                raised = true
-                pumpRunLoop(0.25)
-            }
-            postPointerClick(at: CGPoint(x: frame.midX, y: frame.midY))
+            throw modeError("Скрытая кнопка «\(expectedLabel)» недоступна для нажатия.")
         }
         pumpRunLoop(0.45)
     }
@@ -1860,6 +1923,78 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func pumpRunLoop(_ seconds: TimeInterval) {
         if Thread.isMainThread { RunLoop.current.run(until: Date().addingTimeInterval(seconds)) }
         else { Thread.sleep(forTimeInterval: seconds) }
+    }
+    private typealias WindowLevelRecord = (windowID: UInt32, level: Int32)
+    private typealias SkyLightMainConnection = @convention(c) () -> UInt32
+    private typealias SkyLightSetWindowLevel = @convention(c) (UInt32, UInt32, Int32) -> Int32
+    private typealias SkyLightSetWindowAlpha = @convention(c) (UInt32, UInt32, Float) -> Int32
+    private func withSkyLight(_ operation: (UInt32, SkyLightSetWindowLevel) -> Void) {
+        guard let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_NOW),
+              let mainSymbol = dlsym(handle, "SLSMainConnectionID"),
+              let levelSymbol = dlsym(handle, "SLSSetWindowLevel") else { return }
+        defer { dlclose(handle) }
+        let main = unsafeBitCast(mainSymbol, to: SkyLightMainConnection.self)
+        let setLevel = unsafeBitCast(levelSymbol, to: SkyLightSetWindowLevel.self)
+        operation(main(), setLevel)
+    }
+    private func elevateVisibleYandexWindows() -> [WindowLevelRecord] {
+        let candidates = visibleYandexWindowRecords()
+        var elevated: [WindowLevelRecord] = []
+        withSkyLight { connection, setLevel in
+            for candidate in candidates where setLevel(connection, candidate.windowID, Int32(NSWindow.Level.screenSaver.rawValue)) == 0 {
+                elevated.append(candidate)
+            }
+        }
+        return elevated
+    }
+    private func visibleYandexWindowRecords() -> [WindowLevelRecord] {
+        guard let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated }),
+              let rows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else { return [] }
+        return rows.compactMap { row in
+            guard (row[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == yandex.processIdentifier,
+                  (row[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 0 > 0,
+                  let boundsValue = row[kCGWindowBounds as String] as CFTypeRef?,
+                  CFGetTypeID(boundsValue) == CFDictionaryGetTypeID(),
+                  let bounds = CGRect(dictionaryRepresentation: boundsValue as! CFDictionary),
+                  bounds.width * bounds.height > 100_000,
+                  let windowID = (row[kCGWindowNumber as String] as? NSNumber)?.uint32Value else { return nil }
+            return (windowID, (row[kCGWindowLayer as String] as? NSNumber)?.int32Value ?? 0)
+        }
+    }
+    private func visibleYandexWindowIDs() -> [UInt32] { visibleYandexWindowRecords().map(\.windowID) }
+    private func setSkyLightWindowAlpha(_ windowID: UInt32, _ alpha: Float) -> Bool {
+        guard let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_NOW),
+              let mainSymbol = dlsym(handle, "SLSMainConnectionID"),
+              let alphaSymbol = dlsym(handle, "SLSSetWindowAlpha") else { return false }
+        defer { dlclose(handle) }
+        let main = unsafeBitCast(mainSymbol, to: SkyLightMainConnection.self)
+        let setAlpha = unsafeBitCast(alphaSymbol, to: SkyLightSetWindowAlpha.self)
+        return setAlpha(main(), windowID, alpha) == 0
+    }
+    private func restoreYandexWindowLevels(_ records: [WindowLevelRecord]) {
+        withSkyLight { connection, setLevel in
+            for record in records { _ = setLevel(connection, record.windowID, record.level) }
+        }
+    }
+    private func repairYandexMusicExtension() throws {
+        guard let bridgeURL = Bundle.main.url(forResource: "yandex-music-action", withExtension: "js"),
+              let bridge = try? String(contentsOf: bridgeURL, encoding: .utf8) else {
+            throw modeError("В приложении отсутствует мост Яндекс Музыки.")
+        }
+        let extensions = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/Yandex/YandexBrowser/Default/Extensions/ofiimbenfigghacebjfkihnklgifkcnh", isDirectory: true)
+        let versions = (try? FileManager.default.contentsOfDirectory(at: extensions, includingPropertiesForKeys: nil)) ?? []
+        guard let actionURL = versions.sorted(by: { $0.lastPathComponent > $1.lastPathComponent })
+            .map({ $0.appendingPathComponent("action-play.js") })
+            .first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
+            throw modeError("Не найден установленный контроллер Яндекс Музыки.")
+        }
+        let installed = (try? String(contentsOf: actionURL, encoding: .utf8)) ?? ""
+        if installed.contains("data-piura-music-command") && installed.contains("VibePlayerControls_playButton") { return }
+        guard installed.contains("BaseSonataControlsDesktop_sonataButton__GbwFt") else {
+            throw modeError("Контроллер Яндекс Музыки обновился и требует проверки совместимости.")
+        }
+        try bridge.write(to: actionURL, atomically: true, encoding: .utf8)
     }
     private func modeError(_ message: String) -> NSError { NSError(domain: "PIURAModes", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
     private func appleScriptEscape(_ value: String) -> String {

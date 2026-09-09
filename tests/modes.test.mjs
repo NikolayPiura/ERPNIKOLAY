@@ -139,7 +139,19 @@ test('ERP music card controls a hidden authorized Yandex tab and owns no display
   assert.match(app,/mechanism:'accessibility'/);
   assert.match(app,/includes\('VibePlayerControls_'\)/);
   assert.match(app,/PIURA-PLAYER-/);
-  assert.match(app,/sessionState==='playing'\|\|!!pause&&!play/);
+  assert.match(app,/globalButtons\.length\?!!pause&&!play/);
+  assert.match(app,/play\/pause button for yandex music/);
+  assert.match(app,/data-piura-music-command/);
+  assert.match(app,/repairYandexMusicExtension\(\)/);
+  assert.match(read('mac/resources/yandex-music-action.js'),/VibePlayerControls_playButton/);
+  const hiddenPress=app.slice(app.indexOf('private func pressYandexMusicAccessibility'),app.indexOf('private func deliverMusicResult'));
+  assert.ok(hiddenPress.indexOf('elevateVisibleYandexWindows()')<hiddenPress.indexOf('set minimized of window id \\(windowID) to false'));
+  assert.ok(hiddenPress.indexOf('set index of window id \\(windowID) to 1')>hiddenPress.indexOf('set minimized of window id \\(windowID) to false'));
+  assert.ok(hiddenPress.includes('set minimized of window id \\(windowID) to true'));
+  assert.match(app,/SLSSetWindowLevel/);
+  assert.match(app,/SLSSetWindowAlpha/);
+  assert.match(app,/setSkyLightWindowAlpha\(musicWindowID, 0\.001\)/);
+  assert.match(app,/NSWindow\.Level\.screenSaver\.rawValue/);
   assert.doesNotMatch(app,/state:\(navigator\.mediaSession\?\.playbackState==='playing'\|\|!!pause\)/);
 });
 
