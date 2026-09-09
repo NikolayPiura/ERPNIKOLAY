@@ -132,7 +132,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let id = components?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
         if host == "music" {
-            let command = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "toggle"
+            let action = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "toggle"
+            let value = components?.queryItems?.first(where: { $0.name == "value" })?.value
+            let command = action == "volume" ? "volume:\(value ?? "50")" : action
             requestID = id
             guard launchConfigured else { pendingMusicCommand = (command, id); return }
             performMusicCommand(command, id: id)
@@ -208,7 +210,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "piura", let body = message.body as? [String: Any] else { return }
         if body["action"] as? String == "music" {
-            performMusicCommand(body["command"] as? String ?? "toggle", id: body["requestID"] as? String ?? UUID().uuidString)
+            let action = body["command"] as? String ?? "toggle"
+            let value = (body["value"] as? NSNumber)?.intValue
+            let command = action == "volume" ? "volume:\(value ?? 50)" : action
+            performMusicCommand(command, id: body["requestID"] as? String ?? UUID().uuidString)
             return
         }
         guard let raw = body["mode"] as? String, let mode = WorkMode.resolve(raw) else { return }
@@ -255,8 +260,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func performMusicCommand(_ command: String, id: String) {
-        let allowed = ["toggle", "next", "previous"]
-        guard allowed.contains(command) else {
+        let isVolume = command.hasPrefix("volume:") && Int(command.dropFirst("volume:".count)).map { (0...100).contains($0) } == true
+        let allowed = ["toggle", "next", "previous", "status"]
+        guard allowed.contains(command) || isVolume else {
             deliverMusicResult(["ok":false,"message":"Неизвестная команда музыки.","requestID":id])
             return
         }
@@ -278,6 +284,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 payload = ["ok":false,"message":error.localizedDescription]
             }
             payload["requestID"] = id
+            self.writeMusicReport(payload)
             self.deliverMusicResult(payload)
             self.remoteCommandRunning = false
             if let (next, nextID) = self.pendingMusicCommand {
@@ -288,6 +295,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
                 if !self.isModeRunning && !self.remoteCommandRunning && self.requestID == id { NSApp.terminate(nil) }
             }
+        }
+    }
+    private func writeMusicReport(_ payload: [String: Any]) {
+        let allowed = ["ok", "message", "state", "command", "volume", "requestID", "hiddenWindowCreated", "diagnostic", "artist", "title"]
+        let report = payload.filter { allowed.contains($0.key) }
+        try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
+        if let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
+            try? data.write(to: supportDirectory.appendingPathComponent("last-music.json"), options: .atomic)
         }
     }
     private func controlYandexMusic(_ command: String) throws -> [String: Any] {
@@ -334,12 +349,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let readState = """
         (() => {
           const buttons=[...document.querySelectorAll('button')];
-          const label=b=>(b.getAttribute('aria-label')||b.title||'').toLowerCase();
-          const find=words=>buttons.find(b=>words.some(word=>label(b).includes(word)));
-          const play=find(['воспроиз','play']), pause=find(['пауза','pause']);
+          const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none'};
+          const label=button=>(button.getAttribute('aria-label')||button.title||'').toLowerCase();
+          const find=words=>buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
+          const play=find(['воспроиз','play']),pause=find(['пауза','pause']);
+          const media=[...document.querySelectorAll('audio,video')];
+          const mediaPlaying=media.some(item=>!item.paused&&!item.ended);
+          const sessionState=navigator.mediaSession?.playbackState;
+          const api=window.externalAPI;
+          let apiPlaying=null,track=null;
+          try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying();if(typeof api?.getCurrentTrack==='function')track=api.getCurrentTrack()}catch{}
+          const playing=apiPlaying??(mediaPlaying||sessionState==='playing'||(sessionState!=='paused'&&!!pause&&!play));
           const metadata=navigator.mediaSession?.metadata;
-          const clean=(document.title||'').replace(/\\s*[—–-]\\s*Яндекс Музыка.*$/i,'').trim();
-          return JSON.stringify({ready:!!(play||pause),state:(navigator.mediaSession?.playbackState==='playing'||!!pause)?'playing':'paused',title:metadata?.title||clean||'Моя музыка',artist:metadata?.artist||'Яндекс Музыка'});
+          const trackArtists=Array.isArray(track?.artists)?track.artists.map(item=>item?.title||item?.name||'').filter(Boolean).join(', '):'';
+          const artist=(trackArtists||metadata?.artist||'').trim();
+          const usefulArtist=artist&&!/яндекс|yandex/i.test(artist)?artist:'Исполнитель';
+          const externalMethods=['isPlaying','togglePause','play','pause','next','prev','getCurrentTrack'].filter(name=>typeof api?.[name]==='function');
+          const result={ready:!!(externalMethods.length||play||pause||media.length),state:playing?'playing':'paused',title:track?.title||metadata?.title||'',artist:usefulArtist};
+          if('\(command)'==='status')result.diagnostic={controls:buttons.filter(visible).map(button=>({label:label(button),className:String(button.className||''),testid:button.getAttribute('data-testid')||''})).filter(item=>/воспроиз|play|пауза|pause|следующ|next|предыдущ|previous/.test(item.label)).slice(0,20),media:media.map(item=>({paused:item.paused,ended:item.ended,readyState:item.readyState,muted:item.muted,volume:item.volume})),sessionState:sessionState||'',externalMethods};
+          return JSON.stringify(result);
         })()
         """
         var state: [String: Any]?
@@ -350,33 +378,159 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                value["ready"] as? Bool == true { state = value; break }
             pumpRunLoop(0.35)
         } while Date() < readyDeadline
-        guard let before = state else { throw modeError("Яндекс Музыка ещё не загрузила плеер.") }
+        guard var before = state else { throw modeError("Яндекс Музыка ещё не загрузила плеер.") }
+        let requestedVolume = command.hasPrefix("volume:") ? Int(command.dropFirst("volume:".count)) : nil
+        if let requestedVolume {
+            _ = try runNativeAppleScript("set volume output volume \(requestedVolume)")
+        }
+        let outputVolume = Int((try? runNativeAppleScript("get output volume of (get volume settings)")) ?? "") ?? requestedVolume ?? 50
+        before["volume"] = outputVolume
+        if command == "status" || requestedVolume != nil {
+            before.removeValue(forKey: "ready")
+            before["command"] = command
+            before["hiddenWindowCreated"] = parts[2] == "true"
+            return before
+        }
         let actionScript = """
         (() => {
           const action='\(command)';
           const buttons=[...document.querySelectorAll('button')];
-          const label=b=>(b.getAttribute('aria-label')||b.title||'').toLowerCase();
-          const find=words=>buttons.find(b=>words.some(word=>label(b).includes(word)));
-          const pause=find(['пауза','pause']), play=find(['воспроиз','play']);
-          const playing=navigator.mediaSession?.playbackState==='playing'||!!pause;
+          const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none'};
+          const label=button=>(button.getAttribute('aria-label')||button.title||'').toLowerCase();
+          const find=words=>buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
+          const pause=find(['пауза','pause']),play=find(['воспроиз','play']);
+          const media=[...document.querySelectorAll('audio,video')];
+          const sessionState=navigator.mediaSession?.playbackState;
+          const api=window.externalAPI;
+          let apiPlaying=null;
+          try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying()}catch{}
+          const playing=apiPlaying??(media.some(item=>!item.paused&&!item.ended)||sessionState==='playing'||(sessionState!=='paused'&&!!pause&&!play));
+          try{
+            if(action==='toggle'&&typeof api?.togglePause==='function'){api.togglePause();return JSON.stringify({clicked:true,mechanism:'externalAPI',expectedState:playing?'paused':'playing'})}
+            if(action==='next'&&typeof api?.next==='function'){api.next();return JSON.stringify({clicked:true,mechanism:'externalAPI'})}
+            if(action==='previous'&&typeof api?.prev==='function'){api.prev();return JSON.stringify({clicked:true,mechanism:'externalAPI'})}
+          }catch{}
           const target=action==='toggle'?(playing?pause:play):(action==='next'?find(['следующ','next']):find(['предыдущ','previous']));
           if(!target)return JSON.stringify({clicked:false});
-          target.click();
-          return JSON.stringify({clicked:true,expectedState:action==='toggle'?(playing?'paused':'playing'):(playing?'playing':'paused')});
+          return JSON.stringify({clicked:true,mechanism:'accessibility',expectedState:action==='toggle'?(playing?'paused':'playing'):null});
         })()
         """
         guard let actionData = try execute(actionScript).data(using: .utf8),
               let action = try? JSONSerialization.jsonObject(with: actionData) as? [String: Any],
               action["clicked"] as? Bool == true else { throw modeError("Кнопка плеера Яндекс Музыки не найдена.") }
-        pumpRunLoop(command == "toggle" ? 0.35 : 0.7)
+        if command == "toggle", before["state"] as? String == "paused" {
+            _ = try? runNativeAppleScript("set volume without output muted")
+        }
+        if action["mechanism"] as? String == "accessibility" {
+            try pressYandexMusicAccessibility(windowID: windowID, tabNumber: tabNumber, command: command, wasPlaying: before["state"] as? String == "playing")
+        }
+        pumpRunLoop(command == "toggle" ? 0.55 : 0.7)
         var result = before
+        let expectedState = action["expectedState"] as? String
         if let data = try? execute(readState).data(using: .utf8),
-           let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { result = updated }
-        if let expected = action["expectedState"] { result["state"] = expected }
+           let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            result = updated
+        }
+        let confirmationDeadline = Date().addingTimeInterval(command == "toggle" ? 4.5 : 0.1)
+        repeat {
+            if let data = try? execute(readState).data(using: .utf8),
+               let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { result = updated }
+            if expectedState == nil || result["state"] as? String == expectedState { break }
+            pumpRunLoop(0.35)
+        } while Date() < confirmationDeadline
+        if let expectedState, result["state"] as? String != expectedState {
+            throw modeError(expectedState == "playing" ? "Яндекс Музыка не подтвердила запуск." : "Яндекс Музыка не подтвердила паузу.")
+        }
         result.removeValue(forKey: "ready")
         result["command"] = command
+        result["volume"] = outputVolume
         result["hiddenWindowCreated"] = parts[2] == "true"
         return result
+    }
+    private func pressYandexMusicAccessibility(windowID: Int, tabNumber: Int, command: String, wasPlaying: Bool) throws {
+        guard let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) else {
+            throw modeError("Яндекс Браузер не найден для управления плеером.")
+        }
+        let label: String
+        switch command {
+        case "toggle": label = wasPlaying ? "Пауза" : "Воспроизведение"
+        case "next": label = "Следующая песня"
+        case "previous": label = "Предыдущая песня"
+        default: throw modeError("Неизвестная команда плеера.")
+        }
+        let preparation = try runAppleScript("""
+        tell application "Yandex"
+          set frontID to id of front window
+          set wasMini to minimized of window id \(windowID)
+          set minimized of window id \(windowID) to false
+          set active tab index of window id \(windowID) to \(tabNumber)
+          return (frontID as text) & "," & (wasMini as text)
+        end tell
+        """)
+        let values = preparation.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        let frontID = values.first.flatMap(Int.init)
+        let wasMinimized = values.count > 1 && values[1] == "true"
+        var raised = false
+        defer {
+            _ = try? runAppleScript("""
+            tell application "Yandex"
+              if \(wasMinimized ? "true" : "false") then set minimized of window id \(windowID) to true
+              \(frontID.map { "if exists window id \($0) then set index of window id \($0) to 1" } ?? "")
+              if \(raised ? "true" : "false") then activate
+            end tell
+            """)
+        }
+        let root = AXUIElementCreateApplication(yandex.processIdentifier)
+        func deepMatch(in candidate: AXUIElement, until stop: Date) -> AXUIElement? {
+            var queue: [(AXUIElement, Int)] = [(candidate, 0)], visited = 0
+            while !queue.isEmpty, visited < 12_000, Date() < stop {
+                let (element, depth) = queue.removeFirst(); visited += 1
+                for attribute in [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute] {
+                    let value = axString(element, attribute)
+                    if value.caseInsensitiveCompare(label) == .orderedSame { return element }
+                }
+                guard depth < 20 else { continue }
+                var rawChildren: CFTypeRef?
+                if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &rawChildren) == .success,
+                   let children = rawChildren as? [AXUIElement] { queue.append(contentsOf: children.map { ($0, depth + 1) }) }
+            }
+            return nil
+        }
+        func findPlayerButton(_ timeout: TimeInterval) -> AXUIElement? {
+            var rawWindows: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &rawWindows)
+            let windows = (rawWindows as? [AXUIElement] ?? []).sorted {
+                let left = axString($0, kAXTitleAttribute).lowercased().contains("яндекс музыка")
+                let right = axString($1, kAXTitleAttribute).lowercased().contains("яндекс музыка")
+                return left && !right
+            }
+            let stop = Date().addingTimeInterval(timeout)
+            for candidate in windows {
+                if let match = deepMatch(in: candidate, until: stop) { return match }
+            }
+            return nil
+        }
+        pumpRunLoop(0.25)
+        var button = findPlayerButton(1.2)
+        if button == nil {
+            _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")
+            raised = true
+            pumpRunLoop(0.35)
+            button = findPlayerButton(2.4)
+        }
+        guard let button else { throw modeError("Не найдена кнопка «\(label)» в живом плеере.") }
+        if AXUIElementPerformAction(button, kAXPressAction as CFString) != .success {
+            guard let frame = windowRect(button), frame.width > 1, frame.height > 1 else {
+                throw modeError("Кнопка «\(label)» недоступна для нажатия.")
+            }
+            if !raised {
+                _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")
+                raised = true
+                pumpRunLoop(0.25)
+            }
+            postPointerClick(at: CGPoint(x: frame.midX, y: frame.midY))
+        }
+        pumpRunLoop(0.45)
     }
     private func deliverMusicResult(_ payload: [String: Any]) {
         guard let data = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: data, encoding: .utf8) else { return }
@@ -1132,10 +1286,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 var value: CFTypeRef?
                 for attribute in [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute] {
                     value = nil
-                    if AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
-                       (value as? String == title || (["Control Center","Do Not Disturb"].contains(title) && (value as? String ?? "").hasPrefix(title+","))),
-                       role == nil || axString(element,kAXRoleAttribute) == role { return element }
-                }
+                    if AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success {
+                        let candidate = value as? String ?? ""
+                        let matches = candidate == title || candidate.caseInsensitiveCompare(title) == .orderedSame || (["Control Center","Do Not Disturb"].contains(title) && candidate.hasPrefix(title+","))
+                        if matches && (role == nil || axString(element,kAXRoleAttribute) == role) { return element }
+                        }
+                    }
                 guard depth < 8 else { continue }
                 value = nil
                 if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &value) == .success,

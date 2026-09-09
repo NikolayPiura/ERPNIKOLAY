@@ -40,7 +40,7 @@ test('seven daily links plus a small morning shortcut; page load starts nothing'
   const p=panel();
   assert.equal(p.messages.length,0);
   assert.equal((p.root.innerHTML.match(/<a class="work-mode(?:\s|")/g)||[]).length,7);
-  assert.equal((p.root.innerHTML.match(/<svg /g)||[]).length,8);
+  assert.equal((p.root.innerHTML.match(/<svg /g)||[]).length,7);
   assert.equal((p.root.innerHTML.match(/piura-modes:\/\/work/g)||[]).length,5);
   assert.equal((p.root.innerHTML.match(/piura-modes:\/\/mentorship/g)||[]).length,2);
   assert.match(p.root.innerHTML,/morning-shortcut[^>]+piura-modes:\/\/morning/);
@@ -115,6 +115,8 @@ test('green weekly dashboard and enlarged rules without metadata',()=>{
   const p=panel(),css=read('work-modes.css'),policy=read('communication-policy.html');
   assert.match(p.root.innerHTML,/Понедельник/);
   assert.match(p.root.innerHTML,/Пятница/);
+  assert.doesNotMatch(p.root.innerHTML,/work-modes-head|work-mode-name|>Режим недели<|>Среда · Климат</);
+  assert.doesNotMatch(p.root.innerHTML,/>Понедельник<|>Вторник<|>Среда<|>Четверг<|>Пятница</);
   assert.match(css,/grid-template-columns:repeat\(7/);
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
@@ -125,9 +127,40 @@ test('ERP music card controls a hidden authorized Yandex tab and owns no display
   assert.ok(html.indexOf('id="musicCard"')<html.indexOf('id="fanCard"'));
   assert.match(html,/music-controller\.js/);
   assert.match(controller,/piura-modes:\/\/music/);
+  assert.match(html,/id="musicVolume"/);
+  assert.doesNotMatch(html,/music-kicker|id="musicTitle"|Готово к воспроизведению|Управление без перехода/);
+  assert.match(controller,/send\('volume'/);
   assert.match(app,/host == "music"/);
   assert.match(app,/var needsMusic: Bool \{ false \}/);
   assert.match(app,/set minimized of window id musicID to true/);
+  assert.match(app,/getClientRects|getBoundingClientRect/);
+  assert.match(app,/querySelectorAll\('audio,video'\)/);
+  assert.match(app,/pressYandexMusicAccessibility/);
+  assert.match(app,/mechanism:'accessibility'/);
+  assert.doesNotMatch(app,/state:\(navigator\.mediaSession\?\.playbackState==='playing'\|\|!!pause\)/);
+});
+
+test('music card sends play and volume through the native bridge and paints real state',()=>{
+  const source=read('music-controller.js'),messages=[],events={};
+  const classes=new Set();
+  const classList={toggle(name,on){if(on)classes.add(name);else classes.delete(name)},add:name=>classes.add(name),remove:name=>classes.delete(name)};
+  const makeButton=action=>({dataset:{musicAction:action},disabled:false,innerHTML:'',attributes:{},addEventListener(name,fn){this[name]=fn},setAttribute(name,value){this.attributes[name]=value}});
+  const buttons=['previous','toggle','next'].map(makeButton);
+  const artist={textContent:'Исполнитель'},status={textContent:''},volume={value:'50',events:{},addEventListener(name,fn){this.events[name]=fn}},volumeValue={value:'',textContent:''};
+  const card={classList,querySelectorAll:()=>buttons};
+  const byID={musicCard:card,musicArtist:artist,musicPlay:buttons[1],musicStatus:status,musicVolume:volume,musicVolumeValue:volumeValue};
+  const window={crypto:{randomUUID:()=>String(messages.length+1)},webkit:{messageHandlers:{piura:{postMessage:value=>messages.push(value)}}},addEventListener:(name,fn)=>events[name]=fn};
+  const document={activeElement:null,getElementById:id=>byID[id]};
+  runInNewContext(source,{window,document,location:{origin:'https://nikolaypiura.github.io',href:''},URLSearchParams,setTimeout:()=>1,clearTimeout(){}});
+  buttons[1].click();
+  assert.equal(messages[0].command,'toggle');
+  volume.value='72';volume.events.input();volume.events.change();
+  assert.deepEqual({command:messages[1].command,value:messages[1].value},{command:'volume',value:72});
+  window.piuraMusicResult({ok:true,requestID:messages[1].requestID,state:'playing',artist:'Исполнитель теста',volume:72});
+  assert.equal(artist.textContent,'Исполнитель теста');
+  assert.equal(volumeValue.textContent,'72%');
+  assert.ok(classes.has('is-playing'));
+  assert.equal(buttons[1].attributes['aria-label'],'Поставить музыку на паузу');
 });
 test('isolated reusable profiles, recoverable cleanup, fullscreen and portrait wallpapers',()=>{
   assert.match(app,/profileName\(of: \$0\) == mode.safariProfile/);

@@ -11,7 +11,6 @@
     {day:0,short:'ВС',name:'Воскресенье',focus:'Наставничество',mode:'mentorship',icon:'mentorship'}
   ];
   const icons={
-    morning:'<circle cx="32" cy="32" r="10"/><path d="M32 7v8m0 34v8M7 32h8m34 0h8M14 14l6 6m24 24 6 6m0-36-6 6M20 44l-6 6"/>',
     climate:'<path d="M20 42a13 13 0 1 1 20-11 10 10 0 1 1 2 20H20a9 9 0 0 1 0-18"/><path d="M19 52h26"/>',
     investments:'<path d="M12 49V31m13 18V20m14 29V28m13 21V12"/><path d="m11 23 13-8 13 5 16-13"/>',
     admin:'<rect x="13" y="10" width="38" height="44" rx="8"/><path d="M23 22h18M23 32h18M23 42h12"/><path d="m39 41 4 4 8-10"/>',
@@ -36,7 +35,7 @@
   function link(day,today){
     const current=day.day===today?' is-today':'';
     const weekend=day.mode==='mentorship'?' weekend':'';
-    return '<a class="work-mode'+current+weekend+'" href="piura-modes://'+day.mode+'" data-mode="'+day.mode+'" data-day="'+day.day+'" data-day-name="'+day.name+'" data-focus="'+day.focus+'" aria-label="'+day.name+': '+day.focus+'"'+(day.day===today?' aria-current="date"':'')+'><span class="work-mode-day">'+day.short+'</span><span class="work-mode-art">'+icon(day.icon)+'</span><span class="work-mode-name">'+day.name+'</span><strong>'+day.focus+'</strong></a>';
+    return '<a class="work-mode'+current+weekend+'" href="piura-modes://'+day.mode+'" data-mode="'+day.mode+'" data-day="'+day.day+'" data-day-name="'+day.name+'" data-focus="'+day.focus+'" aria-label="'+day.name+': '+day.focus+'"'+(day.day===today?' aria-current="date"':'')+'><span class="work-mode-day">'+day.short+'</span><span class="work-mode-art">'+icon(day.icon)+'</span><strong>'+day.focus+'</strong></a>';
   }
   function activate(button,event){
     const mode=button.dataset.mode;
@@ -52,9 +51,8 @@
   }
   function draw(root){
     const today=new Date().getDay();
-    const current=days.find(item=>item.day===today)||days[0];
     root.classList.add('work-modes');
-    root.innerHTML='<div class="work-modes-head"><div><span>Режим недели</span><strong>'+current.name+' · '+current.focus+'</strong></div><a class="morning-shortcut" href="piura-modes://morning" data-mode="morning" aria-label="Включить режим Утро">'+icon('morning')+'<span>Утро</span></a></div><div class="work-modes-grid">'+days.map(day=>link(day,today)).join('')+'</div><p class="work-modes-status" role="status" aria-live="polite"></p>';
+    root.innerHTML='<a class="morning-shortcut" href="piura-modes://morning" data-mode="morning" aria-label="Включить режим Утро"><span>Утро</span></a><div class="work-modes-grid">'+days.map(day=>link(day,today)).join('')+'</div><p class="work-modes-status" role="status" aria-live="polite"></p>';
     root.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',event=>activate(button,event)));
   }
   window.piuraModeFinished=result=>{if(result.requestID&&active&&result.requestID!==active.requestID)return;finish(result.message||'Готово',result.ok===false?'error':'ok')};
