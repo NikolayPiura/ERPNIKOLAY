@@ -298,7 +298,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func writeMusicReport(_ payload: [String: Any]) {
-        let allowed = ["ok", "message", "state", "command", "volume", "requestID", "hiddenWindowCreated", "diagnostic", "artist", "title"]
+        let allowed = ["ok", "message", "state", "command", "volume", "requestID", "hiddenWindowCreated", "diagnostic", "artist", "title", "attempts"]
         let report = payload.filter { allowed.contains($0.key) }
         try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
         if let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
@@ -348,7 +348,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         let readState = """
         (() => {
-          const buttons=[...document.querySelectorAll('button')];
+          const allButtons=[...document.querySelectorAll('button')];
+          const globalButtons=allButtons.filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          const buttons=globalButtons.length?globalButtons:allButtons;
           const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none'};
           const label=button=>(button.getAttribute('aria-label')||button.title||'').toLowerCase();
           const find=words=>buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
@@ -359,14 +361,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           const api=window.externalAPI;
           let apiPlaying=null,track=null;
           try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying();if(typeof api?.getCurrentTrack==='function')track=api.getCurrentTrack()}catch{}
-          const playing=apiPlaying??(mediaPlaying||sessionState==='playing'||(sessionState!=='paused'&&!!pause&&!play));
+          /* Yandex Media Session may lag behind its global player button. */
+          const playing=apiPlaying??(mediaPlaying||sessionState==='playing'||!!pause&&!play);
           const metadata=navigator.mediaSession?.metadata;
           const trackArtists=Array.isArray(track?.artists)?track.artists.map(item=>item?.title||item?.name||'').filter(Boolean).join(', '):'';
           const artist=(trackArtists||metadata?.artist||'').trim();
           const usefulArtist=artist&&!/яндекс|yandex/i.test(artist)?artist:'Исполнитель';
           const externalMethods=['isPlaying','togglePause','play','pause','next','prev','getCurrentTrack'].filter(name=>typeof api?.[name]==='function');
           const result={ready:!!(externalMethods.length||play||pause||media.length),state:playing?'playing':'paused',title:track?.title||metadata?.title||'',artist:usefulArtist};
-          if('\(command)'==='status')result.diagnostic={controls:buttons.filter(visible).map(button=>({label:label(button),className:String(button.className||''),testid:button.getAttribute('data-testid')||''})).filter(item=>/воспроиз|play|пауза|pause|следующ|next|предыдущ|previous/.test(item.label)).slice(0,20),media:media.map(item=>({paused:item.paused,ended:item.ended,readyState:item.readyState,muted:item.muted,volume:item.volume})),sessionState:sessionState||'',externalMethods};
+          if('\(command)'==='status')result.diagnostic={controls:buttons.filter(visible).map(button=>({label:label(button),className:String(button.className||''),testid:button.getAttribute('data-testid')||''})).filter(item=>/воспроиз|play|пауза|pause|следующ|next|предыдущ|previous/.test(item.label)).slice(0,20),globalControls:globalButtons.length,media:media.map(item=>({paused:item.paused,ended:item.ended,readyState:item.readyState,muted:item.muted,volume:item.volume})),sessionState:sessionState||'',externalMethods};
           return JSON.stringify(result);
         })()
         """
@@ -394,7 +397,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let actionScript = """
         (() => {
           const action='\(command)';
-          const buttons=[...document.querySelectorAll('button')];
+          const allButtons=[...document.querySelectorAll('button')];
+          const globalButtons=allButtons.filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          const buttons=globalButtons.length?globalButtons:allButtons;
           const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none'};
           const label=button=>(button.getAttribute('aria-label')||button.title||'').toLowerCase();
           const find=words=>buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
@@ -404,7 +409,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           const api=window.externalAPI;
           let apiPlaying=null;
           try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying()}catch{}
-          const playing=apiPlaying??(media.some(item=>!item.paused&&!item.ended)||sessionState==='playing'||(sessionState!=='paused'&&!!pause&&!play));
+          const playing=apiPlaying??(media.some(item=>!item.paused&&!item.ended)||sessionState==='playing'||!!pause&&!play);
           try{
             if(action==='toggle'&&typeof api?.togglePause==='function'){api.togglePause();return JSON.stringify({clicked:true,mechanism:'externalAPI',expectedState:playing?'paused':'playing'})}
             if(action==='next'&&typeof api?.next==='function'){api.next();return JSON.stringify({clicked:true,mechanism:'externalAPI'})}
@@ -431,13 +436,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
            let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             result = updated
         }
-        let confirmationDeadline = Date().addingTimeInterval(command == "toggle" ? 4.5 : 0.1)
-        repeat {
-            if let data = try? execute(readState).data(using: .utf8),
-               let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { result = updated }
-            if expectedState == nil || result["state"] as? String == expectedState { break }
-            pumpRunLoop(0.35)
-        } while Date() < confirmationDeadline
+        var attempts = 1
+        func confirm(until deadline: Date) {
+            repeat {
+                if let data = try? execute(readState).data(using: .utf8),
+                   let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { result = updated }
+                if expectedState == nil || result["state"] as? String == expectedState { break }
+                pumpRunLoop(0.3)
+            } while Date() < deadline
+        }
+        confirm(until: Date().addingTimeInterval(command == "toggle" ? 2.8 : 0.1))
+        if let expectedState, result["state"] as? String != expectedState {
+            // Chromium occasionally exposes the button before the web player has
+            // attached its handler. Retry only while the observed state is still
+            // unchanged, so an already successful Play can never be toggled back.
+            attempts = 2
+            try pressYandexMusicAccessibility(
+                windowID: windowID,
+                tabNumber: tabNumber,
+                command: command,
+                wasPlaying: result["state"] as? String == "playing"
+            )
+            pumpRunLoop(0.45)
+            confirm(until: Date().addingTimeInterval(command == "toggle" ? 4.5 : 0.7))
+        }
         if let expectedState, result["state"] as? String != expectedState {
             throw modeError(expectedState == "playing" ? "Яндекс Музыка не подтвердила запуск." : "Яндекс Музыка не подтвердила паузу.")
         }
@@ -445,35 +467,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         result["command"] = command
         result["volume"] = outputVolume
         result["hiddenWindowCreated"] = parts[2] == "true"
+        result["attempts"] = attempts
         return result
     }
     private func pressYandexMusicAccessibility(windowID: Int, tabNumber: Int, command: String, wasPlaying: Bool) throws {
         guard let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) else {
             throw modeError("Яндекс Браузер не найден для управления плеером.")
         }
-        let label: String
+        let expectedLabel: String
         switch command {
-        case "toggle": label = wasPlaying ? "Пауза" : "Воспроизведение"
-        case "next": label = "Следующая песня"
-        case "previous": label = "Предыдущая песня"
+        case "toggle": expectedLabel = wasPlaying ? "Пауза" : "Воспроизведение"
+        case "next": expectedLabel = "Следующая песня"
+        case "previous": expectedLabel = "Предыдущая песня"
         default: throw modeError("Неизвестная команда плеера.")
         }
+        let marker = "PIURA-PLAYER-\(UUID().uuidString)"
+        let markControl = """
+        (() => {
+          const buttons=[...document.querySelectorAll('button')].filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          if(!buttons.length)return JSON.stringify({ready:false,reason:'global-controls-missing'});
+          const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'};
+          const label=button=>(button.getAttribute('aria-label')||button.title||'').trim().toLowerCase();
+          const words=\(command == "toggle" ? (wasPlaying ? "['пауза','pause']" : "['воспроиз','play']") : (command == "next" ? "['следующ','next']" : "['предыдущ','previous']"));
+          const target=buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)));
+          if(!target)return JSON.stringify({ready:false,reason:'global-button-missing',labels:buttons.filter(visible).map(label)});
+          target.dataset.piuraMusicTarget='true';
+          target.dataset.piuraOriginalAria=target.getAttribute('aria-label')||'';
+          target.setAttribute('aria-label','\(marker)');
+          target.focus({preventScroll:true});
+          return JSON.stringify({ready:true,focused:document.activeElement===target,className:String(target.className||'')});
+        })()
+        """
+        let cleanupControl = """
+        (() => {
+          const target=document.querySelector('[data-piura-music-target="true"]');
+          if(!target)return 'gone';
+          const original=target.dataset.piuraOriginalAria||'';
+          const current=target.getAttribute('aria-label')||'';
+          target.removeAttribute('data-piura-music-target');
+          delete target.dataset.piuraOriginalAria;
+          if(current==='\(marker)'){
+            const restored=\(command == "toggle" ? (wasPlaying ? "'Воспроизведение'" : "'Пауза'") : "original");
+            if(restored)target.setAttribute('aria-label',restored);else target.removeAttribute('aria-label');
+          }
+          return 'clean';
+        })()
+        """
         let preparation = try runAppleScript("""
         tell application "Yandex"
           set frontID to id of front window
           set wasMini to minimized of window id \(windowID)
           set minimized of window id \(windowID) to false
           set active tab index of window id \(windowID) to \(tabNumber)
+          set index of window id \(windowID) to 1
+          activate
           return (frontID as text) & "," & (wasMini as text)
         end tell
         """)
         let values = preparation.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         let frontID = values.first.flatMap(Int.init)
         let wasMinimized = values.count > 1 && values[1] == "true"
-        var raised = false
+        var raised = true
         defer {
             _ = try? runAppleScript("""
             tell application "Yandex"
+              try
+                execute tab \(tabNumber) of window id \(windowID) javascript "\(appleScriptEscape(cleanupControl))"
+              end try
               if \(wasMinimized ? "true" : "false") then set minimized of window id \(windowID) to true
               \(frontID.map { "if exists window id \($0) then set index of window id \($0) to 1" } ?? "")
               if \(raised ? "true" : "false") then activate
@@ -487,7 +547,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 let (element, depth) = queue.removeFirst(); visited += 1
                 for attribute in [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute] {
                     let value = axString(element, attribute)
-                    if value.caseInsensitiveCompare(label) == .orderedSame { return element }
+                    if value == marker { return element }
                 }
                 guard depth < 20 else { continue }
                 var rawChildren: CFTypeRef?
@@ -511,17 +571,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             return nil
         }
         pumpRunLoop(0.25)
-        var button = findPlayerButton(1.2)
+        let marked = try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"\(appleScriptEscape(markControl))\"")
+        guard marked.contains("\"ready\":true") else {
+            throw modeError("Не найдена глобальная кнопка «\(expectedLabel)» в плеере.")
+        }
+        pumpRunLoop(0.2)
+        var focused: CFTypeRef?
+        var button: AXUIElement?
+        if AXUIElementCopyAttributeValue(root, kAXFocusedUIElementAttribute as CFString, &focused) == .success,
+           let focused, CFGetTypeID(focused) == AXUIElementGetTypeID() {
+            let candidate = focused as! AXUIElement
+            for attribute in [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute] where axString(candidate, attribute) == marker {
+                button = candidate
+            }
+        }
+        if button == nil { button = findPlayerButton(1.8) }
         if button == nil {
             _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")
             raised = true
-            pumpRunLoop(0.35)
-            button = findPlayerButton(2.4)
+            pumpRunLoop(0.3)
+            button = findPlayerButton(2.8)
         }
-        guard let button else { throw modeError("Не найдена кнопка «\(label)» в живом плеере.") }
+        guard let button else { throw modeError("Не найдена точная кнопка «\(expectedLabel)» в живом плеере.") }
         if AXUIElementPerformAction(button, kAXPressAction as CFString) != .success {
             guard let frame = windowRect(button), frame.width > 1, frame.height > 1 else {
-                throw modeError("Кнопка «\(label)» недоступна для нажатия.")
+                throw modeError("Кнопка «\(expectedLabel)» недоступна для нажатия.")
             }
             if !raised {
                 _ = try runAppleScript("tell application \"Yandex\" to set index of window id \(windowID) to 1\ntell application \"Yandex\" to activate")

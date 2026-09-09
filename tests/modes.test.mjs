@@ -137,6 +137,9 @@ test('ERP music card controls a hidden authorized Yandex tab and owns no display
   assert.match(app,/querySelectorAll\('audio,video'\)/);
   assert.match(app,/pressYandexMusicAccessibility/);
   assert.match(app,/mechanism:'accessibility'/);
+  assert.match(app,/includes\('VibePlayerControls_'\)/);
+  assert.match(app,/PIURA-PLAYER-/);
+  assert.match(app,/sessionState==='playing'\|\|!!pause&&!play/);
   assert.doesNotMatch(app,/state:\(navigator\.mediaSession\?\.playbackState==='playing'\|\|!!pause\)/);
 });
 
