@@ -38,6 +38,7 @@
     }
     .stage{position:relative;z-index:1;min-width:0;width:100%;height:100vh;overflow:hidden;background:#080b11}
     .module-frame{display:block;width:100%;height:100%;border:0;background:#080b11}
+    .erp-music-engine{position:absolute;left:-2px;bottom:-2px;width:1px;height:1px;border:0;opacity:.001;pointer-events:none}
     .brand-row{min-height:122px;padding:18px 16px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line)}
     .brand-mark{
       width:56px;height:56px;flex:0 0 56px;display:grid;place-items:center;border:1px solid rgba(91,157,255,.46);
@@ -172,6 +173,7 @@
     </div>
     <section class="stage">
       <iframe class="module-frame" id="moduleFrame" title="Эффективность"></iframe>
+      <iframe class="erp-music-engine" id="erpMusicFrame" title="Скрытый официальный плеер Яндекс Музыки" allow="autoplay; encrypted-media"></iframe>
       <div class="modal-bg settings-page" id="settingsModal"><div class="panel control-panel">
         <div class="panel-head"><div class="panel-head-copy"><h2>Настройки ERP</h2><p>Живой центр управления всей системой</p></div><button class="panel-close" id="closeSettings" aria-label="Закрыть настройки">×</button></div>
         <div class="control-shell">
@@ -190,11 +192,11 @@
   </main>
   <div class="tip" id="tip"></div>
   <script>
-    const BUILD_ID='20260909-week12';
+    const BUILD_ID='20260909-week14';
     const ICONS={overview:'<path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',foundation:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/><path d="M9 11h6M12 8v6"/>'};
     const DEFAULT_GROUPS=[
       {id:'core',title:"Главное",accent:"#6ea8fe",items:[
-        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260909-week12"]]},
+        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260909-week14"]]},
       {id:'eff',title:"Эффективность",accent:"#43d39e",items:[
         ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260830ab&tab=overview"],
         ["morning","Утро","Редактируемый утренний чек-лист","piura-erp-restored%203/modules/Morning.html?v=20260818d"],
@@ -223,6 +225,7 @@
     groups.forEach(group=>group.items.forEach(item=>{if(CANONICAL_PATHS.has(item[0]))item[3]=CANONICAL_PATHS.get(item[0])}));
     const shell=document.getElementById("shell");
     const frame=document.getElementById("moduleFrame");
+    const musicFrame=document.getElementById('erpMusicFrame');
     const menu=document.getElementById("menu");
     const tip=document.getElementById('tip');let dragId=null,settingsOpen=false;
     const all=()=>groups.flatMap(group=>group.items);
@@ -230,6 +233,57 @@
     if(localStorage.getItem("piura-erp-shell-compact")==="1")prefs.collapsed=true;
     function save(){localStorage.setItem(KEY,JSON.stringify(prefs));localStorage.setItem(ORDER,JSON.stringify(groups))}
     const WORK_MODE_APPEARANCE={morning:{module:'morning',theme:'light'},work:{module:'overview',theme:'dark'},learning:{module:'overview',theme:'light'},mentorship:{module:'overview',theme:'dark'}};
+    const MUSIC_ORIGIN='https://music.yandex.ru';
+    const MUSIC_QUEUE={queueId:'piura-liked-v1',startIndex:0,tracks:[
+      {trackId:'73439869',albumId:'12747464',title:'Пыяла',subtitle:'АИГЕЛ'},
+      {trackId:'69563055',albumId:'11658823',title:'На своём вайбе',subtitle:'Jah Khalib, GUF'},
+      {trackId:'62107386',albumId:'9756926',title:'Доброе сердце',subtitle:'Порнофильмы'},
+      {trackId:'37258117',albumId:'4714779',title:'Я так соскучился',subtitle:'Порнофильмы'},
+      {trackId:'61565558',albumId:'9613082',title:'Луна не знает пути',subtitle:'Тайпан, Agunda'},
+      {trackId:'52380688',albumId:'7373129',title:'Любимка',subtitle:'NILETTO'}
+    ]};
+    let musicReady=false,musicIntent=['morning','work'].includes(new URLSearchParams(location.search).get('workmode')),musicState={status:'IDLE',currentTrack:null};
+    function postMusic(type,payload){
+      if(!musicReady)return false;
+      musicFrame.contentWindow.postMessage({source:'EXTERNAL_PLAYER',type,...(payload?{payload}: {})},MUSIC_ORIGIN);
+      return true;
+    }
+    function broadcastMusic(){
+      try{frame.contentWindow?.postMessage({type:'piura-music-state',...musicState},location.origin)}catch(_){ }
+    }
+    function playMusic(){
+      musicIntent=true;
+      if(!musicReady)return false;
+      return musicState.status==='PAUSED'?postMusic('RESUME'):musicState.status==='PLAYING'?true:postMusic('PLAY_QUEUE',MUSIC_QUEUE);
+    }
+    function pauseMusic(){
+      musicIntent=false;
+      return ['PLAYING','LOADING'].includes(musicState.status)?postMusic('PAUSE'):true;
+    }
+    window.piuraMusicCommand=action=>{
+      if(action==='toggle')return musicState.status==='PLAYING'?pauseMusic():playMusic();
+      if(action==='previous')return postMusic('PREVIOUS_TRACK');
+      if(action==='next')return postMusic('NEXT_TRACK');
+      if(action==='play')return playMusic();
+      if(action==='pause'||action==='stop')return pauseMusic();
+      return false;
+    };
+    window.piuraSetMusicMode=mode=>['morning','work','play'].includes(mode)?playMusic():pauseMusic();
+    window.piuraMusicSnapshot=()=>({...musicState});
+    window.addEventListener('message',event=>{
+      if(event.origin!==MUSIC_ORIGIN||event.source!==musicFrame.contentWindow||event.data?.source!=='YANDEX_MUSIC')return;
+      if(event.data.type==='READY'){
+        musicReady=true;
+        if(musicIntent)playMusic();
+        broadcastMusic();
+        return;
+      }
+      if(event.data.type==='STATE'){
+        musicState={...musicState,...event.data.payload};
+        broadcastMusic();
+      }
+    });
+    musicFrame.src=MUSIC_ORIGIN+'/iframe/?display=bandlink-wiki&parentOrigin='+encodeURIComponent(location.origin)+'#playlist/305698584/3';
     const PALETTES={balanced:['#6ea8fe','#43d39e','#a78bfa'],ocean:['#55b8ff','#43d3c1','#7f9cff'],sage:['#63c99c','#9ecb6b','#6fa8d8'],mono:['#d4d4d4','#a3a3a3','#737373']};
     const launchWorkMode=launchParams.get('workmode');
     if(Object.hasOwn(WORK_MODE_APPEARANCE,prefs.palette))prefs.palette='balanced';
@@ -253,6 +307,7 @@
     window.piuraApplyWorkMode=mode=>{
       if(mode==='climate'||mode==='investments')mode='work';
       if(!Object.hasOwn(WORK_MODE_APPEARANCE,mode))return false;
+      window.piuraSetMusicMode(mode);
       const appearance=WORK_MODE_APPEARANCE[mode],changed=prefs.theme!==appearance.theme;
       prefs.theme=appearance.theme;document.documentElement.dataset.workmode=mode;
       const url=new URL(location.href);url.searchParams.set('module',appearance.module);url.searchParams.set('theme',appearance.theme);url.searchParams.set('workmode',mode);history.replaceState(null,'',url);

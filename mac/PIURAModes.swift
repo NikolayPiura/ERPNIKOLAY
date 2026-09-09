@@ -36,8 +36,8 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work }
     var needsChatGPT: Bool { self == .work }
-    // Morning and weekday work start the same player controlled by the ERP
-    // card. The player owns no monitor and stays in a background browser tab.
+    // Morning and weekday work use the official Yandex iframe inside ERP.
+    // PIURA Modes never opens, focuses or hides a separate music window.
     var needsMusic: Bool { self == .morning || self == .work }
     var needsZoom: Bool { self == .work || self == .mentorship }
 }
@@ -392,14 +392,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         result["backgroundTabCreated"] = parts[2] == "true"
         if command == "status" || (command == "play" && result["state"] as? String == "playing") { return result }
 
-        let keyCode: Int
         switch command {
-        case "toggle", "play": keyCode = 16
-        case "next": keyCode = 17
-        case "previous": keyCode = 18
+        case "toggle", "play": try postYandexPlayPauseShortcut()
+        case "next": try postSystemMediaKey(17)
+        case "previous": try postSystemMediaKey(18)
         default: throw modeError("Неизвестная команда музыки.")
         }
-        try postSystemMediaKey(keyCode)
         let expectedState = command == "play" ? "playing" :
             (command == "toggle" ? (result["state"] as? String == "playing" ? "paused" : "playing") : nil)
         let oldTitle = result["title"] as? String ?? ""
@@ -422,12 +420,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         result["backgroundTabCreated"] = parts[2] == "true"
         return result
     }
+    private func postYandexPlayPauseShortcut() throws {
+        // The installed Yandex Music controller has its global Play/Pause
+        // command assigned to Ctrl+K in the browser profile. Posting that exact
+        // shortcut reaches the extension while Safari/ERP remains frontmost.
+        let source = CGEventSource(stateID: .hidSystemState)
+        guard let down = CGEvent(keyboardEventSource: source, virtualKey: 40, keyDown: true),
+              let up = CGEvent(keyboardEventSource: source, virtualKey: 40, keyDown: false) else {
+            throw modeError("macOS не создала команду Play/Pause.")
+        }
+        down.flags = [.maskControl]
+        up.flags = [.maskControl]
+        down.post(tap: .cghidEventTap)
+        pumpRunLoop(0.03)
+        up.post(tap: .cghidEventTap)
+    }
     private func postSystemMediaKey(_ keyCode: Int) throws {
         func event(state: Int) -> CGEvent? {
             NSEvent.otherEvent(
                 with: .systemDefined,
                 location: .zero,
-                modifierFlags: [],
+                // Media-key events carry their down/up phase in both the
+                // system-defined payload and modifier flags. Chromium ignores
+                // synthetic events that omit the matching phase flags.
+                modifierFlags: NSEvent.ModifierFlags(rawValue: UInt(state << 8)),
                 timestamp: ProcessInfo.processInfo.systemUptime,
                 windowNumber: 0,
                 context: nil,
@@ -864,15 +880,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if pendingLaunch != nil { return ModeResult(ok: false, message: "Переключаюсь на последний выбранный режим.") }
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
-            if mode.needsMusic {
-                do {
-                    var music = try controlYandexMusic("play")
-                    music["startedFromERP"] = true
-                    verifiedWindows.append(music)
-                } catch {
-                    notes.append("Музыка с панели ERP: \(error.localizedDescription)")
-                }
-            }
+            verifiedWindows.append(["musicControlledFromERP":true,"musicRequested":mode.needsMusic])
         }
         if mode.needsChatGPT {
             do { try arrangeChatGPT(on: left) } catch { notes.append("ChatGPT: \(error.localizedDescription)") }

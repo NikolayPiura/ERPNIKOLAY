@@ -67,7 +67,7 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
   assert.match(app,/changedAfterLayout/);
 });
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
-  assert.match(app,/var needsMusic: Bool \{ false \}/);
+  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   assert.match(app,/let leftURL = mode == \.morning \? morningAdminPreviewURL : policyURL/);
   assert.match(app,/"morningLeftForeground":"goals-and-plans","musicControlledFromERP":true/);
   assert.match(app,/"musicDisplay":"ERP control only"/);
@@ -76,7 +76,7 @@ test('final screen audit leaves music to the ERP control and never assigns it a 
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
 });
-test('morning shows goals with plans on the left without auto-playing music',()=>{
+test('morning shows goals with plans on the left while music stays inside ERP',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(preview,/grid-template-columns:1fr 1fr/);

@@ -109,7 +109,8 @@ test('real fullscreen verification and all four recipes',()=>{
   assert.match(app,/set dark mode to true/);assert.doesNotMatch(app,/set dark mode to false/);
   assert.match(app,/private func finishDesktopWallpaper/);
   assert.match(app,/synchronizeWallpaperSpaces/);
-  assert.match(app,/controlYandexMusic\("play"\)/);
+  const runMode=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
+  assert.doesNotMatch(runMode,/controlYandexMusic/);
 });
 test('green weekly dashboard and enlarged rules without metadata',()=>{
   const p=panel(),css=read('work-modes.css'),policy=read('communication-policy.html');
@@ -121,31 +122,32 @@ test('green weekly dashboard and enlarged rules without metadata',()=>{
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
 });
-test('ERP music card controls a background Yandex tab through macOS media keys and owns no display',()=>{
-  const html=read('piura-erp-restored 3/modules/Overview.html'),controller=read('music-controller.js');
+test('ERP music card controls the official hidden Yandex iframe and owns no display',()=>{
+  const html=read('piura-erp-restored 3/modules/Overview.html'),controller=read('music-controller.js'),index=read('index.html');
   assert.ok(html.indexOf('home-controls-card')<html.indexOf('id="musicCard"'));
   assert.ok(html.indexOf('id="musicCard"')<html.indexOf('id="fanCard"'));
   assert.match(html,/music-controller\.js/);
-  assert.match(controller,/piura-modes:\/\/music/);
+  assert.match(index,/id="erpMusicFrame"/);
+  assert.match(index,/display=bandlink-wiki/);
+  assert.match(index,/source:'EXTERNAL_PLAYER'/);
+  assert.match(index,/type==='READY'/);
+  assert.match(index,/postMusic\('PLAY_QUEUE',MUSIC_QUEUE\)/);
+  assert.match(index,/postMusic\('PAUSE'\)/);
+  assert.match(index,/postMusic\('RESUME'\)/);
+  assert.match(index,/postMusic\('NEXT_TRACK'\)/);
+  assert.match(index,/postMusic\('PREVIOUS_TRACK'\)/);
+  assert.match(controller,/piuraMusicCommand/);
+  assert.doesNotMatch(controller,/piura-modes:\/\/music|messageHandlers|webkit/);
   assert.doesNotMatch(html,/id="musicVolume"/);
   assert.doesNotMatch(html,/music-kicker|id="musicTitle"|Готово к воспроизведению|Управление без перехода/);
   assert.doesNotMatch(controller,/volume|send\('volume'/i);
-  assert.match(app,/host == "music"/);
   assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
-  assert.match(app,/querySelectorAll\('audio,video'\)/);
-  assert.match(app,/includes\('VibePlayerControls_'\)/);
-  const mediaControl=app.slice(app.indexOf('private func controlYandexMusic'),app.indexOf('private func legacyControlYandexMusic'));
-  assert.match(mediaControl,/postSystemMediaKey\(keyCode\)/);
-  assert.match(mediaControl,/make new tab at end of tabs with properties/);
-  assert.match(mediaControl,/set active tab index to previousTab/);
-  assert.doesNotMatch(mediaControl,/activate|make new window|set index of window|set minimized/);
-  assert.match(app,/with: \.systemDefined/);
-  assert.match(app,/down\.post\(tap: \.cghidEventTap\)/);
-  assert.doesNotMatch(app,/state:\(navigator\.mediaSession\?\.playbackState==='playing'\|\|!!pause\)/);
+  const runMode=app.slice(app.indexOf('private func runMode'),app.indexOf('private func closeRegularApplications'));
+  assert.doesNotMatch(runMode,/controlYandexMusic/);
 });
 
-test('music card sends transport commands through the native bridge and paints real state',()=>{
-  const source=read('music-controller.js'),messages=[],events={};
+test('music card sends transport commands to the ERP iframe controller and paints real state',()=>{
+  const source=read('music-controller.js'),commands=[],events={};
   const classes=new Set();
   const classList={toggle(name,on){if(on)classes.add(name);else classes.delete(name)},add:name=>classes.add(name),remove:name=>classes.delete(name)};
   const makeButton=action=>({dataset:{musicAction:action},disabled:false,innerHTML:'',attributes:{},addEventListener(name,fn){this[name]=fn},setAttribute(name,value){this.attributes[name]=value}});
@@ -153,12 +155,13 @@ test('music card sends transport commands through the native bridge and paints r
   const artist={textContent:'Исполнитель'},status={textContent:''};
   const card={classList,querySelectorAll:()=>buttons};
   const byID={musicCard:card,musicArtist:artist,musicPlay:buttons[1],musicStatus:status};
-  const window={crypto:{randomUUID:()=>String(messages.length+1)},webkit:{messageHandlers:{piura:{postMessage:value=>messages.push(value)}}},addEventListener:(name,fn)=>events[name]=fn};
+  const parent={piuraMusicCommand:value=>commands.push(value),piuraMusicSnapshot:()=>({status:'IDLE'})};
+  const window={parent,addEventListener:(name,fn)=>events[name]=fn};
   const document={activeElement:null,getElementById:id=>byID[id]};
-  runInNewContext(source,{window,document,location:{origin:'https://nikolaypiura.github.io',href:''},URLSearchParams,setTimeout:()=>1,clearTimeout(){}});
+  runInNewContext(source,{window,document,location:{origin:'https://nikolaypiura.github.io',href:''}});
   buttons[1].click();
-  assert.equal(messages[0].command,'toggle');
-  window.piuraMusicResult({ok:true,requestID:messages[0].requestID,state:'playing',artist:'Исполнитель теста'});
+  assert.equal(commands[0],'toggle');
+  events.message({origin:'https://nikolaypiura.github.io',data:{type:'piura-music-state',status:'PLAYING',currentTrack:{subtitle:'Исполнитель теста'}}});
   assert.equal(artist.textContent,'Исполнитель теста');
   assert.ok(classes.has('is-playing'));
   assert.equal(buttons[1].attributes['aria-label'],'Поставить музыку на паузу');

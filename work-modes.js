@@ -40,6 +40,7 @@
   function activate(button,event){
     const mode=button.dataset.mode;
     if(!Object.hasOwn(modeLabels,mode))return;
+    try{(window.parent!==window?window.parent:window).piuraSetMusicMode?.(mode)}catch(_){ }
     const label=titleFor(button);
     active={mode,day:button.dataset.day||'',focus:button.dataset.focus||'',requestID:(window.crypto?.randomUUID?.()||String(Date.now()))};
     finish('Передаю «'+label+'» приложению…','busy');
