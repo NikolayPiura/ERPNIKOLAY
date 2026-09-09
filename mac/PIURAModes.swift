@@ -35,7 +35,9 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work }
     var needsChatGPT: Bool { self == .work }
-    var needsMusic: Bool { self == .morning || self == .work }
+    // Music is user-controlled from the ERP card. Modes never press Play and
+    // never reserve the left display for a music browser window.
+    var needsMusic: Bool { false }
     var needsZoom: Bool { self == .work || self == .mentorship }
 }
 private struct DisplayTarget {
@@ -58,6 +60,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var webView: WKWebView!
     private var pageReady = false
     private var pendingLaunch: (WorkMode, Bool, String)?
+    private var pendingMusicCommand: (String, String)?
+    private var remoteCommandRunning = false
     private var requestID = ""
     private var runDeadline = Date.distantFuture
     private var startedAt = Date()
@@ -104,6 +108,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         configureMenu()
         configureWindow()
         launchConfigured = true
+        if let (command, id) = pendingMusicCommand {
+            pendingMusicCommand = nil
+            performMusicCommand(command, id: id)
+            return
+        }
         if let (mode, preview, id) = pendingLaunch {
             pendingLaunch = nil
             beginMode(mode, preview: preview, id: id)
@@ -111,7 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     }
     // Native Split View temporarily hides this panel while macOS presents its
     // second-window chooser. Keep the process alive until the mode finishes.
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !isModeRunning }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !isModeRunning && !remoteCommandRunning }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
@@ -119,11 +128,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         return true
     }
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first(where: { $0.scheme == "piura-modes" }),
-              let host = url.host, let mode = WorkMode.resolve(host) else { return }
-        let preview = URLComponents(url: url, resolvingAgainstBaseURL: false)?
-            .queryItems?.contains(where: { $0.name == "preview" && $0.value == "1" }) ?? false
-        let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
+        guard let url = urls.first(where: { $0.scheme == "piura-modes" }), let host = url.host else { return }
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        let id = components?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
+        if host == "music" {
+            let command = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "toggle"
+            requestID = id
+            guard launchConfigured else { pendingMusicCommand = (command, id); return }
+            performMusicCommand(command, id: id)
+            return
+        }
+        guard let mode = WorkMode.resolve(host) else { return }
+        let preview = components?.queryItems?.contains(where: { $0.name == "preview" && $0.value == "1" }) ?? false
         guard launchConfigured else { pendingLaunch = (mode, preview, id); return }
         beginMode(mode, preview: preview, id: id)
     }
@@ -184,14 +200,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard let url = Bundle.main.url(forResource: "modes", withExtension: "html") else { return }
         webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            guard let self, !self.isModeRunning, self.requestID.isEmpty else { return }
+            guard let self, !self.isModeRunning, !self.remoteCommandRunning, self.requestID.isEmpty else { return }
             self.window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
         }
     }
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "piura", let body = message.body as? [String: Any],
-              let raw = body["mode"] as? String, let mode = WorkMode.resolve(raw) else { return }
+        guard message.name == "piura", let body = message.body as? [String: Any] else { return }
+        if body["action"] as? String == "music" {
+            performMusicCommand(body["command"] as? String ?? "toggle", id: body["requestID"] as? String ?? UUID().uuidString)
+            return
+        }
+        guard let raw = body["mode"] as? String, let mode = WorkMode.resolve(raw) else { return }
         beginMode(mode, preview: body["preview"] as? Bool ?? false, id: body["requestID"] as? String ?? UUID().uuidString)
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -222,12 +242,159 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 self.beginMode(next, preview: nextPreview, id: nextID)
                 return
             }
+            if let (command, commandID) = self.pendingMusicCommand {
+                self.pendingMusicCommand = nil
+                self.performMusicCommand(command, id: commandID)
+                return
+            }
             if !preview {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     if !self.isModeRunning && self.requestID == id { NSApp.terminate(nil) }
                 }
             }
         }
+    }
+    private func performMusicCommand(_ command: String, id: String) {
+        let allowed = ["toggle", "next", "previous"]
+        guard allowed.contains(command) else {
+            deliverMusicResult(["ok":false,"message":"Неизвестная команда музыки.","requestID":id])
+            return
+        }
+        guard !isModeRunning, !remoteCommandRunning else {
+            pendingMusicCommand = (command, id)
+            return
+        }
+        requestID = id
+        remoteCommandRunning = true
+        window.orderOut(nil)
+        NSApp.setActivationPolicy(.accessory)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self else { return }
+            var payload: [String: Any]
+            do {
+                payload = try self.controlYandexMusic(command)
+                payload["ok"] = true
+            } catch {
+                payload = ["ok":false,"message":error.localizedDescription]
+            }
+            payload["requestID"] = id
+            self.deliverMusicResult(payload)
+            self.remoteCommandRunning = false
+            if let (next, nextID) = self.pendingMusicCommand {
+                self.pendingMusicCommand = nil
+                self.performMusicCommand(next, id: nextID)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                if !self.isModeRunning && !self.remoteCommandRunning && self.requestID == id { NSApp.terminate(nil) }
+            }
+        }
+    }
+    private func controlYandexMusic(_ command: String) throws -> [String: Any] {
+        guard try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) != nil else {
+            throw modeError("Яндекс Браузер не найден.")
+        }
+        let location = try runAppleScript("""
+        tell application "Yandex"
+          set musicID to -1
+          set musicTab to -1
+          set createdWindow to false
+          repeat with w in every window
+            set tabNumber to 0
+            repeat with t in every tab of w
+              set tabNumber to tabNumber + 1
+              if URL of t starts with "\(musicURL)" then
+                set musicID to id of w
+                set musicTab to tabNumber
+                if (count of tabs of w) is 1 then
+                  set minimized of w to true
+                end if
+                exit repeat
+              end if
+            end repeat
+            if musicID is not -1 then exit repeat
+          end repeat
+          if musicID is -1 then
+            set musicID to id of (make new window)
+            set URL of active tab of window id musicID to "\(musicURL)"
+            set musicTab to 1
+            set minimized of window id musicID to true
+            set createdWindow to true
+          end if
+          return (musicID as text) & "," & (musicTab as text) & "," & (createdWindow as text)
+        end tell
+        """)
+        let parts = location.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        guard parts.count == 3, let windowID = Int(parts[0]), let tabNumber = Int(parts[1]) else {
+            throw modeError("Не удалось найти вкладку Яндекс Музыки.")
+        }
+        func execute(_ javascript: String) throws -> String {
+            try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"\(appleScriptEscape(javascript))\"")
+        }
+        let readState = """
+        (() => {
+          const buttons=[...document.querySelectorAll('button')];
+          const label=b=>(b.getAttribute('aria-label')||b.title||'').toLowerCase();
+          const find=words=>buttons.find(b=>words.some(word=>label(b).includes(word)));
+          const play=find(['воспроиз','play']), pause=find(['пауза','pause']);
+          const metadata=navigator.mediaSession?.metadata;
+          const clean=(document.title||'').replace(/\\s*[—–-]\\s*Яндекс Музыка.*$/i,'').trim();
+          return JSON.stringify({ready:!!(play||pause),state:(navigator.mediaSession?.playbackState==='playing'||!!pause)?'playing':'paused',title:metadata?.title||clean||'Моя музыка',artist:metadata?.artist||'Яндекс Музыка'});
+        })()
+        """
+        var state: [String: Any]?
+        let readyDeadline = Date().addingTimeInterval(8)
+        repeat {
+            if let data = try? execute(readState).data(using: .utf8),
+               let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               value["ready"] as? Bool == true { state = value; break }
+            pumpRunLoop(0.35)
+        } while Date() < readyDeadline
+        guard let before = state else { throw modeError("Яндекс Музыка ещё не загрузила плеер.") }
+        let actionScript = """
+        (() => {
+          const action='\(command)';
+          const buttons=[...document.querySelectorAll('button')];
+          const label=b=>(b.getAttribute('aria-label')||b.title||'').toLowerCase();
+          const find=words=>buttons.find(b=>words.some(word=>label(b).includes(word)));
+          const pause=find(['пауза','pause']), play=find(['воспроиз','play']);
+          const playing=navigator.mediaSession?.playbackState==='playing'||!!pause;
+          const target=action==='toggle'?(playing?pause:play):(action==='next'?find(['следующ','next']):find(['предыдущ','previous']));
+          if(!target)return JSON.stringify({clicked:false});
+          target.click();
+          return JSON.stringify({clicked:true,expectedState:action==='toggle'?(playing?'paused':'playing'):(playing?'playing':'paused')});
+        })()
+        """
+        guard let actionData = try execute(actionScript).data(using: .utf8),
+              let action = try? JSONSerialization.jsonObject(with: actionData) as? [String: Any],
+              action["clicked"] as? Bool == true else { throw modeError("Кнопка плеера Яндекс Музыки не найдена.") }
+        pumpRunLoop(command == "toggle" ? 0.35 : 0.7)
+        var result = before
+        if let data = try? execute(readState).data(using: .utf8),
+           let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] { result = updated }
+        if let expected = action["expectedState"] { result["state"] = expected }
+        result.removeValue(forKey: "ready")
+        result["command"] = command
+        result["hiddenWindowCreated"] = parts[2] == "true"
+        return result
+    }
+    private func deliverMusicResult(_ payload: [String: Any]) {
+        guard let data = try? JSONSerialization.data(withJSONObject: payload), let json = String(data: data, encoding: .utf8) else { return }
+        webView.evaluateJavaScript("window.piuraMusicResult?.(\(json))")
+        let javascript = "(()=>{const r=\(json);window.piuraMusicResult?.(r);document.querySelectorAll('iframe').forEach(f=>f.contentWindow.postMessage({...r,type:'piura-music-result'},location.origin));return 'delivered'})()"
+        _ = try? runAppleScript("""
+        tell application "Yandex"
+          repeat with w in every window
+            repeat with t in every tab of w
+              if URL of t starts with "\(erpBaseURL)" then
+                try
+                  execute t javascript "\(appleScriptEscape(javascript))"
+                end try
+              end if
+            end repeat
+          end repeat
+        end tell
+        """)
     }
     private func runMode(_ mode: WorkMode, preview: Bool) -> ModeResult {
         let displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
@@ -661,26 +828,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
         guard let erpURL = mode.erpURL else { return }
         guard let app = try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) else { throw modeError("Яндекс не найден.") }
-        let leftURL = mode.needsMusic ? musicURL : policyURL
-        let needsLeft = mode != .learning
-        let morningPreviewScript = mode == .morning ? """
-          set musicTabNumber to 0
-          set previewTabNumber to 0
-          set tabNumber to 0
-          repeat with t in every tab of window id leftID
-            set tabNumber to tabNumber + 1
-            set tabURL to URL of t
-            if tabURL starts with "\(musicURL)" then set musicTabNumber to tabNumber
-            if tabURL starts with "\(morningAdminPreviewBaseURL)" then
-              set previewTabNumber to tabNumber
-              if tabURL is not "\(morningAdminPreviewURL)" then set URL of t to "\(morningAdminPreviewURL)"
-            end if
-          end repeat
-          if previewTabNumber is 0 then
-            make new tab at end of tabs of window id leftID with properties {URL:"\(morningAdminPreviewURL)"}
-          end if
-          if musicTabNumber is not 0 then set active tab index of window id leftID to musicTabNumber
-        """ : ""
+        let leftURL = mode == .morning ? morningAdminPreviewURL : policyURL
+        let needsLeft = mode == .morning || mode == .mentorship
         let leftScript = needsLeft ? """
           repeat with w in every window
             if id of w is not erpID then
@@ -701,7 +850,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set URL of active tab of window id leftID to "\(leftURL)"
           end if
           set minimized of window id leftID to false
-          \(morningPreviewScript)
         """ : ""
         let ids = try runAppleScript("""
         tell application "Yandex"
@@ -1338,7 +1486,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             end tell
             """)
             guard result.hasPrefix(morningAdminPreviewURL) else { throw modeError("Слева не открылся обзор целей и планов.") }
-            verifiedWindows.append(["morningLeftForeground":"goals-and-plans","musicHiddenBehind":true])
+            verifiedWindows.append(["morningLeftForeground":"goals-and-plans","musicControlledFromERP":true])
         }
         }
         attempt {
@@ -1378,25 +1526,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if !failures.isEmpty { throw modeError(failures.joined(separator:" · ")) }
     }
     private func verifyFinalSides(for mode: WorkMode, left: DisplayTarget, right: DisplayTarget) throws {
-        // Read-only final verification: never click Play or raise a window here.
-        let musicIDs = try runAppleScript("""
-        tell application "Yandex"
-          set matches to {}
-          repeat with w in every window
-            repeat with t in every tab of w
-              if URL of t starts with "\(musicURL)" then set end of matches to id of w
-            end repeat
-          end repeat
-          return matches
-        end tell
-        """).split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-        guard mode.needsMusic ? musicIDs == [leftWindowID] : musicIDs.isEmpty else {
-            throw modeError("Музыка должна быть только в одном левом окне и отсутствовать в обучении/наставничестве.")
-        }
+        // Read-only final verification: music is controlled separately by the
+        // ERP card and never owns a display as part of a mode recipe.
         if mode != .learning {
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
-            let expectedLeftURL = mode == .morning ? morningAdminPreviewURL : (mode.needsMusic ? musicURL : policyURL)
-            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expectedLeftURL)
+        }
+        if mode == .morning {
+            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:morningAdminPreviewURL)
+        } else if mode == .mentorship {
+            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:policyURL)
         }
         if mode == .work {
             let screens = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }
@@ -1408,7 +1546,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             }
             verifiedWindows.append(["finalTelegramPairVisible":true])
         }
-        verifiedWindows.append(["finalSideWindowsVerified":true,"musicWindowCount":musicIDs.count,"musicDisplay":mode.needsMusic ? left.screen.localizedName : "none"])
+        verifiedWindows.append(["finalSideWindowsVerified":true,"musicDisplay":"ERP control only"])
     }
     private func verifyOfficeLighting(for mode: WorkMode) throws {
         let deadline = Date().addingTimeInterval(12)

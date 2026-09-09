@@ -6,7 +6,8 @@ import {runInNewContext} from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const app=read('mac/PIURAModes.swift');
 test('music observation never clicks the player, even while buffering',()=>{
-  const code=app.split('let readState = """')[1].split('"""')[0];
+  const music=app.slice(app.indexOf('private func startYandexMusic'),app.indexOf('private func configureMusic'));
+  const code=music.split('let readState = """')[1].split('"""')[0];
   let clicks=0,playing=false;
   const ctx={navigator:{mediaSession:{playbackState:'paused'}},document:{querySelector:()=>({querySelector:s=>s.includes('Пауза')?(playing?{}:null):{click(){clicks++}}})}};
   for(let i=0;i<12;i++)assert.equal(runInNewContext(code,ctx),'ready');
@@ -65,16 +66,17 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
   assert.ok(run.indexOf('restoreForeground')<run.indexOf('finishDesktopWallpaper'));
   assert.match(app,/changedAfterLayout/);
 });
-test('final screen audit forbids duplicate music windows and music in quiet modes',()=>{
-  assert.match(app,/musicIDs == \[leftWindowID\] : musicIDs.isEmpty/);
-  assert.match(app,/mode == \.morning \? morningAdminPreviewURL/);
-  assert.match(app,/"morningLeftForeground":"goals-and-plans","musicHiddenBehind":true/);
+test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
+  assert.match(app,/var needsMusic: Bool \{ false \}/);
+  assert.match(app,/let leftURL = mode == \.morning \? morningAdminPreviewURL : policyURL/);
+  assert.match(app,/"morningLeftForeground":"goals-and-plans","musicControlledFromERP":true/);
+  assert.match(app,/"musicDisplay":"ERP control only"/);
   assert.match(app,/finalSideWindowsVerified/);
   const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
 });
-test('morning keeps music in the left window and shows goals with plans above it',()=>{
+test('morning shows goals with plans on the left without auto-playing music',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(preview,/grid-template-columns:1fr 1fr/);

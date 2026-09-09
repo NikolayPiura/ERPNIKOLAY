@@ -12,10 +12,12 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов использует общий компонент четырёх рабочих пространств', () => {
+test('панель режимов использует общую недельную ленту и отдельное утро', () => {
   assert.match(read('modes.html'), /data-work-modes/);
   const modes = read('work-modes.js');
-  for (const mode of ['morning','work','learning','mentorship']) assert.ok(modes.includes(mode+':'));
+  for (const mode of ['morning','work','mentorship']) assert.ok(modes.includes(mode+':'));
+  assert.equal((modes.match(/name:'(?:Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье)'/g)||[]).length, 7);
+  assert.doesNotMatch(modes, /learning:'Обучение'/);
   assert.match(modes, /messageHandlers/);
   assert.ok(modes.includes('piura-modes://'));
   assert.doesNotMatch(modes, /button.disabled=true/);

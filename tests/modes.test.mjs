@@ -5,11 +5,21 @@ import {runInNewContext} from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const script=read('work-modes.js'), app=read('mac/PIURAModes.swift');
 const names=['morning','work','learning','mentorship'];
+const buttonSpecs=[
+  {mode:'morning'},
+  {mode:'work',day:'1',dayName:'Понедельник',focus:'Климат'},
+  {mode:'work',day:'2',dayName:'Вторник',focus:'Инвестиции'},
+  {mode:'work',day:'3',dayName:'Среда',focus:'Климат'},
+  {mode:'work',day:'4',dayName:'Четверг',focus:'Админ'},
+  {mode:'work',day:'5',dayName:'Пятница',focus:'Фонды'},
+  {mode:'mentorship',day:'6',dayName:'Суббота',focus:'Наставничество'},
+  {mode:'mentorship',day:'0',dayName:'Воскресенье',focus:'Наставничество'}
+];
 function panel(native=true){
   const status={textContent:'',dataset:{}}, events={},messages=[],timers=new Map();
   let sequence=0;
-  const buttons=names.map(mode=>({
-    dataset:{mode},attributes:{},href:'piura-modes://'+mode,
+  const buttons=buttonSpecs.map(spec=>({
+    dataset:{...spec},attributes:{},href:'piura-modes://'+spec.mode,
     addEventListener(event,handler){this[event]=handler},
     setAttribute(key,value){this.attributes[key]=value},
     removeAttribute(key){delete this.attributes[key]}
@@ -26,23 +36,26 @@ function panel(native=true){
   const click=index=>{let prevented=false;buttons[index].click({preventDefault(){prevented=true}});return prevented};
   return {window,buttons,root,status,messages,timers,events,click};
 }
-test('four distinct illustrated links; page load starts nothing',()=>{
+test('seven daily links plus a small morning shortcut; page load starts nothing',()=>{
   const p=panel();
   assert.equal(p.messages.length,0);
-  assert.equal((p.root.innerHTML.match(/<a class="work-mode"/g)||[]).length,4);
-  assert.equal((p.root.innerHTML.match(/<svg /g)||[]).length,4);
-  for(const name of names)assert.ok(p.root.innerHTML.includes('piura-modes://'+name));
+  assert.equal((p.root.innerHTML.match(/<a class="work-mode(?:\s|")/g)||[]).length,7);
+  assert.equal((p.root.innerHTML.match(/<svg /g)||[]).length,8);
+  assert.equal((p.root.innerHTML.match(/piura-modes:\/\/work/g)||[]).length,5);
+  assert.equal((p.root.innerHTML.match(/piura-modes:\/\/mentorship/g)||[]).length,2);
+  assert.match(p.root.innerHTML,/morning-shortcut[^>]+piura-modes:\/\/morning/);
+  assert.doesNotMatch(p.root.innerHTML,/piura-modes:\/\/learning/);
 });
-test('all four native buttons work and stay available while switching',()=>{
+test('all eight weekly controls work and stay available while switching',()=>{
   const p=panel();
-  names.forEach((name,i)=>{
+  buttonSpecs.forEach((spec,i)=>{
     assert.equal(p.click(i),true);
-    assert.equal(p.messages.at(-1).mode,name);
+    assert.equal(p.messages.at(-1).mode,spec.mode);
     assert.equal(p.messages.at(-1).preview,false);
     assert.ok(p.buttons.every(b=>!b.disabled));
   });
-  assert.equal(p.messages.length,4);
-  assert.equal(new Set(p.messages.map(m=>m.requestID)).size,4);
+  assert.equal(p.messages.length,8);
+  assert.equal(new Set(p.messages.map(m=>m.requestID)).size,8);
 });
 test('old callbacks cannot overwrite the newest request; errors release busy state',()=>{
   const p=panel();
@@ -65,7 +78,7 @@ test('browser uses user-initiated protocol links, timeout never claims completio
   for(const fn of p.timers.values())fn();
   assert.notEqual(p.status.dataset.state,'ok');
   assert.ok(p.buttons.every(b=>!b.disabled&&!b.attributes['aria-busy']));
-  p.click(2);assert.match(p.buttons[2].href,/learning/);
+  p.click(2);assert.match(p.buttons[2].href,/work/);
 });
 test('foreign origin cannot inject a success message',()=>{
   const p=panel();
@@ -98,12 +111,23 @@ test('real fullscreen verification and all four recipes',()=>{
   assert.match(app,/synchronizeWallpaperSpaces/);
   assert.match(app,/if !startYandexMusic/);
 });
-test('green icon-only compact dashboard and enlarged rules without metadata',()=>{
+test('green weekly dashboard and enlarged rules without metadata',()=>{
   const p=panel(),css=read('work-modes.css'),policy=read('communication-policy.html');
-  assert.doesNotMatch(p.root.innerHTML,/<strong>|Три экрана · пять режимов/);
-  assert.match(css,/\.work-mode\[data-mode\]\{--tone:#63e4d3/);
+  assert.match(p.root.innerHTML,/Понедельник/);
+  assert.match(p.root.innerHTML,/Пятница/);
+  assert.match(css,/grid-template-columns:repeat\(7/);
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
+});
+test('ERP music card controls a hidden authorized Yandex tab and owns no display',()=>{
+  const html=read('piura-erp-restored 3/modules/Overview.html'),controller=read('music-controller.js');
+  assert.ok(html.indexOf('home-controls-card')<html.indexOf('id="musicCard"'));
+  assert.ok(html.indexOf('id="musicCard"')<html.indexOf('id="fanCard"'));
+  assert.match(html,/music-controller\.js/);
+  assert.match(controller,/piura-modes:\/\/music/);
+  assert.match(app,/host == "music"/);
+  assert.match(app,/var needsMusic: Bool \{ false \}/);
+  assert.match(app,/set minimized of window id musicID to true/);
 });
 test('isolated reusable profiles, recoverable cleanup, fullscreen and portrait wallpapers',()=>{
   assert.match(app,/profileName\(of: \$0\) == mode.safariProfile/);
