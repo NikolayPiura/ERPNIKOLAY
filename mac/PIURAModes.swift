@@ -36,9 +36,9 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work }
     var needsChatGPT: Bool { self == .work }
-    // Music is user-controlled from the ERP card. Modes never press Play and
-    // never reserve the left display for a music browser window.
-    var needsMusic: Bool { false }
+    // Morning and weekday work start the same player controlled by the ERP
+    // card. The player owns no monitor and stays in a background browser tab.
+    var needsMusic: Bool { self == .morning || self == .work }
     var needsZoom: Bool { self == .work || self == .mentorship }
 }
 private struct DisplayTarget {
@@ -134,9 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
         let id = components?.queryItems?.first(where: { $0.name == "request" })?.value ?? UUID().uuidString
         if host == "music" {
-            let action = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "toggle"
-            let value = components?.queryItems?.first(where: { $0.name == "value" })?.value
-            let command = action == "volume" ? "volume:\(value ?? "50")" : action
+            let command = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "toggle"
             requestID = id
             guard launchConfigured else { pendingMusicCommand = (command, id); return }
             performMusicCommand(command, id: id)
@@ -212,9 +210,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "piura", let body = message.body as? [String: Any] else { return }
         if body["action"] as? String == "music" {
-            let action = body["command"] as? String ?? "toggle"
-            let value = (body["value"] as? NSNumber)?.intValue
-            let command = action == "volume" ? "volume:\(value ?? 50)" : action
+            let command = body["command"] as? String ?? "toggle"
             performMusicCommand(command, id: body["requestID"] as? String ?? UUID().uuidString)
             return
         }
@@ -262,9 +258,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func performMusicCommand(_ command: String, id: String) {
-        let isVolume = command.hasPrefix("volume:") && Int(command.dropFirst("volume:".count)).map { (0...100).contains($0) } == true
-        let allowed = ["toggle", "next", "previous", "status"]
-        guard allowed.contains(command) || isVolume else {
+        let allowed = ["toggle", "play", "next", "previous", "status"]
+        guard allowed.contains(command) else {
             deliverMusicResult(["ok":false,"message":"Неизвестная команда музыки.","requestID":id])
             return
         }
@@ -300,7 +295,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func writeMusicReport(_ payload: [String: Any]) {
-        let allowed = ["ok", "message", "state", "command", "volume", "requestID", "hiddenWindowCreated", "diagnostic", "artist", "title", "attempts"]
+        let allowed = ["ok", "message", "state", "command", "requestID", "backgroundTabCreated", "diagnostic", "artist", "title"]
         let report = payload.filter { allowed.contains($0.key) }
         try? FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
         if let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
@@ -308,6 +303,147 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func controlYandexMusic(_ command: String) throws -> [String: Any] {
+        guard workspace.runningApplications.contains(where: {
+            $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated
+        }) else {
+            throw modeError("Сначала включите режим — фоновый плеер подготовится автоматически.")
+        }
+        // Keep the authenticated Yandex Music session in a background tab of
+        // the already-visible ERP window. Creating/selecting browser windows is
+        // deliberately forbidden here: Play/Pause must not flash Yandex UI.
+        let location = try runAppleScript("""
+        tell application "Yandex"
+          set musicID to -1
+          set musicTab to -1
+          set createdTab to false
+          repeat with w in every window
+            set tabNumber to 0
+            repeat with t in every tab of w
+              set tabNumber to tabNumber + 1
+              if URL of t starts with "\(musicURL)" then
+                set musicID to id of w
+                set musicTab to tabNumber
+                exit repeat
+              end if
+            end repeat
+            if musicID is not -1 then exit repeat
+          end repeat
+          if musicID is -1 then
+            set hostID to -1
+            repeat with w in every window
+              repeat with t in every tab of w
+                set u to URL of t
+                if u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html" then
+                  set hostID to id of w
+                  exit repeat
+                end if
+              end repeat
+              if hostID is not -1 then exit repeat
+            end repeat
+            if hostID is -1 then error "ERP window is not available"
+            set previousTab to active tab index of window id hostID
+            tell window id hostID
+              make new tab at end of tabs with properties {URL:"\(musicURL)"}
+              set musicTab to count of tabs
+              set active tab index to previousTab
+            end tell
+            set musicID to hostID
+            set createdTab to true
+          end if
+          return (musicID as text) & "," & (musicTab as text) & "," & (createdTab as text)
+        end tell
+        """)
+        let parts = location.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        guard parts.count == 3, let windowID = Int(parts[0]), let tabNumber = Int(parts[1]) else {
+            throw modeError("Не удалось подготовить фоновую вкладку Яндекс Музыки.")
+        }
+        func execute(_ javascript: String) throws -> String {
+            try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"\(appleScriptEscape(javascript))\"")
+        }
+        let readState = """
+        (() => {
+          const buttons=[...document.querySelectorAll('button')];
+          const controls=buttons.filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          const labels=controls.map(button=>(button.getAttribute('aria-label')||button.title||'').toLowerCase());
+          const play=labels.some(label=>label.includes('воспроиз')||label.includes('play'));
+          const pause=labels.some(label=>label.includes('пауза')||label.includes('pause'));
+          const api=window.externalAPI;
+          let apiPlaying=null,track=null;
+          try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying();if(typeof api?.getCurrentTrack==='function')track=api.getCurrentTrack()}catch{}
+          const mediaPlaying=[...document.querySelectorAll('audio,video')].some(item=>!item.paused&&!item.ended);
+          const playing=apiPlaying??(controls.length?pause&&!play:(mediaPlaying||navigator.mediaSession?.playbackState==='playing'));
+          const metadata=navigator.mediaSession?.metadata;
+          const trackArtists=Array.isArray(track?.artists)?track.artists.map(item=>item?.title||item?.name||'').filter(Boolean).join(', '):'';
+          const artist=(trackArtists||metadata?.artist||'').trim();
+          return JSON.stringify({ready:!!(controls.length||typeof api?.togglePause==='function'||document.querySelector('audio,video')),state:playing?'playing':'paused',title:track?.title||metadata?.title||'',artist:artist&&!/яндекс|yandex/i.test(artist)?artist:'Исполнитель'});
+        })()
+        """
+        var before: [String: Any]?
+        let readyDeadline = Date().addingTimeInterval(parts[2] == "true" ? 10 : 3)
+        repeat {
+            if let data = try? execute(readState).data(using: .utf8),
+               let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               value["ready"] as? Bool == true { before = value; break }
+            pumpRunLoop(0.2)
+        } while Date() < readyDeadline
+        guard var result = before else { throw modeError("Фоновый плеер Яндекс Музыки ещё не загрузился.") }
+        result.removeValue(forKey: "ready")
+        result["command"] = command
+        result["backgroundTabCreated"] = parts[2] == "true"
+        if command == "status" || (command == "play" && result["state"] as? String == "playing") { return result }
+
+        let keyCode: Int
+        switch command {
+        case "toggle", "play": keyCode = 16
+        case "next": keyCode = 17
+        case "previous": keyCode = 18
+        default: throw modeError("Неизвестная команда музыки.")
+        }
+        try postSystemMediaKey(keyCode)
+        let expectedState = command == "play" ? "playing" :
+            (command == "toggle" ? (result["state"] as? String == "playing" ? "paused" : "playing") : nil)
+        let oldTitle = result["title"] as? String ?? ""
+        let confirmationDeadline = Date().addingTimeInterval(3.5)
+        repeat {
+            pumpRunLoop(0.15)
+            if let data = try? execute(readState).data(using: .utf8),
+               let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                result = updated
+                let confirmed = expectedState.map { result["state"] as? String == $0 }
+                    ?? ((result["title"] as? String ?? "") != oldTitle)
+                if confirmed { break }
+            }
+        } while Date() < confirmationDeadline
+        if let expectedState, result["state"] as? String != expectedState {
+            throw modeError(expectedState == "playing" ? "Яндекс Музыка не подтвердила запуск." : "Яндекс Музыка не подтвердила паузу.")
+        }
+        result.removeValue(forKey: "ready")
+        result["command"] = command
+        result["backgroundTabCreated"] = parts[2] == "true"
+        return result
+    }
+    private func postSystemMediaKey(_ keyCode: Int) throws {
+        func event(state: Int) -> CGEvent? {
+            NSEvent.otherEvent(
+                with: .systemDefined,
+                location: .zero,
+                modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: 0,
+                context: nil,
+                subtype: 8,
+                data1: (keyCode << 16) | (state << 8),
+                data2: -1
+            )?.cgEvent
+        }
+        guard let down = event(state: 0xA), let up = event(state: 0xB) else {
+            throw modeError("macOS не создала системную медиакоманду.")
+        }
+        down.post(tap: .cghidEventTap)
+        pumpRunLoop(0.03)
+        up.post(tap: .cghidEventTap)
+    }
+    private func legacyControlYandexMusic(_ command: String) throws -> [String: Any] {
         try repairYandexMusicExtension()
         guard try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) != nil else {
             throw modeError("Яндекс Браузер не найден.")
@@ -729,8 +865,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if !preview {
             if mode == .morning && !setDoNotDisturb(enabled: true) { notes.append("проверьте режим «Не беспокоить»") }
             if mode.needsMusic {
-                do { try configureMusic(for:mode) } catch { notes.append("Оформление музыки: \(error.localizedDescription)") }
-                if !startYandexMusic() { notes.append("не удалось подтвердить воспроизведение музыки") }
+                do {
+                    var music = try controlYandexMusic("play")
+                    music["startedFromERP"] = true
+                    verifiedWindows.append(music)
+                } catch {
+                    notes.append("Музыка с панели ERP: \(error.localizedDescription)")
+                }
             }
         }
         if mode.needsChatGPT {
