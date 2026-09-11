@@ -124,23 +124,24 @@ test('green weekly dashboard and enlarged rules without metadata',()=>{
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
 });
-test('ERP music card controls authenticated My Wave through the invisible native bridge',()=>{
+test('ERP music card uses the official embedded player without opening browser windows',()=>{
   const html=read('piura-erp-restored 3/modules/Overview.html'),controller=read('music-controller.js'),index=read('index.html');
   assert.ok(html.indexOf('home-controls-card')<html.indexOf('id="musicCard"'));
   assert.ok(html.indexOf('id="musicCard"')<html.indexOf('id="fanCard"'));
   assert.match(html,/music-controller\.js/);
   assert.match(index,/id="erpMusicFrame"/);
-  assert.match(index,/piura-modes:\/\/music\?action=/);
-  assert.match(index,/postMusic\('wave'\)/);
-  assert.match(index,/postMusic\('pause'\)/);
-  assert.match(index,/delta<0\?'previous':'next'/);
-  assert.doesNotMatch(index,/MUSIC_QUEUE|PLAY_QUEUE|bandlink-wiki/);
-  assert.match(app,/['"]wave['"]/);
-  assert.match(app,/моя волна/);
-  assert.match(app,/pressHiddenYandexMusicControl\(/);
-  assert.ok(app.includes('set bounds of window id \\(windowID) to {120, 120, 920, 720}'));
-  assert.match(app,/return pressFocusedControl\(\)/);
-  assert.doesNotMatch(app,/key code 40 using control down/);
+  assert.match(index,/allow="autoplay; encrypted-media"/);
+  assert.match(index,/const MUSIC_ORIGIN='https:\/\/music\.yandex\.ru'/);
+  assert.match(index,/postMusic\('PLAY_SOURCE'\)/);
+  assert.match(index,/postMusic\('PAUSE'\)/);
+  assert.match(index,/delta<0\?'PREVIOUS_TRACK':'NEXT_TRACK'/);
+  assert.match(index,/getRandomValues\(seed\)/);
+  assert.match(index,/randomSkipsPending=1\+\(seed\[0\]%24\)/);
+  assert.match(index,/bandlink-wiki/);
+  assert.doesNotMatch(index,/piura-modes:\/\/music|MUSIC_QUEUE|PLAY_QUEUE/);
+  const nativeMusic=app.slice(app.indexOf('private func controlYandexMusic'),app.indexOf('private func retiredWindowBasedYandexMusicControl'));
+  assert.match(nativeMusic,/встроенным плеером ERP/);
+  assert.doesNotMatch(nativeMusic,/runAppleScript|workspace|activate|visible|make new window|active tab/);
   assert.match(controller,/piuraMusicCommand/);
   assert.doesNotMatch(controller,/piura-modes:\/\/music|messageHandlers|webkit/);
   assert.doesNotMatch(html,/id="musicVolume"/);
