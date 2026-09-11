@@ -617,6 +617,8 @@ test('управление фондами сохраняет только Инв
   assert.match(funds, /#inclRow \.pill\.on\{/);
   assert.match(funds, /<polygon points=/);
   assert.match(funds, /id="endowmentTreeWrap"/);
+  assert.match(funds, /#view-endowment \.sec-hdr\{display:flex!important/);
+  assert.match(funds, /#view-endowment \.conn-row\{display:block!important/);
   assert.match(funds, /Доход \/ месяц/);
   assert.match(funds, /Доходность/);
   assert.match(funds, /class="flow-route"/);
