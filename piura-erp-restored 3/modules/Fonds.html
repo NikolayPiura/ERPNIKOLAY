@@ -754,13 +754,13 @@ async function loadPaff(){
 }
 async function loadStructureSources(){
   const results=await Promise.allSettled([loadSolid(),loadPaff(),...funds.filter(fund=>fund.api).map(fund=>fetchFund(fund,true))]);
-  const failed=results.filter(item=>item.status==='rejected');if(failed.length)throw new Error(`Не обновлено источников: ${failed.length} из ${results.length} · ${failed.map(item=>item.reason?.message||item.reason).join(' · ')}`);
-  return results;
+  const failed=results.filter(item=>item.status==='rejected');if(failed.length===results.length)throw new Error(`Источники недоступны · ${failed.map(item=>item.reason?.message||item.reason).join(' · ')}`);
+  return{results,failed:failed.length,total:results.length};
 }
 async function refreshExternalFunds(manual=false){
   const button=document.getElementById('refreshAll'),source=document.getElementById('sourceStatus');if(button){button.disabled=true;button.textContent='↻ Обновляем…'}source.className='data-status loading';source.innerHTML='<i></i>Читаем Google Sheets…';
   const jobs=[['endStatus',loadEndowment],['sourceStatus',loadStructureSources]],results=await Promise.allSettled(jobs.map(([,fn])=>fn()));
-  results.forEach((result,index)=>{const el=document.getElementById(jobs[index][0]);if(!el)return;if(result.status==='fulfilled'){el.className='data-status';el.removeAttribute('title');el.innerHTML='<i></i>Google Sheets · обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}else{el.className='data-status error';el.title=String(result.reason?.message||result.reason||'Ошибка источника');el.innerHTML='<i></i>Источник недоступен · показан последний сохранённый снимок';console.warn(jobs[index][0],result.reason)}});
+  results.forEach((result,index)=>{const el=document.getElementById(jobs[index][0]);if(!el)return;if(result.status==='fulfilled'){const missed=Number(result.value?.failed)||0;el.className='data-status'+(missed?' warning':'');el.removeAttribute('title');el.innerHTML='<i></i>'+(missed?`Обновлено · ${missed} без ответа, сохранён последний снимок`:'Google Sheets · обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}))}else{el.className='data-status error';el.title=String(result.reason?.message||result.reason||'Ошибка источника');el.innerHTML='<i></i>Источник недоступен · показан последний сохранённый снимок';console.warn(jobs[index][0],result.reason)}});
   const ok=results.filter(r=>r.status==='fulfilled').length;source.className='data-status '+(ok===jobs.length?'':'error');source.innerHTML='<i></i>'+`Обновлено источников: ${ok} из ${jobs.length}`;
   if(button){button.disabled=false;button.textContent=ok===jobs.length?`✓ Обновлено ${new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}`:'↻ Повторить обновление'}if(manual&&ok===jobs.length)button?.blur();
 }
@@ -1326,7 +1326,6 @@ try{const e=JSON.parse(localStorage.getItem('piura_cache_endowment_v2')||'null')
 refreshExternalFunds();
 renderTree();
 recalcDisplay();
-funds.forEach(f=>fetchFund(f));
 window.addEventListener('resize',()=>{renderTree();recalcDisplay();});
 window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied'){funds=loadState();renderTree();recalcDisplay()}});
 </script>

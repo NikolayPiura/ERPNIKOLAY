@@ -624,6 +624,8 @@ test('управление фондами сохраняет только Инв
   assert.match(funds, /class="flow-route"/);
   assert.match(funds, /async function timedFetch\(url,options=\{\},timeout=10000\)/);
   assert.match(funds, /timedFetch\(f\.api\+'\?t='\+Date\.now\(\),\{\},10000\)/);
+  assert.match(funds, /failed\.length===results\.length/);
+  assert.match(funds, /без ответа, сохранён последний снимок/);
   assert.doesNotMatch(funds, /id="currencySwitch"/);
   assert.doesNotMatch(funds, /class="solid-assets"/);
   assert.doesNotMatch(funds, /id="endTotalGoal"|id="endYieldGoal"|id="endAnnual"|Цель дохода \/ месяц/);
