@@ -12,12 +12,12 @@ import {
 const root = new URL('../', import.meta.url);
 const read = path => readFileSync(new URL(path, root), 'utf8');
 
-test('панель режимов использует общую недельную ленту и отдельное утро', () => {
+test('панель режимов использует общую недельную ленту и отдельные быстрые режимы', () => {
   assert.match(read('modes.html'), /data-work-modes/);
   const modes = read('work-modes.js');
-  for (const mode of ['morning','work','mentorship']) assert.ok(modes.includes(mode+':'));
+  for (const mode of ['morning','work','learning','mentorship']) assert.ok(modes.includes(mode+':'));
   assert.equal((modes.match(/name:'(?:Понедельник|Вторник|Среда|Четверг|Пятница|Суббота|Воскресенье)'/g)||[]).length, 7);
-  assert.doesNotMatch(modes, /learning:'Обучение'/);
+  assert.match(modes, /learning:'Обучение'/);
   assert.match(modes, /messageHandlers/);
   assert.ok(modes.includes('piura-modes://'));
   assert.doesNotMatch(modes, /button.disabled=true/);
@@ -134,7 +134,7 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /name:'Ассоциация'/);
   assert.match(overview, /name:'Котики'.*?current:309,target:400/);
   assert.match(overview, /name:'Наркотики'.*?current:0,target:50/);
-  assert.match(overview, /detail:'Деревья',current:200,target:500/);
+  assert.match(overview, /detail:'Деревья',current:treesCurrent,target:treesTarget/);
   assert.match(overview, /name:'Ассоциация'.*?current:associationCurrent,target:associationTarget/);
   assert.match(overview, /fan-card>\.device-section-head,.control-grid \.minimal-lamp>\.device-section-head\{display:none!important\}/);
   assert.match(overview, /minimal-lamp \.master-toggle\{display:none!important\}/);
@@ -285,10 +285,10 @@ test('ПС №1 сохраняет старые данные при миграц
 
 test('ПС №1 оставляет по одному действию в динамиках 4–6 и сохраняет старые отметки', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
-  assert.match(weekly, /\[401,4,'Сделано доброе дело',500\]/);
-  assert.match(weekly, /\[501,5,'Сделано доброе дело',300\]/);
+  assert.match(weekly, /\[401,4,'Дело, сделанное в ассоциации',50\]/);
+  assert.match(weekly, /\[501,5,'Дело Fundy Друг',50\]/);
   assert.match(weekly, /\[602,6,'Сделано доброе дело',500\]/);
-  assert.match(weekly, /TASKS_VERSION=8/);
+  assert.match(weekly, /TASKS_VERSION=9/);
   assert.match(weekly, /mergeCurrentTask\(401,\[404\]\)/);
   assert.match(weekly, /mergeCurrentTask\(501,\[502\]\)/);
   assert.match(weekly, /mergeCurrentTask\(602,\[603,604\]\)/);
@@ -471,7 +471,7 @@ test('ПС №1 использует один дневной или недель
   assert.equal(dynamics.length,8);
   assert.deepEqual(dynamics.map(match=>match[2]),['Я','Семья','Группа','Человечество','Жизнь','Вселенная','Духовное','Бесконечность']);
   assert.equal(tasks.length,19);
-  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),8335);
+  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),7635);
   assert.equal(tasks.find(task=>task.name==='Сессия')?.weight,75);
   assert.equal(tasks.find(task=>task.name==='Обучение (пара, инвестиции, наставничество, заочное или очное)')?.weight,10);
   assert.equal(tasks.find(task=>task.name==='Все встречи проведены в тайминге')?.weight,70);
@@ -479,8 +479,9 @@ test('ПС №1 использует один дневной или недель
   assert.equal(tasks.find(task=>task.name==='Описана тэта')?.weight,5500);
   assert.equal(tasks.find(task=>task.name==='Хорошо сделан кайдзен-час')?.weight,20);
   assert.equal(tasks.find(task=>task.name==='Все задачи предыдущего дня')?.weight,70);
-  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===500).length,2);
-  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===300).length,1);
+  assert.equal(tasks.find(task=>task.name==='Дело, сделанное в ассоциации')?.weight,50);
+  assert.equal(tasks.find(task=>task.name==='Дело Fundy Друг')?.weight,50);
+  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===500).length,1);
   assert.equal(tasks.find(task=>task.name==='Выполнен пункт этического плана')?.weight,500);
   assert.ok(tasks.some(task=>task.name==='Личная гигиена, душ, зубы, витамины'));
   assert.ok(tasks.some(task=>task.name==='Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов'));
@@ -558,7 +559,7 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="scoreLine"/);
   assert.match(weekly, /'#35d8f5'/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=8,WEEK_CYCLE_VERSION=3/);
+  assert.match(weekly, /SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=9,WEEK_CYCLE_VERSION=3/);
   assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,404,502,601,603,604,703\]/);
   assert.match(weekly, /if\(needsTaskMigration\)migrateTaskCatalog\(\)/);
   assert.match(weekly, /function mergeCurrentTask\(canonicalId,legacyIds\)/);
@@ -574,7 +575,7 @@ test('миграция ПС №1 сохраняет отметки и стары
     const REMOVED_TASK_IDS=[402,403,404,502,601,603,604,703],clone=value=>JSON.parse(JSON.stringify(value)),num=value=>Number(value)||0;
     const current='2026-08-13',previous='2026-08-06';
     let S={tasks:[
-      {id:101,dynamicId:1,name:'Личная гигиена, душ, зубы, витамины',w:10,order:0,active:true},
+      {id:101,dynamicId:1,name:'Личная гигиена, душ, зубы, витамины, зубная нить',w:10,order:0,active:true},
       {id:102,dynamicId:1,name:'Тренировка',w:20,order:1,active:true},
       {id:403,dynamicId:4,name:'Написана глава книги',w:30,order:2,active:true},
       {id:703,dynamicId:7,name:'Описаны мои динамики',w:100,order:3,active:true}
@@ -592,13 +593,14 @@ test('миграция ПС №1 сохраняет отметки и стары
     return S;
   `)(defaults,beforeDaily);
   assert.deepEqual(migrated.weeks['2026-08-13'].daily,beforeDaily);
-  assert.equal(migrated.weeks['2026-08-13'].weights['102'],40);
+  assert.equal(migrated.weeks['2026-08-13'].weights['102'],20);
   assert.equal(migrated.weeks['2026-08-06'].weights['102'],20);
   assert.equal(migrated.tasks.find(task=>task.id===403)?.active,false);
   assert.equal(migrated.tasks.find(task=>task.id===703)?.active,false);
   assert.equal(migrated.weeks['2026-08-13'].daily['2026-08-18']['703'],1);
   assert.equal(migrated.weeks['2026-08-13'].weights['703'],100);
   assert.equal(migrated.tasks.find(task=>task.id===105)?.active,true);
+  assert.match(migrated.tasks.find(task=>task.id===101)?.name||'',/зубная нить/);
   assert.equal(migrated.weeks['2026-08-13'].daily['2026-08-18']['105'],undefined);
 });
 
@@ -625,7 +627,7 @@ test('управление фондами сохраняет только Инв
   assert.match(funds, /async function timedFetch\(url,options=\{\},timeout=10000\)/);
   assert.match(funds, /timedFetch\(f\.api\+'\?t='\+Date\.now\(\),\{\},10000\)/);
   assert.match(funds, /failed\.length===results\.length/);
-  assert.match(funds, /без ответа, сохранён последний снимок/);
+  assert.match(funds, /Частично обновлено · без ответа/);
   assert.doesNotMatch(funds, /id="currencySwitch"/);
   assert.doesNotMatch(funds, /class="solid-assets"/);
   assert.doesNotMatch(funds, /id="endTotalGoal"|id="endYieldGoal"|id="endAnnual"|Цель дохода \/ месяц/);
@@ -648,7 +650,9 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
   assert.match(foundation, /key:'friend'.*?fact:309,y26:400/);
   assert.match(foundation, /key:'drugs'.*?fact:0,y26:50/);
-  assert.match(foundation, /key:'plants'.*?fact:200,y26:500/);
+  assert.match(foundation, /key:'plants'.*?fact:260,y26:500/);
+  assert.match(foundation, /key:'planet'.*?fact:0,y26:6/);
+  assert.match(foundation, /key:'association'.*?fact:5,y26:60/);
   assert.match(foundation, /piura_foundation_goals_data_revision/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
   assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);

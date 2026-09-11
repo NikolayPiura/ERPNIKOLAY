@@ -7,6 +7,7 @@ const script=read('work-modes.js'), app=read('mac/PIURAModes.swift');
 const names=['morning','work','learning','mentorship'];
 const buttonSpecs=[
   {mode:'morning'},
+  {mode:'learning'},
   {mode:'work',day:'1',dayName:'Понедельник',focus:'Климат'},
   {mode:'work',day:'2',dayName:'Вторник',focus:'Инвестиции'},
   {mode:'work',day:'3',dayName:'Среда',focus:'Климат'},
@@ -36,7 +37,7 @@ function panel(native=true){
   const click=index=>{let prevented=false;buttons[index].click({preventDefault(){prevented=true}});return prevented};
   return {window,buttons,root,status,messages,timers,events,click};
 }
-test('seven daily links plus a small morning shortcut; page load starts nothing',()=>{
+test('seven daily links plus small morning and learning shortcuts; page load starts nothing',()=>{
   const p=panel();
   assert.equal(p.messages.length,0);
   assert.equal((p.root.innerHTML.match(/<a class="work-mode(?:\s|")/g)||[]).length,7);
@@ -44,9 +45,10 @@ test('seven daily links plus a small morning shortcut; page load starts nothing'
   assert.equal((p.root.innerHTML.match(/piura-modes:\/\/work/g)||[]).length,5);
   assert.equal((p.root.innerHTML.match(/piura-modes:\/\/mentorship/g)||[]).length,2);
   assert.match(p.root.innerHTML,/morning-shortcut[^>]+piura-modes:\/\/morning/);
-  assert.doesNotMatch(p.root.innerHTML,/piura-modes:\/\/learning/);
+  assert.match(p.root.innerHTML,/learning-shortcut[^>]+piura-modes:\/\/learning/);
+  assert.match(p.root.innerHTML,/Только инвестиции и решения по капиталу/);
 });
-test('all eight weekly controls work and stay available while switching',()=>{
+test('all nine weekly controls work and stay available while switching',()=>{
   const p=panel();
   buttonSpecs.forEach((spec,i)=>{
     assert.equal(p.click(i),true);
@@ -54,8 +56,8 @@ test('all eight weekly controls work and stay available while switching',()=>{
     assert.equal(p.messages.at(-1).preview,false);
     assert.ok(p.buttons.every(b=>!b.disabled));
   });
-  assert.equal(p.messages.length,8);
-  assert.equal(new Set(p.messages.map(m=>m.requestID)).size,8);
+  assert.equal(p.messages.length,9);
+  assert.equal(new Set(p.messages.map(m=>m.requestID)).size,9);
 });
 test('old callbacks cannot overwrite the newest request; errors release busy state',()=>{
   const p=panel();
@@ -72,8 +74,8 @@ test('old callbacks cannot overwrite the newest request; errors release busy sta
 });
 test('browser uses user-initiated protocol links, timeout never claims completion',()=>{
   const p=panel(false);
-  assert.equal(p.click(1),false);
-  assert.match(p.buttons[1].href,/^piura-modes:\/\/work\?request=/);
+  assert.equal(p.click(2),false);
+  assert.match(p.buttons[2].href,/^piura-modes:\/\/work\?request=/);
   assert.equal(p.messages.length,0);
   for(const fn of p.timers.values())fn();
   assert.notEqual(p.status.dataset.state,'ok');
@@ -122,19 +124,19 @@ test('green weekly dashboard and enlarged rules without metadata',()=>{
   assert.equal((policy.match(/<li>/g)||[]).length,12);
   assert.doesNotMatch(policy,/<header|<footer|Кому:|11\.04\.2025|ЛИЧНЫЙ СТАНДАРТ/);
 });
-test('ERP music card controls the official hidden Yandex iframe and owns no display',()=>{
+test('ERP music card controls authenticated My Wave through the invisible native bridge',()=>{
   const html=read('piura-erp-restored 3/modules/Overview.html'),controller=read('music-controller.js'),index=read('index.html');
   assert.ok(html.indexOf('home-controls-card')<html.indexOf('id="musicCard"'));
   assert.ok(html.indexOf('id="musicCard"')<html.indexOf('id="fanCard"'));
   assert.match(html,/music-controller\.js/);
   assert.match(index,/id="erpMusicFrame"/);
-  assert.match(index,/display=bandlink-wiki/);
-  assert.match(index,/source:'EXTERNAL_PLAYER'/);
-  assert.match(index,/type==='READY'/);
-  assert.match(index,/postMusic\('PLAY_QUEUE',MUSIC_QUEUE\)/);
-  assert.match(index,/postMusic\('PAUSE'\)/);
-  assert.match(index,/postMusic\('RESUME'\)/);
-  assert.match(index,/'PREVIOUS_TRACK':'NEXT_TRACK'/);
+  assert.match(index,/piura-modes:\/\/music\?action=/);
+  assert.match(index,/postMusic\('wave'\)/);
+  assert.match(index,/postMusic\('pause'\)/);
+  assert.match(index,/delta<0\?'previous':'next'/);
+  assert.doesNotMatch(index,/MUSIC_QUEUE|PLAY_QUEUE|bandlink-wiki/);
+  assert.match(app,/['"]wave['"]/);
+  assert.match(app,/моя волна/);
   assert.match(controller,/piuraMusicCommand/);
   assert.doesNotMatch(controller,/piura-modes:\/\/music|messageHandlers|webkit/);
   assert.doesNotMatch(html,/id="musicVolume"/);

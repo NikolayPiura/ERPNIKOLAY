@@ -94,8 +94,8 @@ const DEFAULT_TASKS=[
   [302,3,'Все задачи предыдущего дня',70],
   [303,3,'Все встречи проведены в тайминге',70],
   [304,3,'Выполнен план работы по направлению дня',30],
-  [401,4,'Сделано доброе дело',500],
-  [501,5,'Сделано доброе дело',300],
+  [401,4,'Дело, сделанное в ассоциации',50],
+  [501,5,'Дело Fundy Друг',50],
   [602,6,'Сделано доброе дело',500],
   [701,7,'Выполнен пункт этического плана',500],
   [702,7,'День без расстройств',200],
@@ -103,7 +103,7 @@ const DEFAULT_TASKS=[
 ].map(([id,dynamicId,name,w],order)=>({id,dynamicId,name,w,order,active:true}));
 const REMOVED_TASK_IDS=[402,403,404,502,601,603,604,703];
 const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,snapshotTotal}));
-const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=8,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
+const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=9,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const num=value=>Number(value)||0;
@@ -133,7 +133,7 @@ function freezeWeek(anchor){const week=ensureWeek(anchor);week.weights=week.weig
 function weeksNeedRealignment(){return Object.entries(S.weeks||{}).some(([anchor,week])=>Object.keys(week?.daily||{}).some(date=>thursdayFor(date)!==anchor))}
 function realignWeeksToThursday(){const rebuilt={};Object.values(S.weeks||{}).forEach(source=>{Object.entries(source?.daily||{}).forEach(([date,scores])=>{const anchor=thursdayFor(date),target=rebuilt[anchor]||(rebuilt[anchor]={daily:{},weights:{},taskDynamics:{}});target.daily[date]={...(target.daily[date]||{}),...(scores||{})};Object.entries(source.weights||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.weights[id])))target.weights[id]=num(value)});Object.entries(source.taskDynamics||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.taskDynamics[id])))target.taskDynamics[id]=num(value)})})});S.weeks=rebuilt}
 function mergeCurrentTask(canonicalId,legacyIds){const week=S.weeks[thursdayFor(today())];if(!week)return;for(const bucket of [week.daily,week.planned])Object.values(bucket||{}).forEach(scores=>{if(legacyIds.some(id=>num(scores?.[id])>0))scores[canonicalId]=1;legacyIds.forEach(id=>delete scores[id])});legacyIds.forEach(id=>{delete week.weights?.[id];delete week.taskDynamics?.[id]})}
-function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task)Object.assign(task,{dynamicId:fresh.dynamicId,name:fresh.name,w:fresh.w,order:fresh.order,active:true});else S.tasks.push(clone(fresh))});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);DEFAULT_TASKS.forEach(task=>{week.weights[task.id]=task.w;week.taskDynamics[task.id]=task.dynamicId})}}
+function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{if(!S.tasks.some(item=>num(item.id)===num(fresh.id)))S.tasks.push(clone(fresh))});const patches={401:{dynamicId:4,name:'Дело, сделанное в ассоциации',w:50},501:{dynamicId:5,name:'Дело Fundy Друг',w:50}};Object.entries(patches).forEach(([id,patch])=>{const task=S.tasks.find(item=>num(item.id)===num(id));if(task)Object.assign(task,patch)});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);Object.entries(patches).forEach(([id,patch])=>{week.weights[id]=patch.w;week.taskDynamics[id]=patch.dynamicId})}}
 function taskWeekWeight(task,anchor){const stored=S.weeks[anchor]?.weights?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.w)}
 function taskWeekDynamic(task,anchor){const stored=S.weeks[anchor]?.taskDynamics?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.dynamicId)}
 function scoredTasks(anchor,dynamicId=null){return S.tasks.filter(task=>dynamicId==null||taskWeekDynamic(task,anchor)===num(dynamicId))}

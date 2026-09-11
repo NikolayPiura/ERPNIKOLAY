@@ -1,14 +1,14 @@
 (function(){
   'use strict';
-  const modeLabels={morning:'Утро',work:'Работа',mentorship:'Наставничество'};
+  const modeLabels={morning:'Утро',work:'Работа',learning:'Обучение',mentorship:'Наставничество'};
   const days=[
-    {day:1,short:'ПН',name:'Понедельник',focus:'Климат',mode:'work',icon:'climate'},
-    {day:2,short:'ВТ',name:'Вторник',focus:'Инвестиции',mode:'work',icon:'investments'},
-    {day:3,short:'СР',name:'Среда',focus:'Климат',mode:'work',icon:'climate'},
-    {day:4,short:'ЧТ',name:'Четверг',focus:'Админ',mode:'work',icon:'admin'},
-    {day:5,short:'ПТ',name:'Пятница',focus:'Фонды',mode:'work',icon:'funds'},
-    {day:6,short:'СБ',name:'Суббота',focus:'Наставничество',mode:'mentorship',icon:'mentorship'},
-    {day:0,short:'ВС',name:'Воскресенье',focus:'Наставничество',mode:'mentorship',icon:'mentorship'}
+    {day:1,short:'ПН',name:'Понедельник',focus:'Климат',description:'Только климат и операционная работа.',mode:'work',icon:'climate'},
+    {day:2,short:'ВТ',name:'Вторник',focus:'Инвестиции',description:'Только инвестиции и решения по капиталу.',mode:'work',icon:'investments'},
+    {day:3,short:'СР',name:'Среда',focus:'Климат',description:'Только климат, процессы и результат.',mode:'work',icon:'climate'},
+    {day:4,short:'ЧТ',name:'Четверг',focus:'Админ',description:'Только администрирование и порядок.',mode:'work',icon:'admin'},
+    {day:5,short:'ПТ',name:'Пятница',focus:'Фонды',description:'Только фонды, отчётность и капитал.',mode:'work',icon:'funds'},
+    {day:6,short:'СБ',name:'Суббота',focus:'Наставничество',description:'Только созвоны, разборы и ученики.',mode:'mentorship',icon:'mentorship'},
+    {day:0,short:'ВС',name:'Воскресенье',focus:'Наставничество',description:'Только созвоны, разборы и ученики.',mode:'mentorship',icon:'mentorship'}
   ];
   const icons={
     climate:'<path d="M20 42a13 13 0 1 1 20-11 10 10 0 1 1 2 20H20a9 9 0 0 1 0-18"/><path d="M19 52h26"/>',
@@ -26,7 +26,7 @@
       status.dataset.state=state;
       if(text&&state!=='busy'&&state!=='ok')noticeTimer=setTimeout(()=>{status.textContent='';status.dataset.state=''},15000);
     }
-    document.querySelectorAll('.work-mode,.morning-shortcut').forEach(button=>button.removeAttribute('aria-busy'));
+    document.querySelectorAll('.work-mode,.mode-shortcut').forEach(button=>button.removeAttribute('aria-busy'));
   }
   function titleFor(button){
     return button.dataset.dayName ? button.dataset.dayName+' · '+button.dataset.focus : (modeLabels[button.dataset.mode]||button.dataset.mode);
@@ -35,7 +35,7 @@
   function link(day,today){
     const current=day.day===today?' is-today':'';
     const weekend=day.mode==='mentorship'?' weekend':'';
-    return '<a class="work-mode'+current+weekend+'" href="piura-modes://'+day.mode+'" data-mode="'+day.mode+'" data-day="'+day.day+'" data-day-name="'+day.name+'" data-focus="'+day.focus+'" aria-label="'+day.name+': '+day.focus+'"'+(day.day===today?' aria-current="date"':'')+'><span class="work-mode-day">'+day.short+'</span><span class="work-mode-art">'+icon(day.icon)+'</span><strong>'+day.focus+'</strong></a>';
+    return '<a class="work-mode'+current+weekend+'" href="piura-modes://'+day.mode+'" data-mode="'+day.mode+'" data-day="'+day.day+'" data-day-name="'+day.name+'" data-focus="'+day.focus+'" aria-label="'+day.name+': '+day.focus+'"'+(day.day===today?' aria-current="date"':'')+'><span class="work-mode-day">'+day.short+'</span><span class="work-mode-art">'+icon(day.icon)+'</span><strong>'+day.focus+'</strong><span class="work-mode-copy">'+day.description+'</span></a>';
   }
   function activate(button,event){
     const mode=button.dataset.mode;
@@ -53,7 +53,7 @@
   function draw(root){
     const today=new Date().getDay();
     root.classList.add('work-modes');
-    root.innerHTML='<a class="morning-shortcut" href="piura-modes://morning" data-mode="morning" aria-label="Включить режим Утро"><span>Утро</span></a><div class="work-modes-grid">'+days.map(day=>link(day,today)).join('')+'</div><p class="work-modes-status" role="status" aria-live="polite"></p>';
+    root.innerHTML='<div class="work-mode-shortcuts"><a class="mode-shortcut morning-shortcut" href="piura-modes://morning" data-mode="morning" aria-label="Включить режим Утро"><span>Утро</span></a><a class="mode-shortcut learning-shortcut" href="piura-modes://learning" data-mode="learning" aria-label="Включить режим Обучение"><span>Обучение</span></a></div><div class="work-modes-grid">'+days.map(day=>link(day,today)).join('')+'</div><p class="work-modes-status" role="status" aria-live="polite"></p>';
     root.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener('click',event=>activate(button,event)));
   }
   window.piuraModeFinished=result=>{if(result.requestID&&active&&result.requestID!==active.requestID)return;finish(result.message||'Готово',result.ok===false?'error':'ok')};
@@ -61,6 +61,6 @@
   window.piuraModeNeedsAccess=()=>finish('PIURA Modes нужен доступ к управлению окнами macOS.','error');
   window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura-mode-result')window.piuraModeFinished(event.data)});
   window.addEventListener('pageshow',()=>{if(active)finish('')});
-  window.addEventListener('focus',()=>{document.querySelectorAll('.work-mode,.morning-shortcut').forEach(button=>button.removeAttribute('aria-busy'))});
+  window.addEventListener('focus',()=>{document.querySelectorAll('.work-mode,.mode-shortcut').forEach(button=>button.removeAttribute('aria-busy'))});
   document.querySelectorAll('[data-work-modes]').forEach(draw);
 })();

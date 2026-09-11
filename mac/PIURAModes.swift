@@ -36,8 +36,8 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work || self == .mentorship }
     var needsChatGPT: Bool { self == .work }
-    // Morning and weekday work use the official Yandex iframe inside ERP.
-    // PIURA Modes never opens, focuses or hides a separate music window.
+    // Morning and weekday work use the authenticated Yandex web player through
+    // the ERP bridge. PIURA Modes never focuses or hides a separate music window.
     var needsMusic: Bool { self == .morning || self == .work }
     var needsZoom: Bool { self == .mentorship }
 }
@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260910-batch18" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260911-batch19" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -258,7 +258,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func performMusicCommand(_ command: String, id: String) {
-        let allowed = ["toggle", "play", "next", "previous", "status"]
+        let allowed = ["toggle", "play", "pause", "wave", "next", "previous", "status"]
         guard allowed.contains(command) else {
             deliverMusicResult(["ok":false,"message":"Неизвестная команда музыки.","requestID":id])
             return
@@ -303,6 +303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func controlYandexMusic(_ command: String) throws -> [String: Any] {
+        try repairYandexMusicExtension()
         guard workspace.runningApplications.contains(where: {
             $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated
         }) else {
@@ -313,6 +314,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // deliberately forbidden here: Play/Pause must not flash Yandex UI.
         let location = try runAppleScript("""
         tell application "Yandex"
+          set erpID to -1
+          set erpTab to -1
           set musicID to -1
           set musicTab to -1
           set createdTab to false
@@ -320,42 +323,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set tabNumber to 0
             repeat with t in every tab of w
               set tabNumber to tabNumber + 1
-              if URL of t starts with "\(musicURL)" then
+              set u to URL of t
+              if erpID is -1 and (u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html") then
+                set erpID to id of w
+                set erpTab to tabNumber
+              end if
+              if musicID is -1 and u starts with "\(musicURL)" then
                 set musicID to id of w
                 set musicTab to tabNumber
-                exit repeat
               end if
             end repeat
-            if musicID is not -1 then exit repeat
           end repeat
+          if erpID is -1 then error "ERP window is not available"
           if musicID is -1 then
-            set hostID to -1
-            repeat with w in every window
-              repeat with t in every tab of w
-                set u to URL of t
-                if u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html" then
-                  set hostID to id of w
-                  exit repeat
-                end if
-              end repeat
-              if hostID is not -1 then exit repeat
-            end repeat
-            if hostID is -1 then error "ERP window is not available"
-            set previousTab to active tab index of window id hostID
-            tell window id hostID
+            tell window id erpID
               make new tab at end of tabs with properties {URL:"\(musicURL)"}
               set musicTab to count of tabs
-              set active tab index to previousTab
             end tell
-            set musicID to hostID
+            set musicID to erpID
             set createdTab to true
           end if
-          return (musicID as text) & "," & (musicTab as text) & "," & (createdTab as text)
+          -- ERP is the immutable visible surface on the right monitor. Music
+          -- and accidental sale pages may remain loaded, but never active.
+          set active tab index of window id erpID to erpTab
+          set minimized of window id erpID to false
+          if musicID is not erpID then set minimized of window id musicID to true
+          return (musicID as text) & "," & (musicTab as text) & "," & (createdTab as text) & "," & (erpID as text) & "," & (erpTab as text)
         end tell
         """)
         let parts = location.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        guard parts.count == 3, let windowID = Int(parts[0]), let tabNumber = Int(parts[1]) else {
+        guard parts.count == 5, let windowID = Int(parts[0]), let tabNumber = Int(parts[1]),
+              let visibleERPWindowID = Int(parts[3]), let visibleERPTabNumber = Int(parts[4]) else {
             throw modeError("Не удалось подготовить фоновую вкладку Яндекс Музыки.")
+        }
+        defer {
+            // A final invariant, including error paths: the right monitor must
+            // show ERP, never Music, sale, or another background tab.
+            _ = try? runAppleScript("tell application \"Yandex\" to set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)")
         }
         func execute(_ javascript: String) throws -> String {
             try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"\(appleScriptEscape(javascript))\"")
@@ -371,7 +375,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           let apiPlaying=null,track=null;
           try{if(typeof api?.isPlaying==='function')apiPlaying=!!api.isPlaying();if(typeof api?.getCurrentTrack==='function')track=api.getCurrentTrack()}catch{}
           const mediaPlaying=[...document.querySelectorAll('audio,video')].some(item=>!item.paused&&!item.ended);
-          const playing=apiPlaying??(controls.length?pause&&!play:(mediaPlaying||navigator.mediaSession?.playbackState==='playing'));
+          const sessionState=navigator.mediaSession?.playbackState||'';
+          const playing=apiPlaying??(sessionState==='playing'||mediaPlaying||(sessionState!=='paused'&&controls.length&&pause&&!play));
           const metadata=navigator.mediaSession?.metadata;
           const trackArtists=Array.isArray(track?.artists)?track.artists.map(item=>item?.title||item?.name||'').filter(Boolean).join(', '):'';
           const artist=(trackArtists||metadata?.artist||'').trim();
@@ -390,20 +395,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         result.removeValue(forKey: "ready")
         result["command"] = command
         result["backgroundTabCreated"] = parts[2] == "true"
-        if command == "status" || (command == "play" && result["state"] as? String == "playing") { return result }
+        let wasPlaying = result["state"] as? String == "playing"
+        if command == "status" || (command == "play" && wasPlaying) || (command == "pause" && !wasPlaying) { return result }
 
-        switch command {
-        case "toggle", "play": try postYandexPlayPauseShortcut()
-        case "next": try postSystemMediaKey(17)
-        case "previous": try postSystemMediaKey(18)
-        default: throw modeError("Неизвестная команда музыки.")
-        }
-        let expectedState = command == "play" ? "playing" :
-            (command == "toggle" ? (result["state"] as? String == "playing" ? "paused" : "playing") : nil)
+        // Only use the installed global controller while ERP remains the active
+        // tab. Yandex may reject cold-start autoplay; in that case report the
+        // limitation and never expose or activate the Music tab.
+        _ = try execute("document.documentElement.setAttribute('data-piura-music-command','\(command)');'ready'")
+        _ = try runNativeAppleScript("tell application \"System Events\" to key code 40 using control down")
+        let expectedState = ["play", "wave"].contains(command) ? "playing" :
+            (command == "pause" ? "paused" : (command == "toggle" ? (wasPlaying ? "paused" : "playing") : nil))
         let oldTitle = result["title"] as? String ?? ""
-        let confirmationDeadline = Date().addingTimeInterval(3.5)
+        let confirmationDeadline = Date().addingTimeInterval(command == "wave" ? 8 : 4)
         repeat {
-            pumpRunLoop(0.15)
+            pumpRunLoop(0.2)
             if let data = try? execute(readState).data(using: .utf8),
                let updated = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 result = updated
@@ -414,6 +419,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         } while Date() < confirmationDeadline
         if let expectedState, result["state"] as? String != expectedState {
             throw modeError(expectedState == "playing" ? "Яндекс Музыка не подтвердила запуск." : "Яндекс Музыка не подтвердила паузу.")
+        }
+        if expectedState == nil, (result["title"] as? String ?? "") == oldTitle {
+            throw modeError("Яндекс Музыка не подтвердила переключение трека.")
         }
         result.removeValue(forKey: "ready")
         result["command"] = command
@@ -434,6 +442,174 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         down.post(tap: .cghidEventTap)
         pumpRunLoop(0.03)
         up.post(tap: .cghidEventTap)
+    }
+    private func pressYandexMusicExtensionToolbar() throws {
+        if let cached = yandexMusicExtensionButton,
+           AXUIElementPerformAction(cached, kAXPressAction as CFString) == .success {
+            pumpRunLoop(0.1)
+            return
+        }
+        yandexMusicExtensionButton = nil
+        guard let yandex = workspace.runningApplications.first(where: {
+            $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated
+        }) else { throw modeError("Яндекс Браузер не найден для управления музыкой.") }
+        let root = AXUIElementCreateApplication(yandex.processIdentifier)
+        AXUIElementSetMessagingTimeout(root, 1)
+        var rawWindows: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &rawWindows)
+        let stop = Date().addingTimeInterval(3)
+        var queue = (rawWindows as? [AXUIElement] ?? []).map { ($0, 0) }
+        var visited = 0
+        let extensionTitle = "play/pause button for yandex music"
+        while !queue.isEmpty, visited < 8_000, Date() < stop {
+            let (element, depth) = queue.removeFirst()
+            visited += 1
+            let searchable = [kAXTitleAttribute, kAXDescriptionAttribute, kAXHelpAttribute]
+                .map { axString(element, $0).lowercased() }.joined(separator: " ")
+            let compact = searchable.split(whereSeparator: { $0.isWhitespace }).joined(separator: " ")
+            let labels = ["play", "pause", "воспроизведение", "пауза"]
+            let isControl = searchable.contains(extensionTitle)
+                || labels.contains(where: { compact == $0 || compact.hasPrefix($0 + " ") })
+            if isControl, AXUIElementPerformAction(element, kAXPressAction as CFString) == .success {
+                yandexMusicExtensionButton = element
+                pumpRunLoop(0.1)
+                return
+            }
+            let role = axString(element, kAXRoleAttribute)
+            guard depth < 14, role != "AXWebArea", role != kAXScrollAreaRole else { continue }
+            var rawChildren: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &rawChildren) == .success,
+               let children = rawChildren as? [AXUIElement] {
+                queue.append(contentsOf: children.map { ($0, depth + 1) })
+            }
+        }
+        throw modeError("Не найдена фоновая кнопка управления Яндекс Музыкой.")
+    }
+    private func pressHiddenYandexMusicControl(
+        windowID: Int,
+        tabNumber: Int,
+        command: String,
+        visibleERPWindowID: Int,
+        visibleERPTabNumber: Int
+    ) throws {
+        guard let yandex = workspace.runningApplications.first(where: {
+            $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated
+        }) else { throw modeError("Яндекс Браузер не найден для управления музыкой.") }
+        let previousFront = workspace.frontmostApplication
+        let marker = "PIURA-HIDDEN-MUSIC-\(UUID().uuidString)"
+        let words: String
+        switch command {
+        case "wave": words = "['моя волна','my wave']"
+        case "next": words = "['следующ','next']"
+        case "previous": words = "['предыдущ','previous']"
+        default: words = "[]"
+        }
+        let markControl = """
+        (()=>{const candidates=[...document.querySelectorAll('button,a,[role="button"]')];const visible=e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.disabled&&b.width>0&&b.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const label=e=>(e.getAttribute('aria-label')||e.title||e.textContent||'').trim().toLowerCase();const words=\(words);const target=\(command == "wave" || command == "next" || command == "previous" ? "candidates.find(e=>visible(e)&&words.some(word=>label(e).includes(word)))" : "candidates.find(e=>visible(e)&&String(e.className||'').includes('VibePlayerControls_playButton'))||candidates.find(e=>visible(e)&&/воспроиз|пауза|play|pause/i.test(label(e)))");if(!target)return JSON.stringify({ready:false,labels:candidates.filter(visible).map(label).filter(Boolean).slice(-40)});target.dataset.piuraHiddenMusic='true';target.dataset.piuraOriginalAria=target.getAttribute('aria-label')||'';target.setAttribute('aria-label','\(marker)');target.focus({preventScroll:true});return JSON.stringify({ready:true,tag:target.tagName,label:label(target)})})()
+        """
+        let cleanup = """
+        (()=>{const target=document.querySelector('[data-piura-hidden-music="true"]');if(!target)return 'gone';const original=target.dataset.piuraOriginalAria||'';target.removeAttribute('data-piura-hidden-music');delete target.dataset.piuraOriginalAria;if(original)target.setAttribute('aria-label',original);else target.removeAttribute('aria-label');return 'clean'})()
+        """
+        let executePrefix = "tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript "
+        guard setSkyLightWindowAlpha(UInt32(windowID), 0.001) else {
+            throw modeError("macOS не разрешила скрытое управление музыкой.")
+        }
+        defer {
+            _ = try? runAppleScript(executePrefix + "\"\(appleScriptEscape(cleanup))\"")
+            _ = try? runAppleScript("""
+            tell application "Yandex"
+              set visible of window id \(windowID) to false
+              set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)
+              set minimized of window id \(visibleERPWindowID) to false
+            end tell
+            """)
+            _ = setSkyLightWindowAlpha(UInt32(windowID), 1)
+            if let previousFront, !previousFront.isTerminated { previousFront.activate(options: []) }
+        }
+        _ = try runAppleScript("""
+        tell application "Yandex"
+          set active tab index of window id \(windowID) to \(tabNumber)
+          set minimized of window id \(windowID) to false
+          set visible of window id \(windowID) to true
+          set index of window id \(windowID) to 1
+          activate
+        end tell
+        """)
+        var marked = ""
+        let markDeadline = Date().addingTimeInterval(command == "wave" ? 8 : 4)
+        repeat {
+            marked = (try? runAppleScript(executePrefix + "\"\(appleScriptEscape(markControl))\"")) ?? ""
+            if marked.contains("\"ready\":true") { break }
+            pumpRunLoop(0.2)
+        } while Date() < markDeadline
+        guard marked.contains("\"ready\":true") else {
+            throw modeError(command == "wave" ? "Кнопка «Моя волна» ещё не загрузилась." : "Кнопка плеера Яндекс Музыки не найдена.")
+        }
+        pumpRunLoop(0.15)
+        let root = AXUIElementCreateApplication(yandex.processIdentifier)
+        AXUIElementSetMessagingTimeout(root, 1)
+        func pressMarkedControl(timeout: TimeInterval) -> Bool {
+            let stop = Date().addingTimeInterval(timeout)
+            repeat {
+                var rawWindows: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &rawWindows)
+                var queue = (rawWindows as? [AXUIElement] ?? []).map { ($0, 0) }
+                var visited = 0
+                while !queue.isEmpty, visited < 14_000, Date() < stop {
+                    let (element, depth) = queue.removeFirst()
+                    visited += 1
+                    let matches = [kAXTitleAttribute, kAXDescriptionAttribute, kAXIdentifierAttribute]
+                        .contains(where: { axString(element, $0) == marker })
+                    if matches {
+                        if AXUIElementPerformAction(element, kAXPressAction as CFString) == .success { return true }
+                        // Some Yandex links expose the marked element but omit
+                        // AXPress. The DOM target was focused before traversal;
+                        // Return is the equivalent trusted activation and the
+                        // transparent helper remains the active surface.
+                        let source = CGEventSource(stateID: .hidSystemState)
+                        if let down = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: true),
+                           let up = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: false) {
+                            down.post(tap: .cghidEventTap)
+                            pumpRunLoop(0.03)
+                            up.post(tap: .cghidEventTap)
+                            return true
+                        }
+                        return false
+                    }
+                    guard depth < 22 else { continue }
+                    var rawChildren: CFTypeRef?
+                    if AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &rawChildren) == .success,
+                       let children = rawChildren as? [AXUIElement] {
+                        queue.append(contentsOf: children.map { ($0, depth + 1) })
+                    }
+                }
+                pumpRunLoop(0.12)
+            } while Date() < stop
+            return false
+        }
+        guard pressMarkedControl(timeout: 4) else {
+            throw modeError("Скрытая кнопка Яндекс Музыки недоступна.")
+        }
+        pumpRunLoop(0.35)
+        if command == "wave" {
+            let alreadyPlaying = (try? runAppleScript(executePrefix + "\"navigator.mediaSession?.playbackState||''\"")) == "playing"
+            if alreadyPlaying { return }
+            _ = try? runAppleScript(executePrefix + "\"\(appleScriptEscape(cleanup))\"")
+            let markPlay = """
+            (()=>{const candidates=[...document.querySelectorAll('button,[role="button"]')];const visible=e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.disabled&&b.width>0&&b.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const label=e=>(e.getAttribute('aria-label')||e.title||e.textContent||'').trim().toLowerCase();const target=candidates.find(e=>visible(e)&&String(e.className||'').includes('VibePlayerControls_playButton'))||candidates.find(e=>visible(e)&&/воспроиз|play/i.test(label(e)));if(!target)return JSON.stringify({ready:false});target.dataset.piuraHiddenMusic='true';target.dataset.piuraOriginalAria=target.getAttribute('aria-label')||'';target.setAttribute('aria-label','\(marker)');target.focus({preventScroll:true});return JSON.stringify({ready:true,label:label(target)})})()
+            """
+            var playMarked = ""
+            let playDeadline = Date().addingTimeInterval(8)
+            repeat {
+                playMarked = (try? runAppleScript(executePrefix + "\"\(appleScriptEscape(markPlay))\"")) ?? ""
+                if playMarked.contains("\"ready\":true") { break }
+                pumpRunLoop(0.2)
+            } while Date() < playDeadline
+            guard playMarked.contains("\"ready\":true"), pressMarkedControl(timeout: 4) else {
+                throw modeError("Яндекс Музыка не отдала кнопку запуска «Моей волны».")
+            }
+        }
+        pumpRunLoop(0.2)
     }
     private func postSystemMediaKey(_ keyCode: Int) throws {
         func event(state: Int) -> CGEvent? {
@@ -632,6 +808,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         let expectedLabel: String
         switch command {
+        case "wave": expectedLabel = "Моя волна"
         case "toggle": expectedLabel = wasPlaying ? "Пауза" : "Воспроизведение"
         case "next": expectedLabel = "Следующая песня"
         case "previous": expectedLabel = "Предыдущая песня"
@@ -640,11 +817,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let marker = "PIURA-PLAYER-\(UUID().uuidString)"
         let markControl = """
         (() => {
-          const buttons=[...document.querySelectorAll('button')].filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          const controls=[...document.querySelectorAll('button')].filter(button=>String(button.className||'').includes('VibePlayerControls_'));
+          const buttons=(command == "wave" ? "[...document.querySelectorAll('button,a,[role=\\\"button\\\"]')]" : "controls");
           if(!buttons.length)return JSON.stringify({ready:false,reason:'global-controls-missing'});
           const visible=element=>{const box=element.getBoundingClientRect(),style=getComputedStyle(element);return !element.disabled&&box.width>0&&box.height>0&&style.display!=='none'&&style.visibility!=='hidden'};
           const label=button=>(button.getAttribute('aria-label')||button.title||'').trim().toLowerCase();
-          const words=\(command == "next" ? "['следующ','next']" : "['предыдущ','previous']");
+          const words=\(command == "next" ? "['следующ','next']" : (command == "wave" ? "['моя волна','my wave']" : "['предыдущ','previous']"));
           const target=\(command == "toggle" ? "buttons.find(button=>visible(button)&&String(button.className||'').includes('VibePlayerControls_playButton'))" : "buttons.find(button=>visible(button)&&words.some(word=>label(button).includes(word)))");
           if(!target)return JSON.stringify({ready:false,reason:'global-button-missing',labels:buttons.filter(visible).map(label)});
           target.dataset.piuraMusicTarget='true';
@@ -2169,7 +2347,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             throw modeError("Не найден установленный контроллер Яндекс Музыки.")
         }
         let installed = (try? String(contentsOf: actionURL, encoding: .utf8)) ?? ""
-        if installed.contains("data-piura-music-command") && installed.contains("VibePlayerControls_playButton") { return }
+        if installed.contains("PIURA_BACKGROUND_WAVE_V2") { return }
         guard installed.contains("BaseSonataControlsDesktop_sonataButton__GbwFt") else {
             throw modeError("Контроллер Яндекс Музыки обновился и требует проверки совместимости.")
         }

@@ -173,7 +173,7 @@
     </div>
     <section class="stage">
       <iframe class="module-frame" id="moduleFrame" title="Эффективность"></iframe>
-      <iframe class="erp-music-engine" id="erpMusicFrame" title="Скрытый официальный плеер Яндекс Музыки" allow="autoplay; encrypted-media"></iframe>
+      <iframe class="erp-music-engine" id="erpMusicFrame" title="Невидимый мост управления Яндекс Музыкой"></iframe>
       <div class="modal-bg settings-page" id="settingsModal"><div class="panel control-panel">
         <div class="panel-head"><div class="panel-head-copy"><h2>Настройки ERP</h2><p>Живой центр управления всей системой</p></div><button class="panel-close" id="closeSettings" aria-label="Закрыть настройки">×</button></div>
         <div class="control-shell">
@@ -192,31 +192,34 @@
   </main>
   <div class="tip" id="tip"></div>
   <script>
-    const BUILD_ID='20260910-batch18';
+    const BUILD_ID='20260911-batch19';
     const ICONS={overview:'<path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z"/>',effectiveness:'<path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/>',morning:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',time:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',weekly:'<path d="M4 5h16v15H4zM8 3v4m8-4v4M4 9h16"/>',dynamics:'<path d="m3 17 5-5 4 3 8-9M16 6h4v4"/>',mydynamics:'<circle cx="12" cy="8" r="3"/><path d="M5 20c.6-4 2.9-6 7-6s6.4 2 7 6"/>',funds:'<path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 12 9 5 9-5m-18 4 9 5 9-5"/>',foundation:'<path d="M12 21s-7-4.4-7-11a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 6.6-7 11-7 11Z"/><path d="M9 11h6M12 8v6"/>'};
     const DEFAULT_GROUPS=[
       {id:'core',title:"Главное",accent:"#6ea8fe",items:[
-        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260910-batch18"]]},
+        ["overview","Главная","Админ-шкала, климат и управление комнатой","piura-erp-restored%203/modules/Overview.html?v=20260911-batch19"]]},
       {id:'eff',title:"Эффективность",accent:"#43d39e",items:[
-        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260910-batch18&tab=overview"],
         ["morning","Утро","Редактируемый утренний чек-лист","piura-erp-restored%203/modules/Morning.html?v=20260818d"],
-        ["time","Учёт времени","Часы и редактируемые категории","piura-erp-restored%203/modules/Time-tracker.html?v=20260910-batch18"],
+        ["time","Учёт времени","Часы и редактируемые категории","piura-erp-restored%203/modules/Time-tracker.html?v=20260911-batch19"],
         ["weekly","ПС №1","Баллы по восьми динамикам","piura-erp-restored%203/modules/Dynamics-2.html?v=20260907b"],
-        ["dynamics","Админ-шкала","Шкала, дорожная карта и динамики","piura-erp-restored%203/modules/AdminScale.html?v=20260820b"]]},
+        ["dynamics","Админ-шкала","Шкала, дорожная карта и динамики","piura-erp-restored%203/modules/AdminScale.html?v=20260820b"],
+        ["effectiveness","Эффективность","Доход, время и направления","piura-erp-restored%203/modules/EFFECTIVNESS.html?v=20260911-batch19&tab=overview"]]},
       {id:'money',title:"Управление",accent:"#a78bfa",items:[
-        ["funds","Управление","Структура фондов и Endowment","piura-erp-restored%203/modules/Fonds.html?v=20260910-batch18"]]},
+        ["funds","Управление","Структура фондов и Endowment","piura-erp-restored%203/modules/Fonds.html?v=20260911-batch19"]]},
       {id:'foundation',title:"Фонды",accent:"#43d39e",items:[
-        ["foundation","Фонды","Результаты и цели шести направлений","piura-erp-restored%203/modules/Foundation.html?v=20260910-batch18"]]}
+        ["foundation","Фонды","Результаты и цели шести направлений","piura-erp-restored%203/modules/Foundation.html?v=20260911-batch19"]]}
     ];
     const DEFAULTS={width:300,collapsedWidth:112,itemHeight:60,fontSize:13,gap:18,scale:1,radius:22,opacity:.97,blur:18,bg:'#0b0b0c',accent:'#6ea8fe',text:'#f4f4f5',muted:'#8f8f95',theme:'dark',palette:'balanced',neon:0,moduleScale:1,hoverExpand:false,behaviorVersion:13,tooltips:true,showArrows:false,collapsed:false,hidden:[]};
-    const KEY='piura_erp_shell_v5',ORDER='piura_erp_shell_order_v5',PROFILES='piura_erp_shell_profiles_v1',SERVICE_PREFS_KEY='piura_erp_service_settings_v1';
+    const KEY='piura_erp_shell_v5',ORDER='piura_erp_shell_order_v5',ORDER_REVISION_KEY='piura_erp_shell_order_revision',ORDER_REVISION='20260911a',PROFILES='piura_erp_shell_profiles_v1',SERVICE_PREFS_KEY='piura_erp_service_settings_v1';
     const clone=v=>JSON.parse(JSON.stringify(v));
     function read(k,d){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v||(Array.isArray(d)?clone(d):Object.assign({},d))}catch(e){return Array.isArray(d)?clone(d):Object.assign({},d)}}
     let prefs=Object.assign({},DEFAULTS,read(KEY,DEFAULTS));if(Number(prefs.behaviorVersion||0)<10){prefs.hoverExpand=false;prefs.showArrows=false;prefs.theme=prefs.theme||'dark';prefs.palette=['balanced','ocean','sage','mono'].includes(prefs.palette)?prefs.palette:'balanced';prefs.neon=0}if(Number(prefs.behaviorVersion||0)<11){prefs.gap=Math.max(8,Number(prefs.gap)||0);prefs.behaviorVersion=11}if(Number(prefs.behaviorVersion||0)<12){prefs.gap=Math.max(12,Number(prefs.gap)||0);prefs.behaviorVersion=12}if(Number(prefs.behaviorVersion||0)<13){prefs.gap=Math.max(18,Number(prefs.gap)||0);prefs.behaviorVersion=13}
     const launchParams=new URLSearchParams(location.search),launchTheme=launchParams.get('theme'),launchModule=launchParams.get('module')||launchParams.get('service');
     if(['light','dark'].includes(launchTheme))prefs.theme=launchTheme;
-    const savedGroups=read(ORDER,DEFAULT_GROUPS),savedItems=new Map((Array.isArray(savedGroups)?savedGroups:[]).flatMap(group=>Array.isArray(group.items)?group.items:[]).map(item=>[item[0],item]));
-    let groups=clone(DEFAULT_GROUPS);groups.forEach(group=>group.items=group.items.map(item=>{const old=savedItems.get(item[0]);return old?[item[0],old[1]||item[1],item[2],item[3]]:item}));
+    const savedGroups=read(ORDER,DEFAULT_GROUPS),canonicalItems=new Map(DEFAULT_GROUPS.flatMap(group=>group.items.map(item=>[item[0],item])));
+    let groups=Array.isArray(savedGroups)&&savedGroups.length?clone(savedGroups):clone(DEFAULT_GROUPS);
+    groups.forEach(group=>{group.items=(Array.isArray(group.items)?group.items:[]).map(item=>{const canonical=canonicalItems.get(item[0]);return canonical?[item[0],item[1]||canonical[1],canonical[2],canonical[3]]:item})});
+    DEFAULT_GROUPS.forEach(canonicalGroup=>{let group=groups.find(item=>item.id===canonicalGroup.id);if(!group){group={...canonicalGroup,items:[]};groups.push(group)}canonicalGroup.items.forEach(item=>{if(!groups.some(candidate=>candidate.items.some(saved=>saved[0]===item[0])))group.items.push(clone(item))})});
+    if(localStorage.getItem(ORDER_REVISION_KEY)!==ORDER_REVISION){const ids=['morning','time','weekly','dynamics','effectiveness'],eff=groups.find(group=>group.id==='eff'),byId=new Map(groups.flatMap(group=>group.items.map(item=>[item[0],item])));groups.forEach(group=>group.items=group.items.filter(item=>!ids.includes(item[0])));if(eff)eff.items=[...ids.map(id=>byId.get(id)).filter(Boolean),...eff.items];localStorage.setItem(ORDER_REVISION_KEY,ORDER_REVISION);localStorage.setItem(ORDER,JSON.stringify(groups))}
     // Миграция только старого стандартного имени; пользовательские названия не трогаем.
     groups.flatMap(group=>group.items).forEach(item=>{if(item[0]==='weekly'&&['PS1','PS №1','PS номер один','PS НОМЕР ОДИН','ПС номер один'].includes(item[1]))item[1]='ПС №1';if(item[0]==='dynamics')item[1]='Админ-шкала';if(item[0]==='finance'&&item[2]==='Личный финансовый обзор')item[2]='План, факты и расходы'});
     // Сохраняем пользовательские порядок, названия и видимость, но всегда
@@ -233,29 +236,18 @@
     if(localStorage.getItem("piura-erp-shell-compact")==="1")prefs.collapsed=true;
     function save(){localStorage.setItem(KEY,JSON.stringify(prefs));localStorage.setItem(ORDER,JSON.stringify(groups))}
     const WORK_MODE_APPEARANCE={morning:{module:'morning',theme:'light'},work:{module:'overview',theme:'dark'},learning:{module:'overview',theme:'light'},mentorship:{module:'overview',theme:'dark'}};
-    const MUSIC_ORIGIN='https://music.yandex.ru';
-    const MUSIC_QUEUE={queueId:'piura-liked-v1',startIndex:0,tracks:[
-      {trackId:'73439869',albumId:'12747464',title:'Пыяла',subtitle:'АИГЕЛ'},
-      {trackId:'69563055',albumId:'11658823',title:'На своём вайбе',subtitle:'Jah Khalib, GUF'},
-      {trackId:'62107386',albumId:'9756926',title:'Доброе сердце',subtitle:'Порнофильмы'},
-      {trackId:'37258117',albumId:'4714779',title:'Я так соскучился',subtitle:'Порнофильмы'},
-      {trackId:'61565558',albumId:'9613082',title:'Луна не знает пути',subtitle:'Тайпан, Agunda'},
-      {trackId:'52380688',albumId:'7373129',title:'Любимка',subtitle:'NILETTO'}
-    ]};
-    let musicReady=false,musicIntent=['morning','work'].includes(new URLSearchParams(location.search).get('workmode')),musicIndex=0,musicState={status:'IDLE',currentTrack:null};
+    let musicIntent=['morning','work'].includes(new URLSearchParams(location.search).get('workmode')),musicState={status:'IDLE',currentTrack:{title:'Моя волна',subtitle:'Моя волна'}};
     const musicArtist=track=>track?.subtitle||track?.artists?.map(artist=>artist?.name||artist).filter(Boolean).join(', ')||track?.artist||'';
     function normalizeMusicState(payload={}){
       const raw=payload.currentTrack||payload.track||payload.playerState?.currentTrack||null;
-      const rawId=String(raw?.trackId||raw?.id||payload.trackId||'');
-      const known=MUSIC_QUEUE.tracks.find(track=>String(track.trackId)===rawId)||MUSIC_QUEUE.tracks[musicIndex]||null;
-      if(rawId){const found=MUSIC_QUEUE.tracks.findIndex(track=>String(track.trackId)===rawId);if(found>=0)musicIndex=found}
-      const currentTrack=raw||known?{...(known||{}),...(raw||{})}:musicState.currentTrack;
-      if(currentTrack&&!currentTrack.subtitle)currentTrack.subtitle=musicArtist(raw)||musicArtist(known)||musicArtist(musicState.currentTrack);
-      return{...musicState,...payload,status:String(payload.status||payload.playerState?.status||musicState.status||'IDLE').toUpperCase(),currentTrack};
+      const currentTrack=raw?{...raw}:musicState.currentTrack;
+      if(payload.title||payload.artist)Object.assign(currentTrack,{title:payload.title||currentTrack?.title,subtitle:payload.artist||currentTrack?.subtitle});
+      if(currentTrack&&!currentTrack.subtitle)currentTrack.subtitle=musicArtist(raw)||musicArtist(musicState.currentTrack)||'Моя волна';
+      return{...musicState,...payload,status:String(payload.status||payload.state||payload.playerState?.status||musicState.status||'IDLE').toUpperCase(),currentTrack};
     }
-    function postMusic(type,payload){
-      if(!musicReady)return false;
-      musicFrame.contentWindow.postMessage({source:'EXTERNAL_PLAYER',type,...(payload?{payload}: {})},MUSIC_ORIGIN);
+    function postMusic(action){
+      const request=(window.crypto?.randomUUID?.()||String(Date.now()));
+      musicFrame.src='piura-modes://music?action='+encodeURIComponent(action)+'&request='+encodeURIComponent(request);
       return true;
     }
     function broadcastMusic(){
@@ -263,21 +255,19 @@
     }
     function playMusic(){
       musicIntent=true;
-      if(!musicReady)return false;
       if(['PLAYING','LOADING'].includes(musicState.status))return true;
-      const sent=musicState.status==='PAUSED'?postMusic('RESUME'):postMusic('PLAY_QUEUE',MUSIC_QUEUE);
-      if(sent){musicState=normalizeMusicState({status:'LOADING',currentTrack:musicState.currentTrack||MUSIC_QUEUE.tracks[musicIndex]});broadcastMusic()}
+      const sent=postMusic('wave');
+      if(sent){musicState=normalizeMusicState({status:'LOADING',currentTrack:{title:'Моя волна',subtitle:'Моя волна'}});broadcastMusic()}
       return sent;
     }
     function pauseMusic(){
       musicIntent=false;
       if(!['PLAYING','LOADING'].includes(musicState.status))return true;
-      const sent=postMusic('PAUSE');if(sent){musicState=normalizeMusicState({status:'PAUSED'});broadcastMusic()}return sent;
+      const sent=postMusic('pause');if(sent){musicState=normalizeMusicState({status:'PAUSED'});broadcastMusic()}return sent;
     }
     function shiftMusic(delta){
-      musicIndex=(musicIndex+delta+MUSIC_QUEUE.tracks.length)%MUSIC_QUEUE.tracks.length;
-      const sent=postMusic(delta<0?'PREVIOUS_TRACK':'NEXT_TRACK');
-      if(sent){musicState=normalizeMusicState({currentTrack:MUSIC_QUEUE.tracks[musicIndex]});broadcastMusic()}
+      const sent=postMusic(delta<0?'previous':'next');
+      if(sent){musicState=normalizeMusicState({status:'LOADING'});broadcastMusic()}
       return sent;
     }
     window.piuraMusicCommand=action=>{
@@ -290,20 +280,8 @@
     };
     window.piuraSetMusicMode=mode=>['morning','work','play'].includes(mode)?playMusic():pauseMusic();
     window.piuraMusicSnapshot=()=>({...musicState});
-    window.addEventListener('message',event=>{
-      if(event.origin!==MUSIC_ORIGIN||event.source!==musicFrame.contentWindow||event.data?.source!=='YANDEX_MUSIC')return;
-      if(event.data.type==='READY'){
-        musicReady=true;
-        if(musicIntent)playMusic();
-        broadcastMusic();
-        return;
-      }
-      if(event.data.type==='STATE'){
-        musicState=normalizeMusicState(event.data.payload||{});
-        broadcastMusic();
-      }
-    });
-    musicFrame.src=MUSIC_ORIGIN+'/iframe/?display=bandlink-wiki&parentOrigin='+encodeURIComponent(location.origin)+'#playlist/305698584/3';
+    window.piuraMusicResult=result=>{musicState=normalizeMusicState(result||{});broadcastMusic()};
+    window.addEventListener('pageshow',()=>postMusic('status'));
     const PALETTES={balanced:['#6ea8fe','#43d39e','#a78bfa'],ocean:['#55b8ff','#43d3c1','#7f9cff'],sage:['#63c99c','#9ecb6b','#6fa8d8'],mono:['#d4d4d4','#a3a3a3','#737373']};
     const launchWorkMode=launchParams.get('workmode');
     if(Object.hasOwn(WORK_MODE_APPEARANCE,prefs.palette))prefs.palette='balanced';

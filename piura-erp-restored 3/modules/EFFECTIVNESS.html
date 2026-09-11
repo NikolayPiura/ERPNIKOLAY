@@ -150,6 +150,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .proof-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.proof-step{min-height:146px}.proof-step strong{font-size:clamp(23px,2.5vw,35px)}
 @media(max-width:850px){.proof-grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.proof-grid{grid-template-columns:1fr}}
 .cp-shell{--cp-count:3!important}.cp-overview-history{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+/* 2026-09-11: let the three monthly checkpoints breathe and read downward. */
+.cp-shell{gap:calc(94px * var(--spacing))!important}.cp-board{gap:calc(54px * var(--spacing))!important}.cp-overview-row{min-height:286px!important;padding-block:calc(62px * var(--spacing))!important}.cp-overview-history{gap:22px!important}.cp-overview-point{min-height:132px!important;padding:24px!important}
 </style>
 </head>
 <body>
