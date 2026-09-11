@@ -132,13 +132,13 @@ test('ERP music card uses the official embedded player without opening browser w
   assert.match(index,/id="erpMusicFrame"/);
   assert.match(index,/allow="autoplay; encrypted-media"/);
   assert.match(index,/const MUSIC_ORIGIN='https:\/\/music\.yandex\.ru'/);
-  assert.match(index,/postMusic\('PLAY_SOURCE'\)/);
+  assert.match(index,/postMusic\('PLAY_QUEUE',queue\)/);
   assert.match(index,/postMusic\('PAUSE'\)/);
   assert.match(index,/delta<0\?'PREVIOUS_TRACK':'NEXT_TRACK'/);
+  assert.match(index,/function shuffledMusicQueue\(\)/);
   assert.match(index,/getRandomValues\(seed\)/);
-  assert.match(index,/randomSkipsPending=1\+\(seed\[0\]%24\)/);
   assert.match(index,/bandlink-wiki/);
-  assert.doesNotMatch(index,/piura-modes:\/\/music|MUSIC_QUEUE|PLAY_QUEUE/);
+  assert.doesNotMatch(index,/piura-modes:\/\/music|randomSkipsPending|PLAY_SOURCE/);
   const nativeMusic=app.slice(app.indexOf('private func controlYandexMusic'),app.indexOf('private func retiredWindowBasedYandexMusicControl'));
   assert.match(nativeMusic,/встроенным плеером ERP/);
   assert.doesNotMatch(nativeMusic,/runAppleScript|workspace|activate|visible|make new window|active tab/);
@@ -167,8 +167,8 @@ test('music card sends transport commands to the ERP iframe controller and paint
   runInNewContext(source,{window,document,location:{origin:'https://nikolaypiura.github.io',href:''}});
   buttons[1].click();
   assert.equal(commands[0],'toggle');
-  events.message({origin:'https://nikolaypiura.github.io',data:{type:'piura-music-state',status:'PLAYING',currentTrack:{subtitle:'Исполнитель теста'}}});
-  assert.equal(artist.textContent,'Исполнитель теста');
+  events.message({origin:'https://nikolaypiura.github.io',data:{type:'piura-music-state',status:'PLAYING',currentTrack:{title:'Песня теста',subtitle:'Исполнитель теста'}}});
+  assert.equal(artist.textContent,'Песня теста — Исполнитель теста');
   assert.ok(classes.has('is-playing'));
   assert.equal(buttons[1].attributes['aria-label'],'Поставить музыку на паузу');
 });

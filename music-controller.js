@@ -8,7 +8,8 @@
   function finish(result={}){
     const track=result.currentTrack||result.payload?.currentTrack;
     const artistName=track?.subtitle||track?.artists?.map(item=>item?.name||item).filter(Boolean).join(', ')||track?.artist;
-    if(artistName)artist.textContent=artistName;
+    const trackName=track?.title||track?.name;
+    if(trackName||artistName)artist.textContent=[trackName,artistName].filter(Boolean).join(' — ');
     const currentStatus=String(result.status||result.payload?.status||'IDLE').toUpperCase();
     const playing=currentStatus==='PLAYING';
     card.classList.toggle('is-playing',playing);
