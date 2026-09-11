@@ -435,6 +435,7 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
 @media(max-width:760px){.hero-topbar{align-items:flex-start!important}.hero-right{flex-wrap:wrap!important}.stats-summary{grid-template-columns:1fr!important}.stats-category-grid{grid-template-columns:1fr!important}.stats-category{min-height:245px!important}.stats-category-title strong{font-size:19px!important}.stats-category-title span{font-size:13px!important}}
 /* 31.08.2026 — statistics breathe at the same scale as the rest of the workspace. */
 .stats-view{gap:44px!important}.stats-hero{padding:38px 42px!important}.stats-period-toggle{margin-bottom:30px!important}.stats-summary{gap:26px!important}.stats-summary-card{min-height:174px!important;padding:34px 38px!important;display:grid!important;align-content:center!important}.stats-category-grid{gap:32px!important}.stats-category{min-height:320px!important;padding:38px!important}.stats-category-times{margin-top:34px!important}.stats-time{min-height:128px!important}.stats-share{margin-top:26px!important}
+.stats-category-times{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}.stats-time{padding:20px!important;border:1px solid var(--bord)!important;background:color-mix(in srgb,var(--stat-color) 5%,var(--s2))!important}.stats-time span{display:block!important;margin-bottom:10px!important}.stats-time strong{font-size:clamp(28px,2.4vw,42px)!important}.stats-time:first-child strong{color:var(--stat-color)!important}
 @media(max-width:760px){.stats-view{gap:28px!important}.stats-hero{padding:24px!important}.stats-category-grid{gap:22px!important}.stats-category{min-height:270px!important;padding:26px!important}}
 </style>
 </head>
@@ -994,7 +995,7 @@ function statisticsSnapshot(period=statsPeriod){
   if(period==='7'||period==='30'){
     periodDays=Number(period);const cutoffDate=new Date();cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-(periodDays-1));const cutoff=dk(cutoffDate);keys=allKeys.filter(key=>key>=cutoff);label=periodDays+' дней';
   }
-  let total=0;const categories=cats.map(cat=>{const minutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);total+=minutes;return{...cat,minutes}});
+  let total=0;const categories=cats.map(cat=>{const minutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);total+=minutes;return{...cat,minutes,perDay:minutes/Math.max(1,periodDays)}});
   categories.forEach(cat=>cat.share=total?cat.minutes/total*100:0);categories.sort((a,b)=>b.minutes-a.minutes||a.label.localeCompare(b.label,'ru'));
   return{categories,total,perDay:total/Math.max(1,periodDays),periodDays,label};
 }
@@ -1002,7 +1003,7 @@ function renderTimeStatistics(){
   const summary=document.getElementById('statsSummary'),grid=document.getElementById('statsCategoryGrid');if(!summary||!grid)return;
   const data=statisticsSnapshot();document.querySelectorAll('[data-stats-period]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.statsPeriod===statsPeriod)));
   summary.innerHTML=`<article class="stats-summary-card"><span>Итого · ${data.label}</span><strong>${longDuration(data.total)}</strong></article><article class="stats-summary-card"><span>В день</span><strong>${longDuration(data.perDay)}</strong></article>`;
-  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}%</span></div></div><div class="stats-category-times"><div class="stats-time"><strong>${longDuration(cat.minutes)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span></div></article>`).join('');
+  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}%</span></div></div><div class="stats-category-times"><div class="stats-time"><span>Итого</span><strong>${longDuration(cat.minutes)}</strong></div><div class="stats-time"><span>В день</span><strong>${longDuration(cat.perDay)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span></div></article>`).join('');
 }
 function setStatsPeriod(period){statsPeriod=['7','30','all'].includes(period)?period:'30';renderTimeStatistics()}
 function setTimeView(view){

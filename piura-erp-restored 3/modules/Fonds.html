@@ -305,6 +305,8 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   html[data-erp-theme="light"] #view-manage .root-metrics .rm{background:linear-gradient(145deg,#fbfdff,#f1f5fa)!important}
   @media(max-width:1050px){#view-manage .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
   @media(max-width:700px){#view-manage{padding:24px 16px 70px!important}#view-manage .root-card{padding:30px 24px!important}#view-manage .root-name{font-size:46px!important}#view-manage .root-metrics{grid-template-columns:1fr!important}#view-manage .sec-hdr{min-height:86px}#view-manage .sec-hdr::before,#view-manage .sec-hdr::after{height:24px}#view-manage .conn-row{height:70px!important}#view-manage .conn-row svg{height:68px!important}#view-manage .fund-row{grid-template-columns:1fr!important}#view-manage .fc{min-height:270px!important}}
+#view-endowment{width:100%;max-width:1920px;margin:auto;padding:42px clamp(28px,4vw,72px) 110px}.fund-tabs{gap:6px!important}.fund-tab{min-width:112px!important;padding:9px 15px!important;font-size:11px!important}#view-endowment .root-card{padding:42px 48px!important;overflow:visible!important;border-radius:30px!important;background:radial-gradient(circle at 86% 4%,rgba(79,142,247,.13),transparent 35%),radial-gradient(circle at 8% 100%,rgba(31,216,122,.07),transparent 34%),var(--bg2)!important}#view-endowment .root-name{font-size:clamp(58px,5.25vw,88px)!important;line-height:.94!important;letter-spacing:-.055em!important;color:#f4f7fb!important}#view-endowment .data-status{margin-top:22px!important}#view-endowment .sec-hdr{display:flex;min-height:112px;position:relative;align-items:center;justify-content:center}#view-endowment .sec-hdr:before,#view-endowment .sec-hdr:after{content:'';position:absolute;left:50%;width:2px;height:34px;transform:translateX(-50%);background:linear-gradient(180deg,rgba(91,157,255,.18),#5b9dff 52%,#42d9a4);box-shadow:0 0 16px rgba(91,157,255,.42)}#view-endowment .sec-hdr:before{top:0}#view-endowment .sec-hdr:after{bottom:0}#view-endowment .sec-lbl{position:relative;z-index:1;padding:12px 42px 12px 18px;border:1px solid rgba(91,157,255,.42);border-radius:999px;background:linear-gradient(135deg,rgba(91,157,255,.16),rgba(66,217,164,.1)),#101622;color:#dceaff;font-size:11px;letter-spacing:.16em}#view-endowment .tree-wrap{display:grid;gap:0}#view-endowment .conn-row{height:116px}#view-endowment .conn-row svg{width:100%;height:112px;overflow:visible;filter:drop-shadow(0 0 7px rgba(91,157,255,.24))}#view-endowment .flow-route{stroke-dasharray:11 9;animation:capital-flow 2.5s linear infinite}#view-endowment .fund-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}#view-endowment .fc{min-height:304px;padding:28px 30px!important;border-radius:24px!important;border-left:2px solid var(--accent,#5b9dff);background:radial-gradient(circle at 94% 2%,color-mix(in srgb,var(--accent,#4f8ef7) 10%,transparent),transparent 38%),var(--bg2)}#view-endowment .fc-route{display:flex;align-items:center;gap:9px;margin-bottom:18px;color:color-mix(in srgb,var(--accent,#5b9dff) 78%,white);font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}#view-endowment .fc-route span{width:27px;height:27px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent,#5b9dff) 45%,var(--border));border-radius:50%}#view-endowment .fc-route i{height:1px;flex:1;background:linear-gradient(90deg,var(--accent,#5b9dff),transparent)}#view-endowment .fc-name{font-size:22px!important;color:#f4f7fb!important}#view-endowment .fc-usd{margin-top:13px;font-size:44px!important;color:#f4f7fb!important}#view-endowment .fc-data{margin-top:auto;padding-top:15px}@media(max-width:1050px){#view-endowment .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:700px){#view-endowment{padding:24px 16px 70px}#view-endowment .root-card{padding:30px 24px!important}#view-endowment .fund-row{grid-template-columns:1fr}}
+@media(min-width:1051px){#view-endowment .fund-row{grid-template-columns:repeat(5,minmax(0,1fr));gap:18px}#view-endowment .fc{padding:25px 22px!important}#view-endowment .fc-name{font-size:18px!important}#view-endowment .fc-usd{font-size:36px!important}}
 </style>
 </head>
 <body>
@@ -319,7 +321,7 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   </div>
 </div>
 
-<div class="fund-tabs"><button class="fund-tab on" data-tab="manage">Управление</button><button class="fund-tab" data-tab="endowment">Endowment</button><div class="year-switch hidden" id="goalYearSwitch" aria-label="Год целей"><button class="year-option on" data-goal-year="2026">2026</button><button class="year-option" data-goal-year="2027">2027</button></div><div class="currency-switch hidden" id="currencySwitch" aria-label="Валюта Endowment"><button class="currency-option on" data-currency="usd">$ USD</button><button class="currency-option" data-currency="rub">₽ RUB</button></div></div>
+<div class="fund-tabs"><button class="fund-tab on" data-tab="manage">Инвестиции</button><button class="fund-tab" data-tab="endowment">Endowment</button><div class="year-switch hidden" id="goalYearSwitch" aria-label="Год целей"><button class="year-option on" data-goal-year="2026">2026</button><button class="year-option" data-goal-year="2027">2027</button></div></div>
 
 <div class="wrap tab-view on" id="view-manage">
   <div class="root-card">
@@ -372,19 +374,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
   <div class="tree-wrap" id="treeWrap"></div>
 </div>
 
-<section class="tab-view portfolio-view" id="view-endowment">
-  <div class="portfolio-hero endowment-hero"><div class="endowment-lead"><span class="endowment-kicker">ENDOWMENT · ВЕЧНЫЙ КАПИТАЛ</span><div class="portfolio-title">Капитал, который работает всегда</div><div class="portfolio-sub" id="endSubtitle">Долгосрочный резерв превращается в устойчивый ежемесячный продукт фонда.</div></div><div class="portfolio-metrics"><div class="portfolio-metric"><label>Общий капитал</label><strong id="endTotal">—</strong></div><div class="portfolio-metric"><label>Доход / месяц</label><strong id="endMonthly">—</strong></div><div class="portfolio-metric"><label>Доходность</label><strong id="endYield">—</strong></div></div><div class="data-status" id="endStatus"><i></i>Загружаем таблицу «Фонд Эндаундмент»…</div></div>
-  <div class="theme-grid" id="endowmentFunds">
-    <div class="theme-card" data-endowment="friend" role="button" tabindex="0"><span class="theme-share">—</span><label>Фонд «Друг»</label><strong>—</strong><small>Капитал и доходность</small></div>
-    <div class="theme-card" data-endowment="drugs" role="button" tabindex="0"><span class="theme-share">—</span><label>Фонд «Наркотики»</label><strong>—</strong><small>Капитал и доходность</small></div>
-    <div class="theme-card" data-endowment="scientology" role="button" tabindex="0"><span class="theme-share">—</span><label>Фонд «Саентология»</label><strong>—</strong><small>Капитал и доходность</small></div>
-    <div class="theme-card" data-endowment="planet" role="button" tabindex="0"><span class="theme-share">—</span><label>Фонд «Уборки»</label><strong>—</strong><small>Капитал и доходность</small></div>
-    <div class="theme-card" data-endowment="plants" role="button" tabindex="0"><span class="theme-share">—</span><label>Фонд «Растения»</label><strong>—</strong><small>Капитал и доходность</small></div>
-  </div>
-  <div class="analytics-grid">
-    <div class="analytics-card"><div class="analytics-head"><div><div class="analytics-title">Структура капитала</div><div class="analytics-meta">доля каждого направления в общем Endowment</div></div></div><div class="allocation-bar" id="endAllocation"></div><div class="allocation-legend" id="endLegend"></div></div>
-  </div>
-  <div class="source-note">Источник: Google Sheets «Фонд &quot;Эндаундмент&quot;», вкладка «2026 (ЭНД)». Значения группируются автоматически по столбцу «ФОНД»; ни одна строка с указанным фондом не исключается.</div>
+<section class="tab-view" id="view-endowment">
+  <div class="root-card"><div class="root-name">ENDOWMENT</div><div class="data-status" id="endStatus"><i></i>Загружаем данные…</div></div>
+  <div class="sec-hdr"><div class="sec-lbl">Карта капитала</div></div>
+  <div class="tree-wrap" id="endowmentTreeWrap"></div>
 </section>
 
 <section class="tab-view portfolio-view" id="view-donations">
@@ -691,21 +684,22 @@ function csvRows(text){
 }
 const sheetNumber=v=>{let s=String(v||'').replace(/[\s\u00a0]/g,'').replace(/[^0-9,.-]/g,'').replace(/^([+-]?)[,.]+/,'$1');if(!s)return 0;const commas=(s.match(/,/g)||[]).length,dots=(s.match(/\./g)||[]).length;if(commas&&dots){const decimal=s.lastIndexOf(',')>s.lastIndexOf('.')?',':'.',group=decimal===','?'.':',';s=s.split(group).join('').replace(decimal,'.')}else if(commas){const tail=s.length-s.lastIndexOf(',')-1;s=commas>1||tail===3?s.replace(/,/g,''):s.replace(',','.')}else if(dots>1)s=s.replace(/\./g,'');return Number(s)||0};
 function sheetJsonp(id,sheet){return new Promise((resolve,reject)=>{const callback='piuraSheet_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script'),timer=setTimeout(()=>finish(new Error('Google Sheets timeout')),20000);function finish(error,rows){clearTimeout(timer);delete window[callback];script.remove();error?reject(error):resolve(rows)}window[callback]=response=>{if(response?.status!=='ok')return finish(new Error(response?.errors?.[0]?.detailed_message||'Google Sheets error'));finish(null,(response.table?.rows||[]).map(row=>(row.c||[]).map(cell=>cell?(cell.f??cell.v??''):'')))};script.onerror=()=>finish(new Error('Google Sheets network error'));script.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=responseHandler:${callback}&sheet=${encodeURIComponent(sheet)}&t=${Date.now()}`;document.head.appendChild(script)})}
-async function sheetCsv(id,sheet){const u=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;try{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return csvRows(await r.text())}catch(error){return sheetJsonp(id,sheet)}}
+async function sheetCsv(id,sheet){const u=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}&t=${Date.now()}`;try{const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);const rows=csvRows(await r.text());if(!rows.length)throw new Error('Пустой ответ Google Sheets');return rows}catch(error){return sheetJsonp(id,sheet)}}
 function totalRowValue(rows){const row=rows.find(r=>r.some(v=>String(v).toUpperCase().includes('ИТОГО')));if(!row)return 0;for(const v of row){const n=sheetNumber(v);if(n>0)return n}return 0}
 const ENDOWMENT_NAMES={friend:'Котики',drugs:'Наркотики',scientology:'Саентология',planet:'Уборки',plants:'Растения'};
 const ENDOWMENT_COLORS={friend:'#00d4aa',drugs:'#4f8ef7',scientology:'#9b72ff',planet:'#22b9df',plants:'#9ed63a'};
 const FOUNDATION_GOALS_KEY='piura_foundation_goals_v1';
 const FOUNDATION_GOALS_DATA_REVISION_KEY='piura_foundation_goals_data_revision';
-const FOUNDATION_GOALS_DATA_REVISION='20260831d';
+const FOUNDATION_GOALS_DATA_REVISION='20260910a';
 const DEFAULT_FOUNDATION_GOALS={
   friend:{name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',current:{fundraising:1560,endowment:18043,income:75,product:309},targets:{2026:{fundraising:1750,endowment:20000,income:100,product:400,total:1850},2027:{fundraising:2250,endowment:200000,income:1000,product:1000,total:2500}}},
   plants:{name:'Растения',mission:'Планета, в которой численность растений поддерживается в норме',product:'Посаженные деревья',current:{fundraising:10,endowment:2630,income:11,product:200},targets:{2026:{fundraising:50,endowment:10000,income:50,product:500,total:100},2027:{fundraising:250,endowment:200000,income:1000,product:5000,total:500}}},
   planet:{name:'Уборки',mission:'Планета, избавленная от излишнего мусора',product:'Проведённые уборки',current:{fundraising:10,endowment:0,income:0,product:0},targets:{2026:{fundraising:300,endowment:1000,income:5,product:10,total:315},2027:{fundraising:1000,endowment:200000,income:1000,product:50,total:1250}}},
   drugs:{name:'Наркотики',mission:'Планета, в которой нет наркотиков',product:'Отзывы детей после антинаркотического просвещения',current:{fundraising:10,endowment:0,income:11,product:0},targets:{2026:{fundraising:500,endowment:1000,income:5,product:50,total:515},2027:{fundraising:2250,endowment:200000,income:1000,product:500,total:2500}}},
-  scientology:{name:'Саентология',mission:'Планета, на которой всё больше людей достигают состояния Клир',product:'Разданные книги «Дорога к счастью»',current:{fundraising:10,endowment:0,income:0,product:0},targets:{2026:{fundraising:100,endowment:1000,income:5,product:100,total:115},2027:{fundraising:500,endowment:200000,income:1000,product:1000,total:750}}}
+  scientology:{name:'Саентология',mission:'Планета, на которой всё больше людей достигают состояния Клир',product:'Разданные книги «Дорога к счастью»',current:{fundraising:10,endowment:0,income:0,product:0},targets:{2026:{fundraising:100,endowment:1000,income:5,product:100,total:115},2027:{fundraising:500,endowment:200000,income:1000,product:1000,total:750}}},
+  association:{name:'Ассоциация добрых дел',mission:'Планета, в которой люди делают добрые дела',product:'Добрые дела участников ассоциации',current:{fundraising:0,endowment:0,income:0,product:4},targets:{2026:{fundraising:0,endowment:0,income:0,product:60,total:60},2027:{fundraising:0,endowment:0,income:0,product:500,total:500}}}
 };
-function loadFoundationGoals(){let saved={};try{saved=JSON.parse(localStorage.getItem(FOUNDATION_GOALS_KEY)||'{}')}catch(e){}const goals=JSON.parse(JSON.stringify(DEFAULT_FOUNDATION_GOALS));Object.keys(goals).forEach(key=>{const canonical=goals[key],item=saved[key]||{};goals[key]={...canonical,...item,mission:canonical.mission,product:canonical.product,current:{...canonical.current,...(item.current||{})},targets:{2026:{...canonical.targets[2026],...(item.targets?.[2026]||{})},2027:{...canonical.targets[2027],...(item.targets?.[2027]||{})}}}});if(localStorage.getItem(FOUNDATION_GOALS_DATA_REVISION_KEY)!==FOUNDATION_GOALS_DATA_REVISION){goals.friend.current.product=309;goals.friend.targets[2026].product=400;goals.plants.targets[2026].product=500;goals.drugs.targets[2026].product=50;localStorage.setItem(FOUNDATION_GOALS_KEY,JSON.stringify(goals));localStorage.setItem(FOUNDATION_GOALS_DATA_REVISION_KEY,FOUNDATION_GOALS_DATA_REVISION)}return goals}
+function loadFoundationGoals(){let saved={};try{saved=JSON.parse(localStorage.getItem(FOUNDATION_GOALS_KEY)||'{}')}catch(e){}const goals=JSON.parse(JSON.stringify(DEFAULT_FOUNDATION_GOALS));Object.keys(goals).forEach(key=>{const canonical=goals[key],item=saved[key]||{};goals[key]={...canonical,...item,mission:canonical.mission,product:canonical.product,current:{...canonical.current,...(item.current||{})},targets:{2026:{...canonical.targets[2026],...(item.targets?.[2026]||{})},2027:{...canonical.targets[2027],...(item.targets?.[2027]||{})}}}});if(localStorage.getItem(FOUNDATION_GOALS_DATA_REVISION_KEY)!==FOUNDATION_GOALS_DATA_REVISION){goals.friend.current.product=309;goals.friend.targets[2026].product=400;goals.plants.targets[2026].product=500;goals.drugs.targets[2026].product=50;goals.association.current.product=4;goals.association.targets[2026].product=60;localStorage.setItem(FOUNDATION_GOALS_KEY,JSON.stringify(goals));localStorage.setItem(FOUNDATION_GOALS_DATA_REVISION_KEY,FOUNDATION_GOALS_DATA_REVISION)}return goals}
 function saveFoundationGoals(){localStorage.setItem(FOUNDATION_GOALS_KEY,JSON.stringify(FOUNDATION_GOALS))}
 let FOUNDATION_GOALS=loadFoundationGoals();
 const DONATION_CATEGORIES={cash:'Наличные платежи',oneoff:'Разовый донат',subscriptions:'Подписка',monthly:'Ежемесячный донат'};
@@ -719,14 +713,11 @@ function directionSetting(key){const years=readDirectionSettings(),all=years[Str
 function writeDirectionSettings(all){localStorage.setItem(DIRECTION_SETTINGS_KEY,JSON.stringify(all))}
 function endowmentKey(value){const v=String(value||'').trim().toLocaleLowerCase('ru');if(/friend|друг|кот/.test(v))return'friend';if(/drug|наркот/.test(v))return'drugs';if(/scient|саент/.test(v))return'scientology';if(/planet|планет|чистот/.test(v))return'planet';if(/tree|plant|растен/.test(v))return'plants';return'';}
 function renderEndowment(data){
-  currentEndowmentData=data;const groups=data.groups||{},positions=data.positions||Object.values(groups).flatMap(item=>item.positions||[]),total=Number(data.total)||0,monthly=Number(data.monthly)||0;
+  currentEndowmentData=data;const groups=data.groups||{},total=Number(data.total)||0;
   applyEndowmentToStructure(data);
-  const keys=Object.keys(ENDOWMENT_NAMES),totalUsd=total/usdRub,monthlyUsd=monthly/usdRub,totalYield=totalUsd?monthlyUsd*12/totalUsd*100:0;
-  document.getElementById('endSubtitle').textContent='Долгосрочный резерв превращается в устойчивый ежемесячный продукт фонда.';
-  document.getElementById('endTotal').textContent=fPortfolioMoney(total);document.getElementById('endMonthly').textContent=fPortfolioMoney(monthly);document.getElementById('endYield').textContent=totalYield?totalYield.toFixed(1)+'%':'—';
-  document.querySelectorAll('[data-endowment]').forEach(card=>{const key=card.dataset.endowment,item=groups[key]||{total:0,monthly:0,rows:0},name=ENDOWMENT_NAMES[key],itemUsd=(Number(item.total)||0)/usdRub,itemMonthlyUsd=(Number(item.monthly)||0)/usdRub,itemYield=itemUsd?itemMonthlyUsd*12/itemUsd*100:0,share=percent(Number(item.total)||0,total);card.style.setProperty('--direction-color',ENDOWMENT_COLORS[key]);card.querySelector('label').textContent=name;card.querySelector('strong').textContent=fGoalMoneyUsd(itemUsd);card.querySelector('small').innerHTML=`<div class="endowment-card-metrics"><div class="endowment-card-metric"><span>Доход / месяц</span><b class="accent">${fGoalMoneyUsd(itemMonthlyUsd)}</b></div><div class="endowment-card-metric"><span>Доходность</span><b>${itemYield?itemYield.toFixed(1)+'%':'—'}</b></div></div>`;card.querySelector('.theme-share').textContent=share.toFixed(1)+'% капитала';card.title=name+' · капитал '+fGoalMoneyUsd(itemUsd)+' · доход '+fGoalMoneyUsd(itemMonthlyUsd)+'/мес.';card.onclick=()=>filterEndowment(key);card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();filterEndowment(key)}}});
-  const active=keys.filter(key=>(groups[key]?.total||0)>0);document.getElementById('endAllocation').innerHTML=active.map(key=>`<span class="allocation-seg" style="width:${percent(groups[key].total,total)}%;background:${ENDOWMENT_COLORS[key]}" title="${escapeHtml(ENDOWMENT_NAMES[key])}: ${percent(groups[key].total,total).toFixed(1)}%"></span>`).join('');
-  document.getElementById('endLegend').innerHTML=keys.map(key=>`<div class="legend-row"><span class="legend-dot" style="background:${ENDOWMENT_COLORS[key]}"></span><span class="legend-name">${escapeHtml(ENDOWMENT_NAMES[key])}</span><span class="legend-val">${percent(groups[key]?.total||0,total).toFixed(1)}%</span></div>`).join('');
+  const keys=Object.keys(ENDOWMENT_NAMES),xs=[100,300,500,700,900],markers=keys.map((key,index)=>`<marker id="end-arrow-${index}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><polygon points="0,0 10,5 0,10" fill="${ENDOWMENT_COLORS[key]}"/></marker>`).join(''),routes=keys.map((key,index)=>`<circle cx="${xs[index]}" cy="39" r="4" fill="${ENDOWMENT_COLORS[key]}"/><path class="flow-route" d="M${xs[index]},44 V107" fill="none" stroke="${ENDOWMENT_COLORS[key]}" stroke-width="3" marker-end="url(#end-arrow-${index})"/>`).join('');
+  const cards=keys.map((key,index)=>{const item=groups[key]||{},capital=(Number(item.total)||0)/usdRub,monthly=(Number(item.monthly)||0)/usdRub,yieldValue=capital?monthly*12/capital*100:0,color=ENDOWMENT_COLORS[key];return`<article class="fc" style="--accent:${color}"><div class="fc-route"><span>${String(index+1).padStart(2,'0')}</span><i></i><b>ENDOWMENT</b></div><div class="fc-name">${escapeHtml(ENDOWMENT_NAMES[key])}</div><div class="fc-usd">${fGoalMoneyUsd(capital)}</div><div class="fc-data"><div class="fdr"><span class="fdr-l">Доход / месяц</span><span class="fdr-v g">${fGoalMoneyUsd(monthly)}</span></div><div class="fdr"><span class="fdr-l">Доходность</span><span class="fdr-v y">${yieldValue?yieldValue.toFixed(1)+'%':'—'}</span></div></div></article>`}).join('');
+  const wrap=document.getElementById('endowmentTreeWrap');if(wrap)wrap.innerHTML=`<div class="conn-row"><svg viewBox="0 0 1000 112" preserveAspectRatio="none"><defs>${markers}</defs><path class="flow-trunk" d="M500,2 V39" fill="none" stroke="#5b9dff" stroke-width="4"/><circle cx="500" cy="39" r="7" fill="#0c1320" stroke="#5b9dff" stroke-width="3"/><path d="M100,39 H900" fill="none" stroke="rgba(91,157,255,.34)" stroke-width="2"/>${routes}</svg></div><div class="fund-row">${cards}</div>`;
 }
 function filterEndowment(key='all'){
   endowmentFilter=key;document.querySelectorAll('[data-endowment]').forEach(card=>card.classList.toggle('active',key!=='all'&&card.dataset.endowment===key));
@@ -761,20 +752,20 @@ async function loadPaff(){
   renderTree();recalcDisplay();return{usd,monthly,yield:yieldValue};
 }
 async function loadStructureSources(){
-  const results=await Promise.allSettled([loadSolid(),loadPaff()]);
-  if(results.every(item=>item.status==='rejected'))throw results[0].reason;
+  const results=await Promise.allSettled([loadSolid(),loadPaff(),...funds.filter(fund=>fund.api).map(fund=>fetchFund(fund,true))]);
+  const failed=results.filter(item=>item.status==='rejected');if(failed.length)throw new Error(`Не обновлено источников: ${failed.length} из ${results.length} · ${failed.map(item=>item.reason?.message||item.reason).join(' · ')}`);
   return results;
 }
 async function refreshExternalFunds(manual=false){
   const button=document.getElementById('refreshAll'),source=document.getElementById('sourceStatus');if(button){button.disabled=true;button.textContent='↻ Обновляем…'}source.className='data-status loading';source.innerHTML='<i></i>Читаем Google Sheets…';
-  const jobs=[['endStatus',loadEndowment],['donStatus',loadDonations],['sourceStatus',loadStructureSources]],results=await Promise.allSettled(jobs.map(([,fn])=>fn()));
+  const jobs=[['endStatus',loadEndowment],['sourceStatus',loadStructureSources]],results=await Promise.allSettled(jobs.map(([,fn])=>fn()));
   results.forEach((result,index)=>{const el=document.getElementById(jobs[index][0]);if(!el)return;if(result.status==='fulfilled'){el.className='data-status';el.removeAttribute('title');el.innerHTML='<i></i>Google Sheets · обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}else{el.className='data-status error';el.title=String(result.reason?.message||result.reason||'Ошибка источника');el.innerHTML='<i></i>Источник недоступен · показан последний сохранённый снимок';console.warn(jobs[index][0],result.reason)}});
-  const ok=results.filter(r=>r.status==='fulfilled').length;source.className='data-status '+(ok===3?'':'error');source.innerHTML='<i></i>'+`Обновлено источников: ${ok} из 3`;
-  if(button){button.disabled=false;button.textContent='↻ Обновить данные'}if(manual&&ok===3)button?.blur();
+  const ok=results.filter(r=>r.status==='fulfilled').length;source.className='data-status '+(ok===jobs.length?'':'error');source.innerHTML='<i></i>'+`Обновлено источников: ${ok} из ${jobs.length}`;
+  if(button){button.disabled=false;button.textContent=ok===jobs.length?`✓ Обновлено ${new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}`:'↻ Повторить обновление'}if(manual&&ok===jobs.length)button?.blur();
 }
 
 /* LIVE DATA */
-async function fetchFund(f){
+async function fetchFund(f,strict=false){
   if(!f.api)return;
   const cacheKey='piura_cache_fonds_'+f.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(e){}
   if(cached){f.liveUsd=cached.usd;f.liveMon=cached.mon;f.liveYld=cached.yld;renderTree();recalcDisplay();}
@@ -799,7 +790,7 @@ async function fetchFund(f){
     if(tP===0&&tS>0&&tM>0)tP=tM*12/tS*100;
     f.liveYld=tP;
     localStorage.setItem(cacheKey,JSON.stringify({at:Date.now(),usd:f.liveUsd,mon:f.liveMon,yld:f.liveYld}));
-  }catch(e){console.warn(f.name,e);}
+  }catch(e){console.warn(f.name,e);if(strict)throw e;}
   f.loading=false;renderTree();recalcDisplay();
 }
 
@@ -907,11 +898,6 @@ function makeCard(f){
       r.innerHTML=`<span class="fdr-l">${l}</span><span class="fdr-v ${c}">${v}</span>`;db.appendChild(r);
     });
     div.appendChild(db);
-  }
-  if(f.id===3&&Array.isArray(f.solidAssets)&&f.solidAssets.length){
-    const db=document.createElement('div');db.className='fc-data solid-assets';
-    const title=document.createElement('div');title.className='solid-assets-title';title.textContent='Состав Solid · активы №1 и №2';db.appendChild(title);
-    f.solidAssets.forEach(asset=>{const row=document.createElement('div');row.className='fdr';row.innerHTML=`<span class="fdr-l">${escapeHtml(asset.name)}</span><span class="fdr-v">${asset.currency==='USD'?fU(asset.value):fRExact(asset.value)}</span>`;db.appendChild(row)});div.appendChild(db);
   }
 
   // GOAL PROGRESS BAR
@@ -1320,7 +1306,6 @@ function resetAllData(){
 document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
   document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===btn));
   document.querySelectorAll('.tab-view').forEach(x=>x.classList.toggle('on',x.id==='view-'+btn.dataset.tab));
-  document.getElementById('currencySwitch').classList.toggle('hidden',btn.dataset.tab==='manage');
   document.getElementById('goalYearSwitch').classList.add('hidden');
   localStorage.setItem('piura_funds_tab',btn.dataset.tab);
 }));

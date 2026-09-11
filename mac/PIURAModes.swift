@@ -34,12 +34,12 @@ private enum WorkMode: String {
         }
         return base + "&workmode=" + rawValue
     }
-    var needsTelegram: Bool { self == .work }
+    var needsTelegram: Bool { self == .work || self == .mentorship }
     var needsChatGPT: Bool { self == .work }
     // Morning and weekday work use the official Yandex iframe inside ERP.
     // PIURA Modes never opens, focuses or hides a separate music window.
     var needsMusic: Bool { self == .morning || self == .work }
-    var needsZoom: Bool { self == .work || self == .mentorship }
+    var needsZoom: Bool { self == .mentorship }
 }
 private struct DisplayTarget {
     let screen: NSScreen
@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260904c" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260910-batch15" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -888,6 +888,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         markPhase("musicAndChat")
         do { try restoreForeground(for: mode) } catch { notes.append("Передний план: \(error.localizedDescription)") }
         markPhase("foreground")
+        if !preview && mode.needsMusic {
+            do { try verifyERPMusicPlaying() } catch { notes.append("Музыка ERP: \(error.localizedDescription)") }
+        }
+        markPhase("musicCheck")
         verifiedWindows.append(["workspaceReadySeconds":Date().timeIntervalSince(startedAt),"workspaceErrors":notes])
         if !preview {
             if let job = wallpaperJob {
@@ -934,7 +938,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if mode.needsTelegram { keep.formUnion(telegramIDs) }
         if mode.needsChatGPT { keep.formUnion(["com.openai.chat", "com.openai.codex"]) }
         if mode.needsZoom { keep.insert("us.zoom.xos") }
-        if mode == .work { keep.insert("com.apple.Notes") }
         let currentPID = ProcessInfo.processInfo.processIdentifier
         let apps = workspace.runningApplications.filter { app in
             app.activationPolicy == .regular && app.processIdentifier != currentPID && (app.bundleIdentifier.map { !keep.contains($0) } ?? true)
@@ -951,7 +954,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func openCompanionApps(for mode: WorkMode) throws {
         var ids: [String] = []
         if mode.needsZoom { ids.append("us.zoom.xos") }
-        if mode == .work { ids.append("com.apple.Notes") }
         for id in ids {
             if workspace.runningApplications.contains(where: { $0.bundleIdentifier == id && !$0.isTerminated }) {
                 verifiedWindows.append(["companionApp":id, "reused":true]); continue
@@ -1906,6 +1908,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         verifiedWindows.append(["musicAppearance":result,"outputVolume":volume])
         if mode == .morning && !result.contains("\"light\":true") { throw modeError("Светлая музыка не подтверждена.") }
     }
+    private func verifyERPMusicPlaying() throws {
+        var clicked = false
+        let deadline = min(Date().addingTimeInterval(12), runDeadline)
+        while Date() < deadline {
+            let command = clicked ? "false" : "true"
+            let javascript = """
+            (() => {
+              const frame=document.getElementById('moduleFrame');
+              const doc=frame?.contentDocument;
+              const card=doc?.getElementById('musicCard');
+              const button=doc?.getElementById('musicPlay');
+              if(card?.classList.contains('is-playing'))return 'playing';
+              if(!frame||!doc||!card||!button)return 'loading';
+              if(\(command)){button.click();return 'clicked'}
+              return 'waiting';
+            })()
+            """
+            let state = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"\(appleScriptEscape(javascript))\"")
+            if state == "playing" {
+                verifiedWindows.append(["musicPlaying":true,"musicControlledFromERP":true,"playClicks":clicked ? 1 : 0])
+                return
+            }
+            if state == "clicked" { clicked = true }
+            pumpRunLoop(0.4)
+        }
+        verifiedWindows.append(["musicPlaying":false,"musicControlledFromERP":true,"playClicks":clicked ? 1 : 0])
+        throw modeError("кнопка Play нажата, но встроенный плеер не подтвердил воспроизведение")
+    }
     private func restoreForeground(for mode: WorkMode) throws {
         var failures: [String] = []
         func attempt(_ action: () throws -> Void) {
@@ -1928,7 +1958,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             end tell
             """)
             guard result.hasPrefix(morningAdminPreviewURL) else { throw modeError("Слева не открылся обзор целей и планов.") }
-            verifiedWindows.append(["morningLeftForeground":"goals-and-plans","musicControlledFromERP":true])
+            verifiedWindows.append(["morningLeftForeground":"goals-only","musicControlledFromERP":true])
         }
         }
         attempt {

@@ -69,21 +69,21 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
   assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   assert.match(app,/let leftURL = mode == \.morning \? morningAdminPreviewURL : policyURL/);
-  assert.match(app,/"morningLeftForeground":"goals-and-plans","musicControlledFromERP":true/);
+  assert.match(app,/"morningLeftForeground":"goals-only","musicControlledFromERP":true/);
   assert.match(app,/"musicDisplay":"ERP control only"/);
   assert.match(app,/finalSideWindowsVerified/);
   const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
 });
-test('morning shows goals with plans on the left while music stays inside ERP',()=>{
+test('morning shows only goals on the left while music stays inside ERP',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
-  assert.match(preview,/grid-template-columns:1fr 1fr/);
+  assert.match(preview,/grid-template-columns:1fr/);
   assert.doesNotMatch(preview,/Куда направлено внимание|Что двигаем сегодня|class="mark"/);
   assert.match(preview,/theme=light/);
   assert.match(preview,/section=%D1%86%D0%B5%D0%BB%D0%B8/);
-  assert.match(preview,/section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B/);
+  assert.doesNotMatch(preview,/section=%D0%BF%D0%BB%D0%B0%D0%BD%D1%8B/);
   assert.match(admin,/const adminPreviewParams=new URLSearchParams\(location\.search\)/);
   assert.match(admin,/browseMode=adminPreview\?'sections'/);
   assert.match(admin,/body\[data-admin-preview="1"\] \.topbar/);

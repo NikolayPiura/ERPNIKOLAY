@@ -134,8 +134,7 @@ test('ERP music card controls the official hidden Yandex iframe and owns no disp
   assert.match(index,/postMusic\('PLAY_QUEUE',MUSIC_QUEUE\)/);
   assert.match(index,/postMusic\('PAUSE'\)/);
   assert.match(index,/postMusic\('RESUME'\)/);
-  assert.match(index,/postMusic\('NEXT_TRACK'\)/);
-  assert.match(index,/postMusic\('PREVIOUS_TRACK'\)/);
+  assert.match(index,/'PREVIOUS_TRACK':'NEXT_TRACK'/);
   assert.match(controller,/piuraMusicCommand/);
   assert.doesNotMatch(controller,/piura-modes:\/\/music|messageHandlers|webkit/);
   assert.doesNotMatch(html,/id="musicVolume"/);
@@ -201,7 +200,9 @@ test('repeat launches reuse windows and preserve exact split before any retile',
 });
 test('companion apps, learning exception and selective wallpapers',()=>{
   assert.match(app,/mode.needsZoom.*keep.insert\("us.zoom.xos"\)/);
-  assert.match(app,/mode == .work.*keep.insert\("com.apple.Notes"\)/);
+  assert.match(app,/var needsTelegram: Bool \{ self == \.work \|\| self == \.mentorship \}/);
+  assert.match(app,/var needsZoom: Bool \{ self == \.mentorship \}/);
+  assert.doesNotMatch(app,/mode == \.work.*com\.apple\.Notes/);
   assert.match(app,/case .learning:.*theme=light/);
   for(const file of ['Learning-Left','Mentorship-Center','Mentorship-Right']) assert.match(app,new RegExp(file));
 });

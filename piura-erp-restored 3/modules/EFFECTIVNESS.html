@@ -149,6 +149,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @media(min-width:1101px) and (max-width:1350px){.cp-overview-point .ov-row-tile-val{font-size:calc(var(--fs)*1.6)}}
 .proof-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.proof-step{min-height:146px}.proof-step strong{font-size:clamp(23px,2.5vw,35px)}
 @media(max-width:850px){.proof-grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.proof-grid{grid-template-columns:1fr}}
+.cp-shell{--cp-count:3!important}.cp-overview-history{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 </style>
 </head>
 <body>
@@ -854,7 +855,7 @@ function restoreHistoricalCheckpoints(){
   scheduledCheckpointDates().filter(date=>date<=calculationDate()).forEach(date=>{if(!byDate.has(date)){byDate.set(date,currentCheckpoint(date,true));changed=true}});
   if(changed)writeCheckpoints([...byDate.values()]);
 }
-function scheduledCheckpointDates(){return['2026-08-01','2026-08-15','2026-08-30','2026-09-15']}
+function scheduledCheckpointDates(){return['2026-08-01','2026-09-01','2026-10-01']}
 function checkpointDate(value){return new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}
 function directionAt(point,id){return point?.directions?.[id]||{dph:0,income:0,hours:0}}
 const CHECKPOINT_COLORS={inv:'#4faeff',nav:'#b47cff',klim:'#42d9a4',money:'#f2c75c'};

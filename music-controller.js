@@ -7,7 +7,8 @@
   const status=document.getElementById('musicStatus');
   function finish(result={}){
     const track=result.currentTrack||result.payload?.currentTrack;
-    if(track?.subtitle)artist.textContent=track.subtitle;
+    const artistName=track?.subtitle||track?.artists?.map(item=>item?.name||item).filter(Boolean).join(', ')||track?.artist;
+    if(artistName)artist.textContent=artistName;
     const currentStatus=String(result.status||result.payload?.status||'IDLE').toUpperCase();
     const playing=currentStatus==='PLAYING';
     card.classList.toggle('is-playing',playing);

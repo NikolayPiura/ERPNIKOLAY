@@ -82,28 +82,28 @@ const DYNAMICS=[
 ];
 const DEFAULT_TASKS=[
   [101,1,'Личная гигиена, душ, зубы, витамины',10],
-  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',30],
-  [103,1,'Обучение (пара, инвестиции, наставничество, заочное или очное)',20],
+  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',40],
+  [103,1,'Обучение (пара, инвестиции, наставничество, заочное или очное)',10],
   [104,1,'Сессия',75],
-  [105,1,'Занятие хобби (шахматы, рисование, чтение)',30],
+  [105,1,'Занятие хобби (шахматы, рисование, чтение)',50],
   [201,2,'Утренняя и вечерняя прогулка',10],
-  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',50],
-  [203,2,'Шаг совместного плана',100],
-  [204,2,'Хорошо выполнены совместные ритуалы',30],
+  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',100],
+  [203,2,'Шаг совместного плана',200],
+  [204,2,'Хорошо выполнены совместные ритуалы',150],
   [301,3,'Хорошо сделан кайдзен-час',20],
   [302,3,'Все задачи предыдущего дня',70],
   [303,3,'Все встречи проведены в тайминге',70],
   [304,3,'Выполнен план работы по направлению дня',30],
-  [401,4,'Сделано доброе дело',300],
+  [401,4,'Сделано доброе дело',500],
   [501,5,'Сделано доброе дело',300],
-  [602,6,'Сделано доброе дело',300],
-  [701,7,'Выполнен пункт этического плана',300],
+  [602,6,'Сделано доброе дело',500],
+  [701,7,'Выполнен пункт этического плана',500],
   [702,7,'День без расстройств',200],
-  [801,8,'Описана тэта',1000]
+  [801,8,'Описана тэта',5500]
 ].map(([id,dynamicId,name,w],order)=>({id,dynamicId,name,w,order,active:true}));
 const REMOVED_TASK_IDS=[402,403,404,502,601,603,604,703];
 const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,snapshotTotal}));
-const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=7,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
+const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=8,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const num=value=>Number(value)||0;
@@ -152,7 +152,7 @@ function notifyParent(){clearTimeout(notifyTimer);notifyTimer=setTimeout(()=>{tr
 function persist(notify=true){const current=thursdayFor(today()),week=ensureWeek(current);S.currentSnapshotTotal=weekTotal(current);S.counts=Object.fromEntries(activeTasks().map(task=>[task.id,daysFor(current).filter(day=>taskChecked(task.id,iso(day),current)).length]).filter(([,count])=>count));S.dailyCounts=clone(week.daily||{});S.history=newHistory();localStorage.setItem(STORE,JSON.stringify(S));if(notify)notifyParent()}
 function toggleCheck(taskId,date){const anchor=thursdayFor(date),week=freezeWeek(anchor),task=S.tasks.find(item=>num(item.id)===num(taskId));if(date>today()){const planned=week.planned[date]||(week.planned[date]={});planned[taskId]=num(planned[taskId])>0?0:1;if(!planned[taskId])delete planned[taskId];if(!Object.keys(planned).length)delete week.planned[date];persist();render();return}const scores=week.daily[date]||(week.daily[date]={});if(task){week.weights[task.id]=Number.isFinite(Number(week.weights[task.id]))?Number(week.weights[task.id]):num(task.w);week.taskDynamics[task.id]=Number.isFinite(Number(week.taskDynamics[task.id]))?Number(week.taskDynamics[task.id]):num(task.dynamicId)}scores[taskId]=num(scores[taskId])>0?0:1;if(!scores[taskId])delete scores[taskId];if(!Object.keys(scores).length)delete week.daily[date];if(week.planned?.[date]){delete week.planned[date][taskId];if(!Object.keys(week.planned[date]).length)delete week.planned[date]}persist();render()}
 function shiftIso(value,days){const date=new Date(value+'T12:00:00');date.setDate(date.getDate()+days);return iso(date)}
-function weeklySeries(dynamicId=null){return Array.from({length:WEEK_WINDOW},(_,index)=>{const anchor=shiftIso(selectedWeek,(index-WEEK_WINDOW+1)*7);return{date:anchor,total:chartWeekTotal(anchor,dynamicId),label:shortDate(anchor)}})}
+function weeklySeries(dynamicId=null){return Array.from({length:WEEK_WINDOW},(_,index)=>{const anchor=shiftIso(selectedWeek,(index-WEEK_WINDOW+1)*7);return{date:anchor,total:chartWeekTotal(anchor,dynamicId),label:shortDate(shiftIso(anchor,7))}})}
 function dailyWindowEnd(){return selectedWeek===thursdayFor(today())?today():iso(daysFor(selectedWeek)[6])}
 function dailySeries(dynamicId=null){const end=dailyWindowEnd();return Array.from({length:DAY_WINDOW},(_,index)=>{const date=shiftIso(end,index-DAY_WINDOW+1),anchor=thursdayFor(date);return{date,total:dayTotal(date,dynamicId,anchor),label:shortDate(date)}})}
 function niceScaleMax(series){const high=Math.max(...series.map(item=>num(item.total)),0);if(high<=0)return 10;const rough=high/4,magnitude=10**Math.floor(Math.log10(rough)),normal=rough/magnitude,step=(normal<=1?1:normal<=2?2:normal<=2.5?2.5:normal<=5?5:10)*magnitude;let max=Math.ceil(high/step)*step;if(max<=high)max+=step;if(max<=20)max=Math.ceil(max/5)*5;return Math.max(10,Math.round(max))}
