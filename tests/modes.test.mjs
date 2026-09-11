@@ -46,7 +46,7 @@ test('seven daily links plus small morning and learning shortcuts; page load sta
   assert.equal((p.root.innerHTML.match(/piura-modes:\/\/mentorship/g)||[]).length,2);
   assert.match(p.root.innerHTML,/morning-shortcut[^>]+piura-modes:\/\/morning/);
   assert.match(p.root.innerHTML,/learning-shortcut[^>]+piura-modes:\/\/learning/);
-  assert.match(p.root.innerHTML,/Только инвестиции и решения по капиталу/);
+  assert.doesNotMatch(p.root.innerHTML,/work-mode-copy|Только климат|Только инвестиции|Только созвоны/);
 });
 test('all nine weekly controls work and stay available while switching',()=>{
   const p=panel();
@@ -137,6 +137,10 @@ test('ERP music card controls authenticated My Wave through the invisible native
   assert.doesNotMatch(index,/MUSIC_QUEUE|PLAY_QUEUE|bandlink-wiki/);
   assert.match(app,/['"]wave['"]/);
   assert.match(app,/моя волна/);
+  assert.match(app,/pressHiddenYandexMusicControl\(/);
+  assert.ok(app.includes('set bounds of window id \\(windowID) to {120, 120, 920, 720}'));
+  assert.match(app,/return pressFocusedControl\(\)/);
+  assert.doesNotMatch(app,/key code 40 using control down/);
   assert.match(controller,/piuraMusicCommand/);
   assert.doesNotMatch(controller,/piura-modes:\/\/music|messageHandlers|webkit/);
   assert.doesNotMatch(html,/id="musicVolume"/);

@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260911-batch19" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260911-batch20" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -309,16 +309,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }) else {
             throw modeError("Сначала включите режим — фоновый плеер подготовится автоматически.")
         }
-        // Keep the authenticated Yandex Music session in a background tab of
-        // the already-visible ERP window. Creating/selecting browser windows is
-        // deliberately forbidden here: Play/Pause must not flash Yandex UI.
+        // Keep an authenticated player in a dedicated, invisible, normal-sized
+        // helper window on the centre display. Yandex rejects cold-start audio
+        // from a background DOM click, so the helper is made compositor-
+        // transparent for the trusted accessibility press. The right display's
+        // ERP window and its active tab are never repurposed.
         let location = try runAppleScript("""
         tell application "Yandex"
           set erpID to -1
           set erpTab to -1
           set musicID to -1
           set musicTab to -1
-          set createdTab to false
+          set createdWindow to false
           repeat with w in every window
             set tabNumber to 0
             repeat with t in every tab of w
@@ -328,7 +330,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 set erpID to id of w
                 set erpTab to tabNumber
               end if
-              if musicID is -1 and u starts with "\(musicURL)" then
+              if musicID is -1 and u starts with "\(musicURL)" and id of w is not erpID then
                 set musicID to id of w
                 set musicTab to tabNumber
               end if
@@ -336,30 +338,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
           end repeat
           if erpID is -1 then error "ERP window is not available"
           if musicID is -1 then
-            tell window id erpID
-              make new tab at end of tabs with properties {URL:"\(musicURL)"}
-              set musicTab to count of tabs
-            end tell
-            set musicID to erpID
-            set createdTab to true
+            set musicWindow to make new window with properties {visible:false, bounds:{120, 120, 920, 720}}
+            set musicID to id of musicWindow
+            set URL of active tab of musicWindow to "\(musicURL)"
+            set musicTab to 1
+            set createdWindow to true
           end if
-          -- ERP is the immutable visible surface on the right monitor. Music
-          -- and accidental sale pages may remain loaded, but never active.
+          -- Normalize before the helper can ever become visible. This prevents
+          -- Chromium from inheriting the portrait/full-screen ERP geometry.
+          set visible of window id musicID to false
+          set minimized of window id musicID to false
+          set zoomed of window id musicID to false
+          set bounds of window id musicID to {120, 120, 920, 720}
+          set active tab index of window id musicID to musicTab
           set active tab index of window id erpID to erpTab
           set minimized of window id erpID to false
-          if musicID is not erpID then set minimized of window id musicID to true
-          return (musicID as text) & "," & (musicTab as text) & "," & (createdTab as text) & "," & (erpID as text) & "," & (erpTab as text)
+          return (musicID as text) & "," & (musicTab as text) & "," & (createdWindow as text) & "," & (erpID as text) & "," & (erpTab as text)
         end tell
         """)
         let parts = location.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
         guard parts.count == 5, let windowID = Int(parts[0]), let tabNumber = Int(parts[1]),
               let visibleERPWindowID = Int(parts[3]), let visibleERPTabNumber = Int(parts[4]) else {
-            throw modeError("Не удалось подготовить фоновую вкладку Яндекс Музыки.")
+            throw modeError("Не удалось подготовить скрытый плеер Яндекс Музыки.")
         }
         defer {
-            // A final invariant, including error paths: the right monitor must
-            // show ERP, never Music, sale, or another background tab.
-            _ = try? runAppleScript("tell application \"Yandex\" to set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)")
+            // A final invariant, including error paths: the right monitor shows
+            // ERP, while the helper is both hidden and restored to normal size.
+            _ = try? runAppleScript("""
+            tell application "Yandex"
+              set visible of window id \(windowID) to false
+              set zoomed of window id \(windowID) to false
+              set bounds of window id \(windowID) to {120, 120, 920, 720}
+              set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)
+              set minimized of window id \(visibleERPWindowID) to false
+            end tell
+            """)
         }
         func execute(_ javascript: String) throws -> String {
             try runAppleScript("tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript \"\(appleScriptEscape(javascript))\"")
@@ -398,11 +411,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let wasPlaying = result["state"] as? String == "playing"
         if command == "status" || (command == "play" && wasPlaying) || (command == "pause" && !wasPlaying) { return result }
 
-        // Only use the installed global controller while ERP remains the active
-        // tab. Yandex may reject cold-start autoplay; in that case report the
-        // limitation and never expose or activate the Music tab.
-        _ = try execute("document.documentElement.setAttribute('data-piura-music-command','\(command)');'ready'")
-        _ = try runNativeAppleScript("tell application \"System Events\" to key code 40 using control down")
+        try pressHiddenYandexMusicControl(
+            windowID: windowID,
+            tabNumber: tabNumber,
+            command: command,
+            visibleERPWindowID: visibleERPWindowID,
+            visibleERPTabNumber: visibleERPTabNumber
+        )
         let expectedState = ["play", "wave"].contains(command) ? "playing" :
             (command == "pause" ? "paused" : (command == "toggle" ? (wasPlaying ? "paused" : "playing") : nil))
         let oldTitle = result["title"] as? String ?? ""
@@ -511,6 +526,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         (()=>{const target=document.querySelector('[data-piura-hidden-music="true"]');if(!target)return 'gone';const original=target.dataset.piuraOriginalAria||'';target.removeAttribute('data-piura-hidden-music');delete target.dataset.piuraOriginalAria;if(original)target.setAttribute('aria-label',original);else target.removeAttribute('aria-label');return 'clean'})()
         """
         let executePrefix = "tell application \"Yandex\" to return execute tab \(tabNumber) of window id \(windowID) javascript "
+        // Enforce a small centre-display window before touching compositor
+        // visibility. This is the safety boundary that keeps the portrait ERP
+        // on the right monitor pixel-for-pixel unchanged.
+        _ = try runAppleScript("""
+        tell application "Yandex"
+          set visible of window id \(windowID) to false
+          set minimized of window id \(windowID) to false
+          set zoomed of window id \(windowID) to false
+          set bounds of window id \(windowID) to {120, 120, 920, 720}
+          set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)
+        end tell
+        """)
         guard setSkyLightWindowAlpha(UInt32(windowID), 0.001) else {
             throw modeError("macOS не разрешила скрытое управление музыкой.")
         }
@@ -519,6 +546,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             _ = try? runAppleScript("""
             tell application "Yandex"
               set visible of window id \(windowID) to false
+              set zoomed of window id \(windowID) to false
+              set bounds of window id \(windowID) to {120, 120, 920, 720}
               set active tab index of window id \(visibleERPWindowID) to \(visibleERPTabNumber)
               set minimized of window id \(visibleERPWindowID) to false
             end tell
@@ -528,6 +557,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         _ = try runAppleScript("""
         tell application "Yandex"
+          set zoomed of window id \(windowID) to false
+          set bounds of window id \(windowID) to {120, 120, 920, 720}
           set active tab index of window id \(windowID) to \(tabNumber)
           set minimized of window id \(windowID) to false
           set visible of window id \(windowID) to true
@@ -548,8 +579,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         pumpRunLoop(0.15)
         let root = AXUIElementCreateApplication(yandex.processIdentifier)
         AXUIElementSetMessagingTimeout(root, 1)
+        func pressFocusedControl() -> Bool {
+            if workspace.frontmostApplication?.processIdentifier != yandex.processIdentifier {
+                yandex.activate(options: [])
+                pumpRunLoop(0.08)
+            }
+            let source = CGEventSource(stateID: .hidSystemState)
+            guard let down = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: true),
+                  let up = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: false) else { return false }
+            down.post(tap: .cghidEventTap)
+            pumpRunLoop(0.03)
+            up.post(tap: .cghidEventTap)
+            return true
+        }
         func pressMarkedControl(timeout: TimeInterval) -> Bool {
-            let stop = Date().addingTimeInterval(timeout)
+            let stop = Date().addingTimeInterval(min(timeout, 1.25))
             repeat {
                 var rawWindows: CFTypeRef?
                 _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &rawWindows)
@@ -566,15 +610,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         // AXPress. The DOM target was focused before traversal;
                         // Return is the equivalent trusted activation and the
                         // transparent helper remains the active surface.
-                        let source = CGEventSource(stateID: .hidSystemState)
-                        if let down = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: true),
-                           let up = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: false) {
-                            down.post(tap: .cghidEventTap)
-                            pumpRunLoop(0.03)
-                            up.post(tap: .cghidEventTap)
-                            return true
-                        }
-                        return false
+                        return pressFocusedControl()
                     }
                     guard depth < 22 else { continue }
                     var rawChildren: CFTypeRef?
@@ -585,15 +621,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 }
                 pumpRunLoop(0.12)
             } while Date() < stop
-            return false
+            // Yandex sometimes keeps the focused DOM control out of the AX
+            // tree while the compositor-transparent helper is frontmost.
+            // The target was focused by JavaScript after a successful mark, so
+            // a trusted Return activates that exact control without coordinates.
+            return pressFocusedControl()
         }
         guard pressMarkedControl(timeout: 4) else {
             throw modeError("Скрытая кнопка Яндекс Музыки недоступна.")
         }
         pumpRunLoop(0.35)
         if command == "wave" {
-            let alreadyPlaying = (try? runAppleScript(executePrefix + "\"navigator.mediaSession?.playbackState||''\"")) == "playing"
-            if alreadyPlaying { return }
+            // Navigation and playback can begin a moment after the trusted
+            // "My Wave" click. Wait before considering a second Play press so
+            // a successful launch can never be toggled back to pause.
+            let waveDeadline = Date().addingTimeInterval(3.5)
+            repeat {
+                let state = try? runAppleScript(executePrefix + "\"navigator.mediaSession?.playbackState||''\"")
+                if state == "playing" { return }
+                pumpRunLoop(0.2)
+            } while Date() < waveDeadline
             _ = try? runAppleScript(executePrefix + "\"\(appleScriptEscape(cleanup))\"")
             let markPlay = """
             (()=>{const candidates=[...document.querySelectorAll('button,[role="button"]')];const visible=e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return !e.disabled&&b.width>0&&b.height>0&&s.display!=='none'&&s.visibility!=='hidden'};const label=e=>(e.getAttribute('aria-label')||e.title||e.textContent||'').trim().toLowerCase();const target=candidates.find(e=>visible(e)&&String(e.className||'').includes('VibePlayerControls_playButton'))||candidates.find(e=>visible(e)&&/воспроиз|play/i.test(label(e)));if(!target)return JSON.stringify({ready:false});target.dataset.piuraHiddenMusic='true';target.dataset.piuraOriginalAria=target.getAttribute('aria-label')||'';target.setAttribute('aria-label','\(marker)');target.focus({preventScroll:true});return JSON.stringify({ready:true,label:label(target)})})()
