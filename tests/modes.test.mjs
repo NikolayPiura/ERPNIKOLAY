@@ -136,6 +136,11 @@ test('ERP music card uses the official embedded player without opening browser w
   assert.match(index,/postMusic\('PAUSE'\)/);
   assert.match(index,/delta<0\?'PREVIOUS_TRACK':'NEXT_TRACK'/);
   assert.match(index,/function shuffledMusicQueue\(\)/);
+  assert.match(index,/const MUSIC_CATALOG_KEY='piura_erp_music_catalog_v1'/);
+  assert.match(index,/function musicCatalog\(\)/);
+  assert.match(index,/localStorage\.getItem\(MUSIC_CATALOG_KEY\)/);
+  assert.match(index,/const tracks=musicCatalog\(\)\.map/);
+  assert.match(index,/window\.piuraMusicCatalogCount/);
   assert.match(index,/getRandomValues\(seed\)/);
   assert.match(index,/bandlink-wiki/);
   assert.doesNotMatch(index,/piura-modes:\/\/music|randomSkipsPending|PLAY_SOURCE/);
