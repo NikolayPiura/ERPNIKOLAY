@@ -76,6 +76,16 @@ test('final screen audit leaves music to the ERP control and never assigns it a 
   assert.doesNotMatch(audit,/AXRaise|\.click\(|startYandexMusic/);
   assert.match(app,/distinct == job.records.count/);
 });
+test('morning and mentorship helpers are repaired onto the left while ERP stays right',()=>{
+  const repair=app.slice(app.indexOf('private func enforceYandexSides'),app.indexOf('private func verifyFinalSides'));
+  assert.match(repair,/rightmostDisplay\(\).*leftmostDisplay\(\)/s);
+  assert.match(repair,/id:erpWindowID,target:right,expectedURL:erpURL/);
+  assert.match(repair,/id:leftWindowID,target:left,expectedURL:expected/);
+  assert.match(repair,/selected:erp/);
+  assert.match(repair,/selected:helper/);
+  assert.match(repair,/"mentorshipLeftForeground"/);
+  assert.match(repair,/"rightForeground":"ERP-only"/);
+});
 test('morning shows only goals on the left while music stays inside ERP',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');

@@ -91,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260911-batch22" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260912-batch24" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -2169,6 +2169,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         func attempt(_ action: () throws -> Void) {
             do { try action() } catch { failures.append(error.localizedDescription) }
         }
+        attempt { try enforceYandexSides(for: mode) }
         attempt {
         if mode == .morning {
             let result = try runAppleScript("""
@@ -2224,6 +2225,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         }
         if !failures.isEmpty { throw modeError(failures.joined(separator:" · ")) }
+    }
+    private func enforceYandexSides(for mode: WorkMode) throws {
+        guard mode != .learning,
+              let right = rightmostDisplay(), let left = leftmostDisplay(),
+              let app = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }),
+              let erpURL = mode.erpURL else { return }
+        do {
+            try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:erpURL)
+        } catch {
+            let erp = try yandexWindow(id:erpWindowID,app:app)
+            try fullScreenWindow(of:app,on:right,selected:erp)
+            try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:erpURL)
+        }
+        if mode == .morning || mode == .mentorship {
+            let expected = mode == .morning ? morningAdminPreviewURL : policyURL
+            do {
+                try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expected)
+            } catch {
+                let helper = try yandexWindow(id:leftWindowID,app:app)
+                try fullScreenWindow(of:app,on:left,selected:helper)
+                try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expected)
+            }
+            verifiedWindows.append([mode == .morning ? "morningLeftForeground" : "mentorshipLeftForeground":mode == .morning ? "goals-only" : "mentorship-only","rightForeground":"ERP-only"])
+        }
     }
     private func verifyFinalSides(for mode: WorkMode, left: DisplayTarget, right: DisplayTarget) throws {
         // Read-only final verification: music is controlled separately by the

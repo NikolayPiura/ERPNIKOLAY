@@ -437,6 +437,10 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
 .stats-view{gap:44px!important}.stats-hero{padding:38px 42px!important}.stats-period-toggle{margin-bottom:30px!important}.stats-summary{gap:26px!important}.stats-summary-card{min-height:174px!important;padding:34px 38px!important;display:grid!important;align-content:center!important}.stats-category-grid{gap:32px!important}.stats-category{min-height:320px!important;padding:38px!important}.stats-category-times{margin-top:34px!important}.stats-time{min-height:128px!important}.stats-share{margin-top:26px!important}
 .stats-category-times{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important}.stats-time{padding:20px!important;border:1px solid var(--bord)!important;background:color-mix(in srgb,var(--stat-color) 5%,var(--s2))!important}.stats-time span{display:block!important;margin-bottom:10px!important}.stats-time strong{font-size:clamp(28px,2.4vw,42px)!important}.stats-time:first-child strong{color:var(--stat-color)!important}
 @media(max-width:760px){.stats-view{gap:28px!important}.stats-hero{padding:24px!important}.stats-category-grid{gap:22px!important}.stats-category{min-height:270px!important;padding:26px!important}}
+/* Category cards select a cumulative weekly trend without changing saved time. */
+.stats-category{cursor:pointer;transition:border-color .16s,box-shadow .16s}.stats-category:hover{border-color:color-mix(in srgb,var(--stat-color) 58%,var(--bord))}.stats-category[aria-pressed="true"]{border-color:var(--stat-color);box-shadow:0 0 0 2px color-mix(in srgb,var(--stat-color) 20%,transparent),0 22px 60px color-mix(in srgb,var(--stat-color) 10%,transparent)}
+.stats-trend{position:relative;overflow:hidden;padding:38px;border:1px solid color-mix(in srgb,var(--trend-color,var(--blue)) 34%,var(--bord));border-radius:28px;background:radial-gradient(circle at 8% 0,color-mix(in srgb,var(--trend-color,var(--blue)) 15%,transparent),transparent 40%),var(--bg2)}.stats-trend-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:28px}.stats-trend-copy span{display:block;color:var(--muted);font:850 10px 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase}.stats-trend-copy h2{margin:8px 0 0;color:var(--ink);font-size:clamp(27px,3vw,43px);letter-spacing:-.045em}.stats-trend-value{text-align:right}.stats-trend-value span{display:block;color:var(--muted);font:800 9px 'JetBrains Mono',monospace;letter-spacing:.08em;text-transform:uppercase}.stats-trend-value strong{display:block;margin-top:7px;color:var(--trend-color,var(--blue));font-size:clamp(30px,3.5vw,52px);line-height:1;letter-spacing:-.05em}.stats-trend-chart{position:relative;height:390px}.stats-trend-empty{display:grid;height:100%;place-items:center;color:var(--muted);font-size:13px}.stats-trend canvas{width:100%!important;height:100%!important}
+@media(max-width:760px){.stats-trend{padding:25px 20px}.stats-trend-head{align-items:flex-start;flex-direction:column}.stats-trend-value{text-align:left}.stats-trend-chart{height:300px}}
 </style>
 </head>
 <body>
@@ -504,6 +508,10 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
     </div>
     <div class="stats-section-head"><h2>По направлениям</h2></div>
     <div class="stats-category-grid" id="statsCategoryGrid"></div>
+    <section class="stats-trend" id="statsTrend" aria-live="polite">
+      <div class="stats-trend-head"><div class="stats-trend-copy"><span>Среднее к каждой дате</span><h2 id="statsTrendTitle">Часов в неделю</h2></div><div class="stats-trend-value"><span>На текущем отрезке</span><strong id="statsTrendValue">0 ч/нед.</strong></div></div>
+      <div class="stats-trend-chart"><canvas id="statsTrendChart" aria-label="Тенденция среднего времени в неделю"></canvas><div class="stats-trend-empty" id="statsTrendEmpty" hidden>Для графика пока нет данных</div></div>
+    </section>
   </section>
 </div>
 
@@ -577,11 +585,12 @@ const SHEET_SYNC_DELAY = 1500;
 const OPEN_KEY = 'tt_open_picker_v1';
 const SELECTED_DATE_KEY = 'tt_selected_date_v1';
 const TIME_VIEW_KEY = 'tt_active_view_v1';
+const STATS_CATEGORY_KEY = 'tt_stats_category_v1';
 
 let curDate = (()=>{const saved=localStorage.getItem(SELECTED_DATE_KEY),parsed=/^\d{4}-\d{2}-\d{2}$/.test(saved||'')?new Date(saved+'T00:00:00'):new Date();return Number.isNaN(parsed.getTime())?new Date():parsed})(); curDate.setHours(0,0,0,0);
 let openKey = sessionStorage.getItem(OPEN_KEY) || null, pH = 0, pM = 0;
-let activeTimeView = 'daily', statsPeriod = '30';
-let chartPie = null, chartBar = null;
+let activeTimeView = 'daily', statsPeriod = '30', statsCategoryKey = localStorage.getItem(STATS_CATEGORY_KEY) || 'edu';
+let chartPie = null, chartBar = null, chartStatsTrend = null;
 let catsCache = null, legacyMigrationDone = false, summaryFrame = 0;
 let newCatIcon = '🎨', newCatColor = COLOR_CHOICES[0], newCatWork = true;
 const WD = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
@@ -991,21 +1000,48 @@ function longDuration(minutes){
 }
 function statisticsSnapshot(period=statsPeriod){
   const all=load(),cats=getCats(),today=dk(new Date()),allKeys=Object.keys(all).filter(key=>/^\d{4}-\d{2}-\d{2}$/.test(key)&&key<=today).sort(),first=allKeys[0]||'',last=allKeys.at(-1)||'';
-  let keys=allKeys,periodDays=inclusiveCalendarDays(first,last)||1,label='Всё время';
+  let keys=allKeys,startKey=first||today,endKey=last||today,periodDays=inclusiveCalendarDays(first,last)||1,label='Всё время';
   if(period==='7'||period==='30'){
-    periodDays=Number(period);const cutoffDate=new Date();cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-(periodDays-1));const cutoff=dk(cutoffDate);keys=allKeys.filter(key=>key>=cutoff);label=periodDays+' дней';
+    periodDays=Number(period);const cutoffDate=new Date();cutoffDate.setHours(0,0,0,0);cutoffDate.setDate(cutoffDate.getDate()-(periodDays-1));const cutoff=dk(cutoffDate);keys=allKeys.filter(key=>key>=cutoff);startKey=cutoff;endKey=today;label=periodDays+' дней';
   }
   let total=0;const categories=cats.map(cat=>{const minutes=keys.reduce((sum,key)=>sum+(Number(all[key]?.[cat.key])||0),0);total+=minutes;return{...cat,minutes,perDay:minutes/Math.max(1,periodDays)}});
   categories.forEach(cat=>cat.share=total?cat.minutes/total*100:0);categories.sort((a,b)=>b.minutes-a.minutes||a.label.localeCompare(b.label,'ru'));
-  return{categories,total,perDay:total/Math.max(1,periodDays),periodDays,label};
+  return{categories,total,perDay:total/Math.max(1,periodDays),periodDays,label,startKey,endKey};
+}
+function statisticsTrend(categoryKey,period=statsPeriod){
+  const snapshot=statisticsSnapshot(period),all=load(),start=new Date(snapshot.startKey+'T00:00:00'),end=new Date(snapshot.endKey+'T00:00:00');
+  const totalDays=Math.max(1,inclusiveCalendarDays(snapshot.startKey,snapshot.endKey));
+  const step=totalDays<=8?1:totalDays<=45?5:totalDays<=190?14:30;
+  const offsets=[0];for(let offset=step-1;offset<totalDays;offset+=step)offsets.push(offset);if(offsets.at(-1)!==totalDays-1)offsets.push(totalDays-1);
+  const unique=[...new Set(offsets)].sort((a,b)=>a-b),labels=[],values=[];
+  unique.forEach(offset=>{
+    const checkpoint=new Date(start);checkpoint.setDate(start.getDate()+offset);
+    let minutes=0;for(let day=new Date(start);day<=checkpoint;day.setDate(day.getDate()+1))minutes+=Number(all[dk(day)]?.[categoryKey]||0);
+    labels.push(checkpoint.toLocaleDateString('ru-RU',{day:'numeric',month:'short'}));
+    values.push(Math.round((minutes/Math.max(1,offset+1)*7/60)*10)/10);
+  });
+  return{labels,values};
+}
+function renderStatisticsTrend(){
+  const cats=getCats();if(!cats.some(cat=>cat.key===statsCategoryKey))statsCategoryKey=cats[0]?.key||'';
+  const cat=cats.find(item=>item.key===statsCategoryKey),section=document.getElementById('statsTrend'),title=document.getElementById('statsTrendTitle'),value=document.getElementById('statsTrendValue'),canvas=document.getElementById('statsTrendChart'),empty=document.getElementById('statsTrendEmpty');
+  if(!cat||!section||!title||!value||!canvas||!empty)return;
+  const trend=statisticsTrend(cat.key);section.style.setProperty('--trend-color',cat.color);title.textContent=cat.label+' · часов в неделю';value.textContent=(trend.values.at(-1)||0).toLocaleString('ru-RU',{maximumFractionDigits:1})+' ч/нед.';
+  if(chartStatsTrend){chartStatsTrend.destroy();chartStatsTrend=null}
+  const hasData=trend.values.some(point=>point>0);canvas.hidden=!hasData;empty.hidden=hasData;if(!hasData)return;
+  chartStatsTrend=new Chart(canvas.getContext('2d'),{type:'line',data:{labels:trend.labels,datasets:[{data:trend.values,borderColor:cat.color,backgroundColor:cat.color+'24',borderWidth:4,pointRadius:5,pointHoverRadius:7,pointBackgroundColor:'#0a0c12',pointBorderColor:cat.color,pointBorderWidth:3,fill:true,tension:.34}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:260},scales:{x:{grid:{display:false},ticks:{color:'#8190a6',font:{family:'JetBrains Mono',size:11},maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.055)'},border:{display:false},ticks:{color:'#8190a6',padding:10,callback:tick=>tick+' ч'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>' '+context.parsed.y.toLocaleString('ru-RU',{maximumFractionDigits:1})+' ч/нед.'}}}}});
 }
 function renderTimeStatistics(){
   const summary=document.getElementById('statsSummary'),grid=document.getElementById('statsCategoryGrid');if(!summary||!grid)return;
   const data=statisticsSnapshot();document.querySelectorAll('[data-stats-period]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.statsPeriod===statsPeriod)));
   summary.innerHTML=`<article class="stats-summary-card"><span>Итого · ${data.label}</span><strong>${longDuration(data.total)}</strong></article><article class="stats-summary-card"><span>В день</span><strong>${longDuration(data.perDay)}</strong></article>`;
-  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}%</span></div></div><div class="stats-category-times"><div class="stats-time"><span>Итого</span><strong>${longDuration(cat.minutes)}</strong></div><div class="stats-time"><span>В день</span><strong>${longDuration(cat.perDay)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span></div></article>`).join('');
+  if(!data.categories.some(cat=>cat.key===statsCategoryKey))statsCategoryKey=data.categories[0]?.key||'';
+  grid.innerHTML=data.categories.map(cat=>`<article class="stats-category" role="button" tabindex="0" aria-pressed="${cat.key===statsCategoryKey}" data-stats-category="${escapeAttribute(cat.key)}" style="--stat-color:${cat.color}"><div class="stats-category-head"><span class="stats-category-icon" aria-hidden="true">${escapeAttribute(cat.icon)}</span><div class="stats-category-title"><strong>${escapeAttribute(cat.label)}</strong><span>${Math.round(cat.share)}%</span></div></div><div class="stats-category-times"><div class="stats-time"><span>Итого</span><strong>${longDuration(cat.minutes)}</strong></div><div class="stats-time"><span>В день</span><strong>${longDuration(cat.perDay)}</strong></div></div><div class="stats-share"><span class="stats-share-track"><i style="--share:${Math.min(100,cat.share)}%"></i></span></div></article>`).join('');
+  grid.querySelectorAll('[data-stats-category]').forEach(card=>{card.onclick=()=>setStatsCategory(card.dataset.statsCategory);card.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();setStatsCategory(card.dataset.statsCategory)}}});
+  renderStatisticsTrend();
 }
 function setStatsPeriod(period){statsPeriod=['7','30','all'].includes(period)?period:'30';renderTimeStatistics()}
+function setStatsCategory(key){if(!getCats().some(cat=>cat.key===key))return;statsCategoryKey=key;localStorage.setItem(STATS_CATEGORY_KEY,key);renderTimeStatistics()}
 function setTimeView(view){
   activeTimeView=view==='stats'?'stats':'daily';
   const stats=activeTimeView==='stats';document.body.classList.toggle('time-stats-active',stats);

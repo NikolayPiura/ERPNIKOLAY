@@ -143,6 +143,10 @@ test('ERP music card uses the official embedded player without opening browser w
   assert.match(index,/window\.piuraMusicCatalogCount/);
   assert.match(index,/getRandomValues\(seed\)/);
   assert.match(index,/bandlink-wiki/);
+  assert.match(index,/if\(musicIntent&&!musicQueueStarted\)playMusic\(\)/);
+  assert.match(index,/if\(\['STOPPED','ENDED'\]\.includes\(musicState\.status\)\)musicIntent=false/);
+  const musicEvents=index.slice(index.indexOf("window.addEventListener('message'"),index.indexOf("musicFrame.src="));
+  assert.doesNotMatch(musicEvents,/\['ENDED','STOPPED'\].*playMusic\(\)/);
   assert.doesNotMatch(index,/piura-modes:\/\/music|randomSkipsPending|PLAY_SOURCE/);
   const nativeMusic=app.slice(app.indexOf('private func controlYandexMusic'),app.indexOf('private func retiredWindowBasedYandexMusicControl'));
   assert.match(nativeMusic,/встроенным плеером ERP/);
@@ -155,6 +159,16 @@ test('ERP music card uses the official embedded player without opening browser w
   assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   const runMode=app.slice(app.indexOf('private func runMode'),app.indexOf('private func closeRegularApplications'));
   assert.doesNotMatch(runMode,/controlYandexMusic/);
+});
+
+test('time statistics lets every category drive a cumulative weekly trend',()=>{
+  const html=read('piura-erp-restored 3/modules/Time-tracker.html');
+  assert.match(html,/id="statsTrendChart"/);
+  assert.match(html,/function statisticsTrend\(categoryKey,period=statsPeriod\)/);
+  assert.match(html,/minutes\/Math\.max\(1,offset\+1\)\*7\/60/);
+  assert.match(html,/data-stats-category=/);
+  assert.match(html,/localStorage\.setItem\(STATS_CATEGORY_KEY,key\)/);
+  assert.match(html,/chartStatsTrend=new Chart/);
 });
 
 test('music card sends transport commands to the ERP iframe controller and paints real state',()=>{
