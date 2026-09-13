@@ -35,14 +35,13 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
 });
 test('every mode has three distinct desktop images',()=>{
   assert.match(app,/mode == .morning && index == 0.*Magic-Morning-Left/);
-
-  assert.match(app,/mode == .work && index == 0.*Investments-Left/);
+  assert.match(app,/case .work: "Climate"/);
+  assert.match(app,/mode == .work && index == 0.*Climate-Left/);
   assert.match(app,/mode == .learning && index == 2.*Learning-Right/);
   const hashes=[];
   for(const names of [
     ['Magic-Morning-Left','Magic-Morning','Magic-Morning-Portrait'],
-
-    ['Investments-Left','Investments','Investments-Portrait'],
+    ['Climate-Left','Climate','Climate-Portrait'],
     ['Learning-Left','Learning','Learning-Right'],
     ['Mentorship','Mentorship-Center','Mentorship-Right']
   ]) {
@@ -64,7 +63,22 @@ test('wallpaper changes wait for final Spaces, while asset preparation is early'
   const run=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
   assert.ok(run.indexOf('startDesktopWallpaper')<run.indexOf('arrangeSafari'));
   assert.ok(run.indexOf('restoreForeground')<run.indexOf('finishDesktopWallpaper'));
+  const finish=app.slice(app.indexOf('private func finishDesktopWallpaper'),app.indexOf('private func synchronizeWallpaperSpaces'));
+  assert.match(finish,/synchronizeWallpaperSpaces\(job\)/);
+  assert.ok((finish.match(/setDesktopImageURL/g)||[]).length>=2,'wallpaper is applied before and after the all-Spaces reload');
   assert.match(app,/changedAfterLayout/);
+});
+test('four mode recipes keep their screen and audio contracts',()=>{
+  assert.match(app,/case .work: "Климат"/);
+  assert.match(app,/var needsTelegram: Bool \{ self == \.work \|\| self == \.mentorship \}/);
+  assert.match(app,/var needsChatGPT: Bool \{ self == \.work \}/);
+  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
+  assert.match(app,/var musicVolume: Int\? \{ self == \.morning \? 25 : self == \.work \? 40 : nil \}/);
+  assert.match(app,/case .learning: required = \[courseURL\]/);
+  assert.match(app,/learningERPMinimized/);
+  assert.match(app,/mode == \.morning \? morningAdminPreviewURL : policyURL/);
+  assert.match(app,/if mode\.needsMusic[\s\S]*configureERPMusicVolume\(for:mode\)[\s\S]*verifyERPMusicPlaying\(\)[\s\S]*else[\s\S]*verifyERPMusicPaused\(\)/);
+  assert.match(read('work-modes.js'),/work:'Климат'/);
 });
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
   assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);

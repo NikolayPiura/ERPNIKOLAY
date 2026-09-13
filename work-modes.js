@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const modeLabels={morning:'Утро',work:'Работа',learning:'Обучение',mentorship:'Наставничество'};
+  const modeLabels={morning:'Утро',work:'Климат',learning:'Обучение',mentorship:'Наставничество'};
   const days=[
     {day:1,short:'ПН',name:'Понедельник',focus:'Климат',mode:'work',icon:'climate'},
     {day:2,short:'ВТ',name:'Вторник',focus:'Инвестиции',mode:'work',icon:'investments'},

@@ -13,7 +13,7 @@ private enum WorkMode: String {
     var title: String {
         switch self {
         case .morning: "Утро"
-        case .work: "Работа"
+        case .work: "Климат"
         case .learning: "Обучение"
         case .mentorship: "Наставничество"
         }
@@ -21,7 +21,7 @@ private enum WorkMode: String {
     var wallpaperResource: String {
         switch self {
         case .morning: "Magic-Morning"
-        case .work: "Investments"
+        case .work: "Climate"
         case .learning: "Learning"
         case .mentorship: "Mentorship"
         }
@@ -39,6 +39,7 @@ private enum WorkMode: String {
     // Morning and weekday work use the authenticated Yandex web player through
     // the ERP bridge. PIURA Modes never focuses or hides a separate music window.
     var needsMusic: Bool { self == .morning || self == .work }
+    var musicVolume: Int? { self == .morning ? 25 : self == .work ? 40 : nil }
     var needsZoom: Bool { self == .mentorship }
 }
 private struct DisplayTarget {
@@ -91,7 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260912-batch24" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260913-batch25" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -156,7 +157,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let diagnostics = NSMenu(title: "Проверка")
         for (title, action, key) in [
             ("Расположение «Утро»", #selector(previewMorning), "1"),
-            ("Расположение «Работа»", #selector(previewWork), "2"),
+            ("Расположение «Климат»", #selector(previewWork), "2"),
             ("Расположение «Обучение»", #selector(previewLearning), "4"),
             ("Расположение «Наставничество»", #selector(previewMentorship), "5")
         ] {
@@ -1116,8 +1117,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         markPhase("musicAndChat")
         do { try restoreForeground(for: mode) } catch { notes.append("Передний план: \(error.localizedDescription)") }
         markPhase("foreground")
-        if !preview && mode.needsMusic {
-            do { try verifyERPMusicPlaying() } catch { notes.append("Музыка ERP: \(error.localizedDescription)") }
+        if !preview {
+            if mode.needsMusic {
+                do { try configureERPMusicVolume(for:mode) } catch { notes.append("Громкость музыки: \(error.localizedDescription)") }
+                do { try verifyERPMusicPlaying() } catch { notes.append("Музыка ERP: \(error.localizedDescription)") }
+            } else {
+                do { try verifyERPMusicPaused() } catch { notes.append("Музыка ERP: \(error.localizedDescription)") }
+            }
         }
         markPhase("musicCheck")
         verifiedWindows.append(["workspaceReadySeconds":Date().timeIntervalSince(startedAt),"workspaceErrors":notes])
@@ -1207,7 +1213,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
             if mode == .morning && index == 0 { resource = "Magic-Morning-Left" }
-            if mode == .work && index == 0 { resource = "Investments-Left" }
+            if mode == .work && index == 0 { resource = "Climate-Left" }
             if mode == .learning && index == 0 { resource = "Learning-Left" }
             if mode == .learning && index == 2 { resource = "Learning-Right" }
             if mode == .mentorship && index == 1 { resource = "Mentorship-Center" }
@@ -1242,7 +1248,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let url = URL(fileURLWithPath:path)
             try NSWorkspace.shared.setDesktopImageURL(url, for:screen, options:[.imageScaling:NSImageScaling.scaleProportionallyUpOrDown.rawValue,.allowClipping:true])
         }
-        let deadline = Date().addingTimeInterval(3)
+        // Full-screen windows live in separate Spaces. AppKit updates the
+        // currently visible Desktop only, so persist the same per-display
+        // assignment into every Space before asking WallpaperAgent to reload.
+        try synchronizeWallpaperSpaces(job)
+        // Re-assert the visible desktops after the renderer reload. This keeps
+        // the current Space and the stored full-screen Spaces in agreement.
+        for (id,path) in job.expected {
+            guard let screen = NSScreen.screens.first(where: { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == id }) else { throw modeError("Монитор отключён во время смены обоев.") }
+            try NSWorkspace.shared.setDesktopImageURL(URL(fileURLWithPath:path), for:screen, options:[.imageScaling:NSImageScaling.scaleProportionallyUpOrDown.rawValue,.allowClipping:true])
+        }
+        let deadline = Date().addingTimeInterval(5)
         func currentWallpapersMatch() -> Bool {
             job.expected.allSatisfy { id,path in
                 guard let screen = NSScreen.screens.first(where: { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value == id }) else { return false }
@@ -2193,6 +2209,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         verifiedWindows.append(["musicPlaying":false,"musicControlledFromERP":true,"playClicks":clicked ? 1 : 0])
         throw modeError("кнопка Play нажата, но встроенный плеер не подтвердил воспроизведение")
+    }
+    private func configureERPMusicVolume(for mode:WorkMode) throws {
+        guard let volume=mode.musicVolume else { return }
+        let actual=Int(try runNativeAppleScript("set volume output volume \(volume)\nreturn output volume of (get volume settings) as text"))
+        guard actual == volume else { throw modeError("macOS не подтвердила громкость \(volume)%.") }
+        verifiedWindows.append(["musicVolume":volume,"musicMode":mode.rawValue])
+    }
+    private func verifyERPMusicPaused() throws {
+        let deadline=min(Date().addingTimeInterval(7),runDeadline)
+        var last="loading"
+        repeat {
+            let javascript="""
+            (()=>{const snapshot=window.piuraMusicSnapshot?.();if(!snapshot)return 'loading';const status=String(snapshot.status||'IDLE').toUpperCase();if(['PLAYING','LOADING'].includes(status)){window.piuraSetMusicMode?.('pause');return 'pausing'}return 'silent:'+status})()
+            """
+            last=(try? runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"\(appleScriptEscape(javascript))\"")) ?? "loading"
+            if last.hasPrefix("silent:") {
+                verifiedWindows.append(["musicPlaying":false,"musicState":String(last.dropFirst("silent:".count)).lowercased()])
+                return
+            }
+            pumpRunLoop(0.3)
+        } while Date()<deadline
+        throw modeError("режим без музыки не подтвердил паузу (\(last))")
     }
     private func restoreForeground(for mode: WorkMode) throws {
         var failures: [String] = []
