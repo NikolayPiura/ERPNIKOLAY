@@ -86,6 +86,14 @@ test('morning and mentorship helpers are repaired onto the left while ERP stays 
   assert.match(repair,/"mentorshipLeftForeground"/);
   assert.match(repair,/"rightForeground":"ERP-only"/);
 });
+test('Yandex windows survive generic AX titles by binding immutable IDs to frames',()=>{
+  const binding=app.slice(app.indexOf('private func yandexWindow'),app.indexOf('private func verifyBrowserWindow'));
+  assert.match(binding,/bounds of window id \\\(id\) as text/);
+  assert.match(binding,/kAXFocusedWindowAttribute,kAXMainWindowAttribute/);
+  assert.match(binding,/sameFrame\(\$0,expected\)/);
+  assert.match(binding,/"boundBy":"immutable-frame"/);
+  assert.doesNotMatch(binding,/return candidates\.first/);
+});
 test('morning shows only goals on the left while music stays inside ERP',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');

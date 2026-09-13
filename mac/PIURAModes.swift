@@ -1595,13 +1595,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
     }
     private func yandexWindow(id: Int, app: NSRunningApplication) throws -> AXUIElement {
-        // Raise the immutable browser ID, then bind its exact AX window. Never
-        // use the app's first window for both monitors: that swaps music/ERP.
+        // Raise the immutable browser ID, then bind its exact AX window. Newer
+        // Yandex builds expose every AX title simply as "Yandex", so title
+        // matching alone can no longer distinguish ERP from the left helper.
         var title = try runAppleScript("tell application \"Yandex\"\nset index of window id \(id) to 1\nactivate\nreturn title of active tab of window id \(id)\nend tell")
+        func immutableFrame() -> CGRect? {
+            guard let raw = try? runAppleScript("tell application \"Yandex\" to return bounds of window id \(id) as text") else { return nil }
+            let values = raw.split(separator:",").compactMap { Double($0.trimmingCharacters(in:.whitespaces)) }
+            guard values.count == 4 else { return nil }
+            return CGRect(x:values[0],y:values[1],width:values[2]-values[0],height:values[3]-values[1])
+        }
+        func sameFrame(_ window: AXUIElement, _ expected: CGRect) -> Bool {
+            guard let actual = windowRect(window) else { return false }
+            return abs(actual.minX-expected.minX)<6 && abs(actual.midY-expected.midY)<12 &&
+                abs(actual.width-expected.width)<12 && abs(actual.height-expected.height)<16
+        }
         let root = AXUIElementCreateApplication(app.processIdentifier)
         AXUIElementSetMessagingTimeout(root,1)
         let deadline = Date().addingTimeInterval(6)
         var lastTitles: [String] = []
+        var lastFrame: CGRect?
         repeat {
             var windows: CFTypeRef?
             _ = AXUIElementCopyAttributeValue(root, kAXWindowsAttribute as CFString, &windows)
@@ -1610,10 +1623,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             // AXWindows. Retain only the exact ID binding from this run, and
             // also inspect direct main/focused references with the same title.
             if let cached = yandexWindowCache[id] { candidates.append(cached) }
-            for attribute in [kAXMainWindowAttribute,kAXFocusedWindowAttribute] {
+            var direct: [AXUIElement] = []
+            for attribute in [kAXFocusedWindowAttribute,kAXMainWindowAttribute] {
                 var candidate: CFTypeRef?
                 _ = AXUIElementCopyAttributeValue(root,attribute as CFString,&candidate)
-                if let candidate,CFGetTypeID(candidate) == AXUIElementGetTypeID() { candidates.append(candidate as! AXUIElement) }
+                if let candidate,CFGetTypeID(candidate) == AXUIElementGetTypeID() {
+                    direct.append(candidate as! AXUIElement);candidates.append(candidate as! AXUIElement)
+                }
             }
             lastTitles = candidates.map { axString($0,kAXTitleAttribute) }
             if let match = candidates.first(where: {
@@ -1625,10 +1641,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 _ = AXUIElementPerformAction(match, kAXRaiseAction as CFString)
                 return match
             }
+            // The immutable AppleScript ID has just been activated. Bind the
+            // focused AX window by the same physical frame; this remains exact
+            // even when all window titles collapse to the generic "Yandex".
+            lastFrame = immutableFrame()
+            if let expected = lastFrame,
+               let match = direct.first(where: { isDocumentWindow($0) && sameFrame($0,expected) }) ?? {
+                   let matches=candidates.filter { isDocumentWindow($0) && sameFrame($0,expected) }
+                   return matches.count == 1 ? matches[0] : nil
+               }() {
+                yandexWindowCache[id]=match
+                _=AXUIElementPerformAction(match,kAXRaiseAction as CFString)
+                verifiedWindows.append(["yandexWindowID":id,"boundBy":"immutable-frame","frame":[expected.minX,expected.minY,expected.width,expected.height]])
+                return match
+            }
             pumpRunLoop(0.1)
             title = (try? runAppleScript("tell application \"Yandex\" to return title of active tab of window id \(id)")) ?? title
         } while Date() < deadline
-        verifiedWindows.append(["yandexMissingID":id,"yandexAXTitles":lastTitles,"expectedTitle":title])
+        verifiedWindows.append(["yandexMissingID":id,"yandexAXTitles":lastTitles,"expectedTitle":title,"immutableFrame":lastFrame.map { [$0.minX,$0.minY,$0.width,$0.height] } ?? []])
         throw modeError("Яндекс не подтвердил окно №\(id) «\(title)»; другие окна не перемещены.")
     }
     private func verifyBrowserWindow(app: String, id: Int, target: DisplayTarget, expectedURL: String, fullScreen: Bool = true) throws {
