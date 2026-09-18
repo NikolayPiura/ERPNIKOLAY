@@ -132,7 +132,7 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /function pickLampWheel/);
   assert.match(overview, /setPointerCapture/);
   assert.match(overview, /name:'Ассоциация'/);
-  assert.match(overview, /name:'Котики'.*?current:309,target:400/);
+  assert.match(overview, /name:'Котики'.*?current:309,target:300/);
   assert.match(overview, /name:'Наркотики'.*?current:0,target:50/);
   assert.match(overview, /detail:'Деревья',current:treesCurrent,target:treesTarget/);
   assert.match(overview, /name:'Ассоциация'.*?current:associationCurrent,target:associationTarget/);
@@ -648,13 +648,15 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /activeYear===2026\?goal\.y26:goal\.y27/);
   assert.doesNotMatch(foundation, /фактический продукт/i);
   assert.match(foundation, /Отзывы детей после антинаркотического просвещения/);
-  assert.match(foundation, /key:'friend'.*?fact:309,y26:400/);
+  assert.match(foundation, /key:'friend'.*?fact:309,y26:300/);
   assert.match(foundation, /key:'drugs'.*?fact:0,y26:50/);
   assert.match(foundation, /key:'plants'.*?fact:260,y26:500/);
-  assert.match(foundation, /key:'planet'.*?fact:0,y26:6/);
-  assert.match(foundation, /key:'association'.*?fact:5,y26:60/);
+  assert.match(foundation, /key:'planet'.*?fact:1,y26:6/);
+  assert.match(foundation, /key:'association'.*?fact:9,y26:60/);
   assert.match(foundation, /piura_foundation_goals_data_revision/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
+  assert.match(foundation, /data-increment="\$\{esc\(goal\.key\)\}"/);
+  assert.match(foundation, /localStorage\.setItem\(STORE,JSON\.stringify\(state\)\)/);
   assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);
   assert.doesNotMatch(foundation, /Шесть направлений|<h1>Результаты<\/h1>/);
   assert.doesNotMatch(foundation, /class="yearbar"/);
@@ -663,7 +665,7 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /class="fund-result"/);
   assert.doesNotMatch(foundation, /class="fund-label">Цель/);
   assert.doesNotMatch(foundation, /class="product-label">Продукт/);
-  assert.match(foundation, /<span>\$\{activeYear\}<\/span>/);
+  assert.doesNotMatch(foundation, /<span>\$\{activeYear\}<\/span>/);
   assert.match(foundation, /<small>Сделано<\/small>/);
   assert.match(foundation, /<small>План<\/small>/);
   assert.doesNotMatch(foundation, /<h1>Фонды<\/h1>/);
@@ -890,7 +892,7 @@ test('августовские правки интерфейса сохраня�
   assert.match(admin, /items=\[\.\.\.activeItems,\.\.\.doneItems,\.\.\.hiddenItems\]/);
   assert.match(admin, /overflowCount=Math\.max\(0,activeItems\.length-limit\)\+doneItems\.length/);
   assert.match(admin, /\(item\.done\|\|visibleIndex>=limit\)\?' item-overflow'/);
-  assert.match(foundation, /\.fund\{min-height:300px/);
+  assert.match(foundation, /\.fund\{min-height:322px/);
   assert.doesNotMatch(foundation, /class="(?:fund|product)-label">(?:Цель|Продукт)<\/span>/);
 });
 

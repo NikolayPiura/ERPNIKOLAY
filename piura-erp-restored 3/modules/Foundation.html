@@ -8,50 +8,55 @@
 html[data-erp-theme="light"] .fund-years{background:#fff;box-shadow:0 8px 24px rgba(36,57,88,.06)}html[data-erp-theme="light"] .fund{background:radial-gradient(circle at 0 50%,color-mix(in srgb,var(--c) 8%,transparent),transparent 44%),#fff;box-shadow:0 14px 36px rgba(37,59,91,.065)}html[data-erp-theme="light"] .fund-result{background:linear-gradient(145deg,color-mix(in srgb,var(--c) 7%,#f8fafc),#f8fafc)}
 @media(max-width:1080px){.fund{grid-template-columns:1fr;gap:28px}.fund-result{min-height:210px}}@media(max-width:700px){.shell{padding:18px 12px 70px}.fund-years{width:100%;margin-bottom:16px}.fund-year{flex:1;min-width:0}.fund{min-height:0;padding:30px 24px;grid-template-columns:1fr;gap:26px}.fund-result{min-height:0;padding:24px 20px}.product-head{grid-template-columns:1fr}.goal-numbers{gap:12px}.goal-number strong{font-size:38px}}
 /* Более выразительные карточки без дополнительных подписей. */
-.list{gap:28px}
-.fund{min-height:300px;padding:44px 50px;gap:clamp(44px,5vw,82px);border-radius:28px;background:radial-gradient(circle at 4% 50%,color-mix(in srgb,var(--c) 16%,transparent),transparent 40%),radial-gradient(circle at 88% 8%,color-mix(in srgb,var(--c) 8%,transparent),transparent 34%),linear-gradient(145deg,color-mix(in srgb,var(--c) 3%,var(--erp-surface,var(--panel))),var(--erp-surface,var(--panel)));box-shadow:0 24px 70px rgba(0,0,0,.18),inset 0 1px 0 color-mix(in srgb,var(--c) 13%,transparent)}
+.list{gap:36px}
+.fund{min-height:322px;padding:50px 56px;gap:clamp(48px,5.4vw,90px);border-radius:28px;background:radial-gradient(circle at 4% 50%,color-mix(in srgb,var(--c) 16%,transparent),transparent 40%),radial-gradient(circle at 88% 8%,color-mix(in srgb,var(--c) 8%,transparent),transparent 34%),linear-gradient(145deg,color-mix(in srgb,var(--c) 3%,var(--erp-surface,var(--panel))),var(--erp-surface,var(--panel)));box-shadow:0 24px 70px rgba(0,0,0,.18),inset 0 1px 0 color-mix(in srgb,var(--c) 13%,transparent)}
 .fund:before{inset:27px auto 27px 0;width:5px;box-shadow:0 0 30px color-mix(in srgb,var(--c) 44%,transparent)}
 .fund:after{content:"";position:absolute;right:-80px;top:-90px;width:250px;height:250px;border-radius:50%;background:color-mix(in srgb,var(--c) 7%,transparent);filter:blur(46px);pointer-events:none}
 .fund-goal,.fund-result{position:relative;z-index:1}
 .fund-results{position:relative;z-index:1;min-width:0;display:grid;grid-template-columns:1fr;gap:16px}
 .fund-results.is-multiple{grid-template-columns:repeat(2,minmax(0,1fr))}
-.fund-goal h2{margin-bottom:16px;font-size:clamp(36px,3vw,52px)}
+.fund-goal h2{margin-bottom:18px;font-size:clamp(40px,3.25vw,58px)}
 .fund-goal p{font-size:clamp(14px,1vw,17px);line-height:1.65}
 .fund-result{padding:34px 38px;border-radius:23px;background:linear-gradient(145deg,color-mix(in srgb,var(--c) 12%,var(--erp-raised,var(--raised))),color-mix(in srgb,var(--c) 2%,var(--erp-raised,var(--raised))));box-shadow:0 18px 46px rgba(0,0,0,.2),inset 0 1px 0 color-mix(in srgb,var(--c) 14%,transparent)}
 .fund-results.is-multiple .fund-result{padding:28px 26px}.fund-results.is-multiple .product-copy{font-size:clamp(16px,1.1vw,19px)}.fund-results.is-multiple .goal-number strong{font-size:clamp(36px,2.8vw,50px)}
 .product-copy{font-size:clamp(18px,1.4vw,22px);line-height:1.38}
 .result-percent{padding:8px 12px;font-size:13px}
-.goal-head{margin-top:24px}.goal-numbers{margin-top:18px}.goal-number strong{font-size:clamp(42px,3.6vw,60px)}
+.goal-numbers{margin-top:30px}.goal-number strong{font-size:clamp(42px,3.6vw,60px)}
 .track{height:11px;margin-top:24px}
+.result-actions{display:flex;justify-content:flex-end;margin-top:20px}.result-add{min-width:126px;height:42px;padding:0 17px;border:1px solid color-mix(in srgb,var(--c) 50%,var(--erp-line,var(--line)));border-radius:12px;background:color-mix(in srgb,var(--c) 13%,var(--erp-raised,var(--raised)));color:var(--erp-text,var(--text));font-weight:900;cursor:pointer;transition:transform .15s ease,background .15s ease,box-shadow .15s ease}.result-add:hover{transform:translateY(-1px);background:color-mix(in srgb,var(--c) 20%,var(--erp-raised,var(--raised)));box-shadow:0 8px 24px color-mix(in srgb,var(--c) 18%,transparent)}.result-add:active{transform:translateY(1px)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 html[data-erp-theme="light"] .fund{background:radial-gradient(circle at 4% 50%,color-mix(in srgb,var(--c) 10%,transparent),transparent 42%),radial-gradient(circle at 88% 8%,color-mix(in srgb,var(--c) 7%,transparent),transparent 34%),#fff;box-shadow:0 22px 58px rgba(37,59,91,.09)}
-@media(max-width:1080px){.fund{min-height:0;padding:40px;gap:30px}.fund-result{min-height:230px}}
+@media(max-width:1080px){.fund{min-height:0;padding:42px;gap:34px}.fund-result{min-height:230px}}
 @media(max-width:1400px){.fund-results.is-multiple{grid-template-columns:1fr}}
-@media(max-width:700px){.list{gap:18px}.fund{padding:30px 24px;border-radius:22px}.fund-goal h2{font-size:36px}.fund-result{min-height:0;padding:26px 22px}.goal-number strong{font-size:40px}}
+@media(max-width:700px){.list{gap:24px}.fund{padding:32px 24px;border-radius:22px}.fund-goal h2{font-size:38px}.fund-result{min-height:0;padding:26px 22px}.goal-number strong{font-size:40px}.result-actions{justify-content:stretch}.result-add{width:100%}}
 </style>
 </head>
 <body>
 <main class="shell" data-piura-keep-full>
   <div class="fund-years" aria-label="Год"><button class="fund-year on" data-year="2026">2026</button><button class="fund-year" data-year="2027">2027</button></div>
   <section class="list" id="fundList"></section>
+  <div class="sr-only" id="fundStatus" role="status" aria-live="polite"></div>
 </main>
 <script>
 const STORE='piura_foundation_goals_v1';
 const DATA_REVISION_KEY='piura_foundation_goals_data_revision';
-const DATA_REVISION='20260911a';
+const DATA_REVISION='20260918a';
 const FUNDS=[
- {key:'friend',name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',fact:309,y26:400,y27:1000,color:'#66a6ff'},
+ {key:'friend',name:'Котики',mission:'Планета без бездомных домашних животных',product:'Коты и кошки, которым оказана непосредственная помощь',fact:309,y26:300,y27:1000,color:'#66a6ff'},
+ {key:'scientology',name:'Саентология',mission:'Планета, в которой большее количество людей clear',product:'Разданные книги «Дорога к счастью»',fact:0,y26:100,y27:1000,color:'#a77aff'},
  {key:'drugs',name:'Наркотики',mission:'Планета, в которой нет наркотиков',product:'Отзывы детей после антинаркотического просвещения',fact:0,y26:50,y27:500,color:'#47dba3'},
- {key:'scientology',name:'Саентология',mission:'Планета, на которой всё больше людей достигают состояния Клир',product:'Разданные книги «Дорога к счастью»',fact:0,y26:100,y27:1000,color:'#a77aff'},
- {key:'ecology',name:'Экология',mission:'Планета, избавленная от лишнего мусора, в которой численность растений поддерживается в норме',goals:[{key:'planet',product:'Проведённые уборки',fact:0,y26:6,y27:50},{key:'plants',product:'Посаженные деревья',fact:260,y26:500,y27:5000}],color:'#58d4c5'},
- {key:'association',name:'Ассоциация добрых дел',mission:'Планета, в которой люди делают добрые дела',product:'Добрые дела участников ассоциации',fact:5,y26:60,y27:500,color:'#ff986f'}
+ {key:'ecology',name:'Экология',mission:'Планета, избавленная от лишнего мусора, в которой численность растений поддерживается в норме',goals:[{key:'planet',product:'Проведённые уборки',fact:1,y26:6,y27:50},{key:'plants',product:'Посаженные деревья',fact:260,y26:500,y27:5000}],color:'#58d4c5'},
+ {key:'association',name:'Ассоциация добрых дел',mission:'Планета, в которой люди делают добрые дела',product:'Добрые дела участников ассоциации',fact:9,y26:60,y27:500,color:'#ff986f',incrementable:true}
 ];
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
-function saved(){try{const state=JSON.parse(localStorage.getItem(STORE)||'{}');if(localStorage.getItem(DATA_REVISION_KEY)!==DATA_REVISION){state.planet=state.planet||{};state.planet.targets={...(state.planet.targets||{}),2026:{...(state.planet.targets?.[2026]||{}),product:6}};state.plants=state.plants||{};state.plants.current={...(state.plants.current||{}),product:260};state.association=state.association||{};state.association.current={...(state.association.current||{}),product:5};state.association.targets={...(state.association.targets||{}),2026:{...(state.association.targets?.[2026]||{}),product:60}};localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(DATA_REVISION_KEY,DATA_REVISION)}return state}catch{return{}}}let state=saved(),activeYear=2026;
+function saved(){try{const state=JSON.parse(localStorage.getItem(STORE)||'{}');if(localStorage.getItem(DATA_REVISION_KEY)!==DATA_REVISION){state.planet=state.planet||{};state.planet.current={...(state.planet.current||{}),product:1};state.planet.targets={...(state.planet.targets||{}),2026:{...(state.planet.targets?.[2026]||{}),product:6}};state.plants=state.plants||{};state.plants.current={...(state.plants.current||{}),product:260};state.association=state.association||{};state.association.current={...(state.association.current||{}),product:9};state.association.targets={...(state.association.targets||{}),2026:{...(state.association.targets?.[2026]||{}),product:60}};localStorage.setItem(STORE,JSON.stringify(state));localStorage.setItem(DATA_REVISION_KEY,DATA_REVISION)}return state}catch{return{}}}let state=saved(),activeYear=2026;
 function goalsFor(fund){return fund.goals||[fund]}
 function factFor(goal){return Number(state?.[goal.key]?.current?.product??goal.fact)||0}
-function result(goal){const fact=factFor(goal),target=activeYear===2026?goal.y26:goal.y27,percent=target?fact/target*100:0;return `<section class="fund-result"><div class="product-head"><div class="product-copy">${esc(goal.product)}</div><b class="result-percent">${percent.toFixed(0)}%</b></div><div class="goal-head"><span>${activeYear}</span></div><div class="goal-numbers"><div class="goal-number current"><small>Сделано</small><strong>${fact.toLocaleString('ru-RU')}</strong></div><span class="goal-divider">из</span><div class="goal-number"><small>План</small><strong>${target.toLocaleString('ru-RU')}</strong></div></div><div class="track"><i style="width:${Math.min(100,percent)}%"></i></div></section>`}
+function result(goal){const fact=factFor(goal),target=activeYear===2026?goal.y26:goal.y27,percent=target?fact/target*100:0,actions=goal.incrementable?`<div class="result-actions"><button class="result-add" type="button" data-increment="${esc(goal.key)}" aria-label="Добавить одно доброе дело">+1 дело</button></div>`:'';return `<section class="fund-result"><div class="product-head"><div class="product-copy">${esc(goal.product)}</div><b class="result-percent">${percent.toFixed(0)}%</b></div><div class="goal-numbers"><div class="goal-number current"><small>Сделано</small><strong>${fact.toLocaleString('ru-RU')}</strong></div><span class="goal-divider">из</span><div class="goal-number"><small>План</small><strong>${target.toLocaleString('ru-RU')}</strong></div></div><div class="track"><i style="width:${Math.min(100,percent)}%"></i></div>${actions}</section>`}
 function render(){document.getElementById('fundList').innerHTML=FUNDS.map(fund=>{const goals=goalsFor(fund);return `<article class="fund" style="--c:${fund.color}"><section class="fund-goal"><h2>${esc(fund.name)}</h2><p>${esc(fund.mission)}</p></section><div class="fund-results${goals.length>1?' is-multiple':''}">${goals.map(result).join('')}</div></article>`}).join('')}
+function saveIncrement(key){const goal=FUNDS.flatMap(goalsFor).find(item=>item.key===key);if(!goal)return;const next=factFor(goal)+1;state[key]=state[key]||{};state[key].current={...(state[key].current||{}),product:next};localStorage.setItem(STORE,JSON.stringify(state));const status=document.getElementById('fundStatus');status.textContent=`Добрых дел: ${next}`;render()}
 document.querySelectorAll('[data-year]').forEach(button=>button.onclick=()=>{activeYear=Number(button.dataset.year);document.querySelectorAll('[data-year]').forEach(item=>item.classList.toggle('on',item===button));render()});
+document.getElementById('fundList').addEventListener('click',event=>{const button=event.target.closest('[data-increment]');if(button)saveIncrement(button.dataset.increment)});
 window.addEventListener('message',event=>{if(event.data?.type==='piura:cloud-data-applied'){state=saved();render()}});render();
 </script>
 </body>
