@@ -131,11 +131,11 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /id="lampColorWheel"/);
   assert.match(overview, /function pickLampWheel/);
   assert.match(overview, /setPointerCapture/);
-  assert.match(overview, /name:'Ассоциация'/);
-  assert.match(overview, /name:'Котики'.*?current:309,target:300/);
-  assert.match(overview, /name:'Наркотики'.*?current:0,target:50/);
-  assert.match(overview, /detail:'Деревья',current:treesCurrent,target:treesTarget/);
-  assert.match(overview, /name:'Ассоциация'.*?current:associationCurrent,target:associationTarget/);
+  assert.match(overview, /foundationName\('association','Ассоциация'\)/);
+  assert.match(overview, /foundationName\('friend','Котики'\).*?foundationCurrent\('friend',309\).*?foundationTarget\('friend',300\)/);
+  assert.match(overview, /foundationName\('drugs','Наркотики'\).*?foundationCurrent\('drugs',0\).*?foundationTarget\('drugs',50\)/);
+  assert.match(overview, /foundationProduct\('plants','Деревья'\),current:treesCurrent,target:treesTarget/);
+  assert.match(overview, /foundationName\('association','Ассоциация'\).*?current:associationCurrent,target:associationTarget/);
   assert.match(overview, /fan-card>\.device-section-head,.control-grid \.minimal-lamp>\.device-section-head\{display:none!important\}/);
   assert.match(overview, /minimal-lamp \.master-toggle\{display:none!important\}/);
   assert.match(overview, /goveeControl/);
@@ -655,7 +655,13 @@ test('Фонды показывают понятный результат и п�
   assert.match(foundation, /key:'association'.*?fact:9,y26:60/);
   assert.match(foundation, /piura_foundation_goals_data_revision/);
   assert.match(foundation, /product:'Добрые дела участников ассоциации'/);
-  assert.match(foundation, /data-increment="\$\{esc\(goal\.key\)\}"/);
+  assert.doesNotMatch(foundation, /data-increment|\+1 дело/);
+  assert.match(foundation, /id="fundEdit"/);
+  assert.match(foundation, /data-edit-kind="fund-name"/);
+  assert.match(foundation, /data-edit-kind="fund-mission"/);
+  assert.match(foundation, /data-edit-kind="goal-product"/);
+  assert.match(foundation, /numberField\('current',goal\.key,fact,'Сделано'\)/);
+  assert.match(foundation, /numberField\('target',goal\.key,target,'План'\)/);
   assert.match(foundation, /localStorage\.setItem\(STORE,JSON\.stringify\(state\)\)/);
   assert.doesNotMatch(foundation, /Прогресс \$\{activeYear\}/);
   assert.doesNotMatch(foundation, /Шесть направлений|<h1>Результаты<\/h1>/);
@@ -671,7 +677,7 @@ test('Фонды показывают понятный результат и п�
   assert.doesNotMatch(foundation, /<h1>Фонды<\/h1>/);
   assert.match(shell, /\["foundation","Фонды"/);
   assert.match(shell, /Результаты и цели шести направлений/);
-  assert.match(read('piura-erp-restored 3/modules/Overview.html'), /name:'Экология',metrics:\[\{detail:'Уборки'/);
+  assert.match(read('piura-erp-restored 3/modules/Overview.html'), /foundationName\('ecology','Экология'\),metrics:\[\{detail:foundationProduct\('planet','Уборки'\)/);
   assert.doesNotMatch(shell, /\["friend","Друг"/);
   assert.equal(existsSync(new URL('piura-erp-restored 3/modules/Friend.html',root)),false);
 });
@@ -893,6 +899,7 @@ test('августовские правки интерфейса сохраня�
   assert.match(admin, /overflowCount=Math\.max\(0,activeItems\.length-limit\)\+doneItems\.length/);
   assert.match(admin, /\(item\.done\|\|visibleIndex>=limit\)\?' item-overflow'/);
   assert.match(foundation, /\.fund\{min-height:322px/);
+  assert.match(foundation, /\.list\{gap:56px\}/);
   assert.doesNotMatch(foundation, /class="(?:fund|product)-label">(?:Цель|Продукт)<\/span>/);
 });
 
