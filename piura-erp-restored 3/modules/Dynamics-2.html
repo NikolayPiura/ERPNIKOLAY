@@ -6,7 +6,7 @@
   <title>ПС №1 — восемь динамик</title>
   <style>
     :root{color-scheme:dark;--bg:#08090d;--surface:#111319;--raised:#181b22;--line:rgba(255,255,255,.09);--text:#f5f7fb;--muted:#9299a7;--faint:#606876;--primary:#7ba7ff;--success:#43d39e;--danger:#ff7180;--warning:#f2c45c;--radius:22px}
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;max-width:100%;overflow-x:hidden;background:var(--erp-bg,var(--bg));color:var(--erp-text,var(--text));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{touch-action:manipulation}.app{width:min(1720px,100%);margin:auto;padding:24px clamp(16px,3vw,52px) 70px;display:grid;gap:16px}.app>*{min-width:0}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;max-width:100%;overflow-x:hidden;background:var(--erp-bg,var(--bg));color:var(--erp-text,var(--text));font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}button,input,select{font:inherit}button{touch-action:manipulation}.app{width:100%;max-width:none;margin:0;padding:24px clamp(16px,3vw,52px) 70px;display:grid;gap:16px}.app>*{min-width:0}
     .top{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:94px;padding:19px 22px;border:1px solid var(--erp-line,var(--line));border-radius:21px;background:radial-gradient(circle at 9% 0,rgba(112,165,255,.11),transparent 38%),var(--erp-surface,var(--surface))}.title{font-size:clamp(32px,3.4vw,46px);font-weight:950;letter-spacing:-.065em;line-height:.92}.title-note{display:block;margin-top:10px;color:var(--erp-muted,var(--muted));font-size:10px;font-weight:850;letter-spacing:.12em;text-transform:uppercase}.week-nav{display:flex;align-items:center;gap:6px;padding:6px;border:1px solid var(--erp-line,var(--line));border-radius:13px;background:var(--erp-raised,var(--raised))}.nav,.date-open{height:38px;border:1px solid var(--erp-line,var(--line));border-radius:10px;background:var(--erp-surface,var(--surface));color:var(--erp-text,var(--text));font-weight:850;cursor:pointer}.nav{width:38px;font-size:19px}.date-open{min-width:190px;padding:0 14px;color:var(--erp-primary,var(--primary))}.week-date{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
     .scores{display:grid;grid-template-columns:1.15fr repeat(3,1fr);gap:12px}.score{position:relative;overflow:hidden;min-height:112px;padding:17px 19px;border:1px solid color-mix(in srgb,var(--score,var(--erp-primary,var(--primary))) 18%,var(--erp-line,var(--line)));border-radius:18px;background:radial-gradient(circle at 100% 0,color-mix(in srgb,var(--score,var(--erp-primary,var(--primary))) 13%,transparent),transparent 65%),var(--erp-surface,var(--surface));display:flex;flex-direction:column;justify-content:space-between}.score:before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:var(--score,var(--erp-primary,var(--primary)))}.score.primary{--score:var(--erp-primary,var(--primary))}.score.day{--score:var(--erp-success,var(--success))}.score.day-record{--score:#ff9d72}.score.week-record{--score:#b48cff}.score-label{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--erp-muted,var(--muted));font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.11em}.score-label i{width:7px;height:7px;border-radius:50%;background:var(--score);box-shadow:0 0 12px color-mix(in srgb,var(--score) 72%,transparent)}.score strong{font-size:clamp(34px,3.2vw,52px);line-height:.9;letter-spacing:-.06em;color:var(--score)}.score small{color:var(--erp-faint,var(--faint));font-size:10px}
     .panel{border:1px solid var(--erp-line,var(--line));border-radius:var(--radius);background:var(--erp-surface,var(--surface));overflow:hidden}.panel-head{min-height:62px;padding:13px 18px;border-bottom:1px solid var(--erp-line,var(--line));display:flex;align-items:center;justify-content:space-between;gap:16px}.panel-head h2{margin:0;font-size:18px;letter-spacing:-.02em}.periods,.panel-actions{display:flex;gap:6px}.period,.edit-toggle{height:36px;border:1px solid var(--erp-line,var(--line));border-radius:9px;background:var(--erp-raised,var(--raised));color:var(--erp-muted,var(--muted));font-size:10px;font-weight:850;cursor:pointer}.period{padding:0 11px}.period.on{border-color:var(--erp-primary,var(--primary));color:var(--erp-primary,var(--primary));background:color-mix(in srgb,var(--erp-primary,var(--primary)) 11%,var(--erp-raised,var(--raised)))}.edit-toggle{padding:0 13px;color:var(--erp-primary,var(--primary))}.app.editing .edit-toggle{border-color:var(--erp-primary,var(--primary));background:color-mix(in srgb,var(--erp-primary,var(--primary)) 13%,var(--erp-raised,var(--raised)))}
@@ -82,28 +82,30 @@ const DYNAMICS=[
 ];
 const DEFAULT_TASKS=[
   [101,1,'Личная гигиена, душ, зубы, витамины',10],
-  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',40],
+  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',50],
   [103,1,'Обучение (пара, инвестиции, наставничество, заочное или очное)',10],
   [104,1,'Сессия',75],
-  [105,1,'Занятие хобби (шахматы, рисование, чтение)',50],
+  [105,1,'Занятие хобби (шахматы, рисование, чтение)',60],
   [201,2,'Утренняя и вечерняя прогулка',10],
-  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',100],
+  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',150],
   [203,2,'Шаг совместного плана',200],
   [204,2,'Хорошо выполнены совместные ритуалы',150],
-  [301,3,'Хорошо сделан кайдзен-час',20],
-  [302,3,'Все задачи предыдущего дня',70],
+  [301,3,'Хорошо сделан кайдзен-час',30],
+  [302,3,'Все задачи предыдущего дня',800],
   [303,3,'Все встречи проведены в тайминге',70],
   [304,3,'Выполнен план работы по направлению дня',30],
-  [401,4,'Дело, сделанное в ассоциации',50],
-  [501,5,'Дело Fundy Друг',50],
+  [405,4,'Сделано доброе дело',500],
+  [401,4,'Дело, сделанное в САС',50],
+  [505,5,'Сделано доброе дело',500],
+  [501,5,'Дело, сделанное в фонде Друг',50],
   [602,6,'Сделано доброе дело',500],
   [701,7,'Выполнен пункт этического плана',500],
-  [702,7,'День без расстройств',200],
+  [702,7,'День идеального настроения',200],
   [801,8,'Описана тэта',5500]
 ].map(([id,dynamicId,name,w],order)=>({id,dynamicId,name,w,order,active:true}));
 const REMOVED_TASK_IDS=[402,403,404,502,601,603,604,703];
 const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,snapshotTotal}));
-const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=9,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
+const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=10,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const num=value=>Number(value)||0;
@@ -133,7 +135,7 @@ function freezeWeek(anchor){const week=ensureWeek(anchor);week.weights=week.weig
 function weeksNeedRealignment(){return Object.entries(S.weeks||{}).some(([anchor,week])=>Object.keys(week?.daily||{}).some(date=>thursdayFor(date)!==anchor))}
 function realignWeeksToThursday(){const rebuilt={};Object.values(S.weeks||{}).forEach(source=>{Object.entries(source?.daily||{}).forEach(([date,scores])=>{const anchor=thursdayFor(date),target=rebuilt[anchor]||(rebuilt[anchor]={daily:{},weights:{},taskDynamics:{}});target.daily[date]={...(target.daily[date]||{}),...(scores||{})};Object.entries(source.weights||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.weights[id])))target.weights[id]=num(value)});Object.entries(source.taskDynamics||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.taskDynamics[id])))target.taskDynamics[id]=num(value)})})});S.weeks=rebuilt}
 function mergeCurrentTask(canonicalId,legacyIds){const week=S.weeks[thursdayFor(today())];if(!week)return;for(const bucket of [week.daily,week.planned])Object.values(bucket||{}).forEach(scores=>{if(legacyIds.some(id=>num(scores?.[id])>0))scores[canonicalId]=1;legacyIds.forEach(id=>delete scores[id])});legacyIds.forEach(id=>{delete week.weights?.[id];delete week.taskDynamics?.[id]})}
-function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{if(!S.tasks.some(item=>num(item.id)===num(fresh.id)))S.tasks.push(clone(fresh))});const patches={401:{dynamicId:4,name:'Дело, сделанное в ассоциации',w:50},501:{dynamicId:5,name:'Дело Fundy Друг',w:50}};Object.entries(patches).forEach(([id,patch])=>{const task=S.tasks.find(item=>num(item.id)===num(id));if(task)Object.assign(task,patch)});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);Object.entries(patches).forEach(([id,patch])=>{week.weights[id]=patch.w;week.taskDynamics[id]=patch.dynamicId})}}
+function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{if(!S.tasks.some(item=>num(item.id)===num(fresh.id)))S.tasks.push(clone(fresh))});const patches={102:{dynamicId:1,w:50},105:{dynamicId:1,w:60},202:{dynamicId:2,w:150},301:{dynamicId:3,w:30},302:{dynamicId:3,w:800},405:{dynamicId:4,name:'Сделано доброе дело',w:500},401:{dynamicId:4,name:'Дело, сделанное в САС',w:50},505:{dynamicId:5,name:'Сделано доброе дело',w:500},501:{dynamicId:5,name:'Дело, сделанное в фонде Друг',w:50},702:{dynamicId:7,name:'День идеального настроения',w:200}};Object.entries(patches).forEach(([id,patch])=>{const task=S.tasks.find(item=>num(item.id)===num(id));if(task)Object.assign(task,patch)});DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task)task.order=fresh.order});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);Object.entries(patches).forEach(([id,patch])=>{week.weights[id]=patch.w;week.taskDynamics[id]=patch.dynamicId})}}
 function taskWeekWeight(task,anchor){const stored=S.weeks[anchor]?.weights?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.w)}
 function taskWeekDynamic(task,anchor){const stored=S.weeks[anchor]?.taskDynamics?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.dynamicId)}
 function scoredTasks(anchor,dynamicId=null){return S.tasks.filter(task=>dynamicId==null||taskWeekDynamic(task,anchor)===num(dynamicId))}

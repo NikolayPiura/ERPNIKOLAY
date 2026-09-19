@@ -26,7 +26,8 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   const shell=read('index.html'),office=read('office-modes.js'),overview=read('piura-erp-restored 3/modules/Overview.html');
   assert.doesNotMatch(shell,/prefs\.palette=(mode|launchWorkMode)/);
   assert.doesNotMatch(office,/controlHvac|toggleEverything|zoneAllToggle/);
-  assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\],100\)/);
+  assert.match(office,/brightness=mode==='morning'\?70:100/);
+  assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\],brightness\)/);
   assert.match(overview,/commitLampWheelColor\(hex\).*window.piuraSetOfficeColor\(hex\)/);
   assert.match(overview,/if\(!lightingOnly\)refreshFinancialSummary/);
   assert.match(office,/status:devices.every\(x=>x.ok\)\?'done':'partial'/);

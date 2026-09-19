@@ -27,15 +27,16 @@
     if(!Object.hasOwn(colors,mode))return false;
     if(window.piuraOfficeLighting?.mode===mode&&window.piuraOfficeLighting.status==='pending')return true;
     const request=crypto.randomUUID(),started=performance.now();
-    setState({status:'pending',mode,color:colors[mode],brightness:100,request});
+    const brightness=mode==='morning'?70:100;
+    setState({status:'pending',mode,color:colors[mode],brightness,request});
     // Serialize hardware commands: an older slow request cannot overwrite the
     // latest color. No command is sent simply by loading the ERP.
     queue=queue.catch(()=>{}).then(async()=>{
       const target=await getController();
       if(window.piuraOfficeLighting.request!==request)return;
-      const devices=await target.piuraSetOfficeColor(colors[mode],100);
+      const devices=await target.piuraSetOfficeColor(colors[mode],brightness);
       if(window.piuraOfficeLighting.request!==request)return;
-      setState({status:devices.every(x=>x.ok)?'done':'partial',mode,color:colors[mode],brightness:100,request,devices,durationSeconds:(performance.now()-started)/1000});
+      setState({status:devices.every(x=>x.ok)?'done':'partial',mode,color:colors[mode],brightness,request,devices,durationSeconds:(performance.now()-started)/1000});
     }).catch(()=>{
       if(window.piuraOfficeLighting.request===request)setState({status:'failed',mode,request});
       ready=null;controller?.remove();

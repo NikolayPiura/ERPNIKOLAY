@@ -331,6 +331,12 @@ body{background-image:linear-gradient(rgba(61,219,160,.014) 1px,transparent 1px)
 @media(max-width:850px){.page{padding:16px 14px 50px}.topbar h1{font-size:24px}.columns{grid-template-columns:repeat(2,minmax(0,1fr))}}
 body.embedded .main-tabs{display:none}
 body.embedded .page{padding-top:8px;max-width:none}
+html[data-erp-theme="light"]{--bg:#f2f5f9;--panel:#fff;--panel-2:#f7f9fc;--border:rgba(24,39,61,.14);--text:#172236;--text-dim:#66768c;--accent:#2a78d6;color-scheme:light}
+html[data-erp-theme="light"] body{background-color:var(--bg);background-image:linear-gradient(rgba(42,120,214,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(42,120,214,.025) 1px,transparent 1px);color:var(--text)}
+html[data-erp-theme="light"] .main-tabs{background:rgba(242,245,249,.95)}html[data-erp-theme="light"] .main-tab-btn.active,html[data-erp-theme="light"] .topbar h1,html[data-erp-theme="light"] .chart-card h3{color:#172236}html[data-erp-theme="light"] .main-tab-btn:hover{color:#243754}
+html[data-erp-theme="light"] .controls button,html[data-erp-theme="light"] .col-header{background:#fff;border-color:var(--border);color:#42536b}html[data-erp-theme="light"] #rm-table-scroll,html[data-erp-theme="light"] .chart-card,html[data-erp-theme="light"] .modal,html[data-erp-theme="light"] .cell-popover{background:#fff;border-color:var(--border);box-shadow:0 16px 38px rgba(34,53,82,.08)}
+html[data-erp-theme="light"] #grid thead th,html[data-erp-theme="light"] #grid thead th.corner{background:#f1f5fa;color:#53657d}html[data-erp-theme="light"] #grid tbody td.label{background:#fbfcfe;color:#172236}html[data-erp-theme="light"] #grid tr.dyn-row td,html[data-erp-theme="light"] #grid tr.dyn-row td.label{background:linear-gradient(90deg,rgba(42,120,214,.1),#eef5fc);color:#246ab7}html[data-erp-theme="light"] #grid td.cell{border-right-color:rgba(24,39,61,.08)}html[data-erp-theme="light"] #grid td.cell .num{border-color:#cbd5e3;color:#75869b}html[data-erp-theme="light"] #grid td.cell.has-num .num{color:#fff}html[data-erp-theme="light"] #grid thead th.nextstep-col,html[data-erp-theme="light"] #grid td.nextstep-cell{background:#eef7f4;color:#266d59;border-left-color:#43b992}
+html[data-erp-theme="light"] .item.none{color:#7a899c;border-color:#c9d3df}html[data-erp-theme="light"] .cp-num,html[data-erp-theme="light"] .year-chip,html[data-erp-theme="light"] .year-add-row input{background:#f4f7fb;border-color:#cbd5e3;color:#172236}
 </style>
 </head>
 <body>
@@ -1326,14 +1332,17 @@ loadDynSort();
 buildGradientLegend('rm-gradient-legend');
 buildGradientLegend('dyn-gradient-legend');
 rerenderAll();
-const embeddedTab=new URLSearchParams(location.search).get('embed');
+const myDynamicsParams=new URLSearchParams(location.search);
+function applyEmbeddedTheme(value){const next=value==='light'?'light':'dark';document.documentElement.dataset.erpTheme=next;document.body.dataset.theme=next}
+applyEmbeddedTheme(myDynamicsParams.get('theme')||document.documentElement.dataset.erpTheme||'dark');
+const embeddedTab=myDynamicsParams.get('embed');
 if(embeddedTab==='roadmap'||embeddedTab==='dynamics'){
   document.body.classList.add('embedded');
   switchMainTab(embeddedTab);
 }else{
   switchMainTab(localStorage.getItem('roadmap_active_tab_v1')||'roadmap');
 }
-window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='piura:cloud-data-applied'){loadItems();loadCells();loadNextSteps();loadYears();loadSettings();loadDynSort();rerenderAll()}});
+window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura:theme')applyEmbeddedTheme(event.data.theme);if(event.data?.type==='piura:cloud-data-applied'){loadItems();loadCells();loadNextSteps();loadYears();loadSettings();loadDynSort();rerenderAll()}});
 </script>
 </body>
 </html>

@@ -509,7 +509,7 @@ body.time-stats-active .hero{display:none!important}body.time-stats-active .cont
     <div class="stats-section-head"><h2>По направлениям</h2></div>
     <div class="stats-category-grid" id="statsCategoryGrid"></div>
     <section class="stats-trend" id="statsTrend" aria-live="polite">
-      <div class="stats-trend-head"><div class="stats-trend-copy"><span>Среднее к каждой дате</span><h2 id="statsTrendTitle">Часов в неделю</h2></div><div class="stats-trend-value"><span>На текущем отрезке</span><strong id="statsTrendValue">0 ч/нед.</strong></div></div>
+      <div class="stats-trend-head"><div class="stats-trend-copy"><h2 id="statsTrendTitle">Часов в неделю</h2></div><div class="stats-trend-value"><strong id="statsTrendValue">0 ч/нед.</strong></div></div>
       <div class="stats-trend-chart"><canvas id="statsTrendChart" aria-label="Тенденция среднего времени в неделю"></canvas><div class="stats-trend-empty" id="statsTrendEmpty" hidden>Для графика пока нет данных</div></div>
     </section>
   </section>
@@ -1009,8 +1009,10 @@ function statisticsSnapshot(period=statsPeriod){
   return{categories,total,perDay:total/Math.max(1,periodDays),periodDays,label,startKey,endKey};
 }
 function statisticsTrend(categoryKey,period=statsPeriod){
-  const snapshot=statisticsSnapshot(period),all=load(),start=new Date(snapshot.startKey+'T00:00:00'),end=new Date(snapshot.endKey+'T00:00:00');
-  const totalDays=Math.max(1,inclusiveCalendarDays(snapshot.startKey,snapshot.endKey));
+  const snapshot=statisticsSnapshot(period),all=load(),categoryKeys=Object.keys(all).filter(key=>/^\d{4}-\d{2}-\d{2}$/.test(key)&&key>=snapshot.startKey&&key<=snapshot.endKey&&Number(all[key]?.[categoryKey]||0)>0).sort();
+  if(!categoryKeys.length)return{labels:[],values:[]};
+  const firstKey=categoryKeys[0],start=new Date(firstKey+'T00:00:00'),end=new Date(snapshot.endKey+'T00:00:00');
+  const totalDays=Math.max(1,inclusiveCalendarDays(firstKey,snapshot.endKey));
   const step=totalDays<=8?1:totalDays<=45?5:totalDays<=190?14:30;
   const offsets=[0];for(let offset=step-1;offset<totalDays;offset+=step)offsets.push(offset);if(offsets.at(-1)!==totalDays-1)offsets.push(totalDays-1);
   const unique=[...new Set(offsets)].sort((a,b)=>a-b),labels=[],values=[];
@@ -1029,7 +1031,7 @@ function renderStatisticsTrend(){
   const trend=statisticsTrend(cat.key);section.style.setProperty('--trend-color',cat.color);title.textContent=cat.label+' · часов в неделю';value.textContent=(trend.values.at(-1)||0).toLocaleString('ru-RU',{maximumFractionDigits:1})+' ч/нед.';
   if(chartStatsTrend){chartStatsTrend.destroy();chartStatsTrend=null}
   const hasData=trend.values.some(point=>point>0);canvas.hidden=!hasData;empty.hidden=hasData;if(!hasData)return;
-  chartStatsTrend=new Chart(canvas.getContext('2d'),{type:'line',data:{labels:trend.labels,datasets:[{data:trend.values,borderColor:cat.color,backgroundColor:cat.color+'24',borderWidth:4,pointRadius:5,pointHoverRadius:7,pointBackgroundColor:'#0a0c12',pointBorderColor:cat.color,pointBorderWidth:3,fill:true,tension:.34}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:260},scales:{x:{grid:{display:false},ticks:{color:'#8190a6',font:{family:'JetBrains Mono',size:11},maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.055)'},border:{display:false},ticks:{color:'#8190a6',padding:10,callback:tick=>tick+' ч'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>' '+context.parsed.y.toLocaleString('ru-RU',{maximumFractionDigits:1})+' ч/нед.'}}}}});
+  chartStatsTrend=new Chart(canvas.getContext('2d'),{type:'line',data:{labels:trend.labels,datasets:[{data:trend.values,borderColor:cat.color,backgroundColor:cat.color+'24',borderWidth:4,pointRadius:5,pointHoverRadius:7,pointBackgroundColor:'#0a0c12',pointBorderColor:cat.color,pointBorderWidth:3,fill:true,tension:.34}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:260},scales:{x:{grid:{display:false},ticks:{color:'#8190a6',font:{family:'JetBrains Mono',size:11},maxRotation:0,autoSkip:true,maxTicksLimit:10}},y:{beginAtZero:false,grid:{color:'rgba(255,255,255,.055)'},border:{display:false},ticks:{color:'#8190a6',padding:10,callback:tick=>tick+' ч'}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:context=>' '+context.parsed.y.toLocaleString('ru-RU',{maximumFractionDigits:1})+' ч/нед.'}}}}});
 }
 function renderTimeStatistics(){
   const summary=document.getElementById('statsSummary'),grid=document.getElementById('statsCategoryGrid');if(!summary||!grid)return;

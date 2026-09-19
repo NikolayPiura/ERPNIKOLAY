@@ -233,7 +233,9 @@ test('обзор управляет вентилятором, очистител
   assert.match(overview, /Date\.now\(\)-discoveredGoveeAt<300000/);
   assert.match(overview, /discoveredGoveePromise&&discoveredGoveePromiseKey===key/);
   assert.match(overview, /Promise\.all\(\[controlLamp\('color',value\),controlLamp\('power','on'\)\]\)/);
-  assert.match(overview, /Promise\.all\(\[controlAllLights\('color',hex\),controlAllLights\('brightness',100\)\]\)/);
+  assert.match(overview, /controlAllLights\('power','on'\)/);
+  assert.match(overview, /controlAllLights\('color',hex\)/);
+  assert.match(overview, /controlAllLights\('brightness',Math\.max\(1,Math\.min\(100,Number\(brightness\)\)\)\)/);
   assert.doesNotMatch(overview, /FLOOR_LAMP_HEAD_START_MS|controlPriorityFloorLamp|excludePriorityGovee/);
   assert.doesNotMatch(overview, /id="lampColor"|id="lampWheel"|id="lampKelvin"/);
   assert.match(overview, /class="fund-goal-ratio"/);
@@ -283,12 +285,14 @@ test('ПС №1 сохраняет старые данные при миграц
   assert.equal((weekly.match(/\['2026-\d{2}-\d{2}',\d+\]/g)||[]).length,12);
 });
 
-test('ПС №1 оставляет по одному действию в динамиках 4–6 и сохраняет старые отметки', () => {
+test('ПС №1 содержит личные добрые дела и сохраняет старые отметки при миграции', () => {
   const weekly = read('piura-erp-restored 3/modules/Dynamics-2.html');
-  assert.match(weekly, /\[401,4,'Дело, сделанное в ассоциации',50\]/);
-  assert.match(weekly, /\[501,5,'Дело Fundy Друг',50\]/);
+  assert.match(weekly, /\[405,4,'Сделано доброе дело',500\]/);
+  assert.match(weekly, /\[401,4,'Дело, сделанное в САС',50\]/);
+  assert.match(weekly, /\[505,5,'Сделано доброе дело',500\]/);
+  assert.match(weekly, /\[501,5,'Дело, сделанное в фонде Друг',50\]/);
   assert.match(weekly, /\[602,6,'Сделано доброе дело',500\]/);
-  assert.match(weekly, /TASKS_VERSION=9/);
+  assert.match(weekly, /TASKS_VERSION=10/);
   assert.match(weekly, /mergeCurrentTask\(401,\[404\]\)/);
   assert.match(weekly, /mergeCurrentTask\(501,\[502\]\)/);
   assert.match(weekly, /mergeCurrentTask\(602,\[603,604\]\)/);
@@ -405,8 +409,8 @@ test('Govee принимает обычный API-ключ и сохраняет
   assert.match(overview, /climateProfile\('temperature'/);
   assert.match(overview, /climateProfile\('humidity'/);
   assert.match(overview, /climateProfile\('air'/);
-  assert.match(overview, /v>50\?'Очень влажно'/);
-  assert.match(overview, /\?'Чисто':'Проветрить'/);
+  assert.match(overview, /v>60\?'Очень влажно'/);
+  assert.match(overview, /status:v<=900\?'Чисто':'Проветрить'/);
   assert.doesNotMatch(overview, /Что делать|норма 68/);
   assert.match(overview, /function climateNumber\(raw\)/);
   assert.match(overview, /raw==null\|\|raw===''/);
@@ -470,18 +474,18 @@ test('ПС №1 использует один дневной или недель
   const tasks = [...tasksSource.matchAll(/\[(\d+),(\d+),'([^']+)',(\d+)\]/g)].map(match=>({id:Number(match[1]),dynamic:Number(match[2]),name:match[3],weight:Number(match[4])}));
   assert.equal(dynamics.length,8);
   assert.deepEqual(dynamics.map(match=>match[2]),['Я','Семья','Группа','Человечество','Жизнь','Вселенная','Духовное','Бесконечность']);
-  assert.equal(tasks.length,19);
-  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),7635);
+  assert.equal(tasks.length,21);
+  assert.equal(tasks.reduce((sum,task)=>sum+task.weight,0),9445);
   assert.equal(tasks.find(task=>task.name==='Сессия')?.weight,75);
   assert.equal(tasks.find(task=>task.name==='Обучение (пара, инвестиции, наставничество, заочное или очное)')?.weight,10);
   assert.equal(tasks.find(task=>task.name==='Все встречи проведены в тайминге')?.weight,70);
-  assert.equal(tasks.find(task=>task.name==='День без расстройств')?.weight,200);
+  assert.equal(tasks.find(task=>task.name==='День идеального настроения')?.weight,200);
   assert.equal(tasks.find(task=>task.name==='Описана тэта')?.weight,5500);
-  assert.equal(tasks.find(task=>task.name==='Хорошо сделан кайдзен-час')?.weight,20);
-  assert.equal(tasks.find(task=>task.name==='Все задачи предыдущего дня')?.weight,70);
-  assert.equal(tasks.find(task=>task.name==='Дело, сделанное в ассоциации')?.weight,50);
-  assert.equal(tasks.find(task=>task.name==='Дело Fundy Друг')?.weight,50);
-  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===500).length,1);
+  assert.equal(tasks.find(task=>task.name==='Хорошо сделан кайдзен-час')?.weight,30);
+  assert.equal(tasks.find(task=>task.name==='Все задачи предыдущего дня')?.weight,800);
+  assert.equal(tasks.find(task=>task.name==='Дело, сделанное в САС')?.weight,50);
+  assert.equal(tasks.find(task=>task.name==='Дело, сделанное в фонде Друг')?.weight,50);
+  assert.equal(tasks.filter(task=>task.name==='Сделано доброе дело'&&task.weight===500).length,3);
   assert.equal(tasks.find(task=>task.name==='Выполнен пункт этического плана')?.weight,500);
   assert.ok(tasks.some(task=>task.name==='Личная гигиена, душ, зубы, витамины'));
   assert.ok(tasks.some(task=>task.name==='Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов'));
@@ -559,7 +563,7 @@ test('ПС №1 использует один дневной или недель
   assert.match(weekly, /id="scoreLine"/);
   assert.match(weekly, /'#35d8f5'/);
   assert.match(weekly, /nextDate\.setDate\(nextDate\.getDate\(\)\+direction\*7\)/);
-  assert.match(weekly, /SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=9,WEEK_CYCLE_VERSION=3/);
+  assert.match(weekly, /SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=10,WEEK_CYCLE_VERSION=3/);
   assert.match(weekly, /REMOVED_TASK_IDS=\[402,403,404,502,601,603,604,703\]/);
   assert.match(weekly, /if\(needsTaskMigration\)migrateTaskCatalog\(\)/);
   assert.match(weekly, /function mergeCurrentTask\(canonicalId,legacyIds\)/);
@@ -593,7 +597,7 @@ test('миграция ПС №1 сохраняет отметки и стары
     return S;
   `)(defaults,beforeDaily);
   assert.deepEqual(migrated.weeks['2026-08-13'].daily,beforeDaily);
-  assert.equal(migrated.weeks['2026-08-13'].weights['102'],20);
+  assert.equal(migrated.weeks['2026-08-13'].weights['102'],50);
   assert.equal(migrated.weeks['2026-08-06'].weights['102'],20);
   assert.equal(migrated.tasks.find(task=>task.id===403)?.active,false);
   assert.equal(migrated.tasks.find(task=>task.id===703)?.active,false);
@@ -615,19 +619,21 @@ test('управление фондами сохраняет только Инв
   assert.match(funds, /id="filterPanel" style="display:none/);
   assert.match(funds, /ALL_FUNDS_DEFAULTS_KEY = 'piura_funds_all_included_v3'/);
   assert.match(funds, /allF\(merged\)\.forEach\(f=>\{f\.included=true\}\)/);
-  assert.match(funds, /#view-manage \.conn-row\{display:block!important/);
+  assert.match(funds, /#view-manage \.sec-hdr,#view-endowment \.sec-hdr,#view-manage \.conn-row,#view-endowment \.conn-row\{display:none!important/);
   assert.match(funds, /#inclRow \.pill\.on\{/);
-  assert.match(funds, /<polygon points=/);
+  assert.doesNotMatch(funds, /<polygon points=/);
   assert.match(funds, /id="endowmentTreeWrap"/);
-  assert.match(funds, /#view-endowment \.sec-hdr\{display:flex!important/);
-  assert.match(funds, /#view-endowment \.conn-row\{display:block!important/);
+  assert.match(funds, /id="constructorEditFunds"/);
+  assert.match(funds, /id="structureEditor"/);
+  assert.doesNotMatch(funds, /class=['"]fc-hov/);
+  assert.match(funds, /#view-endowment\.on\{display:grid!important\}/);
   assert.match(funds, /Доход \/ месяц/);
   assert.match(funds, /Доходность/);
-  assert.match(funds, /class="flow-route"/);
+  assert.doesNotMatch(funds, /class="flow-route"/);
   assert.match(funds, /async function timedFetch\(url,options=\{\},timeout=10000\)/);
-  assert.match(funds, /timedFetch\(f\.api\+'\?t='\+Date\.now\(\),\{\},10000\)/);
+  assert.match(funds, /timedFetch\(f\.api\+'\?t='\+Date\.now\(\),\{\},55000\)/);
   assert.match(funds, /failed\.length===results\.length/);
-  assert.match(funds, /Частично обновлено · без ответа/);
+  assert.match(funds, /Проверено \$\{successful\} из \$\{count\} · нет ответа/);
   assert.doesNotMatch(funds, /id="currencySwitch"/);
   assert.doesNotMatch(funds, /class="solid-assets"/);
   assert.doesNotMatch(funds, /id="endTotalGoal"|id="endYieldGoal"|id="endAnnual"|Цель дохода \/ месяц/);
@@ -824,9 +830,12 @@ test('цветовые темы применяют выбранную палит
 
 test('светлая тема не оставляет чёрные рамки на админ-шкале и фондах', () => {
   const shell = read('index.html');
+  const admin = read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(shell, /\.browse-mode\{border:1px solid/);
   assert.match(shell, /\.type-card\{border:1px solid/);
   assert.match(shell, /\.item-row:hover,.level-block:hover,.section-dyn-card:hover\{animation:none/);
+  assert.match(admin, /function clearThemeColorOverrides\(\)/);
+  assert.match(admin, /documentElement\.style\.removeProperty\(name\)/);
 });
 
 test('утро редактируется локально и восстанавливает скрытые пункты без отложенной миграции', () => {
@@ -849,11 +858,12 @@ test('утро редактируется локально и восстанав
   assert.doesNotMatch(morning, /setTimeout\([^)]*HIDDEN_RESTORE_KEY/);
 });
 
-test('климат сохраняет персональные пороги, но не дублирует подписи «Идеал»', () => {
+test('климат использует новые комфортные пороги и не дублирует подписи «Идеал»', () => {
   const overview = read('piura-erp-restored 3/modules/Overview.html');
-  assert.match(overview, /const target=70,tolerance=\.5/);
-  assert.match(overview, /v>target\?'Жарко':'Прохладно'/);
-  assert.match(overview, /v>50\?'Очень влажно'/);
+  assert.match(overview, /isIdeal=v>=71&&v<=75/);
+  assert.match(overview, /v>75\?'Жарко':'Прохладно'/);
+  assert.match(overview, /isIdeal=v>=40&&v<=55,status=v>60\?'Очень влажно'/);
+  assert.match(overview, /status:v<=900\?'Чисто':'Проветрить'/);
   assert.doesNotMatch(overview, /Идеал 70°F|Идеал 45%|Идеал до 500 ppm/);
   const cards = [...overview.matchAll(/function climateCard\(profile\).*?(?=\nconst CLIMATE_SNAPSHOT_KEY)/gs)];
   const card = cards.at(-1)?.[0] || '';

@@ -1069,7 +1069,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         """)
     }
     private func runMode(_ mode: WorkMode, preview: Bool) -> ModeResult {
-        let displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+        var displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+        if displays.count < 3 && !preview {
+            wakeConnectedDisplays()
+            let deadline = Date().addingTimeInterval(4)
+            while displays.count < 3 && Date() < deadline {
+                pumpRunLoop(0.25)
+                displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+            }
+        }
         guard displays.count == 3 else {
             return ModeResult(ok: false, message: "Нужны все три монитора: центральный, левый и правый.")
         }
@@ -1151,6 +1159,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             success += " Для закрытых страниц нужен вход в Google в профиле «\(mode.title)»."
         }
         return ModeResult(ok: notes.isEmpty, message: notes.isEmpty ? success : "Выполнено не полностью: " + notes.joined(separator: " · "))
+    }
+    private func wakeConnectedDisplays() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
+        process.arguments = ["-u", "-t", "4"]
+        try? process.run()
+        verifiedWindows.append(["displayWakeRequested":true])
     }
     private func display(named name: String) -> DisplayTarget? { NSScreen.screens.first(where: { $0.localizedName == name }).map(target) }
     private func display(at index: Int) -> DisplayTarget? { NSScreen.screens.indices.contains(index) ? target(NSScreen.screens[index]) : nil }

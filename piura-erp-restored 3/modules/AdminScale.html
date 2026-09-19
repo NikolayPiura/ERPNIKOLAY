@@ -1144,11 +1144,16 @@ function saveDynNames(a){db.__dynNames=a;persist();}
 const _origBuildTabs=buildTabs;
 
 /* ══ THEME ══ */
-let theme=adminPreview&&adminPreviewParams.get('theme')==='light'?'light':'dark';
-if(!adminPreview)localStorage.setItem('adm_theme','dark');
+const detectedAdminTheme=()=>{const requested=adminPreviewParams.get('theme'),embedded=document.documentElement.dataset.erpTheme,saved=localStorage.getItem('adm_theme');return[requested,embedded,saved].find(value=>value==='light'||value==='dark')||'dark'};
+let theme=detectedAdminTheme();
 document.body.dataset.theme=theme;
+function clearThemeColorOverrides(){
+  for(const name of ['--bg','--bg2','--bg3','--surface','--surface2','--text','--accent','--border','--border2','--border3'])document.documentElement.style.removeProperty(name);
+}
 function syncTheme(){
+  clearThemeColorOverrides();
   document.querySelectorAll('.theme-opt').forEach(b=>b.classList.toggle('active',b.dataset.t===theme));
+  const frame=document.getElementById('embeddedFrame');if(frame?.contentWindow)frame.contentWindow.postMessage({type:'piura:theme',theme},location.origin);
 }
 syncTheme();
 document.getElementById('themePill').addEventListener('click',e=>{
@@ -1156,6 +1161,7 @@ document.getElementById('themePill').addEventListener('click',e=>{
   theme=b.dataset.t;document.body.dataset.theme=theme;
   localStorage.setItem('adm_theme',theme);syncTheme();
 });
+new MutationObserver(()=>{const embedded=document.documentElement.dataset.erpTheme;if((embedded==='light'||embedded==='dark')&&embedded!==theme){theme=embedded;document.body.dataset.theme=theme;syncTheme()}}).observe(document.documentElement,{attributes:true,attributeFilter:['data-erp-theme']});
 
 /* ══ EDIT MODE ══ */
 let editMode=false;
@@ -1664,8 +1670,9 @@ function setAdminWorkspace(view){
   document.getElementById('scaleWorkspace').hidden=view!=='scale';
   document.getElementById('embeddedWorkspace').hidden=view==='scale';
   if(view!=='scale'){
-    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260814g&embed='+encodeURIComponent(view);
+    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260919a&embed='+encodeURIComponent(view)+'&theme='+encodeURIComponent(theme);
     if(!frame.src.endsWith(src))frame.src=src;
+    frame.addEventListener('load',syncTheme,{once:true});
   }
   localStorage.setItem(ADMIN_WORKSPACE_KEY,view);
 }
