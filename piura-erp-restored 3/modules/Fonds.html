@@ -305,6 +305,38 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
 #view-endowment{display:none;gap:56px}#view-endowment.active{display:grid}#view-endowment .root-sub{display:block!important}#view-endowment .root-metrics{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:30px!important}#view-endowment .root-metrics .rm{min-height:132px;padding:25px 28px;border:1px solid var(--border);border-radius:22px;background:var(--bg3)}#view-endowment .tree-wrap{padding-bottom:42px}#view-endowment .conn-row{height:132px!important}#view-endowment .conn-row svg{height:126px!important}#view-endowment .fund-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:34px!important;row-gap:42px!important}#view-endowment .fc{min-height:330px!important;padding:34px 36px!important}#view-endowment .fc-name{font-size:23px!important}#view-endowment .fc-usd{font-size:48px!important}@media(max-width:1050px){#view-endowment .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))!important}}@media(max-width:700px){#view-endowment .root-metrics{grid-template-columns:1fr}#view-endowment .fund-row{grid-template-columns:1fr!important}}
 /* 2026-09-19: clear card constructor; capital-map arrows are intentionally removed. */
 #view-endowment.on{display:grid!important}#view-manage .sec-hdr,#view-endowment .sec-hdr,#view-manage .conn-row,#view-endowment .conn-row{display:none!important}.constructor-head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:4px 2px 22px;border-bottom:1px solid var(--border)}.constructor-head strong{display:block;color:var(--text);font-size:24px;letter-spacing:-.025em}.constructor-head span{display:block;margin-top:7px;color:var(--text3);font-size:12px;line-height:1.55}.constructor-action{height:42px;padding:0 17px;border:1px solid color-mix(in srgb,var(--blue) 52%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--blue) 10%,var(--bg2));color:#9fc2ff;font-weight:800;cursor:pointer;white-space:nowrap}#view-manage .tree-wrap,#view-endowment .tree-wrap{display:grid;gap:34px!important;padding:0 0 46px!important}#view-manage .fund-row,#view-endowment .fund-row{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:42px!important;row-gap:46px!important}#view-manage .fc,#view-endowment .fc{min-height:330px!important;padding:36px 38px!important;border-radius:26px!important;box-shadow:0 20px 54px rgba(0,0,0,.18)!important}.fc-route i{opacity:.3}.fc-route b{letter-spacing:.16em}@media(max-width:950px){#view-manage .fund-row,#view-endowment .fund-row{grid-template-columns:1fr!important}.constructor-head{align-items:flex-start;flex-direction:column}}
+/* 2026-09-19: one capital system, with PFF as the operating core and Endowment as the long horizon. */
+#view-manage{padding-top:30px!important}
+#view-manage .root-sub{display:none!important}
+#view-manage .root-card::after{display:none!important}
+#view-manage .root-card{padding-block:38px!important}
+#view-manage .root-name{font-size:clamp(54px,5vw,82px)!important}
+#view-manage .root-metrics{margin-top:26px!important}
+#view-manage .constructor-head{min-height:54px;padding:0;border:0;justify-content:flex-end}
+#view-manage .constructor-head>div{display:none}
+#view-manage .constructor-action{width:46px;padding:0;font-size:0;border-radius:14px}
+#view-manage .constructor-action::before{content:'✎';font-size:19px}
+#view-manage .tree-wrap{gap:32px!important;padding-bottom:28px!important}
+#view-manage .fc-route b{display:none}
+#view-manage .fc-route i{opacity:.18}
+#view-manage .fc-name::after{content:none!important}
+#view-manage .fc[data-fid="2"]{border-color:color-mix(in srgb,#b06cf5 68%,var(--border))!important;background:radial-gradient(circle at 94% 0,rgba(176,108,245,.23),transparent 42%),linear-gradient(145deg,rgba(176,108,245,.08),#0b0f16 74%)!important}
+#view-manage .fc[data-fid="2"] .fc-name::after{content:'CORE'!important;width:auto!important;height:auto!important;padding:7px 10px;border:1px solid rgba(176,108,245,.42);border-radius:999px;background:rgba(176,108,245,.11);color:#dcb8ff!important;font:850 9px 'JetBrains Mono',monospace!important;letter-spacing:.14em}
+#view-manage .fc[data-fid="6"]{border-color:color-mix(in srgb,#f5b942 62%,var(--border))!important;background:radial-gradient(circle at 94% 0,rgba(245,185,66,.2),transparent 42%),linear-gradient(145deg,rgba(245,185,66,.07),#0b0f16 74%)!important}
+#view-manage .fc[data-fid="6"] .fc-name::after{content:'LONG HORIZON'!important;width:auto!important;height:auto!important;padding:7px 10px;border:1px solid rgba(245,185,66,.38);border-radius:999px;background:rgba(245,185,66,.09);color:#ffd982!important;font:850 9px 'JetBrains Mono',monospace!important;letter-spacing:.12em}
+#view-endowment .root-sub,#view-endowment>.constructor-head{display:none!important}
+@media(min-width:951px){
+  #view-manage .fund-row{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:28px!important;grid-auto-flow:dense}
+  #view-manage .fc{grid-column:span 4;min-height:304px!important}
+  #view-manage .fc[data-fid="1"]{grid-column:span 4;order:1}
+  #view-manage .fc[data-fid="2"]{grid-column:span 8;order:2}
+  #view-manage .fc[data-fid="3"]{order:3}
+  #view-manage .fc[data-fid="4"]{order:4}
+  #view-manage .fc[data-fid="5"]{order:5}
+  #view-manage .fc[data-fid="6"]{grid-column:span 12;order:6;min-height:250px!important}
+}
+html[data-erp-theme="light"] #view-manage .fc[data-fid="2"]{background:radial-gradient(circle at 94% 0,rgba(176,108,245,.14),transparent 42%),linear-gradient(145deg,#fff,#faf6ff 74%)!important}
+html[data-erp-theme="light"] #view-manage .fc[data-fid="6"]{background:radial-gradient(circle at 94% 0,rgba(245,185,66,.14),transparent 42%),linear-gradient(145deg,#fff,#fffaf0 74%)!important}
 </style>
 </head>
 <body>
@@ -323,7 +355,6 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
 <div class="wrap tab-view on" id="view-manage">
   <div class="root-card">
     <div class="root-name" id="rfName">PIURA FOUNDATION</div>
-    <div class="root-sub">ГОЛОВНОЙ ФОНД · ИЕРАРХИЯ</div>
     <div class="root-metrics">
       <div class="rm">
         <div class="rm-lbl">Итого портфель</div>
@@ -362,16 +393,15 @@ html,body{background:var(--bg);color:var(--text);font-family:'SF Pro Display',-a
       </div>
     </div>
     </div>
-    <div class="data-status" id="sourceStatus"><i></i>Загружаем Solid и остальные источники…</div>
+    <div class="data-status" id="sourceStatus"><i></i>Данные показаны · проверяем источники…</div>
   </div>
 
-  <div class="constructor-head"><div><strong>Конструктор фондов</strong><span>Перетаскивайте карточки, чтобы менять порядок. Все параметры и состав собраны в одном редакторе.</span></div><button class="constructor-action" id="constructorEditFunds" type="button">✎ Редактировать фонды</button></div>
+  <div class="constructor-head"><button class="constructor-action" id="constructorEditFunds" type="button" title="Редактировать фонды" aria-label="Редактировать фонды">✎</button></div>
   <div class="tree-wrap" id="treeWrap"></div>
 </div>
 
 <section class="tab-view" id="view-endowment">
-  <div class="root-card"><div class="root-name">ENDOWMENT</div><div class="root-sub">ВЕЧНЫЙ КАПИТАЛ · ИЕРАРХИЯ</div><div class="root-metrics"><div class="rm"><div class="rm-lbl">Итого капитал</div><div class="rm-val" id="endRfUsd">—</div></div><div class="rm"><div class="rm-lbl">Доход / месяц</div><div class="rm-val" id="endRfMonUsd">—</div></div><div class="rm"><div class="rm-lbl">Ср. доходность</div><div class="rm-val" id="endRfYield">—</div></div></div><div class="data-status" id="endStatus"><i></i>Загружаем данные…</div></div>
-  <div class="constructor-head"><div><strong>Конструктор Endowment</strong><span>Пять направлений показываются карточками в той же логике, что и инвестиции.</span></div></div>
+  <div class="root-card"><div class="root-name">ENDOWMENT</div><div class="root-metrics"><div class="rm"><div class="rm-lbl">Итого капитал</div><div class="rm-val" id="endRfUsd">—</div></div><div class="rm"><div class="rm-lbl">Доход / месяц</div><div class="rm-val" id="endRfMonUsd">—</div></div><div class="rm"><div class="rm-lbl">Ср. доходность</div><div class="rm-val" id="endRfYield">—</div></div></div><div class="data-status" id="endStatus"><i></i>Проверяем данные…</div></div>
   <div class="tree-wrap" id="endowmentTreeWrap"></div>
 </section>
 
@@ -557,7 +587,7 @@ let rootName = 'PIURA FOUNDATION';
 /* DEFAULT funds — can be overridden by localStorage */
 const DEFAULT_FUNDS = [
   {id:1,name:'MOSCOW FUND',    usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:API_MSK, sheet:'2026 (НЕД)', cur:'rub',snapshotUsd:261542,snapshotMon:2780,snapshotYld:12.76,liveUsd:261542,liveMon:2780,liveYld:12.76,loading:false,founders:[]},
-  {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',snapshotUsd:869341,snapshotMon:7073,snapshotYld:9.76,liveUsd:869341,liveMon:7073,liveYld:9.76,loading:false,founders:[]},
+  {id:2,name:'PFF',            usdM:null,  yld:null, monthly:null, tag:'Облигации',     included:true,children:[],api:API_PFF, sheet:'2026 (PFF)', cur:'usd',snapshotUsd:932959,snapshotMon:6707,snapshotYld:8.63,liveUsd:932959,liveMon:6707,liveYld:8.63,loading:false,founders:[]},
   {id:3,name:'SOLID FUND',     usdM:null,  yld:null, monthly:0,    tag:'Смешанный',     included:true,children:[],api:null,    sheet:null,         cur:'usd',liveUsd:null,liveMon:null,liveYld:null,loading:false,founders:[]},
   {id:4,name:'SAFE FUND',      usdM:null,  yld:null, monthly:null, tag:'Резерв',   included:true,children:[],api:API_SAFE,sheet:'2026 (SAFE)',cur:'usd',snapshotUsd:61880,snapshotMon:475,snapshotYld:9.21,liveUsd:61880,liveMon:475,liveYld:9.21,loading:false,founders:[]},
   {id:5,name:'PAFF FUND',      usdM:null,  yld:null, monthly:null, tag:'Акции',  included:true,children:[],api:null,    sheet:'2026 (PAFF)',cur:'usd',liveUsd:34867.84,liveMon:285,liveYld:9.8,loading:false,founders:[]},
@@ -763,21 +793,25 @@ async function loadPaff(){
   localStorage.setItem('piura_cache_paff_v1',JSON.stringify({at:Date.now(),usd,monthly,yield:yieldValue}));
   renderTree();recalcDisplay();return{usd,monthly,yield:yieldValue};
 }
-async function loadStructureSources(){
-  const sources=[{name:'Solid',run:loadSolid},{name:'PAFF',run:loadPaff},...funds.filter(fund=>fund.api).map(fund=>({name:fund.name,run:()=>fetchFund(fund,true)}))],results=await Promise.allSettled(sources.map(source=>source.run())),failed=results.map((result,index)=>result.status==='rejected'?{name:sources[index].name,message:String(result.reason?.message||result.reason||'нет ответа')}:null).filter(Boolean);if(failed.length===results.length)throw new Error(`Источники недоступны · ${failed.map(item=>item.name+': '+item.message).join(' · ')}`);return{results,failed,total:results.length,successful:results.length-failed.length,at:Date.now()};
+async function loadStructureSources(fresh=false){
+  const sources=[{name:'Solid',run:loadSolid},{name:'PAFF',run:loadPaff},...funds.filter(fund=>fund.api).map(fund=>({name:fund.name,run:()=>fetchFund(fund,true,fresh)}))],results=await Promise.allSettled(sources.map(source=>source.run())),failed=results.map((result,index)=>result.status==='rejected'?{name:sources[index].name,message:String(result.reason?.message||result.reason||'нет ответа')}:null).filter(Boolean);if(failed.length===results.length)throw new Error(`Источники недоступны · ${failed.map(item=>item.name+': '+item.message).join(' · ')}`);return{results,failed,total:results.length,successful:results.length-failed.length,at:Date.now()};
 }
 async function refreshExternalFunds(manual=false){
   const button=document.getElementById('refreshAll'),source=document.getElementById('sourceStatus');if(button){button.disabled=true;button.textContent='↻ Обновляем…'}source.className='data-status loading';source.innerHTML='<i></i>Читаем Google Sheets…';
-  const jobs=[['endStatus',loadEndowment],['sourceStatus',loadStructureSources]],results=await Promise.allSettled(jobs.map(([,fn])=>fn()));
+  const slowNotice=setTimeout(()=>{if(source.classList.contains('loading')){source.className='data-status';source.innerHTML='<i></i>Текущие суммы уже показаны · источники проверяются в фоне'}},6500);
+  const jobs=[['endStatus',loadEndowment],['sourceStatus',()=>loadStructureSources(manual)]],results=await Promise.allSettled(jobs.map(([,fn])=>fn()));clearTimeout(slowNotice);
   results.forEach((result,index)=>{const el=document.getElementById(jobs[index][0]);if(!el)return;if(result.status==='fulfilled'){const missed=Array.isArray(result.value?.failed)?result.value.failed:[],time=new Date(result.value?.at||Date.now()).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}),count=Number(result.value?.total)||1,successful=Number(result.value?.successful)||(missed.length?count-missed.length:count);el.className='data-status'+(missed.length?' warning':'');el.title=missed.map(item=>item.name+': '+item.message).join('\n');el.innerHTML='<i></i>'+(missed.length?`Проверено ${successful} из ${count} · нет ответа: ${missed.map(item=>item.name).join(', ')}`:`Актуально ${time} · ${successful} из ${count} источников`)}else{el.className='data-status error';el.title=String(result.reason?.message||result.reason||'Ошибка источника');el.innerHTML='<i></i>Источник недоступен · показан последний сохранённый снимок';console.warn(jobs[index][0],result.reason)}});
   const full=results.every(result=>result.status==='fulfilled'&&!(Array.isArray(result.value?.failed)&&result.value.failed.length)),partial=results.some(result=>result.status==='fulfilled');
   if(button){button.disabled=false;button.textContent=full?`✓ Обновлено ${new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}`:partial?'◐ Частично обновлено':'↻ Повторить обновление'}if(manual)button?.blur();
 }
 
 /* LIVE DATA */
-async function fetchFund(f,strict=false){
+async function fetchFund(f,strict=false,fresh=false){
   if(!f.api)return;
   const cacheKey='piura_cache_fonds_'+f.id;let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||'null')}catch(e){}
+  // The previous PFF seed (917k and below) was an old portfolio snapshot.
+  // Never flash it before the current 2026 sheet finishes its background refresh.
+  if(f.id===2&&Number(cached?.usd)<930000)cached=null;
   if(cached){f.liveUsd=cached.usd;f.liveMon=cached.mon;f.liveYld=cached.yld;renderTree();recalcDisplay();}
   else if(f.snapshotUsd){f.liveUsd=f.snapshotUsd;f.liveMon=f.snapshotMon;f.liveYld=f.snapshotYld;}
   f.loading=false;renderTree();recalcDisplay();
