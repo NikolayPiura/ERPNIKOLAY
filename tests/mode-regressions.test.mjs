@@ -29,6 +29,9 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   assert.match(office,/brightness=mode==='morning'\?70:100/);
   assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\],brightness\)/);
   assert.match(overview,/commitLampWheelColor\(hex\).*window.piuraSetOfficeColor\(hex\)/);
+  const officeColor=overview.slice(overview.indexOf('window.piuraSetOfficeColor'),overview.indexOf('async function commitLampWheelColor'));
+  assert.ok(officeColor.indexOf("controlAllLights('power','on')")<officeColor.indexOf("controlAllLights('color',hex)"));
+  assert.ok(officeColor.indexOf("controlAllLights('color',hex)")<officeColor.indexOf("controlAllLights('brightness'"));
   assert.match(overview,/if\(!lightingOnly\)refreshFinancialSummary/);
   assert.match(office,/status:devices.every\(x=>x.ok\)\?'done':'partial'/);
   assert.match(overview,/item.status==='fulfilled'&&!item.value\?\.errors\?\.length/);
@@ -100,6 +103,9 @@ test('morning and mentorship helpers are repaired onto the left while ERP stays 
   assert.match(repair,/selected:helper/);
   assert.match(repair,/"mentorshipLeftForeground"/);
   assert.match(repair,/"rightForeground":"ERP-only"/);
+  const arrangement=app.slice(app.indexOf('private func arrangeYandex'),app.indexOf('private func yandexWindow'));
+  assert.match(arrangement,/repeat with tabNumber from \(count every tab of window id leftID\) to 1 by -1/);
+  assert.match(arrangement,/does not start with "\\\(leftURL\)" then close tab tabNumber/);
 });
 test('Yandex windows survive generic AX titles by binding immutable IDs to frames',()=>{
   const binding=app.slice(app.indexOf('private func yandexWindow'),app.indexOf('private func verifyBrowserWindow'));

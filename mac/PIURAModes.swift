@@ -92,7 +92,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
     private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260913-batch25" }
+    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260920-batch30" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -1550,6 +1550,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             set leftID to id of (make new window)
             set URL of active tab of window id leftID to "\(leftURL)"
           end if
+          repeat with tabNumber from (count every tab of window id leftID) to 1 by -1
+            if URL of tab tabNumber of window id leftID does not start with "\(leftURL)" then close tab tabNumber of window id leftID
+          end repeat
+          set active tab index of window id leftID to 1
           set minimized of window id leftID to false
         """ : ""
         let ids = try runAppleScript("""
@@ -1591,7 +1595,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.2'){if(!document.getElementById('piura-office-loader-10-2')){const s=document.createElement('script');s.id='piura-office-loader-10-2';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.2';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.3'){if(!document.getElementById('piura-office-loader-10-3')){const s=document.createElement('script');s.id='piura-office-loader-10-3';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.3';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -2371,7 +2375,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.2'){if(!document.getElementById('piura-office-loader-10-2')){const s=document.createElement('script');s.id='piura-office-loader-10-2';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.2';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.3'){if(!document.getElementById('piura-office-loader-10-3')){const s=document.createElement('script');s.id='piura-office-loader-10-3';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.3';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)
