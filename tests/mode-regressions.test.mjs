@@ -100,7 +100,7 @@ test('morning powers outlets, starts quiet music, then wakes screens without goa
 test('automatic morning wakes a sleeping Mac before the 07:00 launch',()=>{
   const installer=read('mac/install-auto-morning.sh');
   const agent=read('mac/com.piura.modes.morning.plist');
-  assert.match(installer,/pmset repeat wakeorpoweron MTWRFSU 06:59:00/);
+  assert.match(installer,/pmset repeat wakeorpoweron MTWRFSU 06:59:30/);
   assert.match(agent,/<key>Hour<\/key>\s*<integer>7<\/integer>/);
   assert.match(agent,/<key>Minute<\/key>\s*<integer>0<\/integer>/);
 });

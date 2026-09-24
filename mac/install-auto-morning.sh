@@ -28,9 +28,9 @@ fi
 # launchd's calendar trigger does not wake a sleeping Mac. Schedule a real
 # hardware wake one minute earlier so the 07:00 user agent can run on time.
 if [[ "$(/usr/bin/id -u)" == "0" ]]; then
-  /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:00
-elif /usr/bin/sudo -n /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:00 2>/dev/null; then
+  /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:30
+elif /usr/bin/sudo -n /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:30 2>/dev/null; then
   :
 else
-  /usr/bin/printf '%s\n' 'Нужно один раз выполнить: sudo pmset repeat wakeorpoweron MTWRFSU 06:59:00' >&2
+  /usr/bin/printf '%s\n' 'Нужно один раз выполнить: sudo pmset repeat wakeorpoweron MTWRFSU 06:59:30' >&2
 fi
