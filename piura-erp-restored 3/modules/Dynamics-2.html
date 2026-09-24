@@ -82,15 +82,15 @@ const DYNAMICS=[
 ];
 const DEFAULT_TASKS=[
   [101,1,'Личная гигиена, душ, зубы, витамины',10],
-  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',50],
-  [103,1,'Обучение (пара, инвестиции, наставничество, заочное или очное)',10],
-  [104,1,'Сессия',75],
-  [105,1,'Занятие хобби (шахматы, рисование, чтение)',60],
-  [201,2,'Утренняя и вечерняя прогулка',10],
-  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',150],
-  [203,2,'Шаг совместного плана',200],
-  [204,2,'Хорошо выполнены совместные ритуалы',150],
-  [301,3,'Хорошо сделан кайдзен-час',30],
+  [102,1,'Тренировка: теннис / спортзал / разминка / растяжка / 6 000 шагов',100],
+  [103,1,'Обучение (пара, инвестиции, наставничество, заочное или очное)',30],
+  [104,1,'Сессия',50],
+  [105,1,'Занятие хобби (шахматы, рисование, чтение)',100],
+  [201,2,'Утренняя и вечерняя прогулка',20],
+  [202,2,'Совместное мероприятие (ресторан, парк, путешествие)',100],
+  [203,2,'Шаг совместного плана',250],
+  [204,2,'Хорошо выполнены совместные ритуалы',200],
+  [301,3,'Хорошо сделан кайдзен-час',50],
   [302,3,'Все задачи предыдущего дня',880],
   [303,3,'Все встречи проведены в тайминге',70],
   [304,3,'Выполнен план работы по направлению дня',30],
@@ -100,12 +100,13 @@ const DEFAULT_TASKS=[
   [501,5,'Дело, сделанное в фонде Друг',100],
   [602,6,'Сделано доброе дело',500],
   [701,7,'Выполнен пункт этического плана',500],
-  [702,7,'День с высоким ARO',500],
-  [801,8,'Описана тэта',5500]
+  [702,7,'День с высоким ARO',1000],
+  [704,7,'День идеального настроения',500],
+  [801,8,'Описана тэта',10000]
 ].map(([id,dynamicId,name,w],order)=>({id,dynamicId,name,w,order,active:true}));
 const REMOVED_TASK_IDS=[402,403,404,502,601,603,604,703];
 const HISTORY_SEED=[['2026-05-14',185],['2026-05-21',860],['2026-05-28',185],['2026-06-04',460],['2026-06-11',815],['2026-06-18',130],['2026-06-25',2545],['2026-07-02',1135],['2026-07-09',1670],['2026-07-16',760],['2026-07-23',550],['2026-07-30',150]].map(([date,snapshotTotal])=>({date,snapshotTotal}));
-const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=11,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
+const STORE='wt5',SCHEMA_VERSION=17,DYNAMICS_VERSION=1,TASKS_VERSION=12,WEEK_CYCLE_VERSION=3,DAY_WINDOW=14,WEEK_WINDOW=12,DAY_NAMES=['Чт','Пт','Сб','Вс','Пн','Вт','Ср'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const num=value=>Number(value)||0;
@@ -135,7 +136,7 @@ function freezeWeek(anchor){const week=ensureWeek(anchor);week.weights=week.weig
 function weeksNeedRealignment(){return Object.entries(S.weeks||{}).some(([anchor,week])=>Object.keys(week?.daily||{}).some(date=>thursdayFor(date)!==anchor))}
 function realignWeeksToThursday(){const rebuilt={};Object.values(S.weeks||{}).forEach(source=>{Object.entries(source?.daily||{}).forEach(([date,scores])=>{const anchor=thursdayFor(date),target=rebuilt[anchor]||(rebuilt[anchor]={daily:{},weights:{},taskDynamics:{}});target.daily[date]={...(target.daily[date]||{}),...(scores||{})};Object.entries(source.weights||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.weights[id])))target.weights[id]=num(value)});Object.entries(source.taskDynamics||{}).forEach(([id,value])=>{if(!Number.isFinite(Number(target.taskDynamics[id])))target.taskDynamics[id]=num(value)})})});S.weeks=rebuilt}
 function mergeCurrentTask(canonicalId,legacyIds){const week=S.weeks[thursdayFor(today())];if(!week)return;for(const bucket of [week.daily,week.planned])Object.values(bucket||{}).forEach(scores=>{if(legacyIds.some(id=>num(scores?.[id])>0))scores[canonicalId]=1;legacyIds.forEach(id=>delete scores[id])});legacyIds.forEach(id=>{delete week.weights?.[id];delete week.taskDynamics?.[id]})}
-function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{if(!S.tasks.some(item=>num(item.id)===num(fresh.id)))S.tasks.push(clone(fresh))});const patches={102:{dynamicId:1,w:50},105:{dynamicId:1,w:60},202:{dynamicId:2,w:150},301:{dynamicId:3,w:30},302:{dynamicId:3,w:880},405:{dynamicId:4,name:'Сделано доброе дело',w:500},401:{dynamicId:4,name:'Дело, сделанное в ассоциации',w:100},505:{dynamicId:5,name:'Сделано доброе дело',w:500},501:{dynamicId:5,name:'Дело, сделанное в фонде Друг',w:100},702:{dynamicId:7,name:'День с высоким ARO',w:500}};Object.entries(patches).forEach(([id,patch])=>{const task=S.tasks.find(item=>num(item.id)===num(id));if(task)Object.assign(task,patch)});DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task)task.order=fresh.order});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);Object.entries(patches).forEach(([id,patch])=>{week.weights[id]=patch.w;week.taskDynamics[id]=patch.dynamicId})}}
+function migrateTaskCatalog(){mergeCurrentTask(401,[404]);mergeCurrentTask(501,[502]);mergeCurrentTask(602,[603,604]);DEFAULT_TASKS.forEach(fresh=>{if(!S.tasks.some(item=>num(item.id)===num(fresh.id)))S.tasks.push(clone(fresh))});const patches={101:{dynamicId:1,w:10},102:{dynamicId:1,w:100},103:{dynamicId:1,w:30},104:{dynamicId:1,w:50},105:{dynamicId:1,w:100},201:{dynamicId:2,w:20},202:{dynamicId:2,w:100},203:{dynamicId:2,w:250},204:{dynamicId:2,w:200},301:{dynamicId:3,w:50},302:{dynamicId:3,w:880},405:{dynamicId:4,name:'Сделано доброе дело',w:500},401:{dynamicId:4,name:'Дело, сделанное в ассоциации',w:100},505:{dynamicId:5,name:'Сделано доброе дело',w:500},501:{dynamicId:5,name:'Дело, сделанное в фонде Друг',w:100},702:{dynamicId:7,name:'День с высоким ARO',w:1000},704:{dynamicId:7,name:'День идеального настроения',w:500},801:{dynamicId:8,name:'Описана тэта',w:10000}};Object.entries(patches).forEach(([id,patch])=>{const task=S.tasks.find(item=>num(item.id)===num(id));if(task)Object.assign(task,patch)});DEFAULT_TASKS.forEach(fresh=>{const task=S.tasks.find(item=>num(item.id)===num(fresh.id));if(task){task.order=fresh.order;task.active=true}});S.tasks.forEach(task=>{if(REMOVED_TASK_IDS.includes(num(task.id)))task.active=false});const current=thursdayFor(today()),week=S.weeks[current];if(week){freezeWeek(current);Object.entries(patches).forEach(([id,patch])=>{week.weights[id]=patch.w;week.taskDynamics[id]=patch.dynamicId})}}
 function taskWeekWeight(task,anchor){const stored=S.weeks[anchor]?.weights?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.w)}
 function taskWeekDynamic(task,anchor){const stored=S.weeks[anchor]?.taskDynamics?.[task.id];return Number.isFinite(Number(stored))?Number(stored):num(task.dynamicId)}
 function scoredTasks(anchor,dynamicId=null){return S.tasks.filter(task=>dynamicId==null||taskWeekDynamic(task,anchor)===num(dynamicId))}

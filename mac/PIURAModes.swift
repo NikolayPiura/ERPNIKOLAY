@@ -36,10 +36,10 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work || self == .mentorship }
     var needsChatGPT: Bool { self == .work }
-    // Morning and weekday work use the authenticated Yandex web player through
-    // the ERP bridge. PIURA Modes never focuses or hides a separate music window.
-    var needsMusic: Bool { self == .morning || self == .work }
-    var musicVolume: Int? { self == .morning ? 25 : self == .work ? 40 : nil }
+    // Every room mode has a soundtrack. Morning starts quietly; the remaining
+    // modes use the regular working level.
+    var needsMusic: Bool { true }
+    var musicVolume: Int? { self == .morning ? 20 : 40 }
     var needsZoom: Bool { self == .mentorship }
 }
 private struct DisplayTarget {
@@ -91,8 +91,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private let workTableURL = "https://docs.google.com/spreadsheets/d/1tZFDTfb0AtUB5l7I5KbSSUUUaNOP6ux7M9SWYHb4BMc/edit?gid=720489481#gid=720489481"
     private let erpBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/"
     private let musicURL = "https://music.yandex.ru/"
-    private let morningAdminPreviewBaseURL = "https://nikolaypiura.github.io/ERPNIKOLAY/morning-admin-preview.html"
-    private var morningAdminPreviewURL: String { morningAdminPreviewBaseURL + "?build=20260920-batch30" }
     private let ethicalProgramURL = "https://docs.google.com/spreadsheets/d/1y7rhjj0b__Rng1b8K0RndbnfV2I2Lfy4BMGCplgmZWU/edit?gid=0#gid=0"
     private let tradingViewURL = "https://ru.tradingview.com/symbols/USDRUB/"
     private let policyURL = "https://nikolaypiura.github.io/ERPNIKOLAY/communication-policy.html"
@@ -1069,19 +1067,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         """)
     }
     private func runMode(_ mode: WorkMode, preview: Bool) -> ModeResult {
-        var displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
-        if displays.count < 3 && !preview {
-            wakeConnectedDisplays()
-            let deadline = Date().addingTimeInterval(4)
-            while displays.count < 3 && Date() < deadline {
-                pumpRunLoop(0.25)
-                displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
-            }
-        }
-        guard displays.count == 3 else {
-            return ModeResult(ok: false, message: "Нужны все три монитора: центральный, левый и правый.")
-        }
-        let left = displays[0], center = displays[1], right = displays[2]
         var notes: [String] = []
         var closingApps: [NSRunningApplication] = []
         var wallpaperJob: WallpaperJob?
@@ -1095,6 +1080,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             guard canControlSystemEvents() else {
                 return ModeResult(ok: false, message: "Разрешите PIURA Modes управлять System Events и запустите режим снова.")
             }
+            if mode == .morning {
+                // Morning has an intentional physical order: power first,
+                // quiet music second, and only then wake and arrange displays.
+                do { try setMorningOutletsOn() } catch { notes.append("Розетки: \(error.localizedDescription)") }
+                do { try prepareMorningAudioBeforeDisplays() } catch { notes.append("Утренняя музыка: \(error.localizedDescription)") }
+            }
+        }
+        var displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+        if displays.count < 3 && !preview {
+            wakeConnectedDisplays()
+            let deadline = Date().addingTimeInterval(4)
+            while displays.count < 3 && Date() < deadline {
+                pumpRunLoop(0.25)
+                displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
+            }
+        }
+        guard displays.count == 3 else {
+            return ModeResult(ok: false, message: "Нужны все три монитора: центральный, левый и правый.")
+        }
+        let left = displays[0], center = displays[1], right = displays[2]
+        if !preview {
             closingApps = closeRegularApplications(exceptFor: mode)
             do { try setSystemDarkAppearance() } catch { notes.append("Тёмный Mac: \(error.localizedDescription)") }
             do { wallpaperJob = try startDesktopWallpaper(for: mode) } catch { notes.append("Обои рабочего стола: \(error.localizedDescription)") }
@@ -1167,6 +1173,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         try? process.run()
         verifiedWindows.append(["displayWakeRequested":true])
     }
+    private func setMorningOutletsOn() throws {
+        let endpoint = URL(string:"http://127.0.0.1:45831/smart-home")!
+        var failures: [String] = []
+        for id in ["1","2","3","5"] {
+            var request = URLRequest(url:endpoint)
+            request.httpMethod = "POST"
+            request.timeoutInterval = 3
+            request.setValue("application/json",forHTTPHeaderField:"Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject:["device":id,"power":true])
+            let semaphore = DispatchSemaphore(value:0)
+            var status = 0
+            var requestError: Error?
+            URLSession.shared.dataTask(with:request) { _, response, error in
+                status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                requestError = error
+                semaphore.signal()
+            }.resume()
+            _ = semaphore.wait(timeout:.now()+4)
+            if requestError != nil || !(200..<300).contains(status) { failures.append(id) }
+        }
+        guard failures.isEmpty else { throw modeError("не подтвердились устройства: "+failures.joined(separator:", ")) }
+        verifiedWindows.append(["morningOutletsOn":true,"deviceIDs":["1","2","3","5"],"sequence":1])
+    }
+    private func prepareMorningAudioBeforeDisplays() throws {
+        guard let erpURL = WorkMode.morning.erpURL else { return }
+        _ = try runningApplication("ru.yandex.desktop.yandex-browser",launch:true)
+        let raw = try runAppleScript("""
+        tell application "Yandex"
+          activate
+          set targetID to -1
+          repeat with w in every window
+            repeat with t in every tab of w
+              set u to URL of t
+              if u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html" then
+                set targetID to id of w
+                set active tab of w to t
+                exit repeat
+              end if
+            end repeat
+            if targetID is not -1 then exit repeat
+          end repeat
+          if targetID is -1 then set targetID to id of (make new window)
+          if URL of active tab of window id targetID is not "\(erpURL)" then set URL of active tab of window id targetID to "\(erpURL)"
+          set minimized of window id targetID to true
+          return targetID as text
+        end tell
+        """)
+        guard let id=Int(raw.trimmingCharacters(in:.whitespacesAndNewlines)) else { throw modeError("не найдено окно ERP для музыки") }
+        erpWindowID=id
+        try configureERPMusicVolume(for:.morning)
+        try verifyERPMusicPlaying()
+        verifiedWindows.append(["morningAudioBeforeDisplays":true,"sequence":2])
+    }
     private func display(named name: String) -> DisplayTarget? { NSScreen.screens.first(where: { $0.localizedName == name }).map(target) }
     private func display(at index: Int) -> DisplayTarget? { NSScreen.screens.indices.contains(index) ? target(NSScreen.screens[index]) : nil }
     private func leftmostDisplay() -> DisplayTarget? { NSScreen.screens.min(by: { $0.frame.minX < $1.frame.minX }).map(target) }
@@ -1227,7 +1286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let job = WallpaperJob()
         for (index, screen) in NSScreen.screens.sorted(by: { $0.frame.midX < $1.frame.midX }).enumerated() {
             var resource = mode.wallpaperResource + (screen.frame.height > screen.frame.width ? "-Portrait" : "")
-            if mode == .morning && index == 0 { resource = "Magic-Morning-Left" }
+            if mode == .morning && index == 0 { resource = "Magic-Morning-Left-v2" }
             if mode == .work && index == 0 { resource = "Climate-Left" }
             if mode == .learning && index == 0 { resource = "Learning-Left" }
             if mode == .learning && index == 2 { resource = "Learning-Right" }
@@ -1529,8 +1588,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func arrangeYandex(right: DisplayTarget, left: DisplayTarget, mode: WorkMode) throws {
         guard let erpURL = mode.erpURL else { return }
         guard let app = try runningApplication("ru.yandex.desktop.yandex-browser", launch: true) else { throw modeError("Яндекс не найден.") }
-        let leftURL = mode == .morning ? morningAdminPreviewURL : policyURL
-        let needsLeft = mode == .morning || mode == .mentorship
+        let leftURL = policyURL
+        let needsLeft = mode == .mentorship
         let leftScript = needsLeft ? """
           repeat with w in every window
             if id of w is not erpID then
@@ -1595,7 +1654,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.3'){if(!document.getElementById('piura-office-loader-10-3')){const s=document.createElement('script');s.id='piura-office-loader-10-3';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.3';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.4'){if(!document.getElementById('piura-office-loader-10-4')){const s=document.createElement('script');s.id='piura-office-loader-10-4';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.4';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -1622,7 +1681,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             let leftWindow = try yandexWindow(id: values[1], app: app)
             try fullScreenWindow(of: app, on: left, selected: leftWindow)
             try verifyBrowserWindow(app: "Yandex", id: values[1], target: left, expectedURL: leftURL)
-        } else {
+        } else if mode == .learning {
             _ = try runAppleScript("tell application \"Yandex\" to set minimized of window id \(values[0]) to true")
             let minimized = try runAppleScript("tell application \"Yandex\" to return minimized of window id \(values[0]) as text")
             guard minimized == "true" else { throw modeError("ERP не свернулась для режима обучения.") }
@@ -2258,26 +2317,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         attempt { try enforceYandexSides(for: mode) }
         attempt {
-        if mode == .morning {
-            let result = try runAppleScript("""
-            tell application "Yandex"
-              set previewTabNumber to 0
-              set tabNumber to 0
-              repeat with t in every tab of window id \(leftWindowID)
-                set tabNumber to tabNumber + 1
-                if URL of t starts with "\(morningAdminPreviewBaseURL)" then set previewTabNumber to tabNumber
-              end repeat
-              if previewTabNumber is 0 then error "Нет вкладки целей и планов."
-              set active tab index of window id \(leftWindowID) to previewTabNumber
-              set minimized of window id \(leftWindowID) to false
-              return URL of active tab of window id \(leftWindowID)
-            end tell
-            """)
-            guard result.hasPrefix(morningAdminPreviewURL) else { throw modeError("Слева не открылся обзор целей и планов.") }
-            verifiedWindows.append(["morningLeftForeground":"goals-only","musicControlledFromERP":true])
-        }
-        }
-        attempt {
         if mode != .learning,
            let yandex = workspace.runningApplications.first(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" }) {
             let visible = CGWindowListCopyWindowInfo([.optionOnScreenOnly,.excludeDesktopElements],kCGNullWindowID) as? [[String:Any]] ?? []
@@ -2325,8 +2364,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             try fullScreenWindow(of:app,on:right,selected:erp)
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:erpURL)
         }
-        if mode == .morning || mode == .mentorship {
-            let expected = mode == .morning ? morningAdminPreviewURL : policyURL
+        if mode == .mentorship {
+            let expected = policyURL
             do {
                 try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expected)
             } catch {
@@ -2334,7 +2373,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 try fullScreenWindow(of:app,on:left,selected:helper)
                 try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:expected)
             }
-            verifiedWindows.append([mode == .morning ? "morningLeftForeground" : "mentorshipLeftForeground":mode == .morning ? "goals-only" : "mentorship-only","rightForeground":"ERP-only"])
+            verifiedWindows.append(["mentorshipLeftForeground":"mentorship-only","rightForeground":"ERP-only"])
         }
     }
     private func verifyFinalSides(for mode: WorkMode, left: DisplayTarget, right: DisplayTarget) throws {
@@ -2344,7 +2383,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             try verifyBrowserWindow(app:"Yandex",id:erpWindowID,target:right,expectedURL:mode.erpURL!)
         }
         if mode == .morning {
-            try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:morningAdminPreviewURL)
+            verifiedWindows.append(["morningLeftForeground":"wallpaper-only","morningGoalsOpened":false])
         } else if mode == .mentorship {
             try verifyBrowserWindow(app:"Yandex",id:leftWindowID,target:left,expectedURL:policyURL)
         }
@@ -2375,7 +2414,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.3'){if(!document.getElementById('piura-office-loader-10-3')){const s=document.createElement('script');s.id='piura-office-loader-10-3';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.3';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.4'){if(!document.getElementById('piura-office-loader-10-4')){const s=document.createElement('script');s.id='piura-office-loader-10-4';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.4';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)

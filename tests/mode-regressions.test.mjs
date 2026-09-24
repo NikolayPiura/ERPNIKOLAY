@@ -76,18 +76,27 @@ test('four mode recipes keep their screen and audio contracts',()=>{
   assert.match(app,/case .work: "Климат"/);
   assert.match(app,/var needsTelegram: Bool \{ self == \.work \|\| self == \.mentorship \}/);
   assert.match(app,/var needsChatGPT: Bool \{ self == \.work \}/);
-  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
-  assert.match(app,/var musicVolume: Int\? \{ self == \.morning \? 25 : self == \.work \? 40 : nil \}/);
+  assert.match(app,/var needsMusic: Bool \{ true \}/);
+  assert.match(app,/var musicVolume: Int\? \{ self == \.morning \? 20 : 40 \}/);
   assert.match(app,/case .learning: required = \[courseURL\]/);
   assert.match(app,/learningERPMinimized/);
-  assert.match(app,/mode == \.morning \? morningAdminPreviewURL : policyURL/);
+  assert.match(app,/let needsLeft = mode == \.mentorship/);
+  assert.match(app,/morningGoalsOpened":false/);
   assert.match(app,/if mode\.needsMusic[\s\S]*configureERPMusicVolume\(for:mode\)[\s\S]*verifyERPMusicPlaying\(\)[\s\S]*else[\s\S]*verifyERPMusicPaused\(\)/);
   assert.match(read('work-modes.js'),/work:'Климат'/);
 });
+test('morning powers outlets, starts quiet music, then wakes screens without goals',()=>{
+  const run=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
+  assert.ok(run.indexOf('setMorningOutletsOn()')<run.indexOf('prepareMorningAudioBeforeDisplays()'));
+  assert.ok(run.indexOf('prepareMorningAudioBeforeDisplays()')<run.indexOf('wakeConnectedDisplays()'));
+  assert.match(app,/\["1","2","3","5"\]/);
+  assert.match(app,/Magic-Morning-Left-v2/);
+  assert.doesNotMatch(app,/morningAdminPreview/);
+});
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
-  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
-  assert.match(app,/let leftURL = mode == \.morning \? morningAdminPreviewURL : policyURL/);
-  assert.match(app,/"morningLeftForeground":"goals-only","musicControlledFromERP":true/);
+  assert.match(app,/var needsMusic: Bool \{ true \}/);
+  assert.match(app,/let leftURL = policyURL/);
+  assert.match(app,/"morningLeftForeground":"wallpaper-only","morningGoalsOpened":false/);
   assert.match(app,/"musicDisplay":"ERP control only"/);
   assert.match(app,/finalSideWindowsVerified/);
   const audit=app.slice(app.indexOf('private func verifyFinalSides'),app.indexOf('private func verifyOfficeLighting'));
@@ -115,7 +124,7 @@ test('Yandex windows survive generic AX titles by binding immutable IDs to frame
   assert.match(binding,/"boundBy":"immutable-frame"/);
   assert.doesNotMatch(binding,/return candidates\.first/);
 });
-test('morning shows only goals on the left while music stays inside ERP',()=>{
+test('legacy goals preview remains valid but is no longer assigned by morning mode',()=>{
   const preview=read('morning-admin-preview.html');
   const admin=read('piura-erp-restored 3/modules/AdminScale.html');
   assert.match(preview,/grid-template-columns:1fr/);
