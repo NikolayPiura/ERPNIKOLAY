@@ -621,6 +621,12 @@ test('управление фондами открывает главную Ст
   assert.match(funds, /id="systemStructureGrid"/);
   assert.match(funds, /Вечный фонд/);
   assert.match(funds, /Редактировать структуру/);
+  assert.doesNotMatch(funds, />✎ Редактировать структуру</);
+  assert.doesNotMatch(funds, /Личные капиталы · проекты · накопления · преемственность/);
+  assert.match(funds, /\['Эндаумент «Друг»','endowment:friend',1\]/);
+  assert.match(funds, /\['Эндаумент «Экология»','endowment:plants',1\]/);
+  assert.match(funds, /Вьюгина Ольга \(фонд «Пенсия»\)',0,1/);
+  assert.match(funds, /currentEndowmentData\?\.groups\?\.\[key\]\?\.total/);
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
   assert.match(funds, /id="filterPanel" style="display:none/);
