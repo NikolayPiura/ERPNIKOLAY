@@ -625,7 +625,11 @@ test('управление фондами открывает главную Ст
   assert.doesNotMatch(funds, /Личные капиталы · проекты · накопления · преемственность/);
   assert.match(funds, /\['Эндаумент «Друг»','endowment:friend',1\]/);
   assert.match(funds, /\['Эндаумент «Экология»','endowment:plants',1\]/);
-  assert.match(funds, /Вьюгина Ольга \(фонд «Пенсия»\)',0,1/);
+  assert.match(funds, /Вьюгина Ольга — фонд «Пенсия»',0,1/);
+  assert.match(funds, /piura_fund_system_structure_v3/);
+  assert.match(funds, /class="system-node-status"/);
+  assert.match(funds, /class="system-sector-count"/);
+  assert.match(funds, /data-system-active/);
   assert.match(funds, /currentEndowmentData\?\.groups\?\.\[key\]\?\.total/);
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
