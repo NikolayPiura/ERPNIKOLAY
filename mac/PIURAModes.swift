@@ -1081,15 +1081,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 return ModeResult(ok: false, message: "Разрешите PIURA Modes управлять System Events и запустите режим снова.")
             }
             if mode == .morning {
+                holdSystemAwakeForMorning()
                 // Morning has an intentional physical order: power first,
                 // quiet music second, and only then wake and arrange displays.
                 do { try setMorningOutletsOn() } catch { notes.append("Розетки: \(error.localizedDescription)") }
                 do { try prepareMorningAudioBeforeDisplays() } catch { notes.append("Утренняя музыка: \(error.localizedDescription)") }
+                wakeConnectedDisplays()
             }
         }
         var displays = NSScreen.screens.sorted { $0.frame.midX < $1.frame.midX }.map(target)
-        if displays.count < 3 && !preview {
+        if displays.count < 3 && !preview && mode != .morning {
             wakeConnectedDisplays()
+        }
+        if displays.count < 3 && !preview {
             let deadline = Date().addingTimeInterval(4)
             while displays.count < 3 && Date() < deadline {
                 pumpRunLoop(0.25)
@@ -1166,12 +1170,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         return ModeResult(ok: notes.isEmpty, message: notes.isEmpty ? success : "Выполнено не полностью: " + notes.joined(separator: " · "))
     }
+    private func holdSystemAwakeForMorning() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
+        process.arguments = ["-i", "-t", "240"]
+        try? process.run()
+        verifiedWindows.append(["morningWakeHoldSeconds":240])
+    }
     private func wakeConnectedDisplays() {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
-        process.arguments = ["-u", "-t", "4"]
+        process.arguments = ["-d", "-u", "-t", "180"]
         try? process.run()
-        verifiedWindows.append(["displayWakeRequested":true])
+        verifiedWindows.append(["displayWakeRequested":true,"sequence":3,"displayWakeHoldSeconds":180])
     }
     private func setMorningOutletsOn() throws {
         let endpoint = URL(string:"http://127.0.0.1:45831/smart-home")!
@@ -1223,7 +1234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         guard let id=Int(raw.trimmingCharacters(in:.whitespacesAndNewlines)) else { throw modeError("не найдено окно ERP для музыки") }
         erpWindowID=id
         try configureERPMusicVolume(for:.morning)
-        try verifyERPMusicPlaying()
+        try verifyERPMusicPlaying(timeout:35)
         verifiedWindows.append(["morningAudioBeforeDisplays":true,"sequence":2])
     }
     private func display(named name: String) -> DisplayTarget? { NSScreen.screens.first(where: { $0.localizedName == name }).map(target) }
@@ -2260,9 +2271,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         verifiedWindows.append(["musicAppearance":result,"outputVolume":volume])
         if mode == .morning && !result.contains("\"light\":true") { throw modeError("Светлая музыка не подтверждена.") }
     }
-    private func verifyERPMusicPlaying() throws {
+    private func verifyERPMusicPlaying(timeout:TimeInterval=12) throws {
         var clicked = false
-        let deadline = min(Date().addingTimeInterval(12), runDeadline)
+        let deadline = min(Date().addingTimeInterval(timeout), runDeadline)
         while Date() < deadline {
             let command = clicked ? "false" : "true"
             let javascript = """

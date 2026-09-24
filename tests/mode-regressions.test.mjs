@@ -87,11 +87,22 @@ test('four mode recipes keep their screen and audio contracts',()=>{
 });
 test('morning powers outlets, starts quiet music, then wakes screens without goals',()=>{
   const run=app.slice(app.indexOf('private func runMode'),app.indexOf('private func display'));
+  assert.ok(run.indexOf('holdSystemAwakeForMorning()')<run.indexOf('setMorningOutletsOn()'));
   assert.ok(run.indexOf('setMorningOutletsOn()')<run.indexOf('prepareMorningAudioBeforeDisplays()'));
   assert.ok(run.indexOf('prepareMorningAudioBeforeDisplays()')<run.indexOf('wakeConnectedDisplays()'));
+  assert.match(run,/mode != \.morning/);
+  assert.match(app,/process\.arguments = \["-d", "-u", "-t", "180"\]/);
+  assert.match(app,/verifyERPMusicPlaying\(timeout:35\)/);
   assert.match(app,/\["1","2","3","5"\]/);
   assert.match(app,/Magic-Morning-Left-v2/);
   assert.doesNotMatch(app,/morningAdminPreview/);
+});
+test('automatic morning wakes a sleeping Mac before the 07:00 launch',()=>{
+  const installer=read('mac/install-auto-morning.sh');
+  const agent=read('mac/com.piura.modes.morning.plist');
+  assert.match(installer,/pmset repeat wakeorpoweron MTWRFSU 06:59:00/);
+  assert.match(agent,/<key>Hour<\/key>\s*<integer>7<\/integer>/);
+  assert.match(agent,/<key>Minute<\/key>\s*<integer>0<\/integer>/);
 });
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
   assert.match(app,/var needsMusic: Bool \{ true \}/);
