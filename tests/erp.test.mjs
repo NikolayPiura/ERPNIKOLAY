@@ -626,10 +626,14 @@ test('управление фондами открывает главную Ст
   assert.match(funds, /\['Эндаумент «Друг»','endowment:friend',1\]/);
   assert.match(funds, /\['Эндаумент «Экология»','endowment:plants',1\]/);
   assert.match(funds, /Вьюгина Ольга — фонд «Пенсия»',0,1/);
-  assert.match(funds, /piura_fund_system_structure_v3/);
-  assert.match(funds, /class="system-node-status"/);
-  assert.match(funds, /class="system-sector-count"/);
+  assert.match(funds, /piura_fund_system_structure_v4/);
+  assert.doesNotMatch(funds, /class="system-node-status"/);
+  assert.doesNotMatch(funds, /class="system-sector-count"/);
   assert.match(funds, /data-system-active/);
+  assert.match(funds, /data-system-usd/);
+  assert.match(funds, /\['Пюра Николай \(PFF 2\)',0,0\]/);
+  assert.match(funds, /\['Пюра Александра \(PAFF 2\)',0,0\]/);
+  assert.match(funds, /\['Фонд «LONG» \(3 × 200\)',0,1,10000\]/);
   assert.match(funds, /currentEndowmentData\?\.groups\?\.\[key\]\?\.total/);
   assert.match(funds, /<div class="root-metrics">/);
   assert.match(funds, /id="inclPanel" style="display:none/);
