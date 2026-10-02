@@ -7,7 +7,7 @@ import {spawnSync} from 'node:child_process';
 import {runInNewContext} from 'node:vm';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
-test('four office colors use the intended brightness, serialize and deduplicate pending requests',async()=>{
+test('office colors use full brightness, serialize and deduplicate pending requests',async()=>{
   const calls=[],attributes={},listeners={},window={};
   const controller={piuraSetOfficeColor:async(...args)=>{calls.push(args);return [{source:'test',ok:true}]}};
   const document={documentElement:{dataset:attributes},addEventListener:(name,fn)=>listeners[name]=fn,
@@ -15,15 +15,16 @@ test('four office colors use the intended brightness, serialize and deduplicate 
   const context={window,document,URL,MutationObserver:class{observe(){}},location:{href:'https://example.com/ERPNIKOLAY/'},crypto:{randomUUID:()=>String(Math.random())},performance,setTimeout,clearTimeout};
   const script=read('office-modes.js');runInNewContext(script,context);
   assert.equal(calls.length,0);
-  for(const [mode,color] of Object.entries({morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df'})){
+  const colors={morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df',weekday1:'#42d8a7',weekday2:'#4f8ef7',weekday3:'#9a72ed',weekday4:'#ffad4f',weekday5:'#ff5f98'};
+  for(const [mode,color] of Object.entries(colors)){
     window.piuraSetOfficeMode(mode);window.piuraSetOfficeMode(mode);
     await new Promise(setImmediate);
-    const brightness=mode==='morning'?70:100;
+    const brightness=100;
     assert.deepEqual(calls.at(-1),[color,brightness]);
     assert.equal(window.piuraOfficeLighting.status,'done');
     assert.equal(window.piuraOfficeLighting.brightness,brightness);
   }
-  assert.equal(calls.length,4);
+  assert.equal(calls.length,Object.keys(colors).length);
   const state=window.piuraOfficeLighting;
   runInNewContext(script,context);assert.equal(window.piuraOfficeLighting,state,'a duplicate script must not reset pending/completed lighting');
   window.piuraSetOfficeMode('investments');await new Promise(setImmediate);

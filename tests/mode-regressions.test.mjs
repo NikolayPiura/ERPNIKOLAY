@@ -26,7 +26,8 @@ test('office modes reuse wheel control, not ERP palettes or HVAC',()=>{
   const shell=read('index.html'),office=read('office-modes.js'),overview=read('piura-erp-restored 3/modules/Overview.html');
   assert.doesNotMatch(shell,/prefs\.palette=(mode|launchWorkMode)/);
   assert.doesNotMatch(office,/controlHvac|toggleEverything|zoneAllToggle/);
-  assert.match(office,/brightness=mode==='morning'\?70:100/);
+  assert.match(office,/const brightness=100/);
+  for(const day of [1,2,3,4,5])assert.match(office,new RegExp(`weekday${day}:`));
   assert.match(office,/target.piuraSetOfficeColor\(colors\[mode\],brightness\)/);
   assert.match(overview,/commitLampWheelColor\(hex\).*window.piuraSetOfficeColor\(hex\)/);
   const officeColor=overview.slice(overview.indexOf('window.piuraSetOfficeColor'),overview.indexOf('async function commitLampWheelColor'));
@@ -76,7 +77,7 @@ test('four mode recipes keep their screen and audio contracts',()=>{
   assert.match(app,/case .work: "Климат"/);
   assert.match(app,/var needsTelegram: Bool \{ self == \.work \|\| self == \.mentorship \}/);
   assert.match(app,/var needsChatGPT: Bool \{ self == \.work \}/);
-  assert.match(app,/var needsMusic: Bool \{ true \}/);
+  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   assert.match(app,/var musicVolume: Int\? \{ self == \.morning \? 20 : 40 \}/);
   assert.match(app,/case .learning: required = \[courseURL\]/);
   assert.match(app,/learningERPMinimized/);
@@ -92,6 +93,9 @@ test('morning powers outlets, starts quiet music, then wakes screens without goa
   assert.ok(run.indexOf('prepareMorningAudioBeforeDisplays()')<run.indexOf('wakeConnectedDisplays()'));
   assert.match(run,/mode != \.morning/);
   assert.match(app,/process\.arguments = \["-d", "-u", "-t", "180"\]/);
+  assert.match(app,/process\.arguments = \["-d", "-i", "-t", "3600"\]/);
+  assert.match(app,/returnToMorningLockScreen\(\)/);
+  assert.match(app,/process\.arguments = \["-suspend"\]/);
   assert.match(app,/verifyERPMusicPlaying\(timeout:35\)/);
   assert.match(app,/\["1","2","3","5"\]/);
   assert.match(app,/Magic-Morning-Left-v2/);
@@ -105,7 +109,7 @@ test('automatic morning wakes a sleeping Mac before the 07:00 launch',()=>{
   assert.match(agent,/<key>Minute<\/key>\s*<integer>0<\/integer>/);
 });
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
-  assert.match(app,/var needsMusic: Bool \{ true \}/);
+  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   assert.match(app,/let leftURL = policyURL/);
   assert.match(app,/"morningLeftForeground":"wallpaper-only","morningGoalsOpened":false/);
   assert.match(app,/"musicDisplay":"ERP control only"/);

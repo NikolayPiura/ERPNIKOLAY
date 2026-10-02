@@ -95,7 +95,7 @@ test('component is on main ERP after fund goals and before room controls',()=>{
 });
 test('native safeguards: stable IDs, bounded scripts, latest pending request, no force quit',()=>{
   assert.match(app,/window id erpID/);assert.match(app,/window id leftID/);
-  assert.match(app,/pendingLaunch = \(mode, preview, id\)/);
+  assert.match(app,/pendingLaunch = \(mode, preview, id, weekday\)/);
   assert.match(app,/runDeadline/);assert.match(app,/SIGKILL/);
   assert.doesNotMatch(app,/executeAndReturnError|forceTerminate\(\)/);
   assert.match(app,/requestID == id/);
@@ -156,17 +156,19 @@ test('ERP music card uses the official embedded player without opening browser w
   assert.doesNotMatch(html,/id="musicVolume"/);
   assert.doesNotMatch(html,/music-kicker|id="musicTitle"|Готово к воспроизведению|Управление без перехода/);
   assert.doesNotMatch(controller,/volume|send\('volume'/i);
-  assert.match(app,/var needsMusic: Bool \{ true \}/);
+  assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   const runMode=app.slice(app.indexOf('private func runMode'),app.indexOf('private func closeRegularApplications'));
   assert.doesNotMatch(runMode,/controlYandexMusic/);
 });
 
-test('time statistics lets every category drive a zero-based rolling weekly trend',()=>{
+test('time statistics lets every category drive an adaptive weekly trend without an artificial zero',()=>{
   const html=read('piura-erp-restored 3/modules/Time-tracker.html');
   assert.match(html,/id="statsTrendChart"/);
   assert.match(html,/function statisticsTrend\(categoryKey,period=statsPeriod\)/);
-  assert.match(html,/offset===0\?0/);
-  assert.match(html,/beginAtZero:true,suggestedMin:0/);
+  assert.doesNotMatch(html,/offset===0\?0/);
+  assert.match(html,/function statisticsTrendScale\(values\)/);
+  assert.match(html,/beginAtZero:false,min:scale\.min,max:scale\.max/);
+  assert.match(html,/const firstDataKey=categoryKeys\[0\]/);
   assert.match(html,/data-stats-category=/);
   assert.match(html,/localStorage\.setItem\(STATS_CATEGORY_KEY,key\)/);
   assert.match(html,/chartStatsTrend=new Chart/);

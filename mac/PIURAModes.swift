@@ -36,9 +36,9 @@ private enum WorkMode: String {
     }
     var needsTelegram: Bool { self == .work || self == .mentorship }
     var needsChatGPT: Bool { self == .work }
-    // Every room mode has a soundtrack. Morning starts quietly; the remaining
-    // modes use the regular working level.
-    var needsMusic: Bool { true }
+    // The weekday workspace has music, while learning and mentorship stay
+    // quiet. Morning starts at the gentlest level.
+    var needsMusic: Bool { self == .morning || self == .work }
     var musicVolume: Int? { self == .morning ? 20 : 40 }
     var needsZoom: Bool { self == .mentorship }
 }
@@ -61,7 +61,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var window: NSWindow!
     private var webView: WKWebView!
     private var pageReady = false
-    private var pendingLaunch: (WorkMode, Bool, String)?
+    private var pendingLaunch: (WorkMode, Bool, String, Int?)?
+    private var activeWeekday: Int?
     private var pendingMusicCommand: (String, String)?
     private var remoteCommandRunning = false
     private var requestID = ""
@@ -114,9 +115,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             performMusicCommand(command, id: id)
             return
         }
-        if let (mode, preview, id) = pendingLaunch {
+        if let (mode, preview, id, weekday) = pendingLaunch {
             pendingLaunch = nil
-            beginMode(mode, preview: preview, id: id)
+            beginMode(mode, preview: preview, id: id, weekday: weekday)
         }
     }
     // Native Split View temporarily hides this panel while macOS presents its
@@ -141,8 +142,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         guard let mode = WorkMode.resolve(host) else { return }
         let preview = components?.queryItems?.contains(where: { $0.name == "preview" && $0.value == "1" }) ?? false
-        guard launchConfigured else { pendingLaunch = (mode, preview, id); return }
-        beginMode(mode, preview: preview, id: id)
+        let weekday = components?.queryItems?.first(where: { $0.name == "day" })?.value.flatMap(Int.init)
+        guard launchConfigured else { pendingLaunch = (mode, preview, id, weekday); return }
+        beginMode(mode, preview: preview, id: id, weekday: weekday)
     }
     private func configureMenu() {
         let bar = NSMenu()
@@ -214,15 +216,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             return
         }
         guard let raw = body["mode"] as? String, let mode = WorkMode.resolve(raw) else { return }
-        beginMode(mode, preview: body["preview"] as? Bool ?? false, id: body["requestID"] as? String ?? UUID().uuidString)
+        let weekday = (body["day"] as? String).flatMap(Int.init) ?? body["day"] as? Int
+        beginMode(mode, preview: body["preview"] as? Bool ?? false, id: body["requestID"] as? String ?? UUID().uuidString, weekday: weekday)
     }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         pageReady = true
     }
-    private func beginMode(_ mode: WorkMode, preview: Bool, id: String = UUID().uuidString) {
+    private func beginMode(_ mode: WorkMode, preview: Bool, id: String = UUID().uuidString, weekday: Int? = nil) {
         // Keep the most recent intent instead of discarding clicks during launch.
-        guard !isModeRunning else { pendingLaunch = (mode, preview, id); return }
+        guard !isModeRunning else { pendingLaunch = (mode, preview, id, weekday); return }
         requestID = id
+        activeWeekday = mode == .work ? weekday : nil
         isPreviewRun = preview
         isModeRunning = true
         startedAt = Date(); phaseAt = startedAt; timings = [:]
@@ -239,9 +243,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             self.runDeadline = min(self.runDeadline, Date().addingTimeInterval(5))
             self.finishInWebView(result)
             self.isModeRunning = false
-            if let (next, nextPreview, nextID) = self.pendingLaunch {
+            if let (next, nextPreview, nextID, nextWeekday) = self.pendingLaunch {
                 self.pendingLaunch = nil
-                self.beginMode(next, preview: nextPreview, id: nextID)
+                self.beginMode(next, preview: nextPreview, id: nextID, weekday: nextWeekday)
                 return
             }
             if let (command, commandID) = self.pendingMusicCommand {
@@ -1162,6 +1166,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         let remaining = closingApps.filter { !$0.isTerminated }.map { $0.localizedName ?? "Приложение" }
         if !remaining.isEmpty { notes.append("Не закрылись (возможно, ожидают сохранения): " + remaining.joined(separator: ", ")) }
         markPhase("finishQuitting")
+        if !preview && mode == .morning {
+            do { try returnToMorningLockScreen() } catch { notes.append("Экран утра: \(error.localizedDescription)") }
+        }
         var success = preview
             ? "Проверено расположение режима «\(mode.title)»."
             : "Режим «\(mode.title)» включён."
@@ -1173,9 +1180,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private func holdSystemAwakeForMorning() {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
-        process.arguments = ["-i", "-t", "240"]
+        process.arguments = ["-d", "-i", "-t", "3600"]
         try? process.run()
-        verifiedWindows.append(["morningWakeHoldSeconds":240])
+        verifiedWindows.append(["morningWakeHoldSeconds":3600,"morningDisplaysHeldOn":true])
     }
     private func wakeConnectedDisplays() {
         let process = Process()
@@ -1183,6 +1190,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         process.arguments = ["-d", "-u", "-t", "180"]
         try? process.run()
         verifiedWindows.append(["displayWakeRequested":true,"sequence":3,"displayWakeHoldSeconds":180])
+    }
+    private func returnToMorningLockScreen() throws {
+        let executable = "/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/CGSession"
+        guard FileManager.default.isExecutableFile(atPath: executable) else { throw modeError("не найден системный экран блокировки") }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = ["-suspend"]
+        try process.run()
+        verifiedWindows.append(["morningLockScreenRequested":true,"automaticLoginUsed":false,"musicContinuesInUserSession":true])
     }
     private func setMorningOutletsOn() throws {
         let endpoint = URL(string:"http://127.0.0.1:45831/smart-home")!
@@ -1665,7 +1681,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Start the same physical color-wheel command while the windows arrange.
         // Preview runs do not change the room lights.
         if !isPreviewRun {
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.4'){if(!document.getElementById('piura-office-loader-10-4')){const s=document.createElement('script');s.id='piura-office-loader-10-4';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.4';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let lightingMode = officeLightingMode(for: mode)
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.5'){if(!document.getElementById('piura-office-loader-10-5')){const s=document.createElement('script');s.id='piura-office-loader-10-5';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.5';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -2410,7 +2427,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         }
         verifiedWindows.append(["finalSideWindowsVerified":true,"musicDisplay":"ERP control only"])
     }
+    private func officeLightingMode(for mode: WorkMode) -> String {
+        if mode == .work, let day = activeWeekday, (1...5).contains(day) { return "weekday\(day)" }
+        return mode.rawValue
+    }
     private func verifyOfficeLighting(for mode: WorkMode) throws {
+        let lightingMode = officeLightingMode(for: mode)
         let deadline = Date().addingTimeInterval(12)
         var lastState = ""
         repeat {
@@ -2418,14 +2440,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             lastState = json
             if let data = json.data(using: .utf8), let state = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let status = state["status"] as? String ?? ""
-                if state["mode"] as? String == mode.rawValue {
+                if state["mode"] as? String == lightingMode {
                     if status == "done" { verifiedWindows.append(["officeLighting":state]); return }
                     if status == "partial" || status == "failed" {
                         verifiedWindows.append(["officeLighting":state])
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.4'){if(!document.getElementById('piura-office-loader-10-4')){const s=document.createElement('script');s.id='piura-office-loader-10-4';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.4';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(mode.rawValue)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.5'){if(!document.getElementById('piura-office-loader-10-5')){const s=document.createElement('script');s.id='piura-office-loader-10-5';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.5';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)

@@ -1,12 +1,15 @@
 /* Physical office lighting, using the existing overview color-wheel handler. */
 (()=>{
-  if(window.piuraOfficeVersion==='10.4')return;
-  window.piuraOfficeVersion='10.4';
-  const colors={morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df'};
+  if(window.piuraOfficeVersion==='10.5')return;
+  window.piuraOfficeVersion='10.5';
+  const colors={
+    morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df',
+    weekday1:'#42d8a7',weekday2:'#4f8ef7',weekday3:'#9a72ed',weekday4:'#ffad4f',weekday5:'#ff5f98'
+  };
   let controller,ready,queue=Promise.resolve();
   const setState=state=>{window.piuraOfficeLighting=state;document.documentElement.dataset.officeLighting=JSON.stringify(state)};
   setState({status:'idle'});
-  document.documentElement.dataset.officeControllerReady='10.4';
+  document.documentElement.dataset.officeControllerReady='10.5';
   document.addEventListener('piura:office-mode',()=>window.piuraSetOfficeMode(document.documentElement.dataset.officeModeRequest));
   // Native browser automation may run in an isolated JS world. Observe the
   // shared DOM as well as events; do not depend on access to page globals.
@@ -17,7 +20,7 @@
       controller=document.createElement('iframe');controller.hidden=true;controller.title='Контроллер освещения';
       const timer=setTimeout(()=>reject(new Error('Контроллер освещения не загрузился')),10000);
       controller.onload=()=>{clearTimeout(timer);resolve(controller.contentWindow)};
-      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes10.4',location.href).href;
+      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes10.5',location.href).href;
       document.body.append(controller);
     });
     return ready;
@@ -27,7 +30,7 @@
     if(!Object.hasOwn(colors,mode))return false;
     if(window.piuraOfficeLighting?.mode===mode&&window.piuraOfficeLighting.status==='pending')return true;
     const request=crypto.randomUUID(),started=performance.now();
-    const brightness=mode==='morning'?70:100;
+    const brightness=100;
     setState({status:'pending',mode,color:colors[mode],brightness,request});
     // Serialize hardware commands: an older slow request cannot overwrite the
     // latest color. No command is sent simply by loading the ERP.
