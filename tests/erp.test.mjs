@@ -783,7 +783,11 @@ test('динамика эффективности хранит неизменя�
   assert.match(effectiveness, /formula:'normalized-periods'/);
   assert.doesNotMatch(effectiveness, /function calcDph|last3avg|weighted|Лучший мес|Медиана/);
   assert.match(effectiveness, /function scheduledCheckpointDates/);
+  assert.match(effectiveness, /function nextCheckpointDate/);
   assert.match(effectiveness, /function visibleCheckpointDates/);
+  assert.match(effectiveness, /\[\.\.\.scheduledCheckpointDates\(today\),nextCheckpointDate\(today\)\]/);
+  assert.match(effectiveness, /date===liveDate\?currentCheckpoint/);
+  assert.match(effectiveness, /Живая точка обновляется весь месяц и зафиксируется/);
   assert.match(effectiveness, /checkpointMonths:6/);
   assert.match(effectiveness, /3 месяца/);
   assert.match(effectiveness, /6 месяцев/);
