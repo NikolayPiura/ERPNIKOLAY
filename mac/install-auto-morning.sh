@@ -6,12 +6,16 @@ user_home="$HOME"
 uid="$(/usr/bin/id -u)"
 state_dir="$user_home/Library/Application Support/PIURA Modes"
 agent_file="$user_home/Library/LaunchAgents/com.piura.modes.morning.plist"
+noon_agent_file="$user_home/Library/LaunchAgents/com.piura.modes.noon-lights-off.plist"
 stamp_file="$state_dir/last-auto-morning-date"
 
 /bin/mkdir -p "$state_dir" "$user_home/Library/LaunchAgents" "$user_home/Library/Logs"
 /bin/cp "$script_dir/auto-morning.sh" "$state_dir/auto-morning.sh"
 /bin/chmod 755 "$state_dir/auto-morning.sh"
 /bin/cp "$script_dir/com.piura.modes.morning.plist" "$agent_file"
+/bin/cp "$script_dir/noon-lights-off.sh" "$state_dir/noon-lights-off.sh"
+/bin/chmod 755 "$state_dir/noon-lights-off.sh"
+/bin/cp "$script_dir/com.piura.modes.noon-lights-off.plist" "$noon_agent_file"
 
 # Installing during the day must not unexpectedly rearrange the current
 # workspace. The first automatic run begins tomorrow; calendar runs remain on.
@@ -25,10 +29,17 @@ fi
 /bin/launchctl enable "gui/$uid/com.piura.modes.morning"
 /bin/launchctl print "gui/$uid/com.piura.modes.morning" >/dev/null
 
+/bin/launchctl bootout "gui/$uid/com.piura.modes.noon-lights-off" 2>/dev/null || true
+/bin/launchctl bootstrap "gui/$uid" "$noon_agent_file"
+/bin/launchctl enable "gui/$uid/com.piura.modes.noon-lights-off"
+/bin/launchctl print "gui/$uid/com.piura.modes.noon-lights-off" >/dev/null
+
 # launchd's calendar trigger does not wake a sleeping Mac. Schedule a real
 # hardware wake one minute earlier so the 07:00 user agent can run on time.
 if [[ "$(/usr/bin/id -u)" == "0" ]]; then
   /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:30
+elif /usr/bin/pmset -g sched | /usr/bin/grep -q 'wakepoweron at 6:59AM every day'; then
+  :
 elif /usr/bin/sudo -n /usr/bin/pmset repeat wakeorpoweron MTWRFSU 06:59:30 2>/dev/null; then
   :
 else

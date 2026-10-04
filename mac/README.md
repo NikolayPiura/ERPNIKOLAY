@@ -14,6 +14,8 @@ Create profiles named `Утро`, `Климат`, `Инвестиции`, `Об�
 
 Only the current profile window remains open. Before closing other browser windows, the app saves a private URL inventory under Application Support/PIURA Modes/SessionBackups (permissions 0600). Normal browser close/save confirmations are not dismissed. Other applications quit normally; unsaved documents are never force-discarded.
 
+The morning automation expects the Mac to remain asleep with the user's session active. The hardware wake is scheduled for 06:59:30 and the mode starts at 07:00; FileVault intentionally prevents unattended GUI login after a complete shutdown, so no password is stored. The mode returns to the lock screen after arranging the workspace, while quiet music and the display wake hold continue. A second LaunchAgent switches all color-mode lights off at 12:00 by reusing the existing ERP tab and never opening a spare browser window.
+
 ## Screens and verification
 
 Exactly three connected screens are ordered physically left to right. Safari is native fullscreen in the center; ChatGPT is fullscreen on the left. Telegram uses macOS Full Screen Tile, not resized floating windows; both fullscreen flags and adjacent frames are checked. ERP stays right. Learning keeps only a minimized ERP window in Yandex.

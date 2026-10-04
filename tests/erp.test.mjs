@@ -763,11 +763,11 @@ test('единый защищённый мост поддерживает Docs, 
   assert.equal(adminBridge, integrationBridge);
 });
 
-test('динамика эффективности хранит три ежемесячных среза, а время быстро и безопасно синхронизируется', () => {
+test('динамика эффективности хранит неизменяемые ежемесячные срезы с настраиваемой глубиной, а время быстро и безопасно синхронизируется', () => {
   const shell = read('index.html');
   const effectiveness = read('piura-erp-restored 3/modules/EFFECTIVNESS.html');
   const time = read('piura-erp-restored 3/modules/Time-tracker.html');
-  for (const date of ['2026-08-01','2026-09-01','2026-10-01']) assert.match(effectiveness,new RegExp(date));
+  assert.match(effectiveness,/new Date\('2026-08-01T12:00:00'\)/);
   assert.doesNotMatch(effectiveness, /2026-08-15|2026-08-30|2026-09-15/);
   assert.doesNotMatch(effectiveness, /2026-07-01|2026-07-15/);
   for (const label of ['Инвестиции','Наставничество','Климат','Управление деньгами']) assert.match(effectiveness,new RegExp(label));
@@ -783,7 +783,13 @@ test('динамика эффективности хранит три ежеме
   assert.match(effectiveness, /formula:'normalized-periods'/);
   assert.doesNotMatch(effectiveness, /function calcDph|last3avg|weighted|Лучший мес|Медиана/);
   assert.match(effectiveness, /function scheduledCheckpointDates/);
-  assert.match(effectiveness, /function scheduledCheckpointDates\(\)\{return\['2026-08-01','2026-09-01','2026-10-01'\]\}/);
+  assert.match(effectiveness, /function visibleCheckpointDates/);
+  assert.match(effectiveness, /checkpointMonths:6/);
+  assert.match(effectiveness, /3 месяца/);
+  assert.match(effectiveness, /6 месяцев/);
+  assert.match(effectiveness, /12 месяцев/);
+  assert.match(effectiveness, /Всё время/);
+  assert.doesNotMatch(effectiveness, /saveCheckpoint\(\)/);
   assert.doesNotMatch(effectiveness, /new Date\(2026,7,22,12\)|cursor\.setDate/);
   assert.match(effectiveness, /ov-row cp-overview-row/);
   assert.match(effectiveness, /ov-summary cp-summary/);
@@ -929,7 +935,7 @@ test('августовские правки интерфейса сохраня�
   assert.match(overview, /class="fund-goal fund-goal-ecology"/);
   assert.match(overview, /goal\.metrics\.reduce\(\(sum,metric\)=>sum\+Math\.min\(100/);
   assert.match(overview, /data-piura-keep-full/);
-  assert.match(effectiveness, /return\['2026-08-01','2026-09-01','2026-10-01'\]/);
+  assert.match(effectiveness, /cursor\.setMonth\(cursor\.getMonth\(\)\+1\)/);
   assert.match(effectiveness, /const CHECKPOINT_COLORS=\{inv:'#4faeff',nav:'#b47cff',klim:'#42d9a4',money:'#f2c75c'\}/);
   assert.match(effectiveness, /--checkpoint-color:\$\{color\}/);
   assert.match(weekly, /compact PS №1/);

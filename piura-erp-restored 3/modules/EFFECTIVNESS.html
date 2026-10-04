@@ -149,9 +149,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 @media(min-width:1101px) and (max-width:1350px){.cp-overview-point .ov-row-tile-val{font-size:calc(var(--fs)*1.6)}}
 .proof-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.proof-step{min-height:146px}.proof-step strong{font-size:clamp(23px,2.5vw,35px)}
 @media(max-width:850px){.proof-grid{grid-template-columns:1fr 1fr}}@media(max-width:650px){.proof-grid{grid-template-columns:1fr}}
-.cp-shell{--cp-count:3!important}.cp-overview-history{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-/* 2026-09-11: let the three monthly checkpoints breathe and read downward. */
+.cp-shell{--cp-count:6}.cp-overview-history{grid-template-columns:repeat(var(--cp-count),minmax(145px,1fr))!important;overflow-x:auto;padding-bottom:4px;scrollbar-color:var(--brd2) transparent}
+/* Let the visible monthly checkpoints breathe and read downward. */
 .cp-shell{gap:calc(132px * var(--spacing))!important}.cp-board{gap:calc(82px * var(--spacing))!important}.cp-overview-row{min-height:320px!important;padding:calc(72px * var(--spacing)) calc(72px * var(--spacing))!important;border-radius:28px!important}.cp-overview-history{gap:26px!important}.cp-overview-point{min-height:154px!important;padding:28px!important;border-radius:20px!important}
+@media(max-width:1100px){.cp-overview-history{grid-template-columns:repeat(var(--cp-count),minmax(140px,1fr))!important}}@media(max-width:700px){.cp-overview-history{grid-template-columns:repeat(var(--cp-count),minmax(132px,1fr))!important}}
 </style>
 </head>
 <body>
@@ -196,6 +197,11 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div class="sett-lbl">Формула $/час</div>
       <div class="sett-opts" id="opt-formula"></div>
       <div class="sett-desc" id="formula-desc"></div>
+    </div>
+    <div class="sett-row">
+      <div class="sett-lbl">История ежемесячных срезов</div>
+      <div class="sett-opts" id="opt-checkpoint-months"></div>
+      <div class="sett-desc">Новая точка создаётся первого числа месяца. Прошлые точки больше не пересчитываются.</div>
     </div>
     <div class="sett-row">
       <div class="sett-lbl">Название (топбар)</div>
@@ -292,6 +298,10 @@ const INCOME_PRESETS=[
 const FORMULAS=[
   {id:'normalized',label:'Сопоставимые периоды',desc:'Доход за выбранный период ÷ (все часы ÷ дни наблюдения × дни выбранного периода)'},
 ];
+const CHECKPOINT_HISTORY_OPTIONS=[
+  {id:3,label:'3 месяца'},{id:6,label:'6 месяцев'},
+  {id:12,label:'12 месяцев'},{id:'all',label:'Всё время'},
+];
 
 const requestedTab=new URLSearchParams(location.search).get('tab');
 const EFFECTIVENESS_TAB_KEY='piura_effectiveness_active_tab_v1';
@@ -305,7 +315,7 @@ function setViewPeriod(tid,p){viewPeriod[tid]=p;renderPage();}
 function defaultSettings(){
   return{targetDph:500,logoText:'ПЮ',accent:'#3ddba0',fontSizeVal:22,compactVal:50,
     fontFamily:'inter',tabOrder:ALL_TABS.map(t=>t.id),
-    incomePreset:'12m',customStart:{month:0,year:2026},formula:'normalized'};
+    incomePreset:'12m',customStart:{month:0,year:2026},formula:'normalized',checkpointMonths:6};
 }
 function loadSettings(){
   try{const s=JSON.parse(localStorage.getItem('pu_settings'));return s?Object.assign(defaultSettings(),s):defaultSettings();}
@@ -362,7 +372,7 @@ function openSettings(){
   document.getElementById('opt-cm').value=cs.month;
   document.getElementById('opt-cy').value=cs.year;
   buildAccentOpts();buildFontFamilyOpts();buildTabOrderUI();
-  buildIncomePresetOpts();buildFormulaOpts();
+  buildIncomePresetOpts();buildFormulaOpts();buildCheckpointHistoryOpts();
 }
 function buildAccentOpts(){
   const el=document.getElementById('opt-accent');el.innerHTML='';
@@ -412,6 +422,20 @@ function buildFormulaOpts(){
     el.appendChild(btn);
   });
   if(desc)desc.textContent=(FORMULAS.find(f=>f.id===SETTINGS.formula)||FORMULAS[0]).desc;
+}
+function buildCheckpointHistoryOpts(){
+  const el=document.getElementById('opt-checkpoint-months');if(!el)return;el.innerHTML='';
+  CHECKPOINT_HISTORY_OPTIONS.forEach(option=>{
+    const btn=document.createElement('div');
+    btn.className='sett-opt'+(String(SETTINGS.checkpointMonths)===String(option.id)?' sel':'');
+    btn.textContent=option.label;
+    btn.onclick=()=>{SETTINGS.checkpointMonths=option.id;buildCheckpointHistoryOpts();};
+    el.appendChild(btn);
+  });
+}
+function setCheckpointHistoryMonths(value){
+  SETTINGS.checkpointMonths=value==='all'?'all':Math.max(3,Number(value)||6);
+  saveSettings(SETTINGS);renderPage();
 }
 let dragSrcIdx=null;
 function buildTabOrderUI(){
@@ -840,16 +864,9 @@ function currentCheckpoint(date=isoToday(),reconstructed=false){
   const directions=Object.fromEntries(ALL_TABS.map(tab=>{const value=getTabData(tab,date);return[tab.id,{dph:Math.round(value.dph||0),income:Number(value.incomeTotal)||0,hours:Number(value.normalizedHours)||0,observedHours:Number(value.ts.totalH)||0,observedDays:Number(value.ts.days)||0,periodDays:Number(value.incomePeriodDays)||0,observationStart:value.ts.firstKey||'',observationEnd:value.ts.lastKey||''}]}));
   return{version:3,date,directions,createdAt:Date.now(),reconstructed,formula:'normalized-periods',incomeSnapshot:incomeSnapshotDate()};
 }
-function saveCheckpoint(force=false){
-  if(!incomeData&&!timeData)return;
-  const list=readCheckpoints(),snapshot=currentCheckpoint(),index=list.findIndex(item=>item.date===snapshot.date);
-  if(index>=0)list[index]=snapshot;else list.push(snapshot);writeCheckpoints(list);
-  if(force)renderProgress();
-}
 function ensureScheduledCheckpoint(){
   if(!incomeData&&!timeData)return;
   restoreHistoricalCheckpoints();
-  saveCheckpoint();
 }
 function restoreHistoricalCheckpoints(){
   if(!incomeData&&!timeData)return;
@@ -857,7 +874,16 @@ function restoreHistoricalCheckpoints(){
   scheduledCheckpointDates().filter(date=>date<=calculationDate()).forEach(date=>{if(!byDate.has(date)){byDate.set(date,currentCheckpoint(date,true));changed=true}});
   if(changed)writeCheckpoints([...byDate.values()]);
 }
-function scheduledCheckpointDates(){return['2026-08-01','2026-09-01','2026-10-01']}
+function scheduledCheckpointDates(today=isoToday()){
+  const dates=[],cursor=new Date('2026-08-01T12:00:00'),end=new Date(today+'T12:00:00');
+  end.setDate(1);
+  while(cursor<=end){dates.push([cursor.getFullYear(),String(cursor.getMonth()+1).padStart(2,'0'),'01'].join('-'));cursor.setMonth(cursor.getMonth()+1)}
+  return dates;
+}
+function visibleCheckpointDates(){
+  const dates=scheduledCheckpointDates(),limit=SETTINGS.checkpointMonths==='all'?dates.length:Math.max(3,Number(SETTINGS.checkpointMonths)||6);
+  return dates.slice(-limit);
+}
 function checkpointDate(value){return new Date(value+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}
 function directionAt(point,id){return point?.directions?.[id]||{dph:0,income:0,hours:0}}
 const CHECKPOINT_COLORS={inv:'#4faeff',nav:'#b47cff',klim:'#42d9a4',money:'#f2c75c'};
@@ -873,11 +899,11 @@ function openCheckpointProof(date,id){
   const content=document.getElementById('proof-content');content.innerHTML=`<div class="proof-kicker">Проверка расчёта</div><h2 class="proof-title" id="proof-title">${tab?.name||'Направление'} · ${proofDate(date)}</h2><div class="proof-date">Каждая цифра зафиксирована на эту дату и позже не пересчитывается</div><div class="proof-grid"><article class="proof-step"><span>Доход</span><strong>${proofMoney(income)}</strong><small>${proofDate(incomeStart)} — ${proofDate(date)} · ${periodDays} дн.</small></article><article class="proof-step"><span>Фактическое время</span><strong>${hours(observedHours)}</strong><small>${proofDate(timeStart)} — ${proofDate(timeEnd)} · ${observedDays} дн.</small></article><article class="proof-step"><span>В день</span><strong>${hours(dailyHours)}</strong><small>${hours(observedHours)} ÷ ${observedDays}</small></article><article class="proof-step"><span>В неделю</span><strong>${hours(weeklyHours)}</strong><small>${hours(dailyHours)} × 7</small></article><article class="proof-step"><span>Время периода</span><strong>${hours(normalizedHours)}</strong><small>${hours(dailyHours)} × ${periodDays}</small></article></div><div class="proof-equation"><span>доход ÷ нормализованное время</span><strong>${proofMoney(result)} / час</strong><small>${proofMoney(income)} ÷ ${normalizedHours.toLocaleString('ru-RU',{maximumFractionDigits:1})} ч = ${proofMoney(result)} / час</small></div>`;const modal=document.getElementById('proofmodal');modal.style.setProperty('--proof-color',color);modal.classList.add('on');modal.setAttribute('aria-hidden','false')}
 function closeCheckpointProof(){const modal=document.getElementById('proofmodal');modal.classList.remove('on');modal.setAttribute('aria-hidden','true')}
 function renderProgress(){
-  ensureScheduledCheckpoint();const pg=document.getElementById('pg'),list=readCheckpoints(),dates=scheduledCheckpointDates(),byDate=new Map(list.map(point=>[point.date,point])),points=dates.map(date=>byDate.get(date)||currentCheckpoint(date,true));
+  ensureScheduledCheckpoint();const pg=document.getElementById('pg'),list=readCheckpoints(),dates=visibleCheckpointDates(),byDate=new Map(list.map(point=>[point.date,point])),points=dates.map(date=>byDate.get(date)||currentCheckpoint(date,true));
   if(progressChart){progressChart.destroy();progressChart=null}
   let totalIncome=0,totalHours=0;const ranked=ALL_TABS.map(tab=>{const data=getTabData(tab);totalIncome+=data.avgMonthlyIncome;totalHours+=data.hoursPerMonth;return{tab,data}}).sort((a,b)=>b.data.dph-a.data.dph||b.data.avgMonthlyIncome-a.data.avgMonthlyIncome);
   const overall=totalHours?Math.round(totalIncome/totalHours):0;
-  pg.innerHTML=`<div class="cp-shell"><section class="ov-summary cp-summary"><div class="ov-summary-val">${fmt(overall)}<span style="font-size:.28em;color:var(--mu2);margin-left:.35em">/ час</span></div></section><div class="cp-board">${ranked.map(({tab},index)=>checkpointRow(tab,points,index)).join('')}</div></div>`;
+  pg.innerHTML=`<div class="cp-shell" style="--cp-count:${Math.max(1,points.length)}"><section class="ov-summary cp-summary"><div class="ov-summary-val">${fmt(overall)}<span style="font-size:.28em;color:var(--mu2);margin-left:.35em">/ час</span></div></section><div class="cp-board">${ranked.map(({tab},index)=>checkpointRow(tab,points,index)).join('')}</div></div>`;
 }
 
 async function loadIncome(){

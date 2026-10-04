@@ -64,6 +64,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
     private var pendingLaunch: (WorkMode, Bool, String, Int?)?
     private var activeWeekday: Int?
     private var pendingMusicCommand: (String, String)?
+    private var pendingOfficePowerCommand: (String, String)?
     private var remoteCommandRunning = false
     private var requestID = ""
     private var runDeadline = Date.distantFuture
@@ -115,6 +116,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             performMusicCommand(command, id: id)
             return
         }
+        if let (command, id) = pendingOfficePowerCommand {
+            pendingOfficePowerCommand = nil
+            performOfficePowerCommand(command, id: id)
+            return
+        }
         if let (mode, preview, id, weekday) = pendingLaunch {
             pendingLaunch = nil
             beginMode(mode, preview: preview, id: id, weekday: weekday)
@@ -138,6 +144,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
             requestID = id
             guard launchConfigured else { pendingMusicCommand = (command, id); return }
             performMusicCommand(command, id: id)
+            return
+        }
+        if host == "lights" {
+            let command = components?.queryItems?.first(where: { $0.name == "action" })?.value ?? "off"
+            requestID = id
+            guard launchConfigured else { pendingOfficePowerCommand = (command, id); return }
+            performOfficePowerCommand(command, id: id)
             return
         }
         guard let mode = WorkMode.resolve(host) else { return }
@@ -253,6 +266,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 self.performMusicCommand(command, id: commandID)
                 return
             }
+            if let (command, commandID) = self.pendingOfficePowerCommand {
+                self.pendingOfficePowerCommand = nil
+                self.performOfficePowerCommand(command, id: commandID)
+                return
+            }
             if !preview {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     if !self.isModeRunning && self.requestID == id { NSApp.terminate(nil) }
@@ -292,6 +310,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                 self.performMusicCommand(next, id: nextID)
                 return
             }
+            if let (next, nextID) = self.pendingOfficePowerCommand {
+                self.pendingOfficePowerCommand = nil
+                self.performOfficePowerCommand(next, id: nextID)
+                return
+            }
             // Stay resident as an accessory after the first command. Subsequent
             // Play/Pause presses then reuse the same native bridge instead of
             // cold-launching another process, while no window or Dock icon is shown.
@@ -304,6 +327,82 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         if let data = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
             try? data.write(to: supportDirectory.appendingPathComponent("last-music.json"), options: .atomic)
         }
+    }
+    private func performOfficePowerCommand(_ command: String, id: String) {
+        guard ["on", "off"].contains(command) else { return }
+        guard !isModeRunning, !remoteCommandRunning else {
+            pendingOfficePowerCommand = (command, id)
+            return
+        }
+        requestID = id
+        remoteCommandRunning = true
+        window.orderOut(nil)
+        NSApp.setActivationPolicy(.accessory)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self else { return }
+            let result: [String: Any]
+            do {
+                result = ["ok":true,"command":command,"requestID":id,"lighting":try self.controlOfficePower(command)]
+            } catch {
+                result = ["ok":false,"command":command,"requestID":id,"message":error.localizedDescription]
+            }
+            if let data = try? JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]) {
+                try? FileManager.default.createDirectory(at: self.supportDirectory, withIntermediateDirectories: true)
+                try? data.write(to: self.supportDirectory.appendingPathComponent("last-office-power.json"), options:.atomic)
+            }
+            self.remoteCommandRunning = false
+            if let (next, nextID) = self.pendingOfficePowerCommand {
+                self.pendingOfficePowerCommand = nil
+                self.performOfficePowerCommand(next, id: nextID)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.4) { if !self.isModeRunning && !self.remoteCommandRunning { NSApp.terminate(nil) } }
+        }
+    }
+    private func controlOfficePower(_ command: String) throws -> [String: Any] {
+        guard workspace.runningApplications.contains(where: { $0.bundleIdentifier == "ru.yandex.desktop.yandex-browser" && !$0.isTerminated }) else {
+            throw modeError("Яндекс с активным цветным режимом не запущен; новое окно в 12:00 не открывалось.")
+        }
+        let raw = try runAppleScript("""
+        tell application "Yandex"
+          repeat with w in every window
+            set tabNumber to 0
+            repeat with t in every tab of w
+              set tabNumber to tabNumber + 1
+              set u to URL of t
+              if u is "\(erpBaseURL)" or u starts with "\(erpBaseURL)?" or u starts with "\(erpBaseURL)index.html" then return (id of w as text) & "," & (tabNumber as text)
+            end repeat
+          end repeat
+          return ""
+        end tell
+        """)
+        let location = raw.split(separator:",").compactMap { Int($0.trimmingCharacters(in:.whitespacesAndNewlines)) }
+        guard location.count == 2 else { throw modeError("Активное окно ERP не найдено; чужой браузер не открывался.") }
+        func execute(_ javascript: String) throws -> String {
+            try runAppleScript("tell application \"Yandex\" to execute tab \(location[1]) of window id \(location[0]) javascript \"\(appleScriptEscape(javascript))\"")
+        }
+        _ = try execute("""
+        (()=>{const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.6'){if(!document.getElementById('piura-office-loader-10-6')){const old=document.querySelector('[id^=piura-office-loader-]');old?.remove();const s=document.createElement('script');s.id='piura-office-loader-10-6';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.6';document.head.append(s)}return 'loading'}return 'ready'})()
+        """)
+        let readyDeadline = Date().addingTimeInterval(12)
+        while Date() < readyDeadline {
+            if try execute("document.documentElement.dataset.officeControllerReady || ''") == "10.6" { break }
+            pumpRunLoop(0.25)
+        }
+        guard try execute("document.documentElement.dataset.officeControllerReady || ''") == "10.6" else { throw modeError("Контроллер освещения не загрузился.") }
+        _ = try execute("(()=>{const e=document.documentElement;e.dataset.officePowerRequest='\(command)';document.dispatchEvent(new Event('piura:office-power'));return 'started'})()")
+        let deadline = Date().addingTimeInterval(15)
+        var lastState = ""
+        while Date() < deadline {
+            lastState = try execute("document.documentElement.dataset.officeLighting || '{}'")
+            if let data = lastState.data(using:.utf8), let state = try? JSONSerialization.jsonObject(with:data) as? [String:Any], state["power"] as? String == command {
+                let status = state["status"] as? String ?? ""
+                if status == "power-done" { return state }
+                if status == "power-partial" || status == "power-failed" { throw modeError("Не все источники света подтвердили отключение.") }
+            }
+            pumpRunLoop(0.25)
+        }
+        throw modeError("Нет подтверждения освещения: \(lastState)")
     }
     private func controlYandexMusic(_ command: String) throws -> [String: Any] {
         throw modeError("Музыка управляется встроенным плеером ERP.")
@@ -1165,6 +1264,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         while Date() < quitDeadline && closingApps.contains(where: { !$0.isTerminated }) { pumpRunLoop(0.1) }
         let remaining = closingApps.filter { !$0.isTerminated }.map { $0.localizedName ?? "Приложение" }
         if !remaining.isEmpty { notes.append("Не закрылись (возможно, ожидают сохранения): " + remaining.joined(separator: ", ")) }
+        if !preview {
+            do { try verifyBrowserIsolation(for:mode) } catch { notes.append("Браузеры: \(error.localizedDescription)") }
+        }
         markPhase("finishQuitting")
         if !preview && mode == .morning {
             do { try returnToMorningLockScreen() } catch { notes.append("Экран утра: \(error.localizedDescription)") }
@@ -1280,6 +1382,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         for app in apps { _ = app.terminate() }
         // Never discard unsaved work or dismiss another app's save dialog.
         return apps
+    }
+    private func verifyBrowserIsolation(for mode: WorkMode) throws {
+        let foreignBrowserIDs: Set<String> = [
+            "com.google.Chrome", "com.google.Chrome.canary", "org.mozilla.firefox",
+            "com.microsoft.edgemac", "com.brave.Browser", "company.thebrowser.Browser",
+            "com.operasoftware.Opera"
+        ]
+        let foreign = workspace.runningApplications.filter { app in
+            !app.isTerminated && app.bundleIdentifier.map(foreignBrowserIDs.contains) == true
+        }.map { $0.localizedName ?? $0.bundleIdentifier ?? "Браузер" }
+        guard foreign.isEmpty else { throw modeError("остались окна: "+foreign.joined(separator:", ")) }
+        let safariCount = Int(try runAppleScript("tell application \"Safari\" to return count of windows as text")) ?? -1
+        let yandexCount = Int(try runAppleScript("tell application \"Yandex\" to return count of windows as text")) ?? -1
+        let expectedYandex = mode == .mentorship ? 2 : 1
+        guard safariCount == 1, yandexCount == expectedYandex else {
+            throw modeError("ожидалось одно окно текущего профиля Safari и \(expectedYandex) рабочее окно Яндекса; сейчас \(safariCount) и \(yandexCount)")
+        }
+        verifiedWindows.append(["browserIsolation":true,"safariWindows":safariCount,"yandexWindows":yandexCount,"foreignBrowsers":foreign])
     }
     private func setSystemDarkAppearance() throws {
         let result = try runAppleScript("tell application \"System Events\" to tell appearance preferences\nif dark mode is false then set dark mode to true\nreturn dark mode as text\nend tell")
@@ -1682,7 +1802,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
         // Preview runs do not change the room lights.
         if !isPreviewRun {
             let lightingMode = officeLightingMode(for: mode)
-            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.5'){if(!document.getElementById('piura-office-loader-10-5')){const s=document.createElement('script');s.id='piura-office-loader-10-5';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.5';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+            let start = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.6'){if(!document.getElementById('piura-office-loader-10-6')){const s=document.createElement('script');s.id='piura-office-loader-10-6';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.6';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
             verifiedWindows.append(["officeStart":start])
         }
         let allIDs = try runAppleScript("tell application \"Yandex\" to return id of every window")
@@ -2447,7 +2567,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler
                         throw modeError("Не все источники света подтвердили цвет; подробности в отчёте.")
                     }
                 } else {
-                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.5'){if(!document.getElementById('piura-office-loader-10-5')){const s=document.createElement('script');s.id='piura-office-loader-10-5';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.5';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
+                    _ = try runAppleScript("tell application \"Yandex\" to execute active tab of window id \(erpWindowID) javascript \"(() => {const e=document.documentElement;if(e.dataset.officeControllerReady!=='10.6'){if(!document.getElementById('piura-office-loader-10-6')){const s=document.createElement('script');s.id='piura-office-loader-10-6';s.src='https://nikolaypiura.github.io/ERPNIKOLAY/office-modes.js?v=modes10.6';document.head.append(s)}return 'loading'}e.dataset.officeModeRequest='\(lightingMode)';document.dispatchEvent(new Event('piura:office-mode'));return 'started'})()\"")
                 }
             }
             pumpRunLoop(0.25)

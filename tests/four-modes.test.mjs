@@ -7,9 +7,9 @@ import {spawnSync} from 'node:child_process';
 import {runInNewContext} from 'node:vm';
 const root=new URL('../',import.meta.url);
 const read=p=>readFileSync(new URL(p,root),'utf8');
-test('office colors use full brightness, serialize and deduplicate pending requests',async()=>{
+test('office colors use full brightness, serialize requests and support scheduled power-off',async()=>{
   const calls=[],attributes={},listeners={},window={};
-  const controller={piuraSetOfficeColor:async(...args)=>{calls.push(args);return [{source:'test',ok:true}]}};
+  const controller={piuraSetOfficeColor:async(...args)=>{calls.push(args);return [{source:'test',ok:true}]},piuraSetOfficePower:async(...args)=>{calls.push(args);return [{source:'test',ok:true}]}};
   const document={documentElement:{dataset:attributes},addEventListener:(name,fn)=>listeners[name]=fn,
     createElement:()=>({contentWindow:controller,remove(){}}),body:{append(node){node.onload()}}};
   const context={window,document,URL,MutationObserver:class{observe(){}},location:{href:'https://example.com/ERPNIKOLAY/'},crypto:{randomUUID:()=>String(Math.random())},performance,setTimeout,clearTimeout};
@@ -29,6 +29,10 @@ test('office colors use full brightness, serialize and deduplicate pending reque
   runInNewContext(script,context);assert.equal(window.piuraOfficeLighting,state,'a duplicate script must not reset pending/completed lighting');
   window.piuraSetOfficeMode('investments');await new Promise(setImmediate);
   assert.equal(window.piuraOfficeLighting.mode,'work');
+  window.piuraSetOfficePower('off');window.piuraSetOfficePower('off');await new Promise(setImmediate);
+  assert.equal(window.piuraOfficeLighting.status,'power-done');
+  assert.equal(window.piuraOfficeLighting.power,'off');
+  assert.deepEqual(calls.at(-1),['off']);
 });
 test('music morning skin is reversible, does not reload or toggle playback',()=>{
   const script=read('mac/resources/music-appearance.js');let element;

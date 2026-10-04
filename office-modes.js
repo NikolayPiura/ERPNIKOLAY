@@ -1,7 +1,7 @@
 /* Physical office lighting, using the existing overview color-wheel handler. */
 (()=>{
-  if(window.piuraOfficeVersion==='10.5')return;
-  window.piuraOfficeVersion='10.5';
+  if(window.piuraOfficeVersion==='10.6')return;
+  window.piuraOfficeVersion='10.6';
   const colors={
     morning:'#39ff00',work:'#a600ff',learning:'#ff8000',mentorship:'#00e5df',
     weekday1:'#42d8a7',weekday2:'#4f8ef7',weekday3:'#9a72ed',weekday4:'#ffad4f',weekday5:'#ff5f98'
@@ -9,18 +9,19 @@
   let controller,ready,queue=Promise.resolve();
   const setState=state=>{window.piuraOfficeLighting=state;document.documentElement.dataset.officeLighting=JSON.stringify(state)};
   setState({status:'idle'});
-  document.documentElement.dataset.officeControllerReady='10.5';
+  document.documentElement.dataset.officeControllerReady='10.6';
   document.addEventListener('piura:office-mode',()=>window.piuraSetOfficeMode(document.documentElement.dataset.officeModeRequest));
+  document.addEventListener('piura:office-power',()=>window.piuraSetOfficePower(document.documentElement.dataset.officePowerRequest));
   // Native browser automation may run in an isolated JS world. Observe the
   // shared DOM as well as events; do not depend on access to page globals.
-  new MutationObserver(()=>window.piuraSetOfficeMode(document.documentElement.dataset.officeModeRequest))
-    .observe(document.documentElement,{attributes:true,attributeFilter:['data-office-mode-request']});
+  new MutationObserver(records=>records.forEach(record=>record.attributeName==='data-office-power-request'?window.piuraSetOfficePower(document.documentElement.dataset.officePowerRequest):window.piuraSetOfficeMode(document.documentElement.dataset.officeModeRequest)))
+    .observe(document.documentElement,{attributes:true,attributeFilter:['data-office-mode-request','data-office-power-request']});
   function getController(){
     if(!ready)ready=new Promise((resolve,reject)=>{
       controller=document.createElement('iframe');controller.hidden=true;controller.title='Контроллер освещения';
       const timer=setTimeout(()=>reject(new Error('Контроллер освещения не загрузился')),10000);
       controller.onload=()=>{clearTimeout(timer);resolve(controller.contentWindow)};
-      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes10.5',location.href).href;
+      controller.src=new URL('piura-erp-restored%203/modules/Overview.html?lightingOnly=1&build=modes10.6',location.href).href;
       document.body.append(controller);
     });
     return ready;
@@ -42,6 +43,23 @@
       setState({status:devices.every(x=>x.ok)?'done':'partial',mode,color:colors[mode],brightness,request,devices,durationSeconds:(performance.now()-started)/1000});
     }).catch(()=>{
       if(window.piuraOfficeLighting.request===request)setState({status:'failed',mode,request});
+      ready=null;controller?.remove();
+    });
+    return true;
+  };
+  window.piuraSetOfficePower=power=>{
+    power=/^(on|1|true)$/i.test(String(power))?'on':'off';
+    if(window.piuraOfficeLighting?.power===power&&window.piuraOfficeLighting.status==='power-pending')return true;
+    const request=crypto.randomUUID(),started=performance.now();
+    setState({status:'power-pending',power,request});
+    queue=queue.catch(()=>{}).then(async()=>{
+      const target=await getController();
+      if(window.piuraOfficeLighting.request!==request)return;
+      const devices=await target.piuraSetOfficePower(power);
+      if(window.piuraOfficeLighting.request!==request)return;
+      setState({status:devices.every(x=>x.ok)?'power-done':'power-partial',power,request,devices,durationSeconds:(performance.now()-started)/1000});
+    }).catch(()=>{
+      if(window.piuraOfficeLighting.request===request)setState({status:'power-failed',power,request});
       ready=null;controller?.remove();
     });
     return true;

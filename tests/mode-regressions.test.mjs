@@ -108,6 +108,25 @@ test('automatic morning wakes a sleeping Mac before the 07:00 launch',()=>{
   assert.match(agent,/<key>Hour<\/key>\s*<integer>7<\/integer>/);
   assert.match(agent,/<key>Minute<\/key>\s*<integer>0<\/integer>/);
 });
+test('noon automation turns color-mode lighting off without opening a spare browser',()=>{
+  const installer=read('mac/install-auto-morning.sh');
+  const agent=read('mac/com.piura.modes.noon-lights-off.plist');
+  const script=read('mac/noon-lights-off.sh');
+  assert.match(installer,/com\.piura\.modes\.noon-lights-off/);
+  assert.match(agent,/<key>Hour<\/key>\s*<integer>12<\/integer>/);
+  assert.match(agent,/<key>Minute<\/key>\s*<integer>0<\/integer>/);
+  assert.match(script,/piura-modes:\/\/lights\?action=off/);
+  assert.match(app,/private func controlOfficePower/);
+  assert.match(app,/новое окно в 12:00 не открывалось/);
+  assert.match(read('office-modes.js'),/target\.piuraSetOfficePower\(power\)/);
+  assert.match(read('piura-erp-restored 3/modules/Overview.html'),/window\.piuraSetOfficePower=async power/);
+});
+test('mode completion verifies that previous browser windows are gone',()=>{
+  assert.match(app,/private func verifyBrowserIsolation/);
+  assert.match(app,/"com\.google\.Chrome"/);
+  assert.match(app,/let expectedYandex = mode == \.mentorship \? 2 : 1/);
+  assert.match(app,/try verifyBrowserIsolation\(for:mode\)/);
+});
 test('final screen audit leaves music to the ERP control and never assigns it a display',()=>{
   assert.match(app,/var needsMusic: Bool \{ self == \.morning \|\| self == \.work \}/);
   assert.match(app,/let leftURL = policyURL/);
