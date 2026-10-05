@@ -971,5 +971,18 @@ test('дорожная карта показывает только 2022–2026 
   assert.match(roadmap, /history\.slice\(-40\)/);
   assert.match(roadmap, /Object\.keys\(stored\|\|\{\}\)\.length/);
   assert.match(roadmap, /hasStored=Object\.keys\(stored\|\|\{\}\)\.length>0,recovered=hasStored\?\{\}:recoverNextStepsFromLocalCache\(\)/);
+  assert.match(roadmap, /ROADMAP_UPDATE_20261005_KEY/);
+  assert.match(roadmap, /function applyRoadmapUpdate20261005\(\)/);
+  assert.match(roadmap, /removedIds=new Set\(\['d3-7','d3-8','d3-9','d3-10','d4-0','d4-3','d4-5','d4-6','d5-2'\]\)/);
+  for (const note of ['Вывести PFF в 1 миллион долларов и запечатать фонд.','Сделать фонд с Антоном.','Поднять количество людей до 20 в этом году.','Расставить кормушки в Clearwater.']) assert.ok(roadmap.includes(note));
+  assert.match(roadmap, /'d3-11':\[6,5,4,3,2\]/);
+  assert.match(roadmap, /'d3-12':\[0,3,3,3,4\]/);
+  assert.match(roadmap, /'d3-13':\[5,4,4,3,2\]/);
+  assert.match(roadmap, /'d4-7':\[0,1,1,1,5\]/);
+  assert.match(roadmap, /'d5-1':\[4,4,4,4,7\]/);
+  assert.match(roadmap, /'d5-3':\[4,4,4,4,7\]/);
+  assert.match(roadmap, /name:'Фонд «Друг»'/);
+  assert.match(roadmap, /name:'Наркотическая зависимость'/);
+  assert.match(roadmap, /name:'Ассоциация добрых дел'/);
   assert.doesNotMatch(read('index.html'), /Показывать скрытые годы/);
 });

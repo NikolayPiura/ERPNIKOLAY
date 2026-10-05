@@ -1670,7 +1670,7 @@ function setAdminWorkspace(view){
   document.getElementById('scaleWorkspace').hidden=view!=='scale';
   document.getElementById('embeddedWorkspace').hidden=view==='scale';
   if(view!=='scale'){
-    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20260919a&embed='+encodeURIComponent(view)+'&theme='+encodeURIComponent(theme);
+    const frame=document.getElementById('embeddedFrame'),src='My-Dynamics.html?v=20261005a&embed='+encodeURIComponent(view)+'&theme='+encodeURIComponent(theme);
     if(!frame.src.endsWith(src))frame.src=src;
     frame.addEventListener('load',syncTheme,{once:true});
   }

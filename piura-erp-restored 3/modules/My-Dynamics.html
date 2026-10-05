@@ -504,6 +504,7 @@ const NEXTSTEPS_KEY = 'roadmap_nextsteps_v1';
 const NEXTSTEPS_HISTORY_KEY = 'roadmap_nextsteps_history_v1';
 const NEXTSTEPS_RESTORE_KEY = 'roadmap_nextsteps_restore_20260812_v1';
 const DYNSORT_KEY = 'roadmap_dynsort_v1';
+const ROADMAP_UPDATE_20261005_KEY = 'roadmap_update_20261005_v1';
 
 let YEARS = [2022,2023,2024,2025,2026,2027,2028,2029,2030,2040,2050,2060];
 let hiddenYears = [2027,2029,2030,2040,2050,2060];
@@ -522,22 +523,20 @@ const ROADMAP = [
   ]},
   {n:3, title:'3 ДИНАМИКА', items:[
     {id:'d3-0',name:'Инвестиционный фонд PFF',base:'yellow'},{id:'d3-1',name:'Управление другими фондами',base:'yellow'},
-    {id:'d3-2',name:'Климэйт',base:'red'},{id:'d3-3',name:'Благотворительный фонд',base:'red'},
+    {id:'d3-2',name:'Климэйт',base:'red'},{id:'d3-3',name:'Фонд «Друг»',base:'red'},
     {id:'d3-4',name:'Наставничество',base:'yellow'},{id:'d3-5',name:'Настольный теннис',base:'yellow'},
-    {id:'d3-6',name:'Семья',base:'yellow'},{id:'d3-7',name:'Бизнес',base:'red'},{id:'d3-8',name:'Франшиза',base:'red'},
-    {id:'d3-9',name:'PurrCat',base:'red'},{id:'d3-10',name:'Родительский дом',base:'red'},{id:'d3-11',name:'Снитч',base:'red'},
-    {id:'d3-12',name:'Саентология',base:'red'},{id:'d3-13',name:'Друзья',base:'red'},{id:'d3-14',name:'Шахматы',base:'yellow'},
+    {id:'d3-6',name:'Семья',base:'yellow'},{id:'d3-11',name:'Снитч',base:'red'},
+    {id:'d3-12',name:'Саентология',base:'red',current:4},{id:'d3-13',name:'Друзья',base:'red'},{id:'d3-14',name:'Шахматы',base:'yellow'},
     {id:'d3-15',name:'Спортивный зал + MMA',base:'yellow'},
   ]},
   {n:4, title:'4 ДИНАМИКА', items:[
-    {id:'d4-0',name:'Алкогольная зависимость',base:'yellow'},{id:'d4-1',name:'Наркологическая зависимость',base:'yellow'},
-    {id:'d4-2',name:'Табачная зависимость',base:'yellow'},{id:'d4-3',name:'Брак, Разводы',base:'red'},
-    {id:'d4-4',name:'Война',base:'red'},{id:'d4-5',name:'Люди преклонного возраста',base:'red'},
-    {id:'d4-6',name:'Образование детей',base:'red'},
+    {id:'d4-1',name:'Наркотическая зависимость',base:'yellow'},
+    {id:'d4-2',name:'Табачная зависимость',base:'yellow'},
+    {id:'d4-4',name:'Война',base:'red'},{id:'d4-7',name:'Ассоциация добрых дел',base:'yellow'},
   ]},
   {n:5, title:'5 ДИНАМИКА', items:[
-    {id:'d5-0',name:'Котики',base:'green'},{id:'d5-1',name:'Деревья',base:'green'},
-    {id:'d5-2',name:'Животные',base:'green'},{id:'d5-3',name:'Птицы',base:'yellow'},
+    {id:'d5-0',name:'Котики',base:'green'},{id:'d5-1',name:'Деревья',base:'green',current:7},
+    {id:'d5-3',name:'Птицы',base:'yellow',current:7},
   ]},
   {n:6, title:'6 ДИНАМИКА', items:[
     {id:'d6-0',name:'Капитал',base:'yellow'},{id:'d6-1',name:'Жильё',base:'green'},{id:'d6-2',name:'Мелкие объекты',base:'green'},
@@ -611,7 +610,8 @@ function saveItems(){ localStorage.setItem(ITEMS_KEY, JSON.stringify(ROADMAP)); 
 function defaultCells(){
   const c = {};
   ROADMAP.forEach(d => d.items.forEach(it => {
-    if (it.base) c[it.id + '_' + CURRENT_YEAR] = { n: BASE_NUM[it.base], comment:'' };
+    const value=Number.isFinite(it.current)?it.current:BASE_NUM[it.base];
+    if (value !== undefined) c[it.id + '_' + CURRENT_YEAR] = { n:value, comment:'' };
   }));
   return c;
 }
@@ -630,10 +630,10 @@ const HISTORICAL_CELLS_V1 = {
   'd2-3':[0,0,0,0], 'd2-4':[3,3,2,2],
   'd3-0':[0,1,3,6], 'd3-1':[0,0,3,5], 'd3-2':[5,1,3,8],
   'd3-3':[0,0,0,6], 'd3-4':[0,2,4,5], 'd3-5':[1,2,4,7],
-  'd3-6':[3,3,3,4], 'd3-12':[0,3,2,2], 'd3-14':[2,1,1,6],
+  'd3-6':[3,3,3,4], 'd3-11':[6,5,4,3], 'd3-12':[0,3,3,3], 'd3-13':[5,4,4,3], 'd3-14':[2,1,1,6],
   'd3-15':[1,1,2,4],
-  'd4-1':[0,0,1,0], 'd4-4':[0,0,0,0],
-  'd5-0':[0,1,3,7]
+  'd4-1':[2,2,2,2], 'd4-2':[2,2,2,2], 'd4-4':[2,2,2,2], 'd4-7':[0,1,1,1],
+  'd5-0':[0,1,3,7], 'd5-1':[4,4,4,4], 'd5-3':[4,4,4,4]
 };
 function historicalCells(){
   const out = {};
@@ -685,6 +685,53 @@ function saveNextSteps(){
     history.push({savedAt:new Date().toISOString(),data:snapshot});
     localStorage.setItem(NEXTSTEPS_HISTORY_KEY,JSON.stringify(history.slice(-40)));
   }
+}
+
+function applyRoadmapUpdate20261005(){
+  if(localStorage.getItem(ROADMAP_UPDATE_20261005_KEY)==='1')return;
+  const removedIds=new Set(['d3-7','d3-8','d3-9','d3-10','d4-0','d4-3','d4-5','d4-6','d5-2']);
+  ROADMAP.forEach(dynamic=>{dynamic.items=dynamic.items.filter(item=>!removedIds.has(item.id))});
+  const names={'d3-3':'Фонд «Друг»','d4-1':'Наркотическая зависимость'};
+  ROADMAP.flatMap(dynamic=>dynamic.items).forEach(item=>{if(names[item.id])item.name=names[item.id]});
+  const fourth=ROADMAP.find(dynamic=>dynamic.n===4);
+  if(fourth&&!fourth.items.some(item=>item.id==='d4-7'))fourth.items.push({id:'d4-7',name:'Ассоциация добрых дел',base:'yellow'});
+  const notes={
+    'd2-0':'Больше гулять, проходить вместе по 6 тысяч шагов в день и разговаривать.',
+    'd2-1':'Пробовать разное: сходить на теннис и на скалолазание.',
+    'd2-2':'Съездить в Вермонт и сразу запланировать новое путешествие; постоянно бронировать следующие поездки, в том числе на машине.',
+    'd2-3':'Иметь общую реальность по этому вопросу, обдумать усыновление.',
+    'd2-4':'Улучшить личную гигиену, снять заряд с этого вопроса.',
+    'd3-0':'Вывести PFF в 1 миллион долларов и запечатать фонд.',
+    'd3-1':'Увеличить ставку до 20%, усилить ERP и работу Дмитрия, работать исключительно по вторникам один час и больше пополнять фонды.',
+    'd3-2':'Выстроить этику, больше платить налогов и делегировать задачи.',
+    'd3-3':'Нанять волонтёров и выстроить систему по циклам.',
+    'd3-4':'Сильнее поднять чеки и проводить сезонные встречи по полтора часа.',
+    'd3-5':'Жёсткий график: среда и воскресенье.',
+    'd3-6':'Улучшить взаимоотношения с Викой и чаще общаться с бабушкой.',
+    'd3-11':'Решить, что делать со Снитчом.',
+    'd3-12':'Раздавать «Дороги к счастью» самому, увеличивать квоты по «Дорогам к счастью» и раздавать их.',
+    'd3-13':'Выстроить точную реальность по отношению к этой группе.',
+    'd3-14':'Сходить поиграть в живые шахматы.',
+    'd3-15':'Начать ходить один раз в неделю строго.',
+    'd4-1':'Сделать фонд с Антоном.',
+    'd4-2':'Помочь Никите и Георгию бросить курить.',
+    'd4-4':'Продолжить описывать концепцию достаточности.',
+    'd4-7':'Поднять количество людей до 20 в этом году.',
+    'd5-0':'Начать помогать руками в Pineos.',
+    'd5-1':'Лучше разобраться в программах One Tree Planet, посадить деревья и выполнить годовую цель.',
+    'd5-3':'Расставить кормушки в Clearwater.'
+  };
+  Object.keys(nextSteps).forEach(id=>{if(removedIds.has(id))delete nextSteps[id]});
+  Object.assign(nextSteps,notes);
+  Object.keys(rmCells).forEach(key=>{if([...removedIds].some(id=>key.startsWith(id+'_')))delete rmCells[key]});
+  const scores={
+    'd3-11':[6,5,4,3,2],'d3-12':[0,3,3,3,4],'d3-13':[5,4,4,3,2],
+    'd4-1':[2,2,2,2,5],'d4-2':[2,2,2,2,5],'d4-4':[2,2,2,2,2],'d4-7':[0,1,1,1,5],
+    'd5-1':[4,4,4,4,7],'d5-3':[4,4,4,4,7]
+  };
+  Object.entries(scores).forEach(([id,values])=>values.forEach((n,index)=>{const key=id+'_'+(2022+index);rmCells[key]={...(rmCells[key]||{}),n}}));
+  saveItems();saveCells();saveNextSteps();localStorage.setItem(ROADMAP_UPDATE_20261005_KEY,'1');
+  try{parent.postMessage({type:'piura:data-changed',source:'roadmap-20261005'},location.origin)}catch(error){}
 }
 
 function recoverNextStepsFromLocalCache(){
@@ -1326,6 +1373,7 @@ document.addEventListener('keydown', e => {
 loadItems();
 loadCells();
 loadNextSteps();
+applyRoadmapUpdate20261005();
 loadYears();
 loadSettings();
 loadDynSort();
@@ -1342,7 +1390,7 @@ if(embeddedTab==='roadmap'||embeddedTab==='dynamics'){
 }else{
   switchMainTab(localStorage.getItem('roadmap_active_tab_v1')||'roadmap');
 }
-window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura:theme')applyEmbeddedTheme(event.data.theme);if(event.data?.type==='piura:cloud-data-applied'){loadItems();loadCells();loadNextSteps();loadYears();loadSettings();loadDynSort();rerenderAll()}});
+window.addEventListener('message',event=>{if(event.origin!==location.origin)return;if(event.data?.type==='piura:theme')applyEmbeddedTheme(event.data.theme);if(event.data?.type==='piura:cloud-data-applied'){loadItems();loadCells();loadNextSteps();applyRoadmapUpdate20261005();loadYears();loadSettings();loadDynSort();rerenderAll()}});
 </script>
 </body>
 </html>
